@@ -152,7 +152,7 @@ class BlogPost(WebsiteGenerator):
 			filters=dict(
 				reference_doctype=self.doctype,
 				reference_name=self.name,
-				email=frappe.session.user
+				owner=frappe.session.user
 			)
 		)
 		context.user_feedback = feedback[0] if feedback else ''

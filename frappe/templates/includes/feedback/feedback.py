@@ -5,35 +5,47 @@ from __future__ import unicode_literals
 import frappe
 
 from frappe import _
+from frappe.utils import add_to_date, now
 
 @frappe.whitelist(allow_guest=True)
-def add_feedback(reference_doctype, reference_name, rating, feedback, feedback_email):
+def add_feedback(reference_doctype, reference_name, rating, feedback):
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	if doc.disable_feedback == 1:
+		return
+
+	feedback_count = frappe.db.count("Feedback", {
+		"reference_doctype": reference_doctype,
+		"reference_name": reference_name,
+		"ip_address": frappe.local.request_ip,
+		"creation": (">", add_to_date(now(), hours=-1))
+	})
+
+	if feedback_count > 20:
+		frappe.msgprint(_('Hourly feedback limit reached'))
 		return
 
 	doc = frappe.new_doc('Feedback')
 	doc.reference_doctype = reference_doctype
 	doc.reference_name = reference_name
+	doc.ip_address = frappe.local.request_ip
 	doc.rating = rating
 	doc.feedback = feedback
-	doc.email = feedback_email
 	doc.save(ignore_permissions=True)
 
 	subject = _('New Feedback on {0}: {1}').format(reference_doctype, reference_name)
-	send_mail(doc, subject)
+	# send_mail(doc, subject)
 	return doc
 
 @frappe.whitelist()
-def update_feedback(reference_doctype, reference_name, rating, feedback, feedback_email):
+def update_feedback(reference_doctype, reference_name, rating, feedback):
 	doc = frappe.get_doc(reference_doctype, reference_name)
 	if doc.disable_feedback == 1:
 		return
 
 	filters = {
-		"email": feedback_email,
 		"reference_doctype": reference_doctype,
-		"reference_name": reference_name
+		"reference_name": reference_name,
+		"owner": frappe.session.user
 	}
 	d = frappe.get_all('Feedback', filters=filters, limit=1)
 	doc = frappe.get_doc('Feedback', d[0].name)
@@ -42,7 +54,7 @@ def update_feedback(reference_doctype, reference_name, rating, feedback, feedbac
 	doc.save(ignore_permissions=True)
 
 	subject = _('Feedback updated on {0}: {1}').format(reference_doctype, reference_name)
-	send_mail(doc, subject)
+	# send_mail(doc, subject)
 	return doc
 
 def send_mail(feedback, subject):
