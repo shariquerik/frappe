@@ -150,26 +150,64 @@ frappe.ui.form.on('Number Card', {
 		}
 
 		let aggregate_based_on_fields = [];
+		let aggregate_function_based_on_field_type = [];
+		let currency_type = [];
 		const doctype = frm.doc.document_type;
 
 		if (doctype) {
 			frappe.model.with_doctype(doctype, () => {
 				frappe.get_meta(doctype).fields.map(df => {
 					if (frappe.model.numeric_fieldtypes.includes(df.fieldtype)) {
-						if (df.fieldtype == 'Currency') {
-							if (!df.options || df.options !== 'Company:company:default_currency') {
-								return;
-							}
+						if (!aggregate_function_based_on_field_type.includes(df.fieldtype)) {
+							aggregate_function_based_on_field_type.push(df.fieldtype);
 						}
-						aggregate_based_on_fields.push({label: df.label, value: df.fieldname});
+						if (df.fieldtype == 'Currency') {
+							if (df.options && !currency_type.includes(df.options)) {
+								currency_type.push(df.options);
+							}
+							// if (!df.options || df.options !== 'Company:company:default_currency') {
+							// 	return;
+							// }
+						}
+						aggregate_based_on_fields.push({
+							label: df.label,
+							value: df.fieldname,
+							options: df.options || '',
+							fieldtype: df.fieldtype
+						});
 					}
 				});
 
 				frm.set_df_property('aggregate_function_based_on', 'options', aggregate_based_on_fields);
+				frm.set_df_property('aggregate_function_based_on', 'all_options', aggregate_based_on_fields);
+				frm.set_df_property('aggregate_function_based_on_field_type', 'options', aggregate_function_based_on_field_type);
+				frm.set_df_property('currency_type', 'options', ['', ...currency_type]);
 			});
+			// aggregate_function_based_on_field_type
+			// currency_type
 			frm.trigger('render_filters_table');
 			frm.trigger('render_dynamic_filters_table');
 		}
+	},
+
+	aggregate_function_based_on_field_type: function(frm) {
+		let fieldtype = frm.doc.aggregate_function_based_on_field_type;
+		let aggregate_function_based_on = frm.get_docfield('aggregate_function_based_on').all_options || [];
+		if (fieldtype) {
+			aggregate_function_based_on = aggregate_function_based_on.filter(option => option.fieldtype == fieldtype);
+		}
+		frm.set_df_property('aggregate_function_based_on', 'options', aggregate_function_based_on);
+	},
+
+	currency_type: function(frm) {
+		let currency = frm.doc.currency_type;
+		let aggregate_function_based_on = frm.get_docfield('aggregate_function_based_on').all_options || [];
+		if (currency) {
+			aggregate_function_based_on = aggregate_function_based_on.filter(option => option.options == currency && option.fieldtype == 'Currency');
+		} else {
+			aggregate_function_based_on = aggregate_function_based_on.filter(option => option.fieldtype == 'Currency');
+		}
+		frm.set_df_property('aggregate_function_based_on', 'options', aggregate_function_based_on);
 	},
 
 	set_report_filters: function(frm) {
