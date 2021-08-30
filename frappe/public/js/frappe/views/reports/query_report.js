@@ -521,6 +521,7 @@ frappe.views.QueryReport = class QueryReport extends frappe.views.BaseList {
 
 		this.page.body[0].style.setProperty('--report-filter-height', this.page.page_form.css('height'));
 		this.page.body.parent().css('margin-bottom', 'unset');
+
 	}
 
 	set_filters(filters) {
