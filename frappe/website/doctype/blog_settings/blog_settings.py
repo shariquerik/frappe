@@ -16,3 +16,6 @@ class BlogSettings(Document):
 
 def get_feedback_limit():
 	return frappe.db.get_single_value("Blog Settings", "feedback_limit") or 0
+
+def get_comment_limit():
+	return frappe.db.get_single_value("Blog Settings", "comment_limit") or 0
