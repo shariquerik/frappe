@@ -91,6 +91,10 @@ frappe.breadcrumbs = {
 			this.set_workspace(breadcrumbs);
 		}
 
+		if (frappe.get_prev_route()[0] === "Workspaces" && frappe.get_prev_route().length == 2) {
+			breadcrumbs.workspace = frappe.get_prev_route()[1];
+		}
+
 		if (breadcrumbs.workspace) {
 			if (!breadcrumbs.module_info.blocked && frappe.visible_modules.includes(breadcrumbs.module_info.module)) {
 				$(`<li><a href="/app/${frappe.router.slug(breadcrumbs.workspace)}">${__(breadcrumbs.workspace)}</a></li>`)
