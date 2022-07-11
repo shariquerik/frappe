@@ -95,7 +95,9 @@ def like(reference_doctype, reference_name, like):
 			reference_doctype=ref_doc.doctype,
 			reference_name=ref_doc.name,
 		)
-	return ref_doc
+	# revert with template if all clear (no backlinks)
+	template = frappe.get_template("templates/includes/feedback/feedback.html")
+	return template.render()
 
 def add_like(reference_doctype, reference_name):
 	user = frappe.session.user
