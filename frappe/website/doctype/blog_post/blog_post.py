@@ -164,14 +164,15 @@ class BlogPost(WebsiteGenerator):
 		context.comment_list = get_comment_list(self.doctype, self.name)
 
 		if not context.comment_list:
-			context.comment_text = 0
+			context.comment_count = 0
 		else:
-			context.comment_text = len(context.comment_list)
+			context.comment_count = len(context.comment_list)
 
 	def load_likes(self, context):
 		user = frappe.session.user
 
 		filters = {
+			"comment_type": "Like",
 			"reference_doctype": self.doctype,
 			"reference_name": self.name,
 		}
@@ -183,7 +184,7 @@ class BlogPost(WebsiteGenerator):
 		if user == "Guest":
 			filters["ip_address"] = frappe.local.request_ip
 
-		context.like = frappe.db.count("Comment", filters) or False
+		context.like = frappe.db.count("Comment", filters)
 
 	def set_read_time(self):
 		content = self.content or self.content_html or ""

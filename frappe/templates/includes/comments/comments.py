@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils.html_utils import clean_html
-from frappe.website.doctype.blog_settings.blog_settings import get_comment_limit, get_feedback_limit
+from frappe.website.doctype.blog_settings.blog_settings import get_comment_limit, get_like_limit
 from frappe.website.utils import clear_cache
 
 URLS_COMMENT_PATTERN = re.compile(
@@ -66,8 +66,8 @@ def add_comment(comment, comment_email, comment_by, reference_doctype, reference
 
 
 @frappe.whitelist(allow_guest=True)
-@rate_limit(key="reference_name", limit=get_feedback_limit, seconds=60 * 60)
-def give_feedback(reference_doctype, reference_name, like):
+@rate_limit(key="reference_name", limit=get_like_limit, seconds=60 * 60)
+def like(reference_doctype, reference_name, like):
 	like = frappe.parse_json(like)
 	ref_doc = frappe.get_doc(reference_doctype, reference_name)
 	if ref_doc.disable_feedback == 1:
@@ -79,9 +79,9 @@ def give_feedback(reference_doctype, reference_name, like):
 		delete_like(reference_doctype, reference_name)
 
 	if ref_doc.enable_email_notification:
-		subject = _("Feedback on {0}: {1}").format(reference_doctype, reference_name)
+		subject = _("Like on {0}: {1}").format(reference_doctype, reference_name)
 		if like:
-			message = "<p>Hey, </p><p>You have received a ❤️ heart on your blog post <b>{}</b></p>".format(
+			message = "<p>Hey, </p><p>You have received a ❤️ like on your blog post <b>{}</b></p>".format(
 				reference_name
 			)
 		else:
@@ -114,7 +114,7 @@ def delete_like(reference_doctype, reference_name):
 	user = frappe.session.user
 
 	filters = {
-		"comment_email": frappe.session.user,
+		"comment_email": user,
 		"reference_doctype": reference_doctype,
 		"reference_name": reference_name,
 	}

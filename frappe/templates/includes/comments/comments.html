@@ -57,7 +57,7 @@
 <script>
 	frappe.ready(function() {
 		let guest_allowed = parseInt("{{ guest_allowed or 0}}");
-		let comment_count = "{{ comment_text }}";
+		let comment_count = "{{ comment_count }}";
 		let full_name = ""
 		let user_id = "";
 
@@ -88,7 +88,7 @@
 		}
 
 		let $comment_count = $(`
-			<div class="feedback-item">
+			<div class="feedback-item comments">
 				<span class="comment-icon">${frappe.utils.icon('small-message', 'md')}</span>
 				<span class="comment-count">${comment_count}</span>
 			</div>

@@ -1,4 +1,4 @@
-<div class="feedback-item mr-3">
+<div class="feedback-item likes mr-3">
 	<span class="like-icon"></span>
 	<span class="like-count"></span>
 </div>
@@ -7,13 +7,6 @@
 	frappe.ready(() => {
 		let like = parseInt("{{ like or 0 }}");
 		let like_count = parseInt("{{ like_count or 0 }}");
-
-		let update_like = function() {
-			like = !like;
-			like ? like_count++ : like_count--;
-			toggle_like_icon(like);
-			$('.like-count').text(like_count);
-		}
 
 		let toggle_like_icon = function(active) {
 			active ? $('.like-icon').addClass('gray') : $('.like-icon').removeClass('gray');
@@ -26,12 +19,16 @@
 
 		$('.like-icon').click(() => {
 			update_like();
-			update_feedback();
 		})
 
-		let update_feedback = function() {
+		let update_like = function() {
+			like = !like;
+			like ? like_count++ : like_count--;
+			toggle_like_icon(like);
+			$('.like-count').text(like_count);
+
 			return frappe.call({
-				method: "frappe.templates.includes.comments.comments.give_feedback",
+				method: "frappe.templates.includes.comments.comments.like",
 				args: {
 					reference_doctype: "{{ reference_doctype or doctype }}",
 					reference_name: "{{ reference_name or name }}",
