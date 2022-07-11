@@ -116,7 +116,7 @@ class BlogPost(WebsiteGenerator):
 		context.metatags["image"] = self.meta_image or image or None
 
 		self.load_comments(context)
-		self.load_feedback(context)
+		self.load_likes(context)
 
 		context.category = frappe.db.get_value(
 			"Blog Category", context.doc.blog_category, ["title", "route"], as_dict=1
@@ -168,29 +168,22 @@ class BlogPost(WebsiteGenerator):
 		else:
 			context.comment_text = len(context.comment_list)
 
-	def load_feedback(self, context):
+	def load_likes(self, context):
 		user = frappe.session.user
 
-		feedback = frappe.get_all(
-			"Feedback",
-			fields=["like"],
-			filters=dict(
-				reference_doctype=self.doctype,
-				reference_name=self.name,
-				ip_address=frappe.local.request_ip,
-				owner=user,
-			),
-		)
+		filters = {
+			"reference_doctype": self.doctype,
+			"reference_name": self.name,
+		}
 
-		like_count = 0
+		context.like_count = frappe.db.count("Comment", filters) or 0
 
-		if frappe.db.count("Feedback"):
-			like_count = frappe.db.count(
-				"Feedback", filters=dict(reference_doctype=self.doctype, reference_name=self.name, like=True)
-			)
+		filters["comment_email"] = user
 
-		context.user_feedback = feedback[0] if feedback else ""
-		context.like_count = like_count
+		if user == "Guest":
+			filters["ip_address"] = frappe.local.request_ip
+
+		context.like = frappe.db.count("Comment", filters) or False
 
 	def set_read_time(self):
 		content = self.content or self.content_html or ""

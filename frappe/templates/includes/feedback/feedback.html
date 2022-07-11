@@ -5,7 +5,7 @@
 
 <script type="text/javascript">
 	frappe.ready(() => {
-		let like = parseInt("{{ user_feedback.like or 0 }}");
+		let like = parseInt("{{ like or 0 }}");
 		let like_count = parseInt("{{ like_count or 0 }}");
 
 		let update_like = function() {
@@ -31,22 +31,11 @@
 
 		let update_feedback = function() {
 			return frappe.call({
-				method: "frappe.templates.includes.feedback.feedback.give_feedback",
+				method: "frappe.templates.includes.comments.comments.give_feedback",
 				args: {
 					reference_doctype: "{{ reference_doctype or doctype }}",
 					reference_name: "{{ reference_name or name }}",
 					like
-				},
-				callback: function(r) {
-					if(r.exc) {
-						if(r._server_messages)
-							frappe.msgprint(r._server_messages);
-					} else {
-						if (r.message) {
-							like = like;
-							like_count = like_count;
-						}
-					}
 				}
 			});
 		}
