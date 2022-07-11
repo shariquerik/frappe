@@ -67,7 +67,7 @@ def add_comment(comment, comment_email, comment_by, reference_doctype, reference
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(key="reference_name", limit=get_like_limit, seconds=60 * 60)
-def like(reference_doctype, reference_name, like):
+def like(reference_doctype, reference_name, like, route):
 	like = frappe.parse_json(like)
 	ref_doc = frappe.get_doc(reference_doctype, reference_name)
 	if ref_doc.disable_feedback == 1:
@@ -77,6 +77,10 @@ def like(reference_doctype, reference_name, like):
 		add_like(reference_doctype, reference_name)
 	else:
 		delete_like(reference_doctype, reference_name)
+
+	# since likes are embedded in the page, clear the web cache
+	if route:
+		clear_cache(route)
 
 	if ref_doc.enable_email_notification:
 		subject = _("Like on {0}: {1}").format(reference_doctype, reference_name)
@@ -95,9 +99,6 @@ def like(reference_doctype, reference_name, like):
 			reference_doctype=ref_doc.doctype,
 			reference_name=ref_doc.name,
 		)
-	# revert with template if all clear (no backlinks)
-	template = frappe.get_template("templates/includes/feedback/feedback.html")
-	return template.render()
 
 def add_like(reference_doctype, reference_name):
 	user = frappe.session.user
@@ -116,6 +117,7 @@ def delete_like(reference_doctype, reference_name):
 	user = frappe.session.user
 
 	filters = {
+		"comment_type": "Like",
 		"comment_email": user,
 		"reference_doctype": reference_doctype,
 		"reference_name": reference_name,

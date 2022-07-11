@@ -32,7 +32,8 @@
 				args: {
 					reference_doctype: "{{ reference_doctype or doctype }}",
 					reference_name: "{{ reference_name or name }}",
-					like
+					like,
+					route: "{{ pathname }}",
 				}
 			});
 		}
