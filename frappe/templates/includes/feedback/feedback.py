@@ -24,7 +24,7 @@ def give_feedback(reference_doctype, reference_name, like):
 	if d:
 		doc = frappe.get_doc("Feedback", d[0].name)
 	else:
-		doc = doc = frappe.new_doc("Feedback")
+		doc = frappe.new_doc("Feedback")
 		doc.reference_doctype = reference_doctype
 		doc.reference_name = reference_name
 		doc.ip_address = frappe.local.request_ip
