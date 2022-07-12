@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils.html_utils import clean_html
-from frappe.website.doctype.blog_settings.blog_settings import get_comment_limit, get_like_limit
+from frappe.website.doctype.blog_settings.blog_settings import get_comment_limit
 from frappe.website.utils import clear_cache
 
 URLS_COMMENT_PATTERN = re.compile(
@@ -63,67 +63,3 @@ def add_comment(comment, comment_email, comment_by, reference_doctype, reference
 	# revert with template if all clear (no backlinks)
 	template = frappe.get_template("templates/includes/comments/comment.html")
 	return template.render({"comment": comment.as_dict()})
-
-
-@frappe.whitelist(allow_guest=True)
-@rate_limit(key="reference_name", limit=get_like_limit, seconds=60 * 60)
-def like(reference_doctype, reference_name, like, route):
-	like = frappe.parse_json(like)
-	ref_doc = frappe.get_doc(reference_doctype, reference_name)
-	if ref_doc.disable_feedback == 1:
-		return
-
-	if like:
-		add_like(reference_doctype, reference_name)
-	else:
-		delete_like(reference_doctype, reference_name)
-
-	# since likes are embedded in the page, clear the web cache
-	if route:
-		clear_cache(route)
-
-	if ref_doc.enable_email_notification:
-		subject = _("Like on {0}: {1}").format(reference_doctype, reference_name)
-		if like:
-			message = "<p>Hey, </p><p>You have received a ❤️ like on your blog post <b>{}</b></p>".format(
-				reference_name
-			)
-		else:
-			return
-
-		# notify creator
-		frappe.sendmail(
-			recipients=frappe.db.get_value("User", ref_doc.owner, "email") or ref_doc.owner,
-			subject=subject,
-			message=message,
-			reference_doctype=ref_doc.doctype,
-			reference_name=ref_doc.name,
-		)
-
-def add_like(reference_doctype, reference_name):
-	user = frappe.session.user
-
-	like = frappe.new_doc("Comment")
-	like.comment_type = 'Like'
-	like.comment_email = user
-	like.reference_doctype = reference_doctype
-	like.reference_name = reference_name
-	like.content = "Liked by: " + user
-	if user == "Guest":
-		like.ip_address = frappe.local.request_ip
-	like.save(ignore_permissions=True)
-
-def delete_like(reference_doctype, reference_name):
-	user = frappe.session.user
-
-	filters = {
-		"comment_type": "Like",
-		"comment_email": user,
-		"reference_doctype": reference_doctype,
-		"reference_name": reference_name,
-	}
-
-	if user == "Guest":
-		filters["ip_address"] = frappe.local.request_ip
-	
-	frappe.db.delete("Comment", filters)
