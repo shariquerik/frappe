@@ -10,16 +10,16 @@ from frappe.website.utils import clear_cache
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(key="reference_name", limit=get_like_limit, seconds=60 * 60)
-def like(reference_doctype, reference_name, like, route):
+def like(reference_doctype, reference_name, like, route=""):
 	like = frappe.parse_json(like)
 	ref_doc = frappe.get_doc(reference_doctype, reference_name)
 	if ref_doc.disable_likes == 1:
 		return
 
 	if like:
-		add_like(reference_doctype, reference_name)
+		liked = add_like(reference_doctype, reference_name)
 	else:
-		delete_like(reference_doctype, reference_name)
+		liked = delete_like(reference_doctype, reference_name)
 
 	# since likes are embedded in the page, clear the web cache
 	if route:
@@ -32,7 +32,7 @@ def like(reference_doctype, reference_name, like, route):
 				reference_name
 			)
 		else:
-			return
+			return False
 
 		# notify creator
 		frappe.sendmail(
@@ -42,6 +42,8 @@ def like(reference_doctype, reference_name, like, route):
 			reference_doctype=ref_doc.doctype,
 			reference_name=ref_doc.name,
 		)
+
+	return liked
 
 def add_like(reference_doctype, reference_name):
 	user = frappe.session.user
@@ -55,6 +57,7 @@ def add_like(reference_doctype, reference_name):
 	if user == "Guest":
 		like.ip_address = frappe.local.request_ip
 	like.save(ignore_permissions=True)
+	return True
 
 def delete_like(reference_doctype, reference_name):
 	user = frappe.session.user
@@ -70,3 +73,4 @@ def delete_like(reference_doctype, reference_name):
 		filters["ip_address"] = frappe.local.request_ip
 	
 	frappe.db.delete("Comment", filters)
+	return False

@@ -27,5 +27,4 @@ def execute():
 
 	# clean up
 	frappe.db.delete("Feedback")
-	frappe.db.delete("DocType", "Feedback")
 	frappe.db.commit()

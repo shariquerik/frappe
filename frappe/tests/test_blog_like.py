@@ -6,37 +6,37 @@ import unittest
 import frappe
 
 
-class TestFeedback(unittest.TestCase):
+class TestLike(unittest.TestCase):
 	def tearDown(self):
 		frappe.form_dict.reference_doctype = None
 		frappe.form_dict.reference_name = None
 		frappe.form_dict.like = None
 		frappe.local.request_ip = None
 
-	def test_feedback_creation_updation(self):
+	def test_blog_like_creation_updation(self):
 		from frappe.website.doctype.blog_post.test_blog_post import make_test_blog
 
 		test_blog = make_test_blog()
 
-		frappe.db.delete("Feedback", {"reference_doctype": "Blog Post"})
+		frappe.db.delete("Comment", {"comment_type": "Like", "reference_doctype": "Blog Post"})
 
-		from frappe.templates.includes.likes.likes import give_feedback
+		from frappe.templates.includes.likes.likes import like
 
 		frappe.form_dict.reference_doctype = "Blog Post"
 		frappe.form_dict.reference_name = test_blog.name
 		frappe.form_dict.like = True
 		frappe.local.request_ip = "127.0.0.1"
 
-		feedback = give_feedback()
+		liked = like()
 
-		self.assertEqual(feedback.like, True)
+		self.assertEqual(liked, True)
 
 		frappe.form_dict.like = False
 
-		updated_feedback = give_feedback()
+		disliked = like()
 
-		self.assertEqual(updated_feedback.like, False)
+		self.assertEqual(disliked, False)
 
-		frappe.db.delete("Feedback", {"reference_doctype": "Blog Post"})
+		frappe.db.delete("Comment", {"comment_type": "Like", "reference_doctype": "Blog Post"})
 
 		test_blog.delete()
