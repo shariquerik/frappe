@@ -13,9 +13,18 @@ module.exports = {
 				let asset_path = "/" + path.relative(sites_path, out.path);
 				let dir = path.dirname(out.path);
 				if (out.path.endsWith(".js") && keys.includes(asset_path)) {
-					let bundle_css = files[asset_path];
-					let include_css = '\nfrappe.require("' + bundle_css + '");\n';
-					let modified = include_css + out.text;
+					let js_file_name = path.basename(out.path);
+					js_file_name = js_file_name.split(".bundle.")[0];
+
+					let related_css_file = result.outputFiles.filter((f) => {
+						return (
+							f.path.endsWith(".css") && f.path.includes(`/${js_file_name}.bundle.`)
+						);
+					});
+
+					let css_path = "/" + path.relative(sites_path, related_css_file[0].path);
+
+					let modified = `frappe.add_asset_to_head("${css_path}");\n` + out.text;
 					out.contents = Buffer.from(modified);
 				}
 				if (!fs.existsSync(dir)) {

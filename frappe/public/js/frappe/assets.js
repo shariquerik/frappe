@@ -184,3 +184,27 @@ frappe.assets = {
 		return path;
 	},
 };
+
+frappe._assets_loaded = [];
+
+frappe.add_asset_to_head = function (link) {
+	return new Promise((resolve) => {
+		if (frappe._assets_loaded.includes(link)) return resolve();
+		let el;
+		if (link.split(".").pop() === "js") {
+			el = document.createElement("script");
+			el.type = "text/javascript";
+			el.src = link;
+		} else {
+			el = document.createElement("link");
+			el.type = "text/css";
+			el.rel = "stylesheet";
+			el.href = link;
+		}
+		document.getElementsByTagName("head")[0].appendChild(el);
+		el.onload = () => {
+			frappe._assets_loaded.push(link);
+			resolve();
+		};
+	});
+};
