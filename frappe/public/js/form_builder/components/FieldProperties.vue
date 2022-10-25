@@ -35,6 +35,16 @@ let docfield_df = computed(() => {
 
 	return [...fields];
 });
+
+const get_input_type = (df) => {
+	if (df.fieldtype === 'Check') {
+		return 'checkbox'
+	} else if (['Int', 'Float'].includes(df.fieldtype)) {
+		return 'number'
+	} else {
+		return 'text';
+	}
+}
 </script>
 
 <template>
@@ -46,7 +56,7 @@ let docfield_df = computed(() => {
 				<div class="input">
 					<input
 						class="mb-2 form-control form-control-sm"
-						type="text"
+						:type="get_input_type(df)"
 						v-model="store.selected_field[df.fieldname]"
 						:disabled="store.read_only"
 					/>
