@@ -19,10 +19,13 @@ frappe.ui.form.on("Workspace", {
 			.attr("href", url)
 			.attr("target", "_blank");
 
+		let $workspace_page_link = `<a href="${url}" >${__("workspace page")}</a>`;
+
 		frm.layout.message.empty();
-		let message = __(
-			"This document allows you to edit limited fields. For all kinds of workspace customization, use the Edit button located on the workspace page"
-		);
+		let message =
+			__(
+				"This document allows you to edit limited fields. For all kinds of workspace customization, use the Edit button located on the "
+			) + $workspace_page_link;
 
 		if (
 			frm.doc.for_user ||
@@ -36,7 +39,8 @@ frappe.ui.form.on("Workspace", {
 				message = __("Only Workspace Manager can edit public workspaces");
 			} else {
 				message = __(
-					"We do not allow editing of this document. Simply click the Edit button on the workspace page to make your workspace editable and customize it as you wish"
+					"We do not allow editing of this document. Simply click the Edit button on the {0} to make your workspace editable and customize it as you wish",
+					[$workspace_page_link]
 				);
 			}
 		}
