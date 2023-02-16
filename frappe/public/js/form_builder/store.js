@@ -102,7 +102,7 @@ export const useStore = defineStore("form-builder-store", {
 		reset_changes() {
 			this.fetch();
 		},
-		validate_fields(fields, is_table) {
+		async validate_fields(fields, is_table) {
 			fields = scrub_field_names(fields);
 
 			let not_allowed_in_list_view = ["Attach Image", ...frappe.model.no_value_type];
@@ -119,9 +119,11 @@ export const useStore = defineStore("form-builder-store", {
 				return [fieldname, fieldtype];
 			}
 
-			fields.forEach((df) => {
+			for (let i = 0; i < fields.length; i++) {
+				let df = fields[i];
+
 				// check if fieldname already exist
-				let duplicate = fields.filter((f) => f.fieldname == df.fieldname);
+				let duplicate = fields.filter((f) => f.fieldname && f.fieldname == df.fieldname);
 				if (duplicate.length > 1) {
 					frappe.throw(__("Fieldname {0} appears multiple times", get_field_data(df)));
 				}
@@ -162,7 +164,27 @@ export const useStore = defineStore("form-builder-store", {
 						)
 					);
 				}
-			});
+
+				// check if fieldname is restricted
+				let fieldname = df.label && frappe.model.scrub(df.label).toLowerCase();
+				if (
+					df.label &&
+					!df.fieldname &&
+					in_list(frappe.model.restricted_fields, fieldname)
+				) {
+					let message = __(
+						"For field <b>{0}</b>, fieldname <b>{1}</b> is restricted it will be renamed as <b>{1}1</b>. Do you want to continue?",
+						[df.label, fieldname]
+					);
+					await pause_to_confirm(message);
+				}
+			}
+
+			function pause_to_confirm(message) {
+				return new Promise((resolve) => {
+					frappe.confirm(message, () => resolve());
+				});
+			}
 		},
 		async save_changes() {
 			if (!this.dirty) {
@@ -170,23 +192,26 @@ export const useStore = defineStore("form-builder-store", {
 				return;
 			}
 
-			frappe.dom.freeze(__("Saving..."));
+			let args = {
+				method: "save_customization",
+				freeze: true,
+				freeze_message: __("Saving Customization..."),
+			};
 
 			try {
 				if (this.is_customize_form) {
 					let doc = frappe.get_doc("Customize Form");
 					doc.doc_type = this.doctype;
 					doc.fields = this.get_updated_fields();
-					this.validate_fields(doc.fields, doc.istable);
-					await frappe.call({ method: "save_customization", doc });
+					await this.validate_fields(doc.fields, doc.istable);
+					args.doc = doc;
 				} else {
 					this.doc.fields = this.get_updated_fields();
 					this.validate_fields(this.doc.fields, this.doc.istable);
-					await frappe.call({
-						method: "frappe.desk.form.save.savedocs",
-						args: { doc: this.doc, action: "Save" },
-					});
+					args.method = "frappe.desk.form.save.savedocs";
+					args.args = { doc: this.doc, action: "Save" };
 				}
+				await frappe.call(args);
 				this.fetch();
 			} catch (e) {
 				console.error(e);

@@ -279,6 +279,7 @@ export function scrub_field_names(fields) {
 		if (d.fieldtype) {
 			if (!d.fieldname) {
 				if (d.label) {
+					if (d.doctype == "Customize Form Field") return;
 					d.fieldname = d.label.trim().toLowerCase().replaceAll(" ", "_");
 					if (d.fieldname.endsWith("?")) {
 						d.fieldname = d.fieldname.slice(0, -1);
