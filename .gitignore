@@ -7,6 +7,8 @@
 *.egg-info
 dist/
 frappe/public/dist
+frappe/public/os
+frappe/www/os.html
 # build/
 frappe/docs/current
 .vscode
