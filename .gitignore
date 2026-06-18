@@ -9,6 +9,7 @@ dist/
 frappe/public/dist
 frappe/public/os
 frappe/www/os.html
+frappe-os/tsconfig.tsbuildinfo
 # build/
 frappe/docs/current
 .vscode
