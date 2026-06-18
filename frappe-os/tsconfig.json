@@ -1,0 +1,27 @@
+{
+  // App sources (browser/DOM env). Extends the canonical Vue base.
+  // `allowJs` + `checkJs:false` lets the existing .js modules coexist untouched
+  // while we migrate file-by-file — only .ts and `<script lang="ts">` get checked.
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    // No `baseUrl` (deprecated in TS 6); under bundler resolution `paths` is
+    // resolved relative to this file. Mirrors the `@` alias in vite.config.js.
+    "paths": {
+      "@/*": ["./src/*"],
+      "@framework/ui": ["./types/framework-ui.d.ts"],
+      "@framework/ui/*": ["./types/framework-ui.d.ts"],
+      "frappe-ui": ["./types/frappe-ui.d.ts"],
+      "frappe-ui/*": ["./types/frappe-ui.d.ts"]
+    },
+    "types": ["vite/client"]
+  },
+  "include": [
+    "src/**/*",
+    "src/**/*.vue",
+    "vite-env.d.ts",
+    "auto-imports.d.ts",
+    "components.d.ts"
+  ]
+}

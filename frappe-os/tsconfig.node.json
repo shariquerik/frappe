@@ -1,0 +1,19 @@
+{
+  // Build-time config files run under Node (node:path, import.meta.dirname),
+  // so they get the Node env rather than the DOM lib. Standalone (not a
+  // referenced project) to avoid composite/emit requirements.
+  "extends": "@vue/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    "vite.config.js",
+    "vitest.config.js",
+    "cypress.config.js",
+    "postcss.config.js",
+    "tailwind.config.js"
+  ]
+}

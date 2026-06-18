@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Frappe OS</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    #app { height: 100vh; }
+    *::-webkit-scrollbar { width: 9px; height: 9px; }
+    *::-webkit-scrollbar-thumb { background: var(--outline-gray-2); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    @keyframes osWinIn { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes osFade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes osPop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="text/javascript">
+    // Stays literal `{{ csrf_token }}` in pure Vite dev (no jinja); replaced when
+    // served through www/os.py. boot.js / api.js treat an unrendered token as empty.
+    window.csrf_token = '{{ csrf_token }}'
+  </script>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
