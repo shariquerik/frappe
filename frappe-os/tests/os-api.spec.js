@@ -1,0 +1,162 @@
+// The OS API seam (ADR-0003). api.ts is mocked (the seam reads through it) and
+// frappe-ui's toast is stubbed; the window/registry wiring runs against the real
+// store + curated config. These tests pin the seam's contract: reads/writes delegate
+// to the right backing, windows mutate observable store state, session projects boot,
+// and the registry reads curated config. Each test uses distinct doctypes/apps so the
+// module-singleton store state doesn't bleed between cases.
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/api', () => ({
+  getList: vi.fn(),
+  getDoc: vi.fn(),
+  call: vi.fn(),
+  // records.ts (reached via os.saveDoc/createDoc) imports these from @/api too:
+  getDoctypeMeta: vi.fn(),
+  saveDoc: vi.fn(),
+  createDoc: vi.fn(),
+  cardValue: vi.fn(),
+}))
+vi.mock('frappe-ui', () => ({ toast: vi.fn() }))
+
+import * as api from '@/api'
+import { toast } from 'frappe-ui'
+import { useOS } from '../src/store'
+import { listSurface } from '../src/surface'
+import { getMeta } from '../src/store/registry'
+import { createOsApi, initOsApi, getOsApi } from '../src/os-api'
+
+const boot = (over = {}) => ({ user: 'admin@example.com', csrf_token: 't', registry: [], permissions: {}, ...over })
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('data', () => {
+  it('getList reads straight through api.ts (not the shared records cache)', async () => {
+    const rows = [{ name: 'a' }]
+    api.getList.mockResolvedValue(rows)
+    const os = createOsApi(boot())
+    const result = await os.data.getList('Alpha', { limit: 5 })
+    expect(api.getList).toHaveBeenCalledWith('Alpha', { limit: 5 })
+    expect(result).toBe(rows)
+  })
+
+  it('getDoc reads straight through api.ts', async () => {
+    const doc = { name: 'B-1' }
+    api.getDoc.mockResolvedValue(doc)
+    expect(await createOsApi(boot()).data.getDoc('Beta', 'B-1')).toBe(doc)
+    expect(api.getDoc).toHaveBeenCalledWith('Beta', 'B-1')
+  })
+
+  it('call forwards method + params to api.ts', async () => {
+    api.call.mockResolvedValue(42)
+    expect(await createOsApi(boot()).data.call('m.x', { a: 1 })).toBe(42)
+    expect(api.call).toHaveBeenCalledWith('m.x', { a: 1 })
+  })
+
+  it('saveDoc writes through the records store (api write + list refresh)', async () => {
+    const saved = { name: 'G-1', subject: 'x' }
+    api.saveDoc.mockResolvedValue(saved)
+    api.getList.mockResolvedValue([saved])
+    const result = await createOsApi(boot()).data.saveDoc('Gamma', 'G-1', { subject: 'x' })
+    expect(api.saveDoc).toHaveBeenCalledWith('Gamma', 'G-1', { subject: 'x' })
+    expect(result).toBe(saved)
+    expect(api.getList).toHaveBeenCalledWith('Gamma', { fields: ['*'], limit: 100 })
+  })
+
+  it('createDoc writes through the records store', async () => {
+    const created = { name: 'D-9' }
+    api.createDoc.mockResolvedValue(created)
+    api.getList.mockResolvedValue([created])
+    expect(await createOsApi(boot()).data.createDoc('Delta', { x: 1 })).toBe(created)
+    expect(api.createDoc).toHaveBeenCalledWith('Delta', { x: 1 })
+  })
+})
+
+describe('windows', () => {
+  it('open dispatches a surface into its owning app window', () => {
+    const os = createOsApi(boot())
+    os.windows.open(listSurface('User')) // User -> app:frappe
+    const store = useOS()
+    const win = store.state.windows.find((w) => w.id === 'app:frappe')
+    expect(win).toBeTruthy()
+    expect(win.surface.doctype).toBe('User')
+    expect(store.state.activeId).toBe('app:frappe')
+  })
+
+  it('focus activates a window, close removes it', () => {
+    const os = createOsApi(boot())
+    os.windows.open(listSurface('CRM Lead')) // -> app:crm
+    const store = useOS()
+    store.state.activeId = null
+    os.windows.focus('app:crm')
+    expect(store.state.activeId).toBe('app:crm')
+    os.windows.close('app:crm')
+    expect(store.state.windows.some((w) => w.id === 'app:crm')).toBe(false)
+  })
+})
+
+describe('ui', () => {
+  it('notify raises a toast', () => {
+    createOsApi(boot()).ui.notify('saved')
+    expect(toast).toHaveBeenCalledWith('saved')
+  })
+
+  it('confirm resolves the native prompt result', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    expect(await createOsApi(boot()).ui.confirm('sure?')).toBe(true)
+  })
+})
+
+describe('session', () => {
+  it('projects user and defaults roles to [] when boot omits them', () => {
+    const s = createOsApi(boot()).session
+    expect(s.user).toBe('admin@example.com')
+    expect(s.roles).toEqual([])
+  })
+
+  it('reads roles defensively when boot supplies them', () => {
+    expect(createOsApi(boot({ roles: ['System Manager'] })).session.roles).toEqual(['System Manager'])
+  })
+
+  it('hasPermission reads the boot permission map, defaulting to false', () => {
+    const s = createOsApi(boot({ permissions: { User: { read: true, write: false } } })).session
+    expect(s.hasPermission('User')).toBe(true) // defaults to 'read'
+    expect(s.hasPermission('User', 'write')).toBe(false)
+    expect(s.hasPermission('Unknown')).toBe(false)
+  })
+})
+
+describe('registry', () => {
+  it('displayConfig returns the curated meta', () => {
+    expect(createOsApi(boot()).registry.displayConfig('User')).toBe(getMeta('User'))
+  })
+
+  it('views projects the builtin view collection for known doctypes, none for unknown', () => {
+    const r = createOsApi(boot()).registry
+    expect(r.views('User')).toEqual([
+      { view: 'list', label: 'List', builtin: true },
+      { view: 'form', label: 'Form', builtin: true },
+    ])
+    expect(r.views('No Such Doctype')).toEqual([])
+  })
+
+  it('exposes resolveApplet on the seam; it rejects an unknown id', async () => {
+    // The success path imports a .vue SFC, exercised in Cypress (the unit config skips
+    // .vue on purpose); here we pin the seam + the unknown-id rejection (no import).
+    const r = createOsApi(boot()).registry
+    expect(typeof r.resolveApplet).toBe('function')
+    await expect(r.resolveApplet('no-such-applet')).rejects.toThrow()
+  })
+})
+
+describe('capabilities + singleton', () => {
+  it('advertises what the seam supports today', () => {
+    const caps = createOsApi(boot()).capabilities
+    expect(caps['data.write']).toBe(true)
+    expect(caps.applets).toBe(true)
+  })
+
+  it('initOsApi sets the shared instance getOsApi returns', () => {
+    const inst = initOsApi(boot())
+    expect(getOsApi()).toBe(inst)
+  })
+})
