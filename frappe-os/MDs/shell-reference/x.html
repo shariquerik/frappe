@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>F2</title>
+    <script type="module" crossorigin src="/assets/frappe/shell/assets/index-CADa4Eku.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/frappe/shell/assets/index-CZWc7r44.css">
+  </head>
+  <body class="h-full">
+    <div id="app" class="h-full"></div>
+    <script type="text/javascript">
+      window.csrf_token = '{{ csrf_token }}'
+    </script>
+  
+          <script>
+              {% for key in boot %}
+              window["{{ key }}"] = {{ boot[key] | tojson }};
+              {% endfor %}
+          </script>
+          </body>
+          
+</html>
