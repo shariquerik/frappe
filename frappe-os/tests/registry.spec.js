@@ -5,7 +5,7 @@
 // collection. Backed by the real curated config (frappe/crm/erpnext) — no mocks.
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  useRegistry, appForDoctype, getMeta, initRegistry, knownApplet, listApplets,
+  useRegistry, appForDoctype, getMeta, initRegistry, knownApplet, listApplets, loadApplet,
 } from '../src/store/registry'
 
 describe('apps', () => {
@@ -79,6 +79,25 @@ describe('applet contributions', () => {
     expect(knownApplet('crm', 'my-todos')).toBe(false) // wrong app
     expect(knownApplet('frappe', 'ghost')).toBe(false) // unknown id
   })
+
+  // The assetUrl branch is the architecture's real promise: a separately-built artifact
+  // loaded at runtime by native dynamic import. The importer is injected so the branch is
+  // unit-testable without a real network module (the jsdom env can't fetch /assets/*).
+  it('loadApplet dynamic-imports the assetUrl for a separately-built applet', async () => {
+    const fake = { default: { name: 'ErpHello' } }
+    const urls = []
+    const importer = (url) => { urls.push(url); return Promise.resolve(fake) }
+    const comp = await loadApplet({ appId: 'erpnext', label: 'X', assetUrl: '/assets/erpnext/os-applets/hello.js' }, importer)
+    expect(urls).toEqual(['/assets/erpnext/os-applets/hello.js'])
+    expect(comp).toBe(fake.default) // the module default export IS the SFC
+  })
+
+  it('loadApplet uses the static load() for a first-party applet (no assetUrl)', async () => {
+    const fake = { default: { name: 'Local' } }
+    const importer = () => { throw new Error('should not import by url') }
+    const comp = await loadApplet({ appId: 'frappe', label: 'X', load: () => Promise.resolve(fake) }, importer)
+    expect(comp).toBe(fake.default)
+  })
 })
 
 describe('server-projected registry', () => {
@@ -91,6 +110,17 @@ describe('server-projected registry', () => {
     ({ type: 'display-config', target: dt, name: 'display', sourceApp, payload })
   const view = (dt, name, order) =>
     ({ type: 'doctype-view', target: dt, name, sourceApp: 'frappe', payload: { view: name, label: name, builtin: true }, order })
+  const applet = (appletId, appId, assetUrl, label) =>
+    ({ type: 'applet', target: '', name: appletId, sourceApp: appId, payload: { appletId, appId, assetUrl, label }, order: 0 })
+
+  it('folds a server applet contribution into the index (ADR-0009 server emission)', () => {
+    // erp-hello is no longer hardcoded — it arrives from erpnext's os_applets hook at boot.
+    initRegistry(boot([app('erpnext', 'ERPNext'),
+      applet('erp-hello', 'erpnext', '/assets/erpnext/os-applets/hello.js', 'ERPNext Hello')]))
+    expect(listApplets()).toContainEqual({ appletId: 'erp-hello', appId: 'erpnext', label: 'ERPNext Hello' })
+    expect(knownApplet('erpnext', 'erp-hello')).toBe(true)
+    expect(listApplets()).toContainEqual({ appletId: 'my-todos', appId: 'frappe', label: 'My open ToDos' }) // first-party kept
+  })
 
   it('indexes the server payload directly for a doctype config does not curate', () => {
     // 'Widget' is absent from config/doctypes — it must still appear, from server meta.

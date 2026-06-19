@@ -4,6 +4,7 @@
 // (⌘K / Esc), pointer (drag/resize + dock auto-hide) listeners, and the
 // data-theme attribute that drives frappe-ui's light/dark tokens.
 import { computed, onMounted, onBeforeUnmount } from 'vue'
+import { ToastProvider } from 'frappe-ui'
 import { useOS } from '@/store'
 import MenuBar from './components/MenuBar.vue'
 import Dock from './components/Dock.vue'
@@ -82,6 +83,11 @@ onBeforeUnmount(() => {
     <Dock />
     <CommandPalette />
     <WallpaperPicker />
+
+    <!-- Renders the imperative toast() queue (frappe-ui → vue-sonner). Without a mounted
+         provider os.ui.notify is a silent no-op; mounting it here makes ui.notify real for
+         every applet (built-in or runtime-loaded). Teleports to <body>. -->
+    <ToastProvider />
 
     <!-- Popover layer: reka-ui popovers (Dropdown, Select, …) portal here so
          they paint above windows (z 1..n) and the menu bar (z 90000). Below the

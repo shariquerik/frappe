@@ -5,6 +5,41 @@ import frappeui from 'frappe-ui/vite'
 import frameworkUI from '@framework/ui/vite'
 import path from 'node:path'
 
+// The ADR-0009 shared-singleton import map — maps the three bare specifiers a runtime-loaded
+// applet externalizes to the host's instances, BEFORE any module loads. Mode-aware because the
+// host's modules differ by mode:
+//   - BUILD: the brokers are emitted as stable /assets/frappe/os/os-brokers/*.js chunks that
+//     re-export the host's BUNDLED instances.
+//   - DEV: the host runs unbundled /src/*.ts (Vite's deduped vue/frappe-ui, the live os-api), so
+//     point the specifiers at the broker SOURCE modules Vite serves — `export * from 'vue'` /
+//     `@/os-api` resolve to those SAME dev modules. So a built applet loaded via the bench-proxied
+//     /assets/<app>/… binds to the dev host's singletons too (inject(OS_KEY) resolves in dev).
+// head-prepend guarantees it precedes Vite's injected entry module script.
+function osImportMap() {
+  const DEV = {
+    vue: '/src/brokers/vue.ts',
+    'frappe-ui': '/src/brokers/frappe-ui.ts',
+    '@frappe-os/api': '/src/brokers/api.ts',
+  }
+  const PROD = {
+    vue: '/assets/frappe/os/os-brokers/vue.js',
+    'frappe-ui': '/assets/frappe/os/os-brokers/frappe-ui.js',
+    '@frappe-os/api': '/assets/frappe/os/os-brokers/api.js',
+  }
+  return {
+    name: 'os-import-map',
+    transformIndexHtml(_html, ctx) {
+      const imports = ctx.server ? DEV : PROD
+      return [{
+        tag: 'script',
+        attrs: { type: 'importmap' },
+        children: JSON.stringify({ imports }, null, 2),
+        injectTo: 'head-prepend',
+      }]
+    },
+  }
+}
+
 export default defineConfig({
   // No manual `base` — the frappe-ui plugin owns the Vite base via buildConfig
   // (serves at /os through www/os.py in dev via the proxy, and at /assets/frappe/os
@@ -30,9 +65,35 @@ export default defineConfig({
     // Dedupe shared singletons so the symlinked @framework/ui shares the host's
     // vue / vue-router / frappe-ui / reka-ui instances (provide/inject context).
     frameworkUI(),
+    osImportMap(),
   ],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
+  },
+  // Emit the ADR-0009 brokers (src/brokers/*) as additional entries at STABLE, un-hashed
+  // URLs under os-brokers/ so the import map in index.html can name them statically. Each
+  // re-exports a host singleton; Rollup dedupes the re-export onto the host's one chunk, so
+  // a separately-built applet importing the bare specifier binds to the host's instance.
+  // Everything non-broker keeps Vite's default hashed name. (Build-only; ignored in dev.)
+  build: {
+    rollupOptions: {
+      // Keep each broker entry's re-exports intact: without this the bundler tree-shakes
+      // them away (nothing in the host build imports a broker), leaving an empty side-effect
+      // import — and a runtime-loaded applet's `import { OS_KEY }` would resolve to nothing.
+      preserveEntrySignatures: 'strict',
+      input: {
+        index: path.resolve(import.meta.dirname, 'index.html'),
+        'broker-vue': path.resolve(import.meta.dirname, 'src/brokers/vue.ts'),
+        'broker-frappe-ui': path.resolve(import.meta.dirname, 'src/brokers/frappe-ui.ts'),
+        'broker-api': path.resolve(import.meta.dirname, 'src/brokers/api.ts'),
+      },
+      output: {
+        entryFileNames: (chunk) =>
+          chunk.name.startsWith('broker-')
+            ? `os-brokers/${chunk.name.slice('broker-'.length)}.js`
+            : 'assets/[name]-[hash].js',
+      },
+    },
   },
   // frappe-ui's FeatherIcon imports the CJS `feather-icons` default; pre-bundle it
   // so the dev server resolves the default export (matches the CRM frontend config).

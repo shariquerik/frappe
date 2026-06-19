@@ -15,4 +15,5 @@ export const Badge: any
 export const Switch: any
 export const FormControl: any
 export const toast: any
+export const ToastProvider: any
 export default whatever

@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "cypress run",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "build-applet": "vite build --config",
+    "dev-applet": "vite --config"
   },
   "dependencies": {
     "@framework/ui": "link:../ui",

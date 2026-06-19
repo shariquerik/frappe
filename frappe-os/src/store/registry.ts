@@ -24,6 +24,7 @@ const APP_T = 'app'
 const DISPLAY = 'display-config'
 const VIEW = 'doctype-view'
 const CARD = 'dashboard-card'
+const APPLET = 'applet'
 
 // ── seed: config/* → the App-default Contribution[] (§2 shapes) ──────────────────
 // First app whose modules list a doctype owns it (registry order); else frappe.
@@ -76,6 +77,7 @@ interface RegistryIndex {
   views: Record<string, DoctypeViewPayload[]>   // ordered collection per doctype
   cards: Record<string, Card[]>                 // ordered collection per app
   owner: Record<string, string>                 // doctype → owning app
+  applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
 }
 
 function ownerMap(apps: AppDef[]): Record<string, string> {
@@ -93,6 +95,10 @@ function addToIndex(ix: RegistryIndex, c: Contribution): void {
   }
   else if (c.type === VIEW) (ix.views[c.target] ||= []).push(c.payload as DoctypeViewPayload)
   else if (c.type === CARD) (ix.cards[c.target] ||= []).push(c.payload as Card)
+  else if (c.type === APPLET) {
+    const p = c.payload as AppletPayload
+    ix.applets[p.appletId] = { appId: p.appId, label: p.label, assetUrl: p.assetUrl }
+  }
 }
 
 function indexContributions(contribs: Contribution[]): RegistryIndex {
@@ -101,6 +107,7 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
   const ix: RegistryIndex = {
     apps, appById: Object.fromEntries(apps.map((a) => [a.id, a])),
     display: {}, views: {}, cards: {}, owner: ownerMap(apps),
+    applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
   }
   for (const c of sorted) addToIndex(ix, c)
   return ix
@@ -207,18 +214,33 @@ export function getMeta(doctype: string): DoctypeMeta | null {
 }
 
 // ── applet contributions (ADR-0009) ───────────────────────────────────────────
-// Two seams over one source: sync knownApplet (routing/palette/persistence — "does
-// this id exist?") and async resolveApplet (mount — "give me the Vue component").
-// Today the OS ships a LOCAL map of FIRST-PARTY applets; the server `applet`
-// emission and the external ESM / import-map loader are deferred BEHIND resolveApplet
-// (its async-by-id contract is exactly what a dynamic import() will satisfy), so this map
-// is the only thing that grows when they land — callers never change.
+// Two seams over one source (the indexed `applets` map): sync knownApplet
+// (routing/palette/persistence — "does this id exist?") and async resolveApplet (mount —
+// "give me the Vue component"). The map is seeded FIRST_PARTY ⊕ server `applet` contributions:
+// FIRST_PARTY are bundled into the OS build (can't come from the server — they're static
+// import()s the build code-splits); server contributions arrive from each app's `os_applets`
+// hook (server emission A) and fold in at index time. Offline / unit-test = FIRST_PARTY only.
+// An entry resolves a Vue component two ways (mutually exclusive): `load` for a FIRST-PARTY
+// applet bundled into the OS (a static import the OS build code-splits), or `assetUrl` for a
+// SEPARATELY-BUILT applet shipped in another app's public assets, loaded at runtime as native
+// ESM (ADR-0009). The assetUrl path is the architecture's real promise — no OS rebuild when
+// the app ships a new applet; the import map binds its externals to the host's singletons.
 interface AppletEntry {
   appId: string
   label: string
-  load: () => Promise<{ default: Component }>
+  load?: () => Promise<{ default: Component }>
+  assetUrl?: string
 }
-const APPLETS: Record<string, AppletEntry> = {
+
+// The server `applet` contribution payload (ADR-0009, projected from the `os_applets` hook).
+interface AppletPayload {
+  appletId: string
+  appId: string
+  assetUrl: string
+  label: string
+}
+
+const FIRST_PARTY: Record<string, AppletEntry> = {
   'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/components/MyTodos.vue') },
 }
 
@@ -226,21 +248,33 @@ const APPLETS: Record<string, AppletEntry> = {
 export interface AppletInfo { appletId: string; appId: string; label: string }
 
 export function listApplets(): AppletInfo[] {
-  return Object.entries(APPLETS).map(([appletId, c]) => ({ appletId, appId: c.appId, label: c.label }))
+  return Object.entries(ensureIndex().applets).map(([appletId, c]) => ({ appletId, appId: c.appId, label: c.label }))
 }
 
 // Sync existence check: an applet id known AND owned by the given app (the URL scheme
 // is /<appId>/<appletId>, so the app must match for the path to be canonical).
 export function knownApplet(appId: string, appletId: string): boolean {
-  const c = APPLETS[appletId]
+  const c = ensureIndex().applets[appletId]
   return !!c && c.appId === appId
+}
+
+// Load one entry to its Vue component (the loaded module's default export IS the SFC).
+// `assetUrl` → native dynamic import of the separately-built artifact (ADR-0009; @vite-ignore
+// keeps Vite from trying to bundle a runtime URL); else the first-party static `load`. The
+// importer is injected so the assetUrl branch is unit-testable without a real network module.
+type AppletImporter = (url: string) => Promise<{ default: Component }>
+const importByUrl: AppletImporter = (url) => import(/* @vite-ignore */ url)
+
+export async function loadApplet(entry: AppletEntry, importer: AppletImporter = importByUrl): Promise<Component> {
+  const mod = entry.assetUrl ? await importer(entry.assetUrl) : await entry.load!()
+  return mod.default
 }
 
 // Async resolution to the Vue component (the module's default export IS the SFC).
 export async function resolveApplet(appletId: string): Promise<Component> {
-  const c = APPLETS[appletId]
+  const c = ensureIndex().applets[appletId]
   if (!c) throw new Error(`Unknown applet contribution: ${appletId}`)
-  return (await c.load()).default
+  return loadApplet(c)
 }
 
 // The merged, permission-filtered Registry seam (§2). Each accessor is a cheap lookup
