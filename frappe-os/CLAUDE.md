@@ -27,7 +27,7 @@ yarn cypress       # Cypress interactive runner
   DOM-driven minimize. Assert via `data-active-window` (desktop root) / `data-win-id`
   (window root). History-timeline specs are timing-sensitive — assert a window is visible
   before driving back/forward. **Needs a logged-in bench** behind `yarn dev` (live boot).
-- Always run `yarn test` after touching `store/*` or `route-map.ts`; run Cypress after
+- Always run `yarn test` after touching `desktop/*` or `routing/route-map.ts`; run Cypress after
   changing the URL↔focus bridge in `main.ts`.
 
 ## TypeScript
@@ -38,9 +38,17 @@ yarn cypress       # Cypress interactive runner
 - `frappe-ui` and `@framework/ui` ship untyped source, so they're shimmed to `any` in
   `types/*.d.ts` (mapped via `paths`) to stop vue-tsc crawling them. Add a symbol to the
   frappe-ui shim when a migrated component imports one not yet listed.
+- **Type homes**: each subsystem folder owns a `types.ts`; `src/types.ts` is a thin
+  `export *` barrel re-exporting them all, so `@/types` is the one stable import path.
+- **`defineProps`/`defineEmits` gotcha**: import the macro's type from its CONCRETE module
+  (`@/config/types`, `@/surface/types`, …), never the `@/types` barrel. `@vue/compiler-sfc`'s
+  macro type resolver can't walk the barrel's `export *` — it trips on `data/types.ts`'s
+  `OsStore = ReturnType<typeof useOS>` ("Unresolvable type reference / unsupported built-in
+  utility type"). `vue-tsc` and `yarn build` DON'T catch it; only the dev `vite:vue`
+  transform does. Non-macro type imports may use the barrel freely.
 
 ## Rules
-- Keep the URL projection pure and in `route-map.ts`; `main.ts` is wiring only.
+- Keep the URL projection pure and in `routing/route-map.ts`; `main.ts` is wiring only.
 - Changing the window-id scheme or URL projection touches several places at once — see the
   "Conventions & gotchas" list in `MDs/summary.md`.
 - Inherits the bench-wide code guidelines (small functions, prefer reuse, frappe-ui tokens

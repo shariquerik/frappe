@@ -13,7 +13,7 @@ cd apps/frappe/frappe-os && yarn dev   # → http://localhost:5273/  (base /os/)
 ```
 
 ## Mental model
-Everything is **store-driven**. `useOS()` (`store/index.ts`) is a module-singleton reactive store;
+Everything is **store-driven**. `useOS()` (`desktop/index.ts`) is a module-singleton reactive store;
 components render from it and call its actions. The desktop draws its own windows — there is
 no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused* window.
 
@@ -36,28 +36,38 @@ overlays (palette/picker/menu) and **settings windows** (respawned from URL, nev
 `hydrate()` runs before routing and defensively drops windows whose doctype/record no
 longer resolves.
 
-**Routing** (`router.ts` + `main.ts`): a `focusSig` watcher pushes the focused window's
+**Routing** (`routing/` + `main.ts`): a `focusSig` watcher pushes the focused window's
 path; `afterEach` restores focus on back/forward; `applyRoute` spawns from a cold deep-link.
 Paths: `/os/<app>` (dashboard), `/os/<app>/<doctype>[/<name>]` (list/form), `/os/<app>/settings`.
 A `programmatic`/`restoring` guard pair breaks the focus→push→restore loop — preserve it.
 
 ## Files
-- `store/` — the store, split to satisfy the file-size rule and re-assembled by
-  `index.ts` `useOS()` (public surface stable). `state.ts` (shared reactive singleton +
-  clock), `windows.ts` (open*/in-window nav/lifecycle: openApp/openListGlobal/
-  openRecordGlobal/openNew/popOut/openSettings, openList/openRecordInline/goHome/
-  winBack/winFwd, focusWin/activateWin/closeWin/minimizeWin/restoreWin/clearFocus/
-  toggleZoom/toggleSidebar, enterSplit/exitSplit, theme/wallpaper/toggles),
-  `geometry.ts` (geo defaults/drag/resize/`geoMap`/`bumpZ`), `palette.ts`, `persistence.ts`
-  (serialize/hydrate/startAutosave; theme/wallpaper/toggles are persisted here), `records.ts` (live reactive caches over `api.ts`:
-  listFor/docFor/countFor/fieldMetaFor + load*/saveDoc/createDoc + recordsFor/recordObj getters).
-- `api.ts` — Frappe data layer (whitelisted GET reads; REST PUT/POST writes with CSRF).
-  `boot.ts` — boot payload (window globals in prod, whitelisted `boot()` in dev), seeds CSRF.
+The `src/` tree is grouped by subsystem; each folder owns its logic AND a colocated
+`types.ts` (re-exported through the thin `src/types.ts` barrel, so `@/types` stays one
+stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `config/`
+`routing/` `components/` `applets/` `brokers/`.
+- `desktop/` — the window-manager state machine, split to satisfy the file-size rule and
+  re-assembled by `index.ts` `useOS()` (public surface stable; was `store/`). `state.ts`
+  (shared reactive singleton + clock), `windows.ts` (open*/in-window nav/lifecycle:
+  openApp/openListGlobal/openRecordGlobal/openNew/popOut/openSettings, openList/
+  openRecordInline/goHome/winBack/winFwd, focusWin/activateWin/closeWin/minimizeWin/
+  restoreWin/clearFocus/toggleZoom/toggleSidebar, enterSplit/exitSplit, theme/wallpaper/
+  toggles), `geometry.ts` (geo defaults/drag/resize/`geoMap`/`bumpZ`), `palette.ts`,
+  `persistence.ts` (serialize/hydrate/startAutosave; theme/wallpaper/toggles persisted here).
+- `data/` — the backend-facing layer. `api.ts` (Frappe client: whitelisted GET reads, REST
+  PUT/POST writes with CSRF), `records.ts` (live reactive caches over `api.ts`:
+  listFor/docFor/countFor/fieldMetaFor + load*/saveDoc/createDoc + recordsFor/recordObj —
+  assembled into `useOS()`), `boot.ts` (boot payload: window globals in prod, whitelisted
+  `boot()` in dev; seeds CSRF), `os-api.ts` (the ADR-0003 OS API seam handed to applets).
+  The `@/data` barrel exposes only the public boot+seam; slices use `@/data/api`/`@/data/records`.
+- `registry/` — the client Registry seam (`index.ts` `useRegistry()`: apps/display-config/
+  views/cards projections over the merged Contribution[]; was `store/registry.ts`).
+- `surface/` — `index.ts` Surface constructors + pure helpers (windowRole/sameSurface/…).
 - `config/` — curated DISPLAY config: `apps.ts` (APP tree, dashboard card defs, initials/pill),
   `doctypes.ts` (per-doctype label/color/icon/columns + `getMeta`), `icons.ts` (ICON map).
+- `routing/` — the URL side-channel. `route-map.ts` (pure focus↔URL logic
+  `pathForFocus`/`focusSig`/`applyRoute`, unit-tested), `router.ts` (empty catch-all route).
 - `main.ts` — URL↔focus bridge wiring (boot, guards, watchers) + `/app/...`→`/os/...` interop.
-  `route-map.ts` — pure focus↔URL logic (`pathForFocus`/`focusSig`/`applyRoute`), unit-tested.
-  `router.ts` — empty catch-all route. `types.ts` — shared store/window types.
 - `App.vue` — desktop root (wallpaper, icons, windows, menu bar, dock, overlays, global keys).
 - `components/` — `OSWindow` (renders all 3 window types + chrome); `Views/` (the view seam:
   `DoctypeView` resolves a doctype's active view to a component via `registry.ts`'s
@@ -96,8 +106,8 @@ yarn cypress       # Cypress interactive runner
   CSS variable tokens (`--surface-*`, `--ink-*`, `--outline-*`). Use solid `--surface-base`
   for popovers over the wallpaper; alpha tokens wash out.
 - **Changing the window-id scheme or URL projection?** Update together: `pathForFocus`/
-  `applyRoute` (`route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
-  `store/windows.ts`, and the `route-map.spec.js` decision tables.
+  `applyRoute` (`routing/route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
+  `desktop/windows.ts`, and the `route-map.spec.js` decision tables.
 - **Dev white-screen** (`init_shared_esm_bundler is not defined`): keep
   `optimizeDeps.exclude:['frappe-ui','@framework/ui']` in `vite.config.js`; keep their CJS
   leaf deps (feather-icons, socket.io/`debug`, prosemirror, vuedraggable, dompurify) in
