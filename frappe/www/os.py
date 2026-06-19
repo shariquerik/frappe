@@ -126,6 +126,33 @@ def _view_contribution(doctype, name, label, app, order):
 	}
 
 
+def _applet_contributions():
+	"""Applet contributions (ADR-0009): each installed OS app declares the applets it ships
+	via the `os_applets` hook, so the OS never hardcodes another app's artifact. assetUrl is
+	the app's public assets path for the declared filename, loaded at runtime as native ESM."""
+	contributions = []
+	for app in _installed_os_apps():
+		for order, spec in enumerate(frappe.get_hooks("os_applets", app_name=app) or []):
+			applet_id = spec["appletId"]
+			contributions.append(
+				{
+					"type": "applet",
+					"target": "",
+					"name": applet_id,
+					"sourceApp": app,
+					"payload": {
+						"appletId": applet_id,
+						"appId": app,
+						"assetUrl": f"/assets/{app}/os-applets/{spec['fileName']}",
+						"label": spec.get("label", applet_id),
+						"minOsApi": spec.get("minOsApi", 1),
+					},
+					"order": order,
+				}
+			)
+	return contributions
+
+
 # Fieldtype → the list column "type" the renderer themes (DocView). Plain text otherwise.
 COLUMN_TYPES = {"Currency": "currency", "Int": "int"}
 
@@ -264,6 +291,7 @@ def get_registry():
 			)
 		contributions.append(_view_contribution(doctype, "list", "List", app, 0))
 		contributions.append(_view_contribution(doctype, "form", "Form", app, 1))
+	contributions.extend(_applet_contributions())
 	return {"schemaVersion": 1, "contributions": contributions}
 
 
