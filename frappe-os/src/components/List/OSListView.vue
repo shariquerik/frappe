@@ -45,7 +45,7 @@ const options = computed(() => ({
 </script>
 
 <template>
-  <div class="min-h-0 flex-1 overflow-auto">
+  <div class="min-h-0 flex-1 overflow-auto px-3 py-1">
     <div v-if="error" class="px-[14px] py-[34px] text-center text-[13px] text-ink-red-6">{{ error }}</div>
     <div v-else-if="!rows.length && loading" class="px-[14px] py-[34px] text-center text-[13px] text-ink-gray-4">Loading…</div>
     <ListView
@@ -59,11 +59,11 @@ const options = computed(() => ({
       <template #cell="{ column, item }">
         <template v-for="cell in [cellKind(item, column, statusThemes)]" :key="column.key">
           <StatusPill v-if="cell.kind === 'status'" :value="cell.display" :theme="cell.theme" />
-          <span v-else-if="cell.kind === 'primary'" class="font-medium text-ink-gray-8">{{ cell.display }}</span>
-          <span v-else-if="cell.kind === 'avatar'" class="inline-flex items-center gap-1.5">
+          <span v-else-if="cell.kind === 'primary'" class="text-base font-medium text-ink-gray-8">{{ cell.display }}</span>
+          <span v-else-if="cell.kind === 'avatar'" class="inline-flex items-center gap-1.5 text-base text-ink-gray-7">
             <Avatar :label="cell.label" size="sm" />{{ cell.label }}
           </span>
-          <template v-else>{{ cell.display }}</template>
+          <span v-else class="text-base text-ink-gray-7">{{ cell.display }}</span>
         </template>
       </template>
     </ListView>

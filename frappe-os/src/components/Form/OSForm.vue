@@ -1,17 +1,16 @@
 <script setup lang="ts">
 // Editable, meta-driven record form wired to the live records store. Fetches the real field
-// schema (loadFieldMeta) and the live doc (loadDoc), projects a sectioned FormLayout via the
-// pure buildFormLayout (./layout), and writes through Save (saveDoc) / Create (createDoc).
+// schema (loadFieldMeta, for permissions) and the live doc (loadDoc), renders the tabs →
+// sections → columns FormLayout that useDoctypeLayout builds from the full doctype meta,
+// and writes through Save (saveDoc) / Create (createDoc).
 // Display config (label, title/status fields, themes) comes from the curated `meta` prop;
 // the record and field schema are live. DoctypeView resolves this as the 'form' view.
 import { ref, computed, inject, shallowRef, watch } from 'vue'
 import { Button, Avatar, Dropdown } from 'frappe-ui'
-import { FormLayout } from '@framework/ui/FormLayout'
+import { FormLayout, useDoctypeLayout } from '@framework/ui/FormLayout'
 import StatusPill from '@/components/StatusPill.vue'
 import { useOS } from '@/desktop'
 import { TOOLBAR_SLOT } from '@/components/Window/toolbar'
-import { buildFormLayout } from './layout'
-import type { SchemaField } from './types'
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
 // @vue/compiler-sfc's macro type resolver — see DoctypeView.vue).
 import type { ViewProps } from '@/config/types'
@@ -47,8 +46,12 @@ watch([record, isNew], () => { formDoc.value = isNew.value ? {} : { ...(record.v
 
 const editable = computed(() => (isNew.value ? canCreate.value : canWrite.value))
 
-// Single-tab, section-grouped, two-column layout from the live field schema (pure: ./layout).
-const layout = computed(() => buildFormLayout((fieldMeta.value.data?.fields || []) as SchemaField[], editable.value))
+// Full tabs → sections → columns layout, built from the real doctype meta (Tab Breaks become
+// tabs, Section/Column Breaks the grid). Memoised per doctype by @framework/ui.
+const doctypeLayout = computed(() => useDoctypeLayout(doctype.value))
+const layout = computed(() => doctypeLayout.value.layout.value)
+const layoutLoading = computed(() => doctypeLayout.value.loading.value)
+const layoutError = computed(() => doctypeLayout.value.error.value)
 
 const formTitle = computed(() => {
   if (isNew.value) return 'New ' + (props.meta?.label || doctype.value)
@@ -152,9 +155,9 @@ const formMenu = computed(() => [
     <div v-if="saveError" class="flex-shrink-0 border-b border-outline-red-2 bg-surface-red-1 px-4 py-2 text-[12px] text-ink-red-6">{{ saveError }}</div>
     <!-- body: FormLayout field grid -->
     <div class="min-h-0 flex-1 overflow-auto px-[22px] py-[18px]">
-      <div v-if="fieldMeta.error" class="text-[13px] text-ink-red-6">{{ fieldMeta.error }}</div>
+      <div v-if="fieldMeta.error || layoutError" class="text-[13px] text-ink-red-6">{{ fieldMeta.error || String(layoutError) }}</div>
       <div v-else-if="!isNew && docState.error" class="text-[13px] text-ink-red-6">{{ docState.error }}</div>
-      <div v-else-if="fieldMeta.loading || (!isNew && docState.loading)" class="text-[13px] text-ink-gray-4">Loading…</div>
+      <div v-else-if="fieldMeta.loading || layoutLoading || (!isNew && docState.loading)" class="text-[13px] text-ink-gray-4">Loading…</div>
       <FormLayout v-else v-model:doc="formDoc" :layout="layout" />
     </div>
   </div>

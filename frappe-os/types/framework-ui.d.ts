@@ -5,4 +5,5 @@
 declare const whatever: any
 
 export const FormLayout: any
+export const useDoctypeLayout: any
 export default whatever

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // The app window's title-bar nav, rendered inside WindowChrome's default slot: sidebar
-// toggle, back button, the breadcrumb trail, and the right-hand actions (pop-out, search,
-// presence avatars, app settings). Derives everything from the window's surface via the
+// toggle, back button, the breadcrumb trail, and the right-hand actions (presence avatars +
+// the view's teleported New/Save/menu). Global search and app settings live only in the top
+// MenuBar. Derives everything from the window's surface via the
 // store. Styled on frappe-ui tokens; Button/Avatar come from frappe-ui.
 import { computed, inject, shallowRef } from "vue";
 import { Button, Avatar } from "frappe-ui";
@@ -24,9 +25,6 @@ const mode = computed(() => s.value.view);
 const canBack = computed(() => !!(props.win.back && props.win.back.length));
 function back() {
 	os.winBack(props.win.id);
-}
-function openAppSettings() {
-	os.openSettings(s.value.appId!);
 }
 
 // The view body teleports its primary actions ("New"/"Save") into this zone, so the merged
@@ -135,9 +133,6 @@ const barPresence = computed(() => os.presenceFor(s.value).map((p) => ({ label: 
 		class="flex-shrink-0"
 	/>
 	<div class="flex-1"></div>
-	<Button variant="subtle" size="sm" title="Search" @click="os.openPalette()" @pointerdown.stop>
-		<span class="lucide-search size-[14px]"></span>
-	</Button>
 	<div class="flex flex-shrink-0 items-center" @pointerdown.stop>
 		<Avatar
 			v-for="(p, i) in barPresence"
@@ -150,13 +145,4 @@ const barPresence = computed(() => os.presenceFor(s.value).map((p) => ({ label: 
 	</div>
 	<!-- view body teleports its primary actions (New / Save / record menu) into here -->
 	<div ref="toolbarSlot" class="flex flex-shrink-0 items-center gap-1.5" @pointerdown.stop></div>
-	<Button
-		variant="subtle"
-		size="sm"
-		title="App settings"
-		@click="openAppSettings"
-		@pointerdown.stop
-	>
-		<span class="lucide-settings size-[15px]"></span>
-	</Button>
 </template>
