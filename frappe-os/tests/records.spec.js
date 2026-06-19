@@ -5,7 +5,7 @@
 // bleed between tests.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api', () => ({
+vi.mock('@/data/api', () => ({
   getList: vi.fn(),
   getDoc: vi.fn(),
   getDoctypeMeta: vi.fn(),
@@ -14,11 +14,11 @@ vi.mock('@/api', () => ({
   cardValue: vi.fn(),
 }))
 
-import * as api from '@/api'
+import * as api from '@/data/api'
 import {
   listFor, loadList, docFor, loadDoc, countFor, loadCount,
   fieldMetaFor, loadFieldMeta, saveDoc, createDoc, recordsFor, recordObj,
-} from '../src/store/records'
+} from '../src/data/records'
 
 beforeEach(() => vi.clearAllMocks())
 

@@ -3,7 +3,7 @@
 // (ADR-0012). Window chrome, geometry, focus, history and URL projection are agnostic to
 // which kind a Surface is. This module is the constructors plus the small pure helpers
 // over them; see docs/design/surface-and-registry.md.
-import { useRegistry, appForDoctype } from '@/store/registry'
+import { useRegistry, appForDoctype } from '@/registry'
 import type { Surface, BuiltinSurface, AppletSurface } from '@/types'
 
 // ---- constructors ------------------------------------------------------------

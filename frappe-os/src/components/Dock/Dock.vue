@@ -4,7 +4,7 @@
 // settings pane). Clicking an icon with >1 window opens a chooser popover above it
 // so any one window can be brought to the front; 0 or 1 window focuses directly.
 import { computed } from 'vue'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 import { windowRole, isBuiltin } from '@/surface'
 import type { OsWindow, BuiltinSurface } from '@/types'
 const os = useOS()

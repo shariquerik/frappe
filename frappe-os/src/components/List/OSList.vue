@@ -7,8 +7,10 @@
 import { computed, watch } from 'vue'
 import { Button, Avatar } from 'frappe-ui'
 import OSListView from './OSListView.vue'
-import { useOS } from '@/store'
-import type { ViewProps } from '@/types'
+import { useOS } from '@/desktop'
+// defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
+// resolver — see DoctypeView.vue).
+import type { ViewProps } from '@/config/types'
 
 const props = withDefaults(defineProps<ViewProps>(), {
   presence: () => [],

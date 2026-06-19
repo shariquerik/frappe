@@ -5,10 +5,13 @@
 // Notifications / Integrations / Customize / Theme + working light/dark toggle.
 import { computed, watch } from 'vue'
 import { Switch, Button } from 'frappe-ui'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 import { initials } from '@/config/apps'
 import { surfaceTab } from '@/surface'
-import type { OsWindow, Theme } from '@/types'
+// OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
+// `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
+import type { OsWindow } from '@/surface/types'
+import type { Theme } from '@/desktop/types'
 
 const props = defineProps<{ win: OsWindow }>()
 const os = useOS()

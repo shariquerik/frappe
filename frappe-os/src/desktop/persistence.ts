@@ -4,7 +4,7 @@
 // overlay flags (palette / picker / menu) and the transient settings windows are
 // excluded — a refresh never restores an open overlay or a settings pane.
 import { watch } from 'vue'
-import { useRegistry, getMeta, knownApplet } from './registry'
+import { useRegistry, getMeta, knownApplet } from '@/registry'
 import { state } from './state'
 import { syncTopZ } from './geometry'
 import { HIST_CAP } from './windows'

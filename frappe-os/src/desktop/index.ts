@@ -1,15 +1,16 @@
-// useOS() — the Frappe OS desktop shell state. The store is split into slices
-// (state / geometry / windows / palette / persistence / records); this module
-// re-assembles them into one composable with a stable public surface. All slices are
-// module singletons sharing the one reactive `state`, so useOS() just hands back
-// references — every caller sees the same desktop.
+// useOS() — the Frappe OS desktop shell state. The window-manager is split into local
+// slices (state / geometry / windows / palette / persistence); this module re-assembles
+// them — together with the live record caches (`@/data/records`) and the registry
+// projections (`@/registry`) — into one composable with a stable public surface. All
+// slices are module singletons sharing the one reactive `state`, so useOS() just hands
+// back references — every caller sees the same desktop.
 //
-// The return type is left inferred: `OsStore` in types.ts is `ReturnType<typeof useOS>`,
+// The return type is left inferred: `OsStore` (data/types.ts) is `ReturnType<typeof useOS>`,
 // so the store surface is derived from this assembly rather than hand-maintained. Adding
 // a member here automatically widens OsStore for every consumer (route-map, components).
 import { initials, pill } from '@/config/apps'
 import { ICON } from '@/config/icons'
-import { useRegistry, getMeta, appForDoctype, knownApplet } from './registry'
+import { useRegistry, getMeta, appForDoctype, knownApplet } from '@/registry'
 import type { AppDef } from '@/types'
 
 import { state, clockText } from './state'
@@ -29,7 +30,7 @@ import { hydrate, startAutosave } from './persistence'
 import {
   recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
   loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
-} from './records'
+} from '@/data/records'
 
 // Compatibility shape for the registry data components still read by namespace
 // (os.DATA.APP / .ICON). The app map + APP_ORDER are projected from useRegistry(); they

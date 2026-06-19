@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Wallpaper picker — custom centered/blurred overlay (gallery look, not a
 // frappe-ui Dialog). 8 wallpapers; current one is ringed.
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 const os = useOS()
 </script>
 

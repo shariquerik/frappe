@@ -3,7 +3,7 @@
 // store mutates state.paletteOpen directly when opening a window, so this slice only
 // owns the overlay flag and the result projection.
 import { computed } from 'vue'
-import { useRegistry, appForDoctype, listApplets } from './registry'
+import { useRegistry, appForDoctype, listApplets } from '@/registry'
 import { ICON } from '@/config/icons'
 import { state } from './state'
 import { openApp, openListGlobal, openApplet } from './windows'

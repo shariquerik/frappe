@@ -3,7 +3,7 @@
 // wallpaper, toggles). All geometry is delegated to geometry.js; all display config
 // comes from config/*. This slice owns "what windows exist and what they show".
 import { computed } from 'vue'
-import { appForDoctype } from './registry'
+import { appForDoctype } from '@/registry'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {

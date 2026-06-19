@@ -8,7 +8,10 @@
 import { shallowRef, watch } from 'vue'
 import type { Component } from 'vue'
 import { resolveView } from './registry'
-import type { ViewProps } from '@/types'
+// Import macro types from the concrete module, not the @/types barrel: @vue/compiler-sfc's
+// defineProps type resolver can't walk the barrel's `export *` (it trips on OsStore's
+// ReturnType<> in data/types). tsc/vue-tsc handle the barrel fine for non-macro imports.
+import type { ViewProps } from '@/config/types'
 
 const props = defineProps<ViewProps>()
 

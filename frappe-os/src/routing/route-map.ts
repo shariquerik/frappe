@@ -2,7 +2,7 @@
 // decision tables (focus -> path, route -> store action) are unit-testable in
 // isolation: every function takes the `os` store explicitly and touches no router,
 // history, or window globals. main.js owns the wiring (guards, boot, watchers).
-import type { OsStore, RouteParams, Surface } from './types'
+import type { OsStore, RouteParams, Surface } from '@/types'
 
 // Project the focused window to its canonical path (no /os prefix — the router's base
 // adds it). Doctype is authoritative over `:app` (recomputed via appForDoctype). A record

@@ -6,14 +6,17 @@
 import { computed, provide, shallowRef, watch } from "vue";
 import type { Component } from "vue";
 import { Button, Avatar } from "frappe-ui";
-import { useOS } from "@/store";
-import { OS_KEY, tryGetOsApi } from "@/os-api";
-import { resolveApplet as resolveOsApplet } from "@/store/registry";
+import { useOS } from "@/desktop";
+import { OS_KEY, tryGetOsApi } from "@/data/os-api";
+import { resolveApplet as resolveOsApplet } from "@/registry";
 import { DoctypeView } from "@/components/Views";
 import { SettingsDialog } from "@/components/Settings";
 import StatusPill from "@/components/StatusPill.vue";
 import { windowRole } from "@/surface";
-import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface, ViewProps } from "@/types";
+// OsWindow feeds defineProps, so these come from concrete modules, not the @/types barrel
+// (its `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
+import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/surface/types";
+import type { ViewProps } from "@/config/types";
 import type { Crumb } from "./types";
 
 const props = defineProps<{ win: OsWindow }>();

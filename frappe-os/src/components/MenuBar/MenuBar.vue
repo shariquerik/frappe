@@ -5,7 +5,7 @@
 // are omitted — frappe-ui Dropdown items render label + onClick only.
 import { computed } from 'vue'
 import OSDropdown from '@/components/OSDropdown.vue'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 import { initials } from '@/config/apps'
 import { windowRole } from '@/surface'
 import type { OsWindow } from '@/types'

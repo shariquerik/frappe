@@ -8,6 +8,6 @@
 // So this is the one curated module an applet may import; its named exports ARE the applet
 // contract (an applet author's tsconfig aliases `@frappe-os/api` → this file). Explicit
 // re-exports (not `export *`) keep internals — getOsApi/initOsApi/resolveApplet — private.
-export { OS_KEY } from '@/os-api'
+export { OS_KEY } from '@/data/os-api'
 export { formSurface, listSurface, appletSurface, dashboardSurface } from '@/surface'
 export type { OsApi, Surface, FrappeDoc, GetListOptions } from '@/types'

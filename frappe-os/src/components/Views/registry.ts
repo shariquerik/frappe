@@ -7,7 +7,7 @@
 // without touching DoctypeView or any view component. Adding a builtin view (kanban,
 // report, calendar, …) is a new component plus one BUILTIN_VIEWS entry — never a union edit.
 import type { Component } from 'vue'
-import { useRegistry, resolveApplet } from '@/store/registry'
+import { useRegistry, resolveApplet } from '@/registry'
 import { OSForm } from '../Form'
 import { OSList } from '../List'
 

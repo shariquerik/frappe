@@ -2,7 +2,7 @@
 // ⌘K command palette — custom centered/blurred overlay (the spotlight look is
 // outside frappe-ui Dialog's chrome). Searches apps + doctype lists + records.
 import { ref, watch, nextTick } from 'vue'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 const os = useOS()
 const inputEl = ref<HTMLInputElement | null>(null)
 watch(() => os.state.paletteOpen, (open) => { if (open) nextTick(() => inputEl.value?.focus()) })

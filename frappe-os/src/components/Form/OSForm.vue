@@ -8,10 +8,12 @@ import { ref, computed, watch } from 'vue'
 import { Button, Avatar, Dropdown } from 'frappe-ui'
 import { FormLayout } from '@framework/ui/FormLayout'
 import StatusPill from '@/components/StatusPill.vue'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 import { buildFormLayout } from './layout'
 import type { SchemaField } from './types'
-import type { ViewProps } from '@/types'
+// defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
+// @vue/compiler-sfc's macro type resolver — see DoctypeView.vue).
+import type { ViewProps } from '@/config/types'
 
 const props = withDefaults(defineProps<ViewProps>(), {
   presence: () => [],

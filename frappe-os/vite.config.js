@@ -12,7 +12,7 @@ import path from 'node:path'
 //     re-export the host's BUNDLED instances.
 //   - DEV: the host runs unbundled /src/*.ts (Vite's deduped vue/frappe-ui, the live os-api), so
 //     point the specifiers at the broker SOURCE modules Vite serves — `export * from 'vue'` /
-//     `@/os-api` resolve to those SAME dev modules. So a built applet loaded via the bench-proxied
+//     `@/data/os-api` resolve to those SAME dev modules. So a built applet loaded via the bench-proxied
 //     /assets/<app>/… binds to the dev host's singletons too (inject(OS_KEY) resolves in dev).
 // head-prepend guarantees it precedes Vite's injected entry module script.
 function osImportMap() {

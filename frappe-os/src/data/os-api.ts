@@ -9,9 +9,9 @@
 // See docs/design/surface-and-registry.md §3.
 import type { InjectionKey } from 'vue'
 import { toast } from 'frappe-ui'
-import { getList, getDoc, call } from '@/api'
-import { useOS } from '@/store'
-import { useRegistry, resolveApplet } from '@/store/registry'
+import { getList, getDoc, call } from './api'
+import { useOS } from '@/desktop'
+import { useRegistry, resolveApplet } from '@/registry'
 import type {
   BootData, FrappeDoc, GetListOptions, OsApi, OsData, OsRegistry,
   OsSession, OsStore, OsUi, OsWindows, PermissionType, Surface,
@@ -60,7 +60,7 @@ function makeSession(boot: BootData): OsSession {
 }
 
 // ---- registry: read-only projections over the client Registry seam ------------
-// Both delegate to useRegistry() (store/registry.ts): one source for display config and
+// Both delegate to useRegistry() (registry/index.ts): one source for display config and
 // the views collection, so step 4 flips the backing to the server with no change here.
 function makeRegistry(): OsRegistry {
   const reg = useRegistry()

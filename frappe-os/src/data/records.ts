@@ -6,7 +6,7 @@
 // the curated getMeta — the records here carry no display knowledge.
 
 import { reactive } from 'vue'
-import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, cardValue } from '@/api'
+import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, cardValue } from '@/data/api'
 import type { CacheEntry, FilterValue, FrappeDoc, GetListOptions } from '@/types'
 
 const lists = reactive<Record<string, CacheEntry<FrappeDoc[]>>>({}) // doctype -> entry, data is rows[]

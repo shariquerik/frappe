@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, knownApplet, listApplets, loadApplet,
-} from '../src/store/registry'
+} from '../src/registry'
 
 describe('apps', () => {
   it('returns the installed apps in registry order', () => {

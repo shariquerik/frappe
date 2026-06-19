@@ -10,7 +10,10 @@ import { computed } from 'vue'
 import { ListView, Avatar } from 'frappe-ui'
 import StatusPill from '../StatusPill.vue'
 import { toListViewColumns, cellKind } from './list-columns'
-import type { DoctypeMeta, FrappeDoc, ListColumn } from '@/types'
+// These feed defineProps, so import from concrete modules, not the @/types barrel (its
+// `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
+import type { DoctypeMeta, ListColumn } from '@/config/types'
+import type { FrappeDoc } from '@/data/types'
 
 const props = withDefaults(defineProps<{
   doctype: string

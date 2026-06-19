@@ -3,7 +3,7 @@
 // dev those globals are absent, so we fetch the same payload from the whitelisted
 // boot() method. Either way we seed api.js's CSRF token for writes.
 
-import { call, setCsrf } from '@/api'
+import { call, setCsrf } from './api'
 import type { BootData } from '@/types'
 
 let cached: BootData | null = null

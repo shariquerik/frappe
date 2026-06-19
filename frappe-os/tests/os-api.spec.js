@@ -6,7 +6,7 @@
 // module-singleton store state doesn't bleed between cases.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api', () => ({
+vi.mock('@/data/api', () => ({
   getList: vi.fn(),
   getDoc: vi.fn(),
   call: vi.fn(),
@@ -18,12 +18,12 @@ vi.mock('@/api', () => ({
 }))
 vi.mock('frappe-ui', () => ({ toast: vi.fn() }))
 
-import * as api from '@/api'
+import * as api from '@/data/api'
 import { toast } from 'frappe-ui'
-import { useOS } from '../src/store'
-import { listSurface } from '../src/surface'
-import { getMeta } from '../src/store/registry'
-import { createOsApi, initOsApi, getOsApi } from '../src/os-api'
+import { useOS } from '../src/desktop'
+import { listSurface } from '../src/surface/index'
+import { getMeta } from '../src/registry'
+import { createOsApi, initOsApi, getOsApi } from '../src/data/os-api'
 
 const boot = (over = {}) => ({ user: 'admin@example.com', csrf_token: 't', registry: [], permissions: {}, ...over })
 

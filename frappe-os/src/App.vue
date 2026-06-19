@@ -5,7 +5,7 @@
 // data-theme attribute that drives frappe-ui's light/dark tokens.
 import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { ToastProvider } from 'frappe-ui'
-import { useOS } from '@/store'
+import { useOS } from '@/desktop'
 import { MenuBar } from './components/MenuBar'
 import { Dock } from './components/Dock'
 import { OSWindow } from './components/Window'

@@ -1,7 +1,7 @@
 // route-map projection: focus -> URL path, and route params -> store action.
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useOS } from '../src/store/index'
-import { pathForFocus, applyRoute } from '../src/route-map'
+import { useOS } from '../src/desktop/index'
+import { pathForFocus, applyRoute } from '../src/routing/route-map'
 
 const os = useOS()
 

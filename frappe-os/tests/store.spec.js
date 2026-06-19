@@ -1,7 +1,7 @@
 // Store focus state machine: the invariants the URL bridge relies on. The store is
 // a module singleton, so reset its reactive state before each test.
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useOS } from '../src/store/index'
+import { useOS } from '../src/desktop/index'
 
 const os = useOS()
 

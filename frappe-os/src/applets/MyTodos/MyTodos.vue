@@ -6,7 +6,7 @@
 // (windows.open(formSurface)) → write (data.saveDoc) → feedback (ui.notify).
 import { computed, inject, onMounted, ref } from "vue";
 import { Badge, Button } from "frappe-ui";
-import { OS_KEY } from "@/os-api";
+import { OS_KEY } from "@/data/os-api";
 import { formSurface } from "@/surface";
 import type { FrappeDoc } from "@/types";
 import { groupByDueDate, asText, toDateKey, priorityTheme } from "./todo-groups";
