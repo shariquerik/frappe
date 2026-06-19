@@ -28,3 +28,26 @@ behavior tweaks. Heavy build for new screens; zero build for small logic.
 > **Terminology:** "applet" is the app-contributed coded surface this ADR loads; it predates
 > the rename from "component" (now reserved for the Vue mechanism). See `CONTEXT.md`. The
 > filename keeps its `component-loading` slug for stable links. Decision unchanged.
+
+## Addendum — the shared/bundled dependency boundary
+
+The externalization above defines a hard line for **every** dependency an applet uses:
+
+- **Shared externals (exactly three): `vue`, `frappe-ui`, and the OS-API module.** The build
+  preset marks these `external`; they are **never** bundled into the applet. At runtime the
+  host import map resolves them to the OS's single instances. (The OS-API module is shared not
+  only for the API object but because `OS_KEY` is a `Symbol` — `inject(OS_KEY)` only resolves
+  if both sides reference the *same* Symbol instance and the *same* Vue runtime. So the applet
+  imports the OS API under a **stable bare specifier** the preset externalizes and the import
+  map maps to the host's served os-api ESM.)
+- **Everything else is bundled into the applet's own ESM artifact.** Each applet has its own
+  build (its own `package.json`); any dep beyond the three externals (a chart lib, a date util)
+  is compiled *into* its output. The applet is self-contained except for the three externals.
+
+**Accepted cost — duplication.** If N applets each bundle the same heavy dep, the page loads N
+copies. That is the deliberate price of a closed three-singleton import map. The *only* escape
+is the **host promoting** a widely-needed dep into the shared import map — which makes that
+dep's version part of the compatibility contract (ADR-0008). Promotion is therefore a
+**host-only, deliberate, rare event**; an app can never unilaterally add a shared singleton, it
+can only bundle. We keep the shared set minimal on purpose: a bigger shared set means a bigger
+version-lockstep surface across all apps.

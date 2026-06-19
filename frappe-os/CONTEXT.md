@@ -82,6 +82,12 @@ preset and loaded as native ESM sharing the host's Vue/frappe-ui/OS API.
 _Avoid_: "component" for this concept. An applet is *implemented as* a Vue component (its
 module's default export IS the SFC), but "component" is reserved for the Vue mechanism (the
 `Component` type, `.vue` files, `<component :is>`) — never the domain concept.
+An applet is **not a standalone Vue app**: it ships *no Vue runtime of its own* and stands up
+no second SPA. It binds to the OS's single shared Vue/frappe-ui/OS-API (via the Build preset's
+externals + the host import map). This is the whole point — Frappe OS exists so apps stop
+shipping their own separate Vue apps (as CRM's `frontend` SPA does today). The contributing app
+is just an **identity (`appId`) and an asset home (`/assets/<app>/…`)**; its own frontend stack
+is irrelevant to the applet it ships.
 
 **Build preset**:
 The official Vite build configuration an app uses to compile an Applet so it externalizes

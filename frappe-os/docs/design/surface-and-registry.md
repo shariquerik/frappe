@@ -310,6 +310,154 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 >   splits them into `dashboard-card` contributions in step 4. `config/apps.ts`'s
 >   `initials`/`pill` are pure presentation helpers, not registry data, so they stay put.
 
+> **Applet loader (B) — tracer bullet PLAN** (next slice; ADR-0009 + its dependency-boundary
+> addendum). Retires the architecture's one entirely-unvalidated promise: *a separately-built
+> app contributes a pre-built applet the OS loads at runtime as native ESM, sharing the host's
+> single Vue/frappe-ui/OS-API — no OS rebuild.* The applet tracer bullet proved render/OS-API/
+> persistence/URL but stubbed this behind a LOCAL map; steps 4/5 only proved server-merge. This
+> slice proves the **load**.
+> - **B-before-A (deliberate inversion of the handoff).** The risk lives entirely in the runtime
+>   load + shared-singleton render, NOT in server emission (that's the same merge pattern steps
+>   4/5/5.2 already proved). So this slice does **B** (real `import(assetUrl)` of an external
+>   artifact through an import map + broker) and **defers A** (server `applet` contributions) to
+>   the next slice. The `assetUrl` is hardcoded in the local `APPLETS` map for now — the map stays
+>   "the only thing that grows"; callers never change.
+> - **Contributor = erpnext, not CRM (cleanest proof).** An applet is **not a second Vue app**
+>   (CONTEXT.md): it ships no Vue of its own and binds to the OS's single shared Vue. CRM's
+>   standalone `frontend` SPA (its own Vue) would muddy the proof; erpnext has no Vue frontend, so
+>   an erpnext-shipped applet can *only* be running on the OS's Vue. The contributor is just an
+>   `appId` + an asset home (`/assets/erpnext/…`); the applet is a brand-new preset-built artifact
+>   in erpnext's public assets, touching none of erpnext's existing frontend.
+> - **Sharing = Strategy 2, broker re-export (NOT host-dep externalization).** The host stays
+>   bundled; the frappe-os build emits stable-URL **broker** entries that re-export its *own*
+>   `vue` / `frappe-ui` / `@frappe-os/api` instances (separate files per specifier to avoid
+>   namespace-merge collisions). An **import map** in `www/os.html` maps those three bare
+>   specifiers → the broker URLs, before any module loads. The applet's preset marks the three
+>   `external`; at runtime they resolve via the import map to the host's *one* instance. Rejected
+>   Strategy 1 (externalize the host's own frappe-ui — deep, fragile surgery given the existing
+>   `optimizeDeps` chain) for this slice.
+> - **OS-API bare specifier = `@frappe-os/api`** (parallels the repo's `@framework/ui`). Shared
+>   not just for the API object but because `OS_KEY` is a `Symbol` — `inject(OS_KEY)` only resolves
+>   if both sides reference the *same* Symbol AND the *same* Vue runtime. The applet preset
+>   types-aliases `@frappe-os/api` → `src/os-api.ts` at build, externalizes it for bundle.
+> - **Dependency boundary (ADR-0009 addendum):** the applet bundles *everything except* the three
+>   externals; it has its own `package.json` + build. The tracer-bullet applet deliberately needs
+>   **zero extra deps** (keeps the bullet about the load, not dep-bundling). Duplication of any
+>   non-shared dep across applets is the accepted cost; promotion to a shared singleton is a
+>   host-only ADR-0008 compatibility event.
+> - **`resolveApplet` gains an `assetUrl` branch:** `AppletEntry.assetUrl?` → `resolveApplet` does
+>   `import(/* @vite-ignore */ assetUrl)` and returns `module.default`; else today's `load()`. One
+>   hardcoded entry `'erp-hello': { appId:'erpnext', label:'ERPNext Hello',
+>   assetUrl:'/assets/erpnext/os-applets/hello.js' }`. Applet build emits to
+>   `apps/erpnext/erpnext/public/os-applets/hello.js` at a **stable un-hashed filename**.
+>   `knownApplet`/`listApplets`/persistence/URL (`/erpnext/erp-hello`)/palette all work unchanged.
+> - **Green bar — a *falsifiable* proof (two-Vues fails LOUDLY):** the erpnext applet on mount
+>   (1) `inject(OS_KEY)` → loud `NO OS API` state if falsy; (2) `os.data.getList` a guaranteed
+>   readable doctype → renders rows; (3) one **frappe-ui** `Button` (proves external #2) → click →
+>   `os.ui.notify` toast; (4) a local `ref` counter ++ (reactivity on the shared scheduler); (5)
+>   `os.windows.open(formSurface(...))` → spawns a builtin window (proves `windows` across the
+>   boundary, ADR-0012, like `my-todos`). Cypress on the bench-served build asserts all five.
+> - **Three dev loops (the load mechanism is production-only — dev-host Vue isn't externalized):**
+>   `yarn dev` + the local-map `my-todos` for **host** wiring; the erpnext applet's own `vite dev`
+>   + a **~30-line stub-OS dev harness** (`dev.html` mounts the SFC, `provide(OS_KEY, stubOs)`,
+>   stubOs hits the bench REST) for **applet** authoring with HMR; `vite build --watch` the applet
+>   → bench-served built host → reload for the **load** integration. Cypress is the gate. The stub
+>   harness is *not* throwaway — it's how every future applet author works.
+> - **Deliverables:** the official **Vite build preset** (externalizes the three; emits stable
+>   filename) — ADR-0009's "official preset" is a real artifact of this slice; broker entries +
+>   import map in `www/os.html`; `resolveApplet` `assetUrl` branch + hardcoded entry; the erpnext
+>   applet SFC + its `package.json`/preset config + stub-OS dev harness; Vitest for the branch;
+>   Cypress green-bar spec (built+bench). **Verify:** `yarn typecheck && yarn test && yarn build`
+>   in frappe-os + build the erpnext applet + Cypress against the bench-served build.
+> - **Honest gap (no silent caps):** the loader path is NOT exercised by the fast `yarn dev` loop
+>   (production-only mechanism) — mitigated by the local-map path staying dev-testable and the
+>   `build --watch` integration loop. Server `applet` emission (A), the doctype-view applet
+>   (`DoctypeViewPayload.appletId`), and Scripts (ADR-0006) remain deferred.
+
+> **Applet loader (B) as built** (`src/brokers/{vue,frappe-ui,api}.ts`, `index.html`,
+> `vite.config.js`, `store/registry.ts`, `preset/applet.js`, `package.json`; the erpnext
+> applet `apps/erpnext/erpnext/os-applets/hello/*`; `tests/registry.spec.js` +3 and a new
+> Cypress green-bar spec — all green: typecheck + 82 Vitest + frappe-os build + applet build;
+> brokers + applet artifact verified SERVED by the bench, content-type `text/javascript`):
+> - **The architecture's one unvalidated promise is now real:** a separately-built app
+>   (erpnext, no Vue of its own) ships a pre-built applet the OS loads at runtime as native
+>   ESM, sharing the host's single Vue / frappe-ui / OS-API — no OS rebuild. The erpnext build
+>   emits a 3 KB `hello.js` whose only un-bundled imports are the three bare specifiers
+>   `vue` / `frappe-ui` / `@frappe-os/api`; `export { … as default }` is the SFC.
+> - **Sharing = Strategy 2 (broker re-export), confirmed working.** `src/brokers/*` are
+>   additional Vite entries emitted at STABLE, un-hashed URLs (`os-brokers/{vue,frappe-ui,
+>   api}.js`) under the build's base; each re-exports the host's OWN bundled instance, deduped
+>   onto the one chunk the host already ships. The **`osImportMap()` plugin** injects an import map
+>   (`head-prepend`, before the entry module) mapping the three bare specifiers → those broker URLs
+>   in build (and → the broker SOURCE modules in dev — see the dev/prod bullet below), so the
+>   applet's `import(assetUrl)` binds to the host's singletons. `@frappe-os/api`'s broker
+>   (`brokers/api.ts`) doubles as the curated public surface — `OS_KEY` + surface constructors
+>   only, internals (`getOsApi`/`resolveApplet`/…) stay private; an applet author's tsconfig
+>   aliases `@frappe-os/api` → this file.
+> - **The make-or-break detail — re-export preservation.** Rolldown (Vite 8) tree-shakes a
+>   broker entry's re-exports to a bare side-effect `import"<chunk>"` because nothing in the
+>   host build consumes the broker, leaving `import { OS_KEY }` resolving to nothing (the silent
+>   two-Vues failure mode the green bar guards against). Fix: `build.rollupOptions.
+>   preserveEntrySignatures: 'strict'` pins each entry's signature, so the broker emits the real
+>   `import { … } from "<chunk>"; export { … as OS_KEY/ref/Button/… }`. Verified: the served
+>   brokers re-export OS_KEY/formSurface (api), ref/inject/onMounted/Fragment/… (vue), and
+>   Button/Badge/toast (frappe-ui). (An earlier `generateBundle` regex fallback was removed once
+>   `preserveEntrySignatures` proved sufficient — no dead plumbing left.)
+> - **`resolveApplet` gained an `assetUrl` branch** (`store/registry.ts`): `AppletEntry` is now
+>   `{ appId, label, load?, assetUrl? }`; the extracted `loadApplet(entry, importer)` does
+>   `importer(assetUrl)` (default = `import(/* @vite-ignore */ url)`) → `.default`, else the
+>   first-party static `load()`. The injected `importer` makes the branch unit-testable in jsdom
+>   without a network module. One hardcoded entry `'erp-hello' → /assets/erpnext/os-applets/
+>   hello.js`; `knownApplet`/`listApplets`/persistence/URL (`/erpnext/erp-hello`)/palette work
+>   unchanged. Server `applet` emission (A) stays deferred — the map is still the only thing that grows.
+> - **The official Build preset is a real artifact** (`preset/applet.js`): `appletConfig({root,
+>   entry,outDir,fileName,devApiPath})` → Vite lib-mode ES build, `external` = the three shared
+>   singletons (`SHARED_EXTERNALS`), stable un-hashed filename. The erpnext applet ships ZERO
+>   extra deps and no build tooling of its own — its `vite.config.js` imports the preset by path
+>   and is RUN FROM frappe-os (`yarn build:applet:erpnext` / `dev:applet:erpnext`), so vite +
+>   `@vitejs/plugin-vue` + vue resolve from frappe-os/node_modules (the applet config must NOT
+>   `import 'vite'` — it has no node_modules; it returns the preset's plain config object).
+> - **Dev loops.** Host wiring: `yarn dev` + the local-map `my-todos`. Applet authoring: the erpnext
+>   applet's own `vite dev` (stub-OS `dev.html`/`dev.ts` providing `OS_KEY`, `stub-os.ts` hitting the
+>   bench REST) for HMR — NOT throwaway, it's how every applet author works. Load integration: with
+>   the **mode-aware import map** the runtime-loaded applet now also works in the MAIN `yarn dev`
+>   server (`build:applet:erpnext` → reload the dev host) — no longer only the bench-served build.
+> - **Green bar = five falsifiable checks PASSED** in `Hello.vue`, asserted by `cypress/e2e/
+>   applet-loader.cy.js` against the BENCH-SERVED prod build: (1) `inject(OS_KEY)` resolved (else a
+>   loud `data-os="missing"` state); (2) `data.getList('DocType')` rows; (3) a frappe-ui `Button` →
+>   `ui.notify` toast; (4) a `ref` counter ++; (5) `windows.open(formSurface(...))` spawns a builtin
+>   window. Run logged-in as Administrator on `http://f2.localhost:8016` — all five green.
+> - **Works in BOTH the bench-served prod build (:8016) AND the Vite dev server** — via a
+>   **mode-aware import map** (`osImportMap()` plugin, injected `head-prepend` so it precedes the
+>   entry module; the static `index.html` block was removed). The map's targets differ because the
+>   host's modules do: BUILD → the stable `/assets/frappe/os/os-brokers/*.js` chunks (re-export the
+>   host's BUNDLED instances); DEV → the broker SOURCE modules `/src/brokers/*.ts` Vite serves, whose
+>   `export * from 'vue'` / `@/os-api` resolve to the SAME deduped dev vue / live os-api the host
+>   runs. So a built applet (loaded via the bench-proxied `/assets/<app>/…` in dev) binds to the dev
+>   host's singletons too — `inject(OS_KEY)` resolves in dev. Green bar PASSES on both :8016 and the
+>   dev server.
+> - **The diagnosis that led here:** the first green-bar run hit `data-os="missing"` against :8096;
+>   `performance.getEntriesByType` showed the host had loaded `/src/os-api.ts` (dev) while the broker
+>   re-exported the prod `os-api` chunk → two OS_KEY Symbols. The prod fix is the bench webserver;
+>   the dev fix is the DEV branch of the import map above. (:8096 is itself a Vite dev server.)
+> - **`ui.notify` was a silent no-op** — the host mounted no toast renderer, so `toast()` queued
+>      into a vue-sonner instance nothing displayed. Fixed by mounting frappe-ui's `<ToastProvider />`
+>      in `App.vue` (makes `ui.notify` real for EVERY applet, built-in or runtime-loaded; the shim
+>      `types/frappe-ui.d.ts` gained `ToastProvider`).
+> - **Prod SPA route added** (`frappe/hooks.py`): `{"from_route": "/os/<path:app_path>", "to_route":
+>   "os"}` — mirrors the `/desk/<path:app_path>` rule. Without it the webserver 404'd every `/os/<…>`
+>   deep link / reload ("Page not found"), since the www page only answered exact `/os`. Now any
+>   `/os/<…>` serves the single os page and vue-router resolves the sub-path client-side. The green
+>   bar visits the deep link `/os/erpnext/erp-hello` DIRECTLY and passes. (hooks.py is cached —
+>   `bench clear-cache` + a webserver reload; the dev `bench start` auto-reloads the .py change.)
+> - **Honest gaps (no silent caps):** the runtime-loaded applet now runs in dev too (via the DEV
+>   import map), but it still requires the applet ARTIFACT to be built (`build:applet:erpnext`) — the
+>   main `yarn dev` HMR loop covers the host, not the applet's own source (that's the stub-OS
+>   harness's job). Server `applet` emission (A), the doctype-view applet
+>   (`DoctypeViewPayload.appletId`), and Scripts (ADR-0006) remain deferred. Shared-chunk
+>   tree-shaking means an applet using a Vue API the host never references would not find it —
+>   acceptable for the closed shared contract (ADR-0008); promotion stays a host-only event.
+
 ## 3. OS API seam (ADR-0003) — minimum surface to start
 
 The one object applets & scripts receive. Keep it *narrow* and additive-only (ADR-0008).
@@ -356,4 +504,5 @@ interface OsApi {
 | 5 dogfood ✅ | `www/os.py` (`_display_payload`/`_list_columns`/`_status_field`); `store/registry.ts` (`overlayServer`/`osNativeMeta`/`appPayloadFor`/`curatedCards`/`decorate`; `permit`/`allowed` removed); `registry.spec.js` | done — server projects display-config from Desk meta (label/title/columns/status); client indexes server payloads DIRECTLY + overlays OS-native presentation (branding/icons/status/cards) keyed by id; config/* demoted to offline fallback; ownership from `sourceApp`. Property Setter/Number Card/Client Script/Report/Kanban projection deferred |
 | 5.2 Property Setter ✅ | `www/os.py` (`_title_default`/`_doctype_property_setters`/`_display_patch`/`DISPLAY_PATCH_PROPERTIES`; `get_registry` patch emit); no client change | done — doctype `title_field` Property Setter → live `__site__` display-config patch (ADR-0007 App-default ⊕ Site-layer); base carries the app-default title so the merge is real; unmapped doctype properties logged+skipped; field-level deferred (lossless via baked meta). Verified on f2.localhost |
 | Applet tracer bullet ✅ | `os-api.ts` (`OS_KEY`/`tryGetOsApi`/`resolveApplet`/caps), `surface.ts` (`appletSurface`), `store/registry.ts` (local map + `knownApplet`/`resolveApplet`/`listApplets`), `store/windows.ts` (`openApplet`), `store/{index,persistence,palette}.ts`, `route-map.ts`, `main.ts`, `OSWindow.vue` + new `MyTodos.vue`; specs + Cypress | done — first real **applet** (app-contributed full-window screen; implemented as a Vue component, but "component" stays the Vue mechanism) end-to-end (render + OS-API + persistence + URL). provide/inject entry contract (`OS_KEY`); "My open ToDos" grouped by due date; URL `/<app>/<appletId>` (doctype-wins); external loader + server `applet` emission deferred behind `resolveApplet` |
+| Applet loader (B) ✅ | new `src/brokers/{vue,frappe-ui,api}.ts`, `preset/applet.js`; `vite.config.js` (`osImportMap()` mode-aware import map + `preserveEntrySignatures:'strict'` + broker entries), `store/registry.ts` (`assetUrl` branch + `loadApplet` + `erp-hello`), `App.vue` + `types/frappe-ui.d.ts` (`ToastProvider`), `frappe/hooks.py` (`/os/<path>` route), `package.json` (applet scripts); new `apps/erpnext/erpnext/os-applets/hello/*` (SFC + preset config + stub-OS harness); `registry.spec.js` +3, new `cypress/e2e/applet-loader.cy.js` | done — separately-built erpnext applet loaded at runtime as native ESM, sharing the host's single Vue/frappe-ui/OS-API via import map + brokers (Strategy 2). Official Build preset shipped; `import(assetUrl)` branch; **5-check Cypress green bar PASSED via a DIRECT deep-link visit on the bench-served build (:8016)**. **also PASSES in the `yarn dev` server** via the mode-aware import map. Mounted `ToastProvider` (ui.notify was a no-op); added the `/os/<path>` SPA route (deep links 404'd). Server `applet` emission (A), doctype-view applet, Scripts still deferred |
 ```
