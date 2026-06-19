@@ -347,7 +347,7 @@ def get_doctype_meta(doctype: str):
 
 
 @frappe.whitelist()
-def card_value(doctype: str, filters=None, fieldname=None):
+def card_value(doctype: str, filters: str | list | dict | None = None, fieldname: str | None = None):
 	"""Dashboard card value: a live count, or a sum of `fieldname` when given."""
 	if not frappe.has_permission(doctype, "read"):
 		frappe.throw(_("Not permitted to read {0}").format(doctype), frappe.PermissionError)
