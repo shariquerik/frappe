@@ -409,7 +409,8 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 >   first-party static `load()`. The injected `importer` makes the branch unit-testable in jsdom
 >   without a network module. One hardcoded entry `'erp-hello' → /assets/erpnext/os-applets/
 >   hello.js`; `knownApplet`/`listApplets`/persistence/URL (`/erpnext/erp-hello`)/palette work
->   unchanged. Server `applet` emission (A) stays deferred — the map is still the only thing that grows.
+>   unchanged. (Server `applet` emission (A) is now done — see "Server applet emission (A) as built";
+>   the local map no longer grows, an app's `os_applets` hook does.)
 > - **The official Build preset is a real artifact** (`preset/applet.js`): `appletConfig({root,
 >   entry,outDir,fileName,devApiPath})` → Vite lib-mode ES build, `external` = the three shared
 >   singletons (`SHARED_EXTERNALS`), stable un-hashed filename. The erpnext applet ships ZERO
@@ -453,10 +454,40 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 > - **Honest gaps (no silent caps):** the runtime-loaded applet now runs in dev too (via the DEV
 >   import map), but it still requires the applet ARTIFACT to be built (`build:applet:erpnext`) — the
 >   main `yarn dev` HMR loop covers the host, not the applet's own source (that's the stub-OS
->   harness's job). Server `applet` emission (A), the doctype-view applet
->   (`DoctypeViewPayload.appletId`), and Scripts (ADR-0006) remain deferred. Shared-chunk
+>   harness's job). Server `applet` emission (A) is now **done — see the next note**; the doctype-view
+>   applet (`DoctypeViewPayload.appletId`) and Scripts (ADR-0006) remain deferred. Shared-chunk
 >   tree-shaking means an applet using a Vue API the host never references would not find it —
 >   acceptable for the closed shared contract (ADR-0008); promotion stays a host-only event.
+
+> **Server applet emission (A) as built** (`frappe/www/os.py` `_applet_contributions()` + `get_registry`;
+> `erpnext/erpnext/hooks.py` `os_applets`; `frappe-os/src/store/registry.ts` `FIRST_PARTY` ⊕ server fold;
+> `tests/registry.spec.js` "folds a server applet contribution" — all green: 24 registry specs):
+> - **The hardcoded `APPLETS` map is retired.** Loader (B) called that map "the only thing that grows";
+>   it no longer grows. An app **declares** the applets it ships via the `os_applets` hook; the server
+>   projects them into the Registry and the client discovers them at boot — no OS edit per applet.
+> - **The hook (per app):** `os_applets = [{ appletId, label, fileName, minOsApi? }]`. erpnext ships
+>   `{appletId:'erp-hello', label:'ERPNext Hello', fileName:'hello.js'}` (`erpnext/hooks.py`). The
+>   server reads it via `frappe.get_hooks("os_applets", app_name=app)` for each **installed OS app**
+>   only (`_installed_os_apps()`), so an uninstalled app contributes nothing.
+> - **Server projection** (`os.py` `_applet_contributions()`, `get_registry().extend(...)`): one
+>   `type:'applet'` contribution per hook entry — `{appletId, appId:app, assetUrl, label, minOsApi}` —
+>   with `assetUrl` **derived server-side** as `/assets/{app}/os-applets/{fileName}` (the app's public
+>   assets path, the same URL the build preset emits to). `sourceApp=app`, `name=appletId`, `order` by
+>   hook position. This is the same merge pattern as steps 4/5/5.2 — the low-risk slice the B-before-A
+>   inversion promised.
+> - **Client fold-in** (`registry.ts`): `erp-hello` was **removed from `FIRST_PARTY`** (only the
+>   OS-bundled `my-todos` remains — a static `import()` the OS build code-splits, which genuinely can't
+>   come from the server). `addToIndex`'s `APPLET` branch folds each server contribution into
+>   `ix.applets`, seeded `FIRST_PARTY` ⊕ server. `knownApplet`/`listApplets`/`resolveApplet`/the
+>   `assetUrl` load branch/persistence/URL (`/erpnext/erp-hello`)/palette all work unchanged — the
+>   entry now simply *arrives from the hook* instead of being literal in the OS source.
+> - **Proof:** `registry.spec.js` "folds a server applet contribution into the index (ADR-0009 server
+>   emission)" indexes a registry carrying `applet('erp-hello','erpnext',…)` and asserts `listApplets`
+>   /`knownApplet('erpnext','erp-hello')` see it while the first-party `my-todos` is kept.
+> - **Still deferred (no silent caps):** the doctype-view applet (`DoctypeViewPayload.appletId` — an
+>   app-contributed bespoke view for a doctype, now unblocked by A) and Scripts (ADR-0006); Number Card
+>   → `dashboard-card`, Client Script → Script, Report/Kanban → `doctype-view` as before. `minOsApi`
+>   is emitted but not yet gate-enforced client-side (additive, ADR-0008).
 
 ## 3. OS API seam (ADR-0003) — minimum surface to start
 
@@ -504,5 +535,6 @@ interface OsApi {
 | 5 dogfood ✅ | `www/os.py` (`_display_payload`/`_list_columns`/`_status_field`); `store/registry.ts` (`overlayServer`/`osNativeMeta`/`appPayloadFor`/`curatedCards`/`decorate`; `permit`/`allowed` removed); `registry.spec.js` | done — server projects display-config from Desk meta (label/title/columns/status); client indexes server payloads DIRECTLY + overlays OS-native presentation (branding/icons/status/cards) keyed by id; config/* demoted to offline fallback; ownership from `sourceApp`. Property Setter/Number Card/Client Script/Report/Kanban projection deferred |
 | 5.2 Property Setter ✅ | `www/os.py` (`_title_default`/`_doctype_property_setters`/`_display_patch`/`DISPLAY_PATCH_PROPERTIES`; `get_registry` patch emit); no client change | done — doctype `title_field` Property Setter → live `__site__` display-config patch (ADR-0007 App-default ⊕ Site-layer); base carries the app-default title so the merge is real; unmapped doctype properties logged+skipped; field-level deferred (lossless via baked meta). Verified on f2.localhost |
 | Applet tracer bullet ✅ | `os-api.ts` (`OS_KEY`/`tryGetOsApi`/`resolveApplet`/caps), `surface.ts` (`appletSurface`), `store/registry.ts` (local map + `knownApplet`/`resolveApplet`/`listApplets`), `store/windows.ts` (`openApplet`), `store/{index,persistence,palette}.ts`, `route-map.ts`, `main.ts`, `OSWindow.vue` + new `MyTodos.vue`; specs + Cypress | done — first real **applet** (app-contributed full-window screen; implemented as a Vue component, but "component" stays the Vue mechanism) end-to-end (render + OS-API + persistence + URL). provide/inject entry contract (`OS_KEY`); "My open ToDos" grouped by due date; URL `/<app>/<appletId>` (doctype-wins); external loader + server `applet` emission deferred behind `resolveApplet` |
-| Applet loader (B) ✅ | new `src/brokers/{vue,frappe-ui,api}.ts`, `preset/applet.js`; `vite.config.js` (`osImportMap()` mode-aware import map + `preserveEntrySignatures:'strict'` + broker entries), `store/registry.ts` (`assetUrl` branch + `loadApplet` + `erp-hello`), `App.vue` + `types/frappe-ui.d.ts` (`ToastProvider`), `frappe/hooks.py` (`/os/<path>` route), `package.json` (applet scripts); new `apps/erpnext/erpnext/os-applets/hello/*` (SFC + preset config + stub-OS harness); `registry.spec.js` +3, new `cypress/e2e/applet-loader.cy.js` | done — separately-built erpnext applet loaded at runtime as native ESM, sharing the host's single Vue/frappe-ui/OS-API via import map + brokers (Strategy 2). Official Build preset shipped; `import(assetUrl)` branch; **5-check Cypress green bar PASSED via a DIRECT deep-link visit on the bench-served build (:8016)**. **also PASSES in the `yarn dev` server** via the mode-aware import map. Mounted `ToastProvider` (ui.notify was a no-op); added the `/os/<path>` SPA route (deep links 404'd). Server `applet` emission (A), doctype-view applet, Scripts still deferred |
+| Applet loader (B) ✅ | new `src/brokers/{vue,frappe-ui,api}.ts`, `preset/applet.js`; `vite.config.js` (`osImportMap()` mode-aware import map + `preserveEntrySignatures:'strict'` + broker entries), `store/registry.ts` (`assetUrl` branch + `loadApplet` + `erp-hello`), `App.vue` + `types/frappe-ui.d.ts` (`ToastProvider`), `frappe/hooks.py` (`/os/<path>` route), `package.json` (applet scripts); new `apps/erpnext/erpnext/os-applets/hello/*` (SFC + preset config + stub-OS harness); `registry.spec.js` +3, new `cypress/e2e/applet-loader.cy.js` | done — separately-built erpnext applet loaded at runtime as native ESM, sharing the host's single Vue/frappe-ui/OS-API via import map + brokers (Strategy 2). Official Build preset shipped; `import(assetUrl)` branch; **5-check Cypress green bar PASSED via a DIRECT deep-link visit on the bench-served build (:8016)**. **also PASSES in the `yarn dev` server** via the mode-aware import map. Mounted `ToastProvider` (ui.notify was a no-op); added the `/os/<path>` SPA route (deep links 404'd). Server `applet` emission (A) now done (next row); doctype-view applet, Scripts still deferred |
+| Server applet emission (A) ✅ | `frappe/www/os.py` (`_applet_contributions`/`get_registry`), `erpnext/erpnext/hooks.py` (`os_applets`), `frappe-os/src/store/registry.ts` (`FIRST_PARTY` ⊕ server fold; `erp-hello` removed from the bundled map); `registry.spec.js` | done — apps declare applets via the `os_applets` hook `{appletId,label,fileName,minOsApi?}`; the server projects one `type:'applet'` contribution each with `assetUrl=/assets/{app}/os-applets/{fileName}` (installed OS apps only); the client folds them into `ix.applets` at boot. The hardcoded `APPLETS` map is retired — `erp-hello` arrives from erpnext's hook. doctype-view applet (`DoctypeViewPayload.appletId`, now unblocked) + Scripts (ADR-0006) still deferred |
 ```
