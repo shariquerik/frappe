@@ -9,12 +9,12 @@ import { Button, Avatar } from "frappe-ui";
 import { useOS } from "@/store";
 import { OS_KEY, tryGetOsApi } from "@/os-api";
 import { resolveApplet as resolveOsApplet } from "@/store/registry";
-import DocView from "@/components/DocView.vue";
+import { DoctypeView } from "@/components/Views";
 import { SettingsDialog } from "@/components/Settings";
 import StatusPill from "@/components/StatusPill.vue";
 import { windowRole } from "@/surface";
-import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/types";
-import type { Crumb, DocProps } from "./types";
+import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface, ViewProps } from "@/types";
+import type { Crumb } from "./types";
 
 const props = defineProps<{ win: OsWindow }>();
 const os = useOS();
@@ -155,23 +155,23 @@ function openAppSettings() {
 	os.openSettings(s.value.appId!);
 }
 
-// doc props for DocView (DocView fetches its own list/doc/field-schema from the store)
-const docProps = computed<DocProps>(() => {
+// view props for DoctypeView (each view fetches its own list/doc/field-schema from the store)
+const viewProps = computed<ViewProps>(() => {
 	if (role.value === "record") {
 		const dt = s.value.doctype!;
 		return {
-			doc: { kind: "form", doctype: dt, recordName: s.value.recordName },
+			doctype: dt,
+			view: "form",
+			recordName: s.value.recordName,
 			meta: os.getMeta(dt),
 			presence: os.presenceFor(s.value).map((p) => ({ label: p.label })),
 		};
 	}
 	const dt = s.value.doctype!;
 	return {
-		doc: {
-			kind: mode.value === "form" ? "form" : "list",
-			doctype: dt,
-			recordName: s.value.recordName,
-		},
+		doctype: dt,
+		view: mode.value,
+		recordName: s.value.recordName,
 		meta: dt ? os.getMeta(dt) : null,
 		presence: os.presenceFor(s.value).map((p) => ({ label: p.label })),
 		onOpen: (d, name) => os.openRecordInline(props.win.id, d, name),
@@ -179,7 +179,7 @@ const docProps = computed<DocProps>(() => {
 		onCreated: (d, name) => os.openRecordInline(props.win.id, d, name),
 	};
 });
-const barPresence = computed(() => docProps.value.presence);
+const barPresence = computed(() => viewProps.value.presence);
 
 // dashboard data
 const greeting = computed(() => "Good afternoon, " + (os.state.userName || "Faris").split(" ")[0]);
@@ -592,7 +592,7 @@ const team = computed(() => {
 						</div>
 					</div>
 					<!-- LIST / FORM -->
-					<DocView v-else v-bind="docProps" />
+					<DoctypeView v-else v-bind="viewProps" />
 				</div>
 			</div>
 		</template>
@@ -665,7 +665,7 @@ const team = computed(() => {
 				<span class="flex-1"></span>
 			</div>
 			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-				<DocView v-bind="docProps" />
+				<DoctypeView v-bind="viewProps" />
 			</div>
 		</template>
 

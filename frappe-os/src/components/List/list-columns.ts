@@ -19,7 +19,7 @@ export function toListViewColumns(cols: ListColumn[] = []): ListViewColumn[] {
   }))
 }
 
-// Classify one cell value. Mirrors the old DocView `cellFor`: em-dash for empty values,
+// Classify one cell value. Mirrors the original `cellFor`: em-dash for empty values,
 // status → themed pill, avatar → label, primary → emphasized, else plain text.
 export function cellKind(
   value: unknown,

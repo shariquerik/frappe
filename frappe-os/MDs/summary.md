@@ -59,9 +59,13 @@ A `programmatic`/`restoring` guard pair breaks the focus→push→restore loop �
   `route-map.ts` — pure focus↔URL logic (`pathForFocus`/`focusSig`/`applyRoute`), unit-tested.
   `router.ts` — empty catch-all route. `types.ts` — shared store/window types.
 - `App.vue` — desktop root (wallpaper, icons, windows, menu bar, dock, overlays, global keys).
-- `components/` — `OSWindow` (renders all 3 window types + chrome), `DocView` (live list/form,
-  self-fetching, editable Save/New), `SettingsDialog` (settings two-pane body), `MenuBar`,
-  `Dock` (with window chooser), `CommandPalette`, `WallpaperPicker`, `StatusPill`.
+- `components/` — `OSWindow` (renders all 3 window types + chrome); `Views/` (the view seam:
+  `DoctypeView` resolves a doctype's active view to a component via `registry.ts`'s
+  `resolveView` — builtin `list`/`form` from a `BUILTIN_VIEWS` map, applet-backed views via
+  `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table) and `Form/` (`OSForm`
+  editable record screen) — the self-fetching builtin views, each with Save/New; `Settings`
+  (settings two-pane body), `MenuBar`, `Dock` (with window chooser), `CommandPalette`,
+  `WallpaperPicker`, `StatusPill`.
 - `index.css` — frappe-ui style + Tailwind. Backend host page: `frappe/www/os.{py,html}`.
 
 ## Tests

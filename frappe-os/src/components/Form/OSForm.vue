@@ -3,7 +3,7 @@
 // schema (loadFieldMeta) and the live doc (loadDoc), projects a sectioned FormLayout via the
 // pure buildFormLayout (./layout), and writes through Save (saveDoc) / Create (createDoc).
 // Display config (label, title/status fields, themes) comes from the curated `meta` prop;
-// the record and field schema are live. DocView renders this for its form branch.
+// the record and field schema are live. DoctypeView resolves this as the 'form' view.
 import { ref, computed, watch } from 'vue'
 import { Button, Avatar, Dropdown } from 'frappe-ui'
 import { FormLayout } from '@framework/ui/FormLayout'
@@ -11,20 +11,15 @@ import StatusPill from '@/components/StatusPill.vue'
 import { useOS } from '@/store'
 import { buildFormLayout } from './layout'
 import type { SchemaField } from './types'
-import type { DocViewDoc, DoctypeMeta } from '@/types'
+import type { ViewProps } from '@/types'
 
-const props = withDefaults(defineProps<{
-  doc: DocViewDoc // { kind:'form', doctype, recordName }
-  meta?: DoctypeMeta | null // curated display config (getMeta)
-  presence?: { label: string }[]
-  onCreated?: (doctype: string, name: string) => void // after create
-}>(), {
+const props = withDefaults(defineProps<ViewProps>(), {
   presence: () => [],
 })
 
 const os = useOS()
-const doctype = computed(() => props.doc.doctype)
-const isNew = computed(() => !props.doc.recordName || props.doc.recordName === 'new')
+const doctype = computed(() => props.doctype)
+const isNew = computed(() => !props.recordName || props.recordName === 'new')
 
 // ---------- live field schema + permissions ----------
 const fieldMeta = computed(() => (doctype.value ? os.fieldMetaFor(doctype.value) : { loading: false, data: null, error: null }))
@@ -34,12 +29,12 @@ const canWrite = computed(() => !!fieldMeta.value.data?.can_write)
 
 // ---------- live doc ----------
 const docState = computed(() =>
-  doctype.value && props.doc.recordName && !isNew.value
-    ? os.docFor(doctype.value, props.doc.recordName)
+  doctype.value && props.recordName && !isNew.value
+    ? os.docFor(doctype.value, props.recordName)
     : { loading: false, data: null, error: null },
 )
-watch([doctype, () => props.doc.recordName, isNew], () => {
-  if (!isNew.value && doctype.value && props.doc.recordName) os.loadDoc(doctype.value, props.doc.recordName)
+watch([doctype, () => props.recordName, isNew], () => {
+  if (!isNew.value && doctype.value && props.recordName) os.loadDoc(doctype.value, props.recordName)
 }, { immediate: true })
 const record = computed<Record<string, any> | null>(() => (isNew.value ? {} : docState.value.data))
 
@@ -54,7 +49,7 @@ const layout = computed(() => buildFormLayout((fieldMeta.value.data?.fields || [
 
 const formTitle = computed(() => {
   if (isNew.value) return 'New ' + (props.meta?.label || doctype.value)
-  return record.value?.[props.meta?.titleField || ''] || record.value?.name || props.doc.recordName || ''
+  return record.value?.[props.meta?.titleField || ''] || record.value?.name || props.recordName || ''
 })
 const statusValue = computed(() => record.value?.[props.meta?.statusField || ''])
 const statusTheme = computed(() => (props.meta?.statusThemes || {})[statusValue.value] || 'gray')
@@ -85,7 +80,7 @@ async function save() {
     } else {
       const changes: Record<string, unknown> = {}
       dirtyFields.value.forEach((k) => { changes[k] = formDoc.value[k] })
-      await os.saveDoc(doctype.value!, props.doc.recordName!, changes)
+      await os.saveDoc(doctype.value!, props.recordName!, changes)
     }
   } catch (e) {
     saveError.value = (e as Error).message

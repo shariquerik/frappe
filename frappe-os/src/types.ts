@@ -181,7 +181,7 @@ export interface DoctypeMeta {
   listColumns?: ListColumn[]
   // Optional curated list "saved views" chips. None of the current curated metas
   // set this, so the list falls back to a single "All" chip; typed here so the
-  // DocView projection that reads it stays checked.
+  // OSList projection that reads it stays checked.
   savedViews?: { label: string; count?: number }[]
 }
 
@@ -198,12 +198,20 @@ export interface DoctypeViewPayload {
   defaults?: Record<string, unknown>
 }
 
-// What DocView renders: a list or a single record. Assembled by OSWindow from the
-// focused window's view; `recordName` is absent/`'new'` for a blank create form.
-export interface DocViewDoc {
-  kind: 'list' | 'form'
+// The uniform prop bundle every view component (builtin OSList/OSForm or an applet-backed
+// custom view) receives from DoctypeView: the doctype + active view name + optional record,
+// the curated display config, viewer presence, and the OS navigation callbacks. Assembled by
+// OSWindow from the focused window's surface; `recordName` is absent/`'new'` for a blank
+// create form. A view component declares the whole bundle and reads only what it needs.
+export interface ViewProps {
   doctype: string
+  view: BuiltinView
   recordName?: string | null
+  meta: DoctypeMeta | null
+  presence: { label: string }[]
+  onOpen?: (doctype: string, name: string) => void // open a record (list → form)
+  onNew?: (doctype: string) => void // start a blank create form
+  onCreated?: (doctype: string, name: string) => void // after a create succeeds
 }
 
 // ── Data layer (api.ts) ────────────────────────────────────────────────────────

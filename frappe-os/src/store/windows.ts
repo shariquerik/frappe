@@ -84,7 +84,7 @@ function navFocus(winId: string, surface: Surface) {
 export const openList = (winId: string, dt: string) => navFocus(winId, listSurface(dt))
 export const openRecordInline = (winId: string, dt: string, name: string) => navFocus(winId, formSurface(dt, name))
 // A blank create form. `'new'` is the sentinel record name: the form renders empty
-// and DocView creates the doc on Save, then navigates to the real record.
+// and OSForm creates the doc on Save, then navigates to the real record.
 export const openNew = (winId: string, dt: string) => navFocus(winId, formSurface(dt, 'new'))
 export const goHome = (winId: string) => navFocus(winId, dashboardSurface(windowAppId(winId)))
 
