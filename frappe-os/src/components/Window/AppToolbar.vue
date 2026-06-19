@@ -3,9 +3,11 @@
 // toggle, back button, the breadcrumb trail, and the right-hand actions (pop-out, search,
 // presence avatars, app settings). Derives everything from the window's surface via the
 // store. Styled on frappe-ui tokens; Button/Avatar come from frappe-ui.
-import { computed } from "vue";
+import { computed, inject, shallowRef } from "vue";
 import { Button, Avatar } from "frappe-ui";
+import StatusPill from "@/components/StatusPill.vue";
 import { useOS } from "@/desktop";
+import { TOOLBAR_SLOT } from "./toolbar";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see summary.md gotcha).
 import type { OsWindow, BuiltinSurface } from "@/surface/types";
@@ -23,12 +25,34 @@ const canBack = computed(() => !!(props.win.back && props.win.back.length));
 function back() {
 	os.winBack(props.win.id);
 }
-function popOutCurrent() {
-	os.popOut(s.value.doctype!, s.value.recordName!);
-}
 function openAppSettings() {
 	os.openSettings(s.value.appId!);
 }
+
+// The view body teleports its primary actions ("New"/"Save") into this zone, so the merged
+// bar carries them alongside the breadcrumb instead of a second toolbar underneath.
+const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null));
+
+// The live record count, shown as a badge on the doctype crumb in list mode (the old list
+// toolbar's count moved here when the two bars merged). Null until the list view loads it.
+const listCount = computed(() => {
+	if (mode.value !== "list" || !s.value.doctype) return null;
+	const c = os.countFor(s.value.doctype);
+	return c.data == null ? null : c.data;
+});
+
+// The record's status, shown as a pill next to the form breadcrumb (the form's own title row
+// merged up here, mirroring the list count). Read from the live record + curated meta themes.
+const formStatus = computed(() => {
+	if (mode.value !== "form" || !s.value.doctype || s.value.recordName === "new") return null;
+	const meta = os.getMeta(s.value.doctype);
+	const field = meta?.statusField;
+	if (!field) return null;
+	const record = os.recordObj(s.value.doctype, s.value.recordName!);
+	const value = record?.[field];
+	if (value == null) return null;
+	return { value, theme: (meta?.statusThemes || {})[value] || "gray" };
+});
 
 const crumbs = computed(() => {
 	const out: Crumb[] = [];
@@ -98,18 +122,19 @@ const barPresence = computed(() => os.presenceFor(s.value).map((p) => ({ label: 
 				>{{ cr.label }}</span
 			>
 		</template>
+		<span
+			v-if="listCount != null"
+			class="ml-0.5 flex-shrink-0 rounded-full bg-surface-gray-2 px-[7px] py-px text-[12px] text-ink-gray-4"
+			>{{ listCount }}</span
+		>
 	</div>
+	<StatusPill
+		v-if="formStatus"
+		:value="formStatus.value"
+		:theme="formStatus.theme"
+		class="flex-shrink-0"
+	/>
 	<div class="flex-1"></div>
-	<Button
-		v-if="mode === 'form'"
-		variant="subtle"
-		size="sm"
-		label="Pop out"
-		@click="popOutCurrent"
-		@pointerdown.stop
-	>
-		<template #prefix><span class="lucide-external-link size-[13px]"></span></template>
-	</Button>
 	<Button variant="subtle" size="sm" title="Search" @click="os.openPalette()" @pointerdown.stop>
 		<span class="lucide-search size-[14px]"></span>
 	</Button>
@@ -123,6 +148,8 @@ const barPresence = computed(() => os.presenceFor(s.value).map((p) => ({ label: 
 			class="-ml-1.5 shadow-[0_0_0_2px_var(--surface-gray-1)]"
 		/>
 	</div>
+	<!-- view body teleports its primary actions (New / Save / record menu) into here -->
+	<div ref="toolbarSlot" class="flex flex-shrink-0 items-center gap-1.5" @pointerdown.stop></div>
 	<Button
 		variant="subtle"
 		size="sm"

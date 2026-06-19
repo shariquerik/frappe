@@ -4,11 +4,12 @@
 // pure buildFormLayout (./layout), and writes through Save (saveDoc) / Create (createDoc).
 // Display config (label, title/status fields, themes) comes from the curated `meta` prop;
 // the record and field schema are live. DoctypeView resolves this as the 'form' view.
-import { ref, computed, watch } from 'vue'
+import { ref, computed, inject, shallowRef, watch } from 'vue'
 import { Button, Avatar, Dropdown } from 'frappe-ui'
 import { FormLayout } from '@framework/ui/FormLayout'
 import StatusPill from '@/components/StatusPill.vue'
 import { useOS } from '@/desktop'
+import { TOOLBAR_SLOT } from '@/components/Window/toolbar'
 import { buildFormLayout } from './layout'
 import type { SchemaField } from './types'
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
@@ -92,17 +93,38 @@ async function save() {
 }
 
 const saveLabel = computed(() => (saving.value ? 'Saving…' : isNew.value ? 'Create' : 'Save'))
-const formMenu = [
+
+// The chrome bar's action zone: when present (app window with a breadcrumb), Save + the record
+// menu teleport up into it and the form's own breadcrumb/presence are dropped as duplicates.
+// Null for a popped-out record window — the form then keeps its full inline header.
+const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
+
+function popOut() {
+  os.popOut(doctype.value!, props.recordName!)
+}
+// Pop-out only makes sense from an inline (chrome-backed) form; a record window is already out.
+const formMenu = computed(() => [
+  ...(toolbarSlot.value ? [{ label: 'Pop out', onClick: popOut }] : []),
   { label: 'Duplicate', onClick: () => {} },
   { label: 'Print', onClick: () => {} },
   { label: 'Delete', onClick: () => {} },
-]
+])
 </script>
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- header -->
-    <div class="flex flex-shrink-0 items-center gap-2.5 border-b border-outline-gray-1 px-4 py-[11px]">
+    <!-- merged: breadcrumb, title, status pill and actions all ride the chrome bar, so the form
+         has no header strip of its own — only the actions teleport up. -->
+    <Teleport v-if="toolbarSlot" :to="toolbarSlot">
+      <Dropdown v-if="!isNew" :options="formMenu">
+        <Button variant="subtle" size="sm">
+          <span class="lucide-ellipsis size-[15px]"></span>
+        </Button>
+      </Dropdown>
+      <Button v-if="editable" variant="solid" size="sm" :label="saveLabel" :loading="saving" :disabled="!canSave" @click="save" />
+    </Teleport>
+    <!-- chromeless (popped-out record window): full inline header -->
+    <div v-else class="flex flex-shrink-0 items-center gap-2.5 border-b border-outline-gray-1 px-4 py-[11px]">
       <div class="flex min-w-0 flex-col gap-0.5">
         <div class="flex items-center gap-1.5 text-[11px] text-ink-gray-4">
           <span>{{ meta?.label }}</span>

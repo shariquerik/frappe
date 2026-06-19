@@ -13,6 +13,7 @@ import { DoctypeView } from "@/components/Views";
 import { SettingsDialog } from "@/components/Settings";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
+import { TOOLBAR_SLOT } from "./toolbar";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
 import { windowRole } from "@/surface";
@@ -38,6 +39,13 @@ const applet = computed(() => surf.value as AppletSurface);
 // importing the store. Skipped offline (uninitialised seam) — no applet window exists then.
 const osApi = tryGetOsApi();
 if (osApi) provide(OS_KEY, osApi);
+
+// The chrome bar's action zone: AppToolbar binds this to a DOM node, the view body teleports
+// its primary actions (list "New", form "Save"/menu) into it — one merged bar, not two. Stays
+// null for windows without an AppToolbar (record/settings/applet), so those views fall back to
+// rendering their actions inline (see TOOLBAR_SLOT).
+const toolbarSlot = shallowRef<HTMLElement | null>(null);
+provide(TOOLBAR_SLOT, toolbarSlot);
 
 // Resolve the component on demand (ADR-0009 async-by-id); shallowRef keeps it non-reactive.
 const resolved = shallowRef<Component | null>(null);

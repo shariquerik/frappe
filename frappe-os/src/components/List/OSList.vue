@@ -4,10 +4,11 @@
 // the table over OSListView. Display config (label/icon/columns/saved views) comes from the
 // curated `meta` prop; the rows, count and create-permission are live. Symmetric with
 // Form/OSForm — both are full view components DoctypeView resolves and renders.
-import { computed, watch } from 'vue'
-import { Button, Avatar } from 'frappe-ui'
+import { computed, inject, shallowRef, watch } from 'vue'
+import { Button } from 'frappe-ui'
 import OSListView from './OSListView.vue'
 import { useOS } from '@/desktop'
+import { TOOLBAR_SLOT } from '@/components/Window/toolbar'
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
 // resolver — see DoctypeView.vue).
 import type { ViewProps } from '@/config/types'
@@ -33,31 +34,23 @@ const total = computed(() => (countState.value.data == null ? records.value.leng
 watch(doctype, (dt) => { if (dt) { os.loadList(dt); os.loadCount(dt) } }, { immediate: true })
 
 const savedViews = computed(() => props.meta?.savedViews || [{ label: 'All' }])
+
+// The window chrome's action zone: "New" teleports up next to the breadcrumb, so the list's
+// title/count/presence no longer need a toolbar bar of their own (count rides the breadcrumb,
+// presence rides the chrome). Filter/Sort drop down into the saved-view row below.
+const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
 </script>
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- toolbar -->
-    <div class="flex flex-shrink-0 items-center gap-2.5 border-b border-outline-gray-1 px-[14px] py-[9px]">
-      <span class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md bg-surface-gray-3 text-ink-gray-7">
-        <span :class="meta?.icon" class="size-[14px]"></span>
-      </span>
-      <span class="font-semibold text-[14px] text-ink-gray-8">{{ meta?.label }}</span>
-      <span class="rounded-full bg-surface-gray-2 px-[7px] py-px text-[12px] text-ink-gray-4">{{ total }}</span>
-      <div class="flex-1"></div>
-      <div class="mr-1 flex items-center">
-        <Avatar v-for="(p, i) in presence" :key="i" :label="p.label" size="sm"
-          :style="{ marginLeft: i ? '-6px' : '0', boxShadow: '0 0 0 2px var(--surface-base)' }" :title="p.label + ' is viewing'" />
-      </div>
-      <Button variant="subtle" size="sm" label="Filter">
-        <template #prefix><span class="lucide-filter size-[13px]"></span></template>
-      </Button>
-      <Button variant="subtle" size="sm" label="Sort" />
+    <!-- "New" rides the window chrome's action zone (next to the breadcrumb); inline fallback
+         only for a chromeless window. -->
+    <Teleport :to="toolbarSlot" :disabled="!toolbarSlot">
       <Button v-if="canCreate" variant="solid" size="sm" label="New" @click="onNew?.(doctype)">
         <template #prefix><span class="lucide-plus size-[14px]"></span></template>
       </Button>
-    </div>
-    <!-- saved view chips -->
+    </Teleport>
+    <!-- saved view chips + filter/sort -->
     <div class="flex flex-shrink-0 items-center gap-1.5 border-b border-outline-gray-1 bg-surface-gray-1 px-[14px] py-[7px]">
       <span class="lucide-bookmark size-[13px] text-ink-gray-4 mr-0.5"></span>
       <button v-for="(v, i) in savedViews" :key="i"
@@ -69,10 +62,10 @@ const savedViews = computed(() => props.meta?.savedViews || [{ label: 'All' }])
         {{ v.label }}<span v-if="v.count != null" class="ml-[5px] opacity-60">{{ v.count }}</span>
       </button>
       <div class="flex-1"></div>
-      <span v-if="listState.loading" class="inline-flex items-center gap-1.5 text-[11px] text-ink-gray-5">Loading…</span>
-      <span v-else class="inline-flex items-center gap-1.5 text-[11px] text-ink-green-7">
-        <span class="h-1.5 w-1.5 rounded-full bg-surface-green-5"></span>Live
-      </span>
+      <Button variant="subtle" size="sm" label="Filter">
+        <template #prefix><span class="lucide-filter size-[13px]"></span></template>
+      </Button>
+      <Button variant="subtle" size="sm" label="Sort" />
     </div>
     <!-- table -->
     <OSListView
