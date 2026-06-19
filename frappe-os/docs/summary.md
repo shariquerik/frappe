@@ -69,7 +69,9 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `config/
   `pathForFocus`/`focusSig`/`applyRoute`, unit-tested), `router.ts` (empty catch-all route).
 - `main.ts` — URL↔focus bridge wiring (boot, guards, watchers) + `/app/...`→`/os/...` interop.
 - `App.vue` — desktop root (wallpaper, icons, windows, menu bar, dock, overlays, global keys).
-- `components/` — `OSWindow` (renders all 3 window types + chrome); `Views/` (the view seam:
+- `components/` — `Window/` (`OSWindow` is a thin dispatcher: geometry + window-type branch,
+  composing `WindowChrome` (bar + traffic lights), `AppToolbar`/`AppSidebar` (app-window nav),
+  and `AppDashboard` (stats/recents/team); each child takes only `win`); `Views/` (the view seam:
   `DoctypeView` resolves a doctype's active view to a component via `registry.ts`'s
   `resolveView` — builtin `list`/`form` from a `BUILTIN_VIEWS` map, applet-backed views via
   `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table) and `Form/` (`OSForm`

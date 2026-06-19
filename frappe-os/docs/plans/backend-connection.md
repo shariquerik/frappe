@@ -8,8 +8,8 @@ new session. Read `summary.md` first for the app's mental model.
 
 **Branch:** work is on the `frappe-os` branch (in `apps/frappe`), based on the
 **latest `develop`** (remote is `upstream`, frappe/frappe). The `/x` shell source is
-NOT on this branch — its referenced files are frozen in `shell-reference/` (see that
-folder's README). frappe-os depends on `@framework/ui` (`ui/vite` for the build,
+NOT on this branch (the patterns it lent are now ported into the live `frappe-os`
+files; see the Reference section below). frappe-os depends on `@framework/ui` (`ui/vite` for the build,
 `FormLayout` for the form view); both are present on current `develop`. If the build
 ever fails on a missing `@framework/ui` export, the local `develop` is stale —
 `git fetch upstream develop` and rebase (do NOT switch to framework2).
@@ -110,24 +110,23 @@ follow `apps/frappe/CLAUDE.md` (small functions ~10 lines, files 100–300 lines
 
 ## Reference: how the `/x` shell does it (copy these patterns)
 
-> **Note:** `frappe-os` will move to a branch based on `develop`, where
-> `apps/frappe/shell` does **not** exist. Frozen copies of every file referenced
-> below live in `frappe-os/MDs/shell-reference/` (see its `README.md`). Read those
-> snapshots after the branch switch; the `apps/frappe/...` paths below are the
-> originals on `framework2`.
+> **Note:** these patterns came from `apps/frappe/shell` (the `/x` shell) on the
+> `framework2` branch; `frappe-os` lives on a branch based on `develop`, where
+> `apps/frappe/shell` does **not** exist. The patterns are now fully ported into the
+> live `frappe-os` files, so this section is historical.
 
-- `apps/frappe/shell/vite.config.js` (snapshot: `shell-reference/vite.config.js`) — `frappeui({ frappeProxy:true, jinjaBootData:true,
+- `apps/frappe/shell/vite.config.js` — `frappeui({ frappeProxy:true, jinjaBootData:true,
   buildConfig:{ outDir: ../frappe/public/shell, baseUrl:/assets/frappe/shell/,
   indexHtmlPath: ../frappe/www/x.html } })` + `frameworkUI()` + the optimizeDeps
   include/exclude list (already mirrored in `frappe-os/vite.config.js`).
-- `apps/frappe/shell/src/api.js` (snapshot: `shell-reference/api.js`) — reads via whitelisted GET (`frappe.client.get_list`,
+- `apps/frappe/shell/src/api.js` — reads via whitelisted GET (`frappe.client.get_list`,
   `/api/resource/<dt>/<name>`); writes via REST `PUT`/`POST` with
   `X-Frappe-CSRF-Token`. **Port this file almost verbatim.**
-- `apps/frappe/frappe/www/x.py` (snapshot: `shell-reference/x.py`) — host page `get_context` (Guest → redirect to
+- `apps/frappe/frappe/www/x.py` — host page `get_context` (Guest → redirect to
   `/login`), `get_boot()` (user + csrf + registry), `@whitelist boot()` for the dev
   server, `get_doctype_meta(doctype)` (lean field descriptors, perms). **Template for
   `os.py`.**
-- `apps/frappe/frappe/www/x.html` (snapshot: `shell-reference/x.html`) — `window.csrf_token` + the `boot` injection loop.
+- `apps/frappe/frappe/www/x.html` — `window.csrf_token` + the `boot` injection loop.
 - Shell router: `createWebHistory('/x')`, hardcoded mount base. For OS keep
   `createWebHistory('/os')` but let the frappe-ui plugin own the Vite base (drop the
   manual `base:'/os/'` + `os-base-slash-redirect` dev middleware in vite.config.js).

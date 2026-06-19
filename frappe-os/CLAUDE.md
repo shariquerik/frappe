@@ -2,7 +2,7 @@
 
 Standalone Vue 3 macOS-style desktop shell for Frappe, served at `/os` and wired to the
 live backend (lists/forms/counts from the REST/whitelisted API; curated icons/colors/card
-defs in `src/config/*`). Read **`MDs/summary.md`** first — it's the full orientation (mental
+defs in `src/config/*`). Read **`docs/summary.md`** first — it's the full orientation (mental
 model, store, routing, file map, gotchas). This file is just the commands and the rules.
 
 ## Commands
@@ -50,6 +50,6 @@ yarn cypress       # Cypress interactive runner
 ## Rules
 - Keep the URL projection pure and in `routing/route-map.ts`; `main.ts` is wiring only.
 - Changing the window-id scheme or URL projection touches several places at once — see the
-  "Conventions & gotchas" list in `MDs/summary.md`.
+  "Conventions & gotchas" list in `docs/summary.md`.
 - Inherits the bench-wide code guidelines (small functions, prefer reuse, frappe-ui tokens
   for styling) from the parent `CLAUDE.md` files.

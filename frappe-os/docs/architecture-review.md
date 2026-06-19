@@ -2,6 +2,15 @@
 
 _Reviewed: 2026-06-17. Scope: `frappe-os/src`, against `apps/frappe/CLAUDE.md` guidelines._
 
+> **Status as of 2026-06-19:** finding #3 is **resolved** — `OSWindow.vue` was split (682 →
+> 157-line dispatcher) into `WindowChrome` / `AppToolbar` / `AppSidebar` / `AppDashboard`
+> under `components/Window/`; every file is now within the 100–300 guideline. Still open:
+> the data layer duplicates frappe-ui resources / `useDoctypeLayout` (zero usage), and the
+> hardcoded "Faris" demo data persists in `MenuBar.vue` + `AppDashboard.vue` (moved verbatim
+> from `OSWindow.vue` during the split, flagged in-file). File paths below predate the
+> ADR-0013 feature-folder rollout (`store/`→`desktop/`, flat `components/`→feature folders);
+> the open findings hold, the paths are as-reviewed.
+
 > **Context:** Frappe OS is being built as the **new frontend for the framework**, not a
 > throwaway POC. The findings below are weighted accordingly — data-layer and reuse
 > decisions that would be cosmetic in a prototype are *foundational* here, because every
@@ -19,7 +28,9 @@ Three things to get right **before** this becomes the framework's frontend:
 1. The data layer is hand-rolled and duplicates what frappe-ui already ships.
 2. `@framework/ui` is barely used — the package that exists to render doctype forms is
    imported for one component and then bypassed.
-3. `OSWindow.vue` (629 lines) is the one hard file-size violation and mixes 4 concerns.
+3. ~~`OSWindow.vue` (629 lines) is the one hard file-size violation and mixes 4 concerns.~~
+   **Resolved** — split into a thin dispatcher + `WindowChrome`/`AppToolbar`/`AppSidebar`/
+   `AppDashboard` (see §3 item 1).
 
 ---
 
@@ -72,7 +83,7 @@ call — worth a one-line note that `ListView` was considered and rejected so no
 |---|---|---|---|
 | 1 | Clean over clever | ✅ | Readable, well-commented |
 | 3 | Functions ~10 lines | ⚠️ | Mostly; large computeds in `OSWindow.vue`/`DocView.vue` |
-| 4 | Files 100–300 lines | ❌ | **`OSWindow.vue` = 629** — 2× over. All else in range |
+| 4 | Files 100–300 lines | ✅ | `OSWindow.vue` split (was 629) — all files now in range |
 | 5 | <15 files per folder | ✅ | `components/` 9, `store/` 8, `config/` 3 |
 | 6 | No abbreviations | ⚠️ | Terse locals: `g`, `v`, `k`, `tog`, `rd`, `rm`, `st` |
 | 7 | Standard API | ❌ | Custom data layer vs frappe-ui resources (Gap A) |
@@ -82,17 +93,19 @@ call — worth a one-line note that `ListView` was considered and rejected so no
 | 11 | Minimum app, iterate | ✅ | Clear phased build |
 
 Folder layout is clean and conventional (`store/` slices, `config/` display data,
-`components/`, `MDs/` docs, `types/` shims). The store-slice split exists specifically to
+`components/`, `docs/`, `types/` shims). The store-slice split exists specifically to
 satisfy the file-size rule — good instinct that `OSWindow.vue` didn't receive.
 
 ---
 
 ## 3. Architecture improvements (ranked)
 
-1. **Split `OSWindow.vue` (629 → ~3×150).** It renders all three window types *plus* the
-   full dashboard inline. Extract `WindowChrome.vue` (traffic lights + title bar, repeated
-   3×), `AppDashboard.vue` (the stats/recents/team grid), leaving `OSWindow` a thin
-   dispatcher. Highest-value, lowest-risk, and the only hard guideline violation.
+1. ~~**Split `OSWindow.vue` (629 → ~3×150).**~~ **Done (2026-06-19).** It rendered all three
+   window types *plus* the full dashboard inline. Now a 157-line dispatcher (geometry +
+   window-type branch) composing `WindowChrome.vue` (bar wrapper + traffic lights, was
+   repeated 3×), `AppToolbar.vue` (app-window nav), `AppSidebar.vue` (module nav + counts),
+   and `AppDashboard.vue` (stats/recents/team grid). Each child takes only `win` and derives
+   its surface via `useOS()`. All files now within 100–300.
 
 2. **Adopt frappe-ui resources incrementally.** Don't rip out `api.ts` wholesale — route
    *new* data paths through `createListResource`/`useDoc`. Start with the form path in
@@ -102,23 +115,12 @@ satisfy the file-size rule — good instinct that `OSWindow.vue` didn't receive.
 3. **Drop the custom `get_doctype_meta` backend method** if `useDoctypeLayout` fetches meta
    itself — fewer bespoke whitelisted endpoints to own.
 
-4. **Remove hard-coded demo data from production components.** `OSWindow.vue` hardcodes the
-   `team` list and a "Faris" greeting; `MenuBar.vue` hardcodes `userName = 'Faris Ansari'`.
+4. **Remove hard-coded demo data from production components.** `AppDashboard.vue` (moved from
+   `OSWindow.vue` in the §3-item-1 split) hardcodes the `team` list and a "Faris" greeting;
+   `MenuBar.vue` hardcodes `userName = 'Faris Ansari'`.
    These must come from boot/session, not be baked into render functions — especially as
    the framework frontend.
 
 5. **Minor:** rename single-letter template locals (`g`, `v`) for #6; reassess whether the
    `recordsFor`/`recordObj` sync getters (header calls them a "compat bridge") are still
    needed now that loads are live.
-
----
-
-## 4. Doc staleness — fixed
-
-`MDs/summary.md` and `frappe-os/CLAUDE.md` described the codebase as `.js` and referenced
-"Phase 4 / synchronous mock"; the `src/` tree is now fully `.ts`/`.vue` and data is live.
-Both docs were refreshed on 2026-06-17.
-
-**Still carrying stale comments inside source** (`store/records.ts`, `route-map.ts`,
-`config/*.ts`, `store/windows.ts`): "Phase 4 wires loads", "compat bridge", "former
-synchronous mock". Worth a cleanup pass — left untouched for now.
