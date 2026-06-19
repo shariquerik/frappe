@@ -12,6 +12,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+    AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
+    AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']
     CommandPalette: typeof import('./src/components/CommandPalette/CommandPalette.vue')['default']
     Dock: typeof import('./src/components/Dock/Dock.vue')['default']
     DoctypeView: typeof import('./src/components/Views/DoctypeView.vue')['default']
@@ -26,11 +29,15 @@ declare module 'vue' {
     SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
     StatusPill: typeof import('./src/components/StatusPill.vue')['default']
     WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
+    WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
   }
 }
 
 // For TSX support
 declare global {
+  const AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+  const AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
+  const AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']
   const CommandPalette: typeof import('./src/components/CommandPalette/CommandPalette.vue')['default']
   const Dock: typeof import('./src/components/Dock/Dock.vue')['default']
   const DoctypeView: typeof import('./src/components/Views/DoctypeView.vue')['default']
@@ -45,4 +52,5 @@ declare global {
   const SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
   const StatusPill: typeof import('./src/components/StatusPill.vue')['default']
   const WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
+  const WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
 }
