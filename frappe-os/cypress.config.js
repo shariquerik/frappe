@@ -1,18 +1,25 @@
 import { defineConfig } from 'cypress'
 
-// E2E runs against the live dev server (yarn dev, port 5273). The app is mounted
-// under /os/, so specs visit '/os/...'. Start the server before `yarn e2e`.
-//
-// REQUIRES A LOGGED-IN BENCH. Now that the backend is wired up, `yarn dev` proxies
-// /api to the local bench and boot.js fetches the whitelisted boot() through it; a
-// Guest (or no bench running) means no boot payload and the app cannot mount. Run a
-// bench (site f2.localhost on :8016) and be logged in before `yarn e2e`. These specs
-// are therefore not part of an unattended/headless gate until that bench exists.
+// E2E runs against a LIVE, LOGGED-IN bench (site f2.localhost) — Frappe boot() refuses
+// Guest, so the app can't mount otherwise. The session is established automatically by
+// cypress/support/e2e.js, so a plain `yarn e2e` works with no extra flags. Prereqs:
+//   - routing.cy.js          → needs `yarn dev` up (proxies /api to the bench). The dev
+//     server binds f2.localhost:8096 (the frappe-ui plugin's port); the `f2.localhost`
+//     host — not `localhost` — is what lets the proxy resolve the multitenant site.
+//   - applet-loader.cy.js    → needs the BUILT host shipped to the bench and served at
+//     f2.localhost:8016 (`yarn build && yarn build-applet …`); it targets that origin
+//     directly via `env.origin` and logs in itself.
+// Override the bench password for a different site with `CYPRESS_admin_password=…`.
 export default defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5273',
-    supportFile: false,
+    baseUrl: 'http://f2.localhost:8096',
+    supportFile: 'cypress/support/e2e.js',
     specPattern: 'cypress/e2e/**/*.cy.js',
     video: false,
+    env: {
+      // Local dev bench admin credentials / the bench-served origin for applet-loader.
+      admin_password: 'admin',
+      origin: 'http://f2.localhost:8016',
+    },
   },
 })
