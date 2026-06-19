@@ -9,6 +9,7 @@ import { Badge, Button } from "frappe-ui";
 import { OS_KEY } from "@/os-api";
 import { formSurface } from "@/surface";
 import type { FrappeDoc } from "@/types";
+import { groupByDueDate, asText, toDateKey, priorityTheme } from "./todo-groups";
 
 const os = inject(OS_KEY);
 
@@ -34,38 +35,10 @@ async function load() {
 }
 onMounted(load);
 
-// Today as a local YYYY-MM-DD so date-only comparisons stay string-lexicographic.
-const today = computed(() => {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-});
-
-// The reason this is an applet, not the generic list: ToDos grouped by due date into
-// Overdue / Today / Upcoming. Undated items fall into Upcoming (nothing is overdue with no
-// date). The justification for D2 — a presentation the generic renderer can't express.
-const groups = computed(() => {
-  const t = today.value;
-  const buckets: Record<string, FrappeDoc[]> = { overdue: [], today: [], upcoming: [] };
-  for (const r of rows.value) {
-    const due = (r.date || "").slice(0, 10);
-    if (due && due < t) buckets.overdue.push(r);
-    else if (due === t) buckets.today.push(r);
-    else buckets.upcoming.push(r);
-  }
-  return [
-    { key: "overdue", label: "Overdue", items: buckets.overdue },
-    { key: "today", label: "Today", items: buckets.today },
-    { key: "upcoming", label: "Upcoming", items: buckets.upcoming },
-  ].filter((g) => g.items.length);
-});
-
-const PRIORITY_THEME: Record<string, string> = { High: "red", Medium: "orange", Low: "gray" };
-
-// ToDo descriptions are stored as HTML; show the plain text for a one-line title.
-function asText(html: string): string {
-  return (html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
+// ToDos grouped by due date into Overdue / Today / Upcoming — the reason this is an applet,
+// not the generic list (a presentation the generic renderer can't express). The bucketing,
+// the plain-text title and the priority theme are pure projections in ./todo-groups.
+const groups = computed(() => groupByDueDate(rows.value, toDateKey(new Date())));
 
 function openTodo(name: string) {
   os?.windows.open(formSurface("ToDo", name));
@@ -106,7 +79,7 @@ async function markDone(name: string) {
           class="flex cursor-pointer items-center gap-3 border-b border-outline-gray-1 px-4 py-2.5 last:border-b-0"
           @click="openTodo(r.name)"
         >
-          <Badge v-if="r.priority" size="sm" :theme="PRIORITY_THEME[r.priority] || 'gray'" :label="r.priority" />
+          <Badge v-if="r.priority" size="sm" :theme="priorityTheme(r.priority)" :label="r.priority" />
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium text-ink-gray-8">
               {{ asText(r.description) || r.name }}

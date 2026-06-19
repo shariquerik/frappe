@@ -241,7 +241,7 @@ interface AppletPayload {
 }
 
 const FIRST_PARTY: Record<string, AppletEntry> = {
-  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/components/MyTodos.vue') },
+  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos') },
 }
 
 // One enumerable applet info row (palette entry points read this).

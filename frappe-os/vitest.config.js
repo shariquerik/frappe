@@ -11,6 +11,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom', // store.hydrate reads localStorage
-    include: ['tests/**/*.spec.js'],
+    // Flat root specs (pure store/route logic) plus specs colocated in a feature folder's
+    // own tests/ dir (e.g. components/ListView/tests) — the feature-folder convention.
+    include: ['tests/**/*.spec.js', 'src/**/*.spec.js'],
   },
 })

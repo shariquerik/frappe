@@ -6,11 +6,11 @@
 import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { ToastProvider } from 'frappe-ui'
 import { useOS } from '@/store'
-import MenuBar from './components/MenuBar.vue'
-import Dock from './components/Dock.vue'
-import OSWindow from './components/OSWindow.vue'
-import CommandPalette from './components/CommandPalette.vue'
-import WallpaperPicker from './components/WallpaperPicker.vue'
+import { MenuBar } from './components/MenuBar'
+import { Dock } from './components/Dock'
+import { OSWindow } from './components/Window'
+import { CommandPalette } from './components/CommandPalette'
+import { WallpaperPicker } from './components/Settings'
 
 const os = useOS()
 const ICON = os.DATA.ICON

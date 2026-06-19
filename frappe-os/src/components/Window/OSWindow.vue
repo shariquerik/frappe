@@ -9,11 +9,12 @@ import { Button, Avatar } from "frappe-ui";
 import { useOS } from "@/store";
 import { OS_KEY, tryGetOsApi } from "@/os-api";
 import { resolveApplet as resolveOsApplet } from "@/store/registry";
-import DocView from "./DocView.vue";
-import SettingsDialog from "./SettingsDialog.vue";
-import StatusPill from "./StatusPill.vue";
+import DocView from "@/components/DocView.vue";
+import { SettingsDialog } from "@/components/Settings";
+import StatusPill from "@/components/StatusPill.vue";
 import { windowRole } from "@/surface";
-import type { BuiltinSurface, AppletSurface, DocViewDoc, DoctypeMeta, Geo, OsWindow, Surface } from "@/types";
+import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/types";
+import type { Crumb, DocProps } from "./types";
 
 const props = defineProps<{ win: OsWindow }>();
 const os = useOS();
@@ -112,11 +113,6 @@ watch(
 	},
 	{ immediate: true },
 );
-interface Crumb {
-	label: string | undefined;
-	clickable: boolean;
-	go?: () => void;
-}
 const crumbs = computed(() => {
 	const out: Crumb[] = [];
 	if (role.value === "record") return out;
@@ -160,14 +156,6 @@ function openAppSettings() {
 }
 
 // doc props for DocView (DocView fetches its own list/doc/field-schema from the store)
-interface DocProps {
-	doc: DocViewDoc;
-	meta: DoctypeMeta | null;
-	presence: { label: string }[];
-	onOpen?: (doctype: string, name: string) => void;
-	onNew?: (doctype: string) => void;
-	onCreated?: (doctype: string, name: string) => void;
-}
 const docProps = computed<DocProps>(() => {
 	if (role.value === "record") {
 		const dt = s.value.doctype!;

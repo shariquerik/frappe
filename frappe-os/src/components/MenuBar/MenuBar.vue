@@ -4,7 +4,7 @@
 // app's logo+name show in the app menu. Keyboard-shortcut chips from the original
 // are omitted — frappe-ui Dropdown items render label + onClick only.
 import { computed } from 'vue'
-import OSDropdown from './OSDropdown.vue'
+import OSDropdown from '@/components/OSDropdown.vue'
 import { useOS } from '@/store'
 import { initials } from '@/config/apps'
 import { windowRole } from '@/surface'

@@ -12,33 +12,35 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    CommandPalette: typeof import('./src/components/CommandPalette.vue')['default']
-    Dock: typeof import('./src/components/Dock.vue')['default']
+    CommandPalette: typeof import('./src/components/CommandPalette/CommandPalette.vue')['default']
+    Dock: typeof import('./src/components/Dock/Dock.vue')['default']
     DocView: typeof import('./src/components/DocView.vue')['default']
-    MenuBar: typeof import('./src/components/MenuBar.vue')['default']
-    MyTodos: typeof import('./src/components/MyTodos.vue')['default']
+    MenuBar: typeof import('./src/components/MenuBar/MenuBar.vue')['default']
     OSDropdown: typeof import('./src/components/OSDropdown.vue')['default']
-    OSWindow: typeof import('./src/components/OSWindow.vue')['default']
+    OSForm: typeof import('./src/components/Form/OSForm.vue')['default']
+    OSListView: typeof import('./src/components/ListView/OSListView.vue')['default']
+    OSWindow: typeof import('./src/components/Window/OSWindow.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SettingsDialog: typeof import('./src/components/SettingsDialog.vue')['default']
+    SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
     StatusPill: typeof import('./src/components/StatusPill.vue')['default']
-    WallpaperPicker: typeof import('./src/components/WallpaperPicker.vue')['default']
+    WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
   }
 }
 
 // For TSX support
 declare global {
-  const CommandPalette: typeof import('./src/components/CommandPalette.vue')['default']
-  const Dock: typeof import('./src/components/Dock.vue')['default']
+  const CommandPalette: typeof import('./src/components/CommandPalette/CommandPalette.vue')['default']
+  const Dock: typeof import('./src/components/Dock/Dock.vue')['default']
   const DocView: typeof import('./src/components/DocView.vue')['default']
-  const MenuBar: typeof import('./src/components/MenuBar.vue')['default']
-  const MyTodos: typeof import('./src/components/MyTodos.vue')['default']
+  const MenuBar: typeof import('./src/components/MenuBar/MenuBar.vue')['default']
   const OSDropdown: typeof import('./src/components/OSDropdown.vue')['default']
-  const OSWindow: typeof import('./src/components/OSWindow.vue')['default']
+  const OSForm: typeof import('./src/components/Form/OSForm.vue')['default']
+  const OSListView: typeof import('./src/components/ListView/OSListView.vue')['default']
+  const OSWindow: typeof import('./src/components/Window/OSWindow.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
-  const SettingsDialog: typeof import('./src/components/SettingsDialog.vue')['default']
+  const SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
   const StatusPill: typeof import('./src/components/StatusPill.vue')['default']
-  const WallpaperPicker: typeof import('./src/components/WallpaperPicker.vue')['default']
+  const WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
 }
