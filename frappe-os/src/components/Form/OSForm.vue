@@ -110,7 +110,7 @@ const formMenu = [
           <span class="text-ink-gray-6">{{ isNew ? 'New' : record?.name }}</span>
         </div>
         <div class="flex items-center gap-2.5">
-          <span class="text-lg font-semibold text-ink-gray-9">{{ formTitle }}</span>
+          <span class="text-md font-semibold text-ink-gray-9">{{ formTitle }}</span>
           <StatusPill v-if="!isNew && statusValue != null" :value="statusValue" :theme="statusTheme" />
         </div>
       </div>
