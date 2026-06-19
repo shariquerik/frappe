@@ -60,6 +60,10 @@ website_route_rules = [
 	{"from_route": "/kb/<category>", "to_route": "Help Article"},
 	{"from_route": "/profile", "to_route": "me"},
 	{"from_route": "/desk/<path:app_path>", "to_route": "desk"},
+	# Frappe OS is a client-routed SPA: any /os/<…> deep link (or reload) must serve the
+	# single os page (www/os.html) and let vue-router resolve the sub-path client-side —
+	# mirrors the /desk rule above. Without this the webserver 404s every /os/<…> path.
+	{"from_route": "/os/<path:app_path>", "to_route": "os"},
 ]
 
 website_redirects = [
