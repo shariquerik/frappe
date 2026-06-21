@@ -42,8 +42,12 @@ export interface Command {
 }
 
 // A placement of a Command into a Region, carrying the conditions under which it appears
-// (`when`) and its ordering within that Region (CONTEXT.md → Action). `group` is divider-group
-// placement metadata for the Region's renderer; `layer` defaults to 'app'.
+// (`when`) and its placement within that Region (CONTEXT.md → Action). `group` is the divider
+// group the Region's renderer draws; `layer` defaults to 'app'.
+//
+// `order` and `priority` are TWO SEPARATE axes (collapsing them onto one number makes a
+// high-priority override land at the wrong menu position): `order` is the ascending within-region
+// RENDER position; `priority` is the competition tiebreak (HIGHER wins) on equal specificity+layer.
 //
 // `commandPatch` is an ADR-0007 Patch of the placed Command's presentation, applied only when
 // THIS Action wins its (region, command) competition — the contextual override an app makes
@@ -59,6 +63,7 @@ export interface Action {
   sourceApp: string
   when?: When
   order?: number
+  priority?: number
   group?: string
   layer?: Layer
   commandPatch?: CommandPatch

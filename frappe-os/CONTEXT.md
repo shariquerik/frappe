@@ -149,7 +149,8 @@ several Actions compete *for the same region+command* (the depth-3 specificity t
 replaces a responder chain — see Action / Region). Specificity is the **lexicographic vector
 `(surface-key-count, window-key-count)`**, so the tier dominates the raw count — a one-key
 *surface* predicate outranks a two-key *window* one. Equal specificity falls through to layer
-(App<Site<User) → explicit order → a logged true tie. Evaluated as data, never `eval`
+(App<Site<User) → explicit `priority` (higher wins, a separate axis from the ascending render
+`order`) → a logged true tie. Evaluated as data, never `eval`
 (consistent with ADR-0006); an unknown `when` key degrades to no-match plus a loud warning
 (forward-compatible with additive Context fields).
 _Avoid_: "visibility" unqualified (ambiguous with permission filtering); say "eligibility"

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isEligible } from '../src/actions/eligibility'
 import { specificity, compareSpecificity } from '../src/actions/specificity'
 import { resolve } from '../src/actions/resolve'
-import { FILE_COMMANDS, invoke } from '../src/actions/contributions'
+import { FILE_COMMANDS, invoke, registerRunHandlers } from '../src/actions/contributions'
 import { contextForOS } from '../src/actions/context'
 import { fileMenuOptions } from '../src/actions/menubar'
 import { useOS } from '../src/desktop/index'
@@ -111,10 +111,18 @@ describe('resolve (tiebreak chain: specificity → layer → order → true-tie)
     expect(items[0].layer).toBe('user')
   })
 
-  it('explicit order breaks an equal specificity+layer tie — higher wins', () => {
-    const lo = act('x', { order: 1 })
-    const hi = act('x', { order: 9 })
-    expect(resolve([lo, hi], 'menubar:file', {}).items[0].order).toBe(9)
+  it('explicit priority breaks an equal specificity+layer tie — higher wins (a separate axis from render order)', () => {
+    const lo = act('x', { priority: 1 })
+    const hi = act('x', { priority: 9 })
+    expect(resolve([lo, hi], 'menubar:file', {}).items[0].priority).toBe(9)
+  })
+
+  it('render order does NOT decide a competition — equal priority is a true tie, not "higher order wins"', () => {
+    const lo = act('x', { sourceApp: 'appA', order: 9 }) // renders later, but no priority edge
+    const hi = act('x', { sourceApp: 'appB', order: 1 })
+    const { items, shadows } = resolve([lo, hi], 'menubar:file', {})
+    expect(items[0].sourceApp).toBe('appA') // first competitor wins the tie; order is render-only
+    expect(shadows[0].reason).toBe('true-tie')
   })
 
   it('a genuine tie is logged ⚠ true-tie and resolved to the first competitor', () => {
@@ -126,11 +134,41 @@ describe('resolve (tiebreak chain: specificity → layer → order → true-tie)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('⚠ true-tie'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('appB')) // attributed
   })
+
+  // 3+-way competition: every loser is shadowed by the FINAL winner, not by whichever Action was
+  // winning mid-fold — an intermediate loser is never credited to an Action that itself then lost.
+  it('attributes every shadow to the final winner in a 3-way competition', () => {
+    const medium = act('x', { sourceApp: 'med', when: { activeApp: 'crm' } }) // window tier [0,1]
+    const weak = act('x', { sourceApp: 'weak' }) // global [0,0]
+    const strong = act('x', { sourceApp: 'strong', when: { doctype: 'CRM Lead' } }) // surface tier [1,0]
+    const ctx = { activeApp: 'crm', doctype: 'CRM Lead' }
+    const { items, shadows } = resolve([medium, weak, strong], 'menubar:file', ctx)
+    expect(items[0].sourceApp).toBe('strong') // surface tier dominates
+    expect(shadows.every((s) => s.winner.sourceApp === 'strong')).toBe(true) // never credited to 'med'
+    expect(shadows.map((s) => s.loser.sourceApp).sort()).toEqual(['med', 'weak'])
+    expect(shadows.every((s) => s.reason === 'override')).toBe(true) // both strictly outranked
+  })
+
+  // A winning override that declares no group/order inherits the slot's render placement from the
+  // default it shadows — re-presenting a default must not relocate it across divider groups.
+  it('a winning override inherits the shadowed default\'s group + order when it sets none', () => {
+    const base = act('x', { sourceApp: 'frappe', group: 'a', order: 1 })
+    const override = act('x', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' } }) // no group/order
+    const { items } = resolve([base, override], 'menubar:file', { activeApp: 'erpnext' })
+    expect(items[0]).toMatchObject({ sourceApp: 'erpnext', group: 'a', order: 1 })
+  })
+
+  it('an override that DOES set group/order keeps its own (a deliberate relocation)', () => {
+    const base = act('x', { sourceApp: 'frappe', group: 'a', order: 1 })
+    const override = act('x', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, group: 'z', order: 5 })
+    const { items } = resolve([base, override], 'menubar:file', { activeApp: 'erpnext' })
+    expect(items[0]).toMatchObject({ group: 'z', order: 5 })
+  })
 })
 
-// The first-party `frappe` File Commands + their run Handlers, resolved through the
-// FIRST_PARTY_RUN map (mirrors registry's FIRST_PARTY applets — no server round-trip for the
-// OS's own defaults). Run against the real store, reset between cases (module singleton).
+// The first-party `frappe` File Commands + their run Handlers, resolved through the open
+// RUN_HANDLERS map (an app registers its own the same way — no server round-trip for the OS's
+// own defaults). Run against the real store, reset between cases (module singleton).
 describe('first-party File commands + invoke', () => {
   const os = useOS()
   const command = (id) => FILE_COMMANDS.find((c) => c.id === id)
@@ -161,6 +199,14 @@ describe('first-party File commands + invoke', () => {
   it('throws loudly when a run ref is not registered', () => {
     const ghost = { id: 'x', sourceApp: 'frappe', title: 'X', handler: { kind: 'run', ref: 'ghost' } }
     expect(() => invoke(ghost, os)).toThrow(/ghost/)
+  })
+
+  it('invokes an app-registered run handler — the open seam, not a first-party-only map', () => {
+    let called = false
+    registerRunHandlers({ 'erp-thing': () => { called = true } })
+    const appCommand = { id: 'erpnext.thing', sourceApp: 'erpnext', title: 'Thing', handler: { kind: 'run', ref: 'erp-thing' } }
+    invoke(appCommand, os)
+    expect(called).toBe(true)
   })
 })
 
@@ -277,5 +323,87 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
     item.onClick()
     expect(openApp).toHaveBeenCalledWith('erpnext') // the real new-window Handler, unchanged
     openApp.mockRestore()
+  })
+
+  it('keeps the re-titled item in the OS default\'s slot — still two divider groups, not three', () => {
+    os.openApp('erpnext')
+    const opts = fileMenuOptions(os)
+    expect(opts.map((g) => g.group)).toEqual(['a', 'b']) // override inherits group 'a', no stray '' group
+    expect(opts.find((g) => g.group === 'a').items.map((i) => i.label)).toEqual(['Open…', 'New ERPNext window'])
+  })
+})
+
+// An Action whose Command id has no contribution can't render. The File-menu projection must
+// warn and skip it — never a silent drop (an app shipping os_actions but forgetting os_commands).
+describe('Action referencing a missing Command (warned, not silently dropped)', () => {
+  const os = useOS()
+  const orphan = {
+    type: 'action', target: 'menubar:file', name: 'erpnext.ghost', sourceApp: 'erpnext',
+    payload: { command: 'erpnext.ghost', region: 'menubar:file', sourceApp: 'erpnext' },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), app('erpnext', 'ERPNext', 1), orphan] },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.activeId = null
+    os.state.paletteOpen = false
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  it('warns and renders only the first-party items', () => {
+    const labels = fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label)
+    expect(labels).toEqual(['Open…', 'New window', 'Close window']) // the orphan does not appear
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext.ghost'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no such Command'))
+  })
+})
+
+// Command-axis collision: an app re-declares a first-party Command id (here a hijack of
+// frappe.window.new with its own title + handler). The Command axis has no resolver — the
+// File-menu fold must keep the first-party verb (first-seen wins, FILE_COMMANDS lead) and
+// LOG the shadow attributed to the loser, never silently last-wins overwrite the OS default
+// verb's run Handler/title across every context (ADR-0014 — apps override presentation via an
+// Action's commandPatch, not by re-declaring the Command).
+describe('command-axis collision (an app cannot silently hijack a first-party verb)', () => {
+  const os = useOS()
+  const hijack = {
+    type: 'command', target: '', name: 'frappe.window.new', sourceApp: 'erpnext',
+    payload: { id: 'frappe.window.new', sourceApp: 'erpnext', title: 'HIJACKED', handler: { kind: 'run', ref: 'ghost' } },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), app('erpnext', 'ERPNext', 1), hijack] },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.activeId = null
+    os.state.paletteOpen = false
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  it('keeps the first-party verb — title and run Handler are not overwritten', () => {
+    const item = fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'New window')
+    expect(item).toBeDefined() // not re-titled to "HIJACKED"
+    item.onClick() // the first-party run Handler, not the colliding "ghost" ref (which would throw)
+    expect(os.state.windows).toHaveLength(1)
+  })
+
+  it('logs the collision attributed to both apps (never a silent overwrite)', () => {
+    fileMenuOptions(os)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('command-collision'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.new'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext')) // the shadowed loser, attributed
   })
 })

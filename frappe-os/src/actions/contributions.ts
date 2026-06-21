@@ -1,8 +1,8 @@
 // The OS's own File-menu items as first-party `frappe` contributions — dogfooding ADR-0001
 // (MenuBar.vue is the standing violation we start migrating here). Each item is a Command (the
 // verb) placed by an Action into the `menubar:file` Region. The run Handlers are resolved
-// through FIRST_PARTY_RUN, a static ref→fn map (mirrors registry's FIRST_PARTY applets — no
-// server round-trip for the OS's own defaults). A run Handler is fire-and-forget (ADR: no
+// through RUN_HANDLERS, an OPEN ref→fn map (mirrors registry's applet entries — no server
+// round-trip for the OS's own defaults). A run Handler is fire-and-forget (ADR: no
 // lifecycle/teardown — deferred). Only the File region is migrated this slice; the other six
 // menus stay literal in MenuBar.vue.
 import { surfaceAppId } from '@/surface'
@@ -22,13 +22,23 @@ function closeActiveWindow(os: OsStore): void {
   if (os.state.activeId) os.closeWin(os.state.activeId)
 }
 
-// The closed ref→behavior map for the OS's own run Handlers. An app contributing its own run
-// Command ships its handler the same way (its own map); the resolver never loads one to judge
-// eligibility — it is reached only on invoke.
-const FIRST_PARTY_RUN: Record<string, (os: OsStore) => void> = {
+// The ref→behavior map for run Handlers — OPEN, not a closed first-party constant. The OS seeds
+// its OWN handlers here; an app ships its run handlers the SAME way through registerRunHandlers
+// (the general mechanism — no privileged core, CONTEXT.md → App). The resolver never loads one to
+// judge eligibility; a handler is reached only on invoke.
+type RunHandler = (os: OsStore) => void
+const RUN_HANDLERS: Record<string, RunHandler> = {
   'open-palette': (os) => os.openPalette(),
   'new-window': newWindow,
   'close-active-window': closeActiveWindow,
+}
+
+// Register run Handlers into the open map — how an app's run Commands become invocable, the same
+// seam the (deferred) applet-style ESM loader that fetches an app's handler module will feed.
+// Without this an app-contributed run Command folds through the whole pipeline but throws on
+// invoke ("no run handler registered") — a first-party-only path masquerading as the general one.
+export function registerRunHandlers(handlers: Record<string, RunHandler>): void {
+  Object.assign(RUN_HANDLERS, handlers)
 }
 
 export const FILE_COMMANDS: Command[] = [
@@ -47,12 +57,12 @@ export const FILE_ACTIONS: Action[] = [
 ]
 
 // Invoke a resolved Command. A navigate Handler is pure data (open its Surface); a run Handler
-// is resolved by ref through FIRST_PARTY_RUN and fired (loud throw if the ref is unregistered —
+// is resolved by ref through RUN_HANDLERS and fired (loud throw if the ref is unregistered —
 // never a silent no-op, the bug this slice fixes).
 export function invoke(command: Command, os: OsStore): void {
   const handler = command.handler
   if (handler.kind === 'navigate') { os.openSurface(handler.surface); return }
-  const run = FIRST_PARTY_RUN[handler.ref]
+  const run = RUN_HANDLERS[handler.ref]
   if (!run) throw new Error(`[actions] no run handler registered for ref "${handler.ref}" (command ${command.id})`)
   run(os)
 }

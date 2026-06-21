@@ -18,9 +18,40 @@ import type { OsStore } from '@/types'
 export interface MenuItem { label: string; onClick: () => void }
 export interface MenuGroup { group: string; hideLabel: boolean; items: MenuItem[] }
 
-// First-party OS defaults ⊕ the server-folded app contributions, the data the resolver competes.
-function mergedCommands(): Command[] { return [...FILE_COMMANDS, ...useRegistry().commands()] }
-function mergedActions(): Action[] { return [...FILE_ACTIONS, ...useRegistry().actions()] }
+// Fold the merged Commands into an id→Command map, FIRST-SEEN WINS (first-party FILE_COMMANDS
+// lead, so an app can never silently replace an OS default verb's run Handler or title). A
+// colliding id is a shadow on the Command axis — attributed and logged like the resolver's
+// Action shadows, never a silent last-wins overwrite (ADR-0014). Apps override a verb's
+// presentation contextually through an Action's commandPatch, not by re-declaring the Command.
+function commandsById(commands: Command[]): Map<string, Command> {
+  const byId = new Map<string, Command>()
+  for (const command of commands) {
+    const winner = byId.get(command.id)
+    if (winner) {
+      console.warn(`[actions] command-collision: ${command.id} — "${winner.sourceApp}" shadows "${command.sourceApp}"`)
+      continue
+    }
+    byId.set(command.id, command)
+  }
+  return byId
+}
+
+// First-party OS defaults ⊕ the server-folded app contributions — the data the resolver competes.
+// Memoized on the registry's collection identity (a stable reference until the next boot /
+// initRegistry), so the File-menu computed doesn't re-spread the arrays and rebuild the id map on
+// every reactive tick — the per-render allocation the other six menus would multiply once migrated.
+interface Merged { byId: Map<string, Command>; actions: Action[] }
+let cache: (Merged & { sourceCommands: Command[]; sourceActions: Action[] }) | null = null
+
+function merged(): Merged {
+  const sourceCommands = useRegistry().commands()
+  const sourceActions = useRegistry().actions()
+  if (!cache || cache.sourceCommands !== sourceCommands || cache.sourceActions !== sourceActions) {
+    const byId = commandsById([...FILE_COMMANDS, ...sourceCommands])
+    cache = { sourceCommands, sourceActions, byId, actions: [...FILE_ACTIONS, ...sourceActions] }
+  }
+  return cache
+}
 
 function appendItem(groups: MenuGroup[], action: Action, command: Command, os: OsStore): void {
   const key = action.group ?? ''
@@ -34,12 +65,18 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
 
 // The File menu, resolved against the live Context and grouped into its divider sections.
 export function fileMenuOptions(os: OsStore): MenuGroup[] {
-  const byId = new Map(mergedCommands().map((c) => [c.id, c]))
-  const { items } = resolve(mergedActions(), FILE_REGION, contextForOS(os))
+  const { byId, actions } = merged()
+  const { items } = resolve(actions, FILE_REGION, contextForOS(os))
   const groups: MenuGroup[] = []
   for (const action of items) {
     const command = byId.get(action.command)
-    if (command) appendItem(groups, action, command, os)
+    if (!command) {
+      // An Action whose Command id has no contribution can't render — warn, never silently drop
+      // (the slice's "never a silent drop" stance; an app likely shipped os_actions, not os_commands).
+      console.warn(`[actions] dropped Action for "${action.command}" in ${action.region}: no such Command (from "${action.sourceApp}")`)
+      continue
+    }
+    appendItem(groups, action, command, os)
   }
   return groups
 }

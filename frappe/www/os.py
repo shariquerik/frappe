@@ -115,6 +115,20 @@ def _app_of(doctype):
 	return app or "frappe"
 
 
+def _valid_contribution(spec, required, app, hook):
+	"""True if `spec` is a dict carrying every required key; otherwise log and skip it. A single
+	malformed hook entry must never crash the desktop boot (get_registry runs inside get_boot) —
+	it degrades to one dropped contribution, logged so it is never silently lost (ADR-0014)."""
+	if not isinstance(spec, dict):
+		frappe.logger("frappe_os").warning(f"Skipped malformed {hook} entry from {app}: not a dict")
+		return False
+	missing = [key for key in required if spec.get(key) is None]
+	if missing:
+		frappe.logger("frappe_os").warning(f"Skipped {hook} contribution from {app}: missing {', '.join(missing)}")
+		return False
+	return True
+
+
 def _view_contribution(doctype, name, label, app, order):
 	return {
 		"type": "doctype-view",
@@ -126,31 +140,47 @@ def _view_contribution(doctype, name, label, app, order):
 	}
 
 
-def _applet_contributions():
-	"""Applet contributions (ADR-0009): each installed OS app declares the applets it ships
-	via the `os_applets` hook, so the OS never hardcodes another app's artifact. assetUrl is
-	the app's public assets path for the declared filename, loaded at runtime as native ESM."""
+def _hook_contributions(hook, required, project):
+	"""Project an installed-OS-app `os_*` hook into uniform Registry contributions (ADR-0001):
+	iterate installed OS apps only (ADR-0010), validate each entry (skip-with-warn, so one
+	malformed entry never crashes boot), and delegate the per-extension-point shape to `project`,
+	which returns the (type, target, name, payload) for one validated spec. The envelope
+	(sourceApp + ADR-0007 identity + per-app declaration order) is uniform and lives here once."""
 	contributions = []
 	for app in _installed_os_apps():
-		for order, spec in enumerate(frappe.get_hooks("os_applets", app_name=app) or []):
-			applet_id = spec["appletId"]
+		for order, spec in enumerate(frappe.get_hooks(hook, app_name=app) or []):
+			if not _valid_contribution(spec, required, app, hook):
+				continue
+			contribution_type, target, name, payload = project(spec, app)
 			contributions.append(
 				{
-					"type": "applet",
-					"target": "",
-					"name": applet_id,
+					"type": contribution_type,
+					"target": target,
+					"name": name,
 					"sourceApp": app,
-					"payload": {
-						"appletId": applet_id,
-						"appId": app,
-						"assetUrl": f"/assets/{app}/os-applets/{spec['fileName']}",
-						"label": spec.get("label", applet_id),
-						"minOsApi": spec.get("minOsApi", 1),
-					},
+					"payload": payload,
 					"order": order,
 				}
 			)
 	return contributions
+
+
+def _applet_contributions():
+	"""Applet contributions (ADR-0009): each installed OS app declares the applets it ships
+	via the `os_applets` hook, so the OS never hardcodes another app's artifact. assetUrl is
+	the app's public assets path for the declared filename, loaded at runtime as native ESM."""
+
+	def project(spec, app):
+		applet_id = spec["appletId"]
+		return "applet", "", applet_id, {
+			"appletId": applet_id,
+			"appId": app,
+			"assetUrl": f"/assets/{app}/os-applets/{spec['fileName']}",
+			"label": spec.get("label", applet_id),
+			"minOsApi": spec.get("minOsApi", 1),
+		}
+
+	return _hook_contributions("os_applets", ("appletId", "fileName"), project)
 
 
 def _command_contributions():
@@ -159,25 +189,23 @@ def _command_contributions():
 	(command, '', id, app); the payload is the client Command shape (id/sourceApp/title/handler).
 	The OS's own first-party File Commands stay bundled in the frontend (their run Handlers are
 	compiled in) — only app contributions flow through here."""
-	contributions = []
-	for app in _installed_os_apps():
-		for order, spec in enumerate(frappe.get_hooks("os_commands", app_name=app) or []):
-			contributions.append(
-				{
-					"type": "command",
-					"target": "",
-					"name": spec["id"],
-					"sourceApp": app,
-					"payload": {
-						"id": spec["id"],
-						"sourceApp": app,
-						"title": spec["title"],
-						"handler": spec["handler"],
-					},
-					"order": order,
-				}
-			)
-	return contributions
+
+	def project(spec, app):
+		return "command", "", spec["id"], {
+			"id": spec["id"],
+			"sourceApp": app,
+			"title": spec["title"],
+			"handler": spec["handler"],
+		}
+
+	return _hook_contributions("os_commands", ("id", "title", "handler"), project)
+
+
+# Optional Action fields copied through to the client payload when present (ADR-0007): `when`
+# gates the placement, `order` is its ascending RENDER position within the Region, `priority` the
+# competition tiebreak (higher wins — a separate axis from render `order`), `layer` its override
+# layer (App<Site<User), `commandPatch` re-titles the placed Command only when this Action wins.
+_ACTION_PAYLOAD_KEYS = ("when", "order", "priority", "group", "layer", "commandPatch")
 
 
 def _action_contributions():
@@ -186,28 +214,15 @@ def _action_contributions():
 	(action, region, command, app); the payload is the client Action shape. `when` gates the
 	placement contextually and `commandPatch` re-titles the placed Command only when this Action
 	wins its (region, command) competition — the override-of-a-default this slice ships."""
-	contributions = []
-	for app in _installed_os_apps():
-		for order, spec in enumerate(frappe.get_hooks("os_actions", app_name=app) or []):
-			payload = {
-				"command": spec["command"],
-				"region": spec["region"],
-				"sourceApp": app,
-			}
-			for key in ("when", "order", "group", "commandPatch"):
-				if spec.get(key) is not None:
-					payload[key] = spec[key]
-			contributions.append(
-				{
-					"type": "action",
-					"target": spec["region"],
-					"name": spec["command"],
-					"sourceApp": app,
-					"payload": payload,
-					"order": spec.get("order", order),
-				}
-			)
-	return contributions
+
+	def project(spec, app):
+		payload = {"command": spec["command"], "region": spec["region"], "sourceApp": app}
+		for key in _ACTION_PAYLOAD_KEYS:
+			if spec.get(key) is not None:
+				payload[key] = spec[key]
+		return "action", spec["region"], spec["command"], payload
+
+	return _hook_contributions("os_actions", ("command", "region"), project)
 
 
 # Fieldtype → the list column "type" the renderer themes (DocView). Plain text otherwise.

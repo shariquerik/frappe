@@ -6,24 +6,29 @@
 // The winner of a competition is chosen by, in order (prototype-validated, design doc):
 //   1. specificity — the lexicographic (surfaceCount, windowCount) vector (tier dominates count)
 //   2. layer — ADR-0007 App < Site < User
-//   3. order — explicit priority; HIGHER wins (a deliberate bump). Distinct from the ascending
-//      within-region RENDER order, which is a separate axis applied to the winners below.
+//   3. priority — explicit competition priority; HIGHER wins (a deliberate bump). A SEPARATE
+//      axis from `order` (the ascending within-region RENDER position applied to the winners
+//      below), so a high-priority override no longer drags the item to the menu's bottom.
 //   4. a genuine tie — logged as `⚠ true-tie`, resolved to the first competitor (never a
 //      silent coin-flip; ADR-0007 "shadowed, never silently dropped").
-// Every shadow is attributed and logged (ADR-0014), distinguishing a clean override from a tie.
+// Every shadow is attributed to the FINAL winner and logged (ADR-0014), distinguishing a clean
+// override from a tie. A winning override inherits the slot's RENDER placement (group + order)
+// from the default it shadows when it declares none, so re-presenting a default (a commandPatch
+// re-title) never silently relocates the item across the Region's divider groups.
 import { isEligible } from './eligibility'
 import { specificity, compareSpecificity } from './specificity'
 import type { Action, Context, ShadowEvent } from './types'
 
 const LAYER_RANK = { app: 0, site: 1, user: 2 } as const
 const layerRank = (a: Action): number => LAYER_RANK[a.layer ?? 'app']
+const priorityOf = (a: Action): number => a.priority ?? 0
 const orderOf = (a: Action): number => a.order ?? 0
 
 // Compare two competitors down the tiebreak chain. >0 when `a` outranks `b`; 0 is a true tie.
 function compareActions(a: Action, b: Action): number {
   return compareSpecificity(specificity(a.when), specificity(b.when))
     || layerRank(a) - layerRank(b)
-    || orderOf(a) - orderOf(b)
+    || priorityOf(a) - priorityOf(b)
 }
 
 // Group eligible Actions by command, preserving first-seen order so a true tie is broken
@@ -38,16 +43,36 @@ function groupByCommand(actions: Action[]): Map<string, Action[]> {
   return groups
 }
 
-// Pick the winner of one command's competitors, recording every loser as a shadow.
-function resolveCompetition(command: string, region: string, competitors: Action[], shadows: ShadowEvent[]): Action {
+// The winner is the max down the tiebreak chain; the FIRST competitor wins a true tie — the
+// fold advances only on a strict `> 0`, never on equality, so the result is deterministic.
+function pickWinner(competitors: Action[]): Action {
   let winner = competitors[0]
   for (const challenger of competitors.slice(1)) {
-    const cmp = compareActions(challenger, winner)
-    const [keep, drop] = cmp > 0 ? [challenger, winner] : [winner, challenger]
-    shadows.push({ region, command, winner: keep, loser: drop, reason: cmp === 0 ? 'true-tie' : 'override' })
-    winner = keep
+    if (compareActions(challenger, winner) > 0) winner = challenger
   }
   return winner
+}
+
+// Record every non-winning competitor as a shadow of the FINAL winner (not whichever Action was
+// winning mid-fold), distinguishing a clean `override` (the winner strictly outranks it) from an
+// indistinguishable `true-tie`. Attributing to the final winner keeps a 3+-way competition's log
+// honest — an intermediate loser is never credited to an Action that itself went on to lose.
+function recordShadows(command: string, region: string, competitors: Action[], winner: Action, shadows: ShadowEvent[]): void {
+  for (const loser of competitors) {
+    if (loser === winner) continue
+    shadows.push({ region, command, winner, loser, reason: compareActions(winner, loser) === 0 ? 'true-tie' : 'override' })
+  }
+}
+
+// A winning override inherits the slot's RENDER placement (group + order) from a default it
+// shadows when it declares none — re-presenting a default must not silently relocate the item.
+// An override that DOES set group/order keeps its own (a deliberate relocation, ADR-0014). Never
+// mutates the winning Action (no shared-state leak across contexts/windows).
+function inheritPlacement(winner: Action, competitors: Action[]): Action {
+  if (winner.group !== undefined && winner.order !== undefined) return winner
+  const base = competitors.find((c) => c !== winner && (c.group !== undefined || c.order !== undefined))
+  if (!base) return winner
+  return { ...winner, group: winner.group ?? base.group, order: winner.order ?? base.order }
 }
 
 function logShadow(s: ShadowEvent): void {
@@ -67,7 +92,9 @@ export function resolve(actions: Action[], region: string, context: Context): Re
   const shadows: ShadowEvent[] = []
   const items: Action[] = []
   for (const [command, competitors] of groupByCommand(eligible)) {
-    items.push(resolveCompetition(command, region, competitors, shadows))
+    const winner = pickWinner(competitors)
+    recordShadows(command, region, competitors, winner, shadows)
+    items.push(inheritPlacement(winner, competitors))
   }
   shadows.forEach(logShadow)
   items.sort((a, b) => orderOf(a) - orderOf(b))

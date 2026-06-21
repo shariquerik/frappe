@@ -50,7 +50,9 @@ the real `actions` module (copied here so they survive deleting the throwaway pr
 - **Competition is per `(region, command)`** — same verb in the same region. Different
   commands/regions never compete; all render.
 - **Final tiebreaks** on equal specificity, in order: ADR-0007 layer (App<Site<User) →
-  explicit `order` → genuine tie (logged as `⚠ true-tie`, never a silent coin-flip).
+  explicit `priority` (higher wins — a SEPARATE axis from the ascending render `order`) →
+  genuine tie (logged as `⚠ true-tie`, never a silent coin-flip). A winning override inherits
+  the slot's render placement (group + order) from the default it shadows when it sets none.
 - **Always log shadows**, distinguishing a clean override from a true tie.
 
 ## Session 2 — TO-ISSUES ✅ DONE — the tracer bullet (Q6)
