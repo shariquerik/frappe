@@ -153,6 +153,63 @@ def _applet_contributions():
 	return contributions
 
 
+def _command_contributions():
+	"""Command contributions (Action model, CONTEXT.md → Command): each installed OS app declares
+	the verbs it adds/overrides via the `os_commands` hook. Identity (ADR-0007) is
+	(command, '', id, app); the payload is the client Command shape (id/sourceApp/title/handler).
+	The OS's own first-party File Commands stay bundled in the frontend (their run Handlers are
+	compiled in) — only app contributions flow through here."""
+	contributions = []
+	for app in _installed_os_apps():
+		for order, spec in enumerate(frappe.get_hooks("os_commands", app_name=app) or []):
+			contributions.append(
+				{
+					"type": "command",
+					"target": "",
+					"name": spec["id"],
+					"sourceApp": app,
+					"payload": {
+						"id": spec["id"],
+						"sourceApp": app,
+						"title": spec["title"],
+						"handler": spec["handler"],
+					},
+					"order": order,
+				}
+			)
+	return contributions
+
+
+def _action_contributions():
+	"""Action contributions (Action model, CONTEXT.md → Action): each installed OS app declares
+	the placements (incl. overrides) it makes via the `os_actions` hook. Identity (ADR-0007) is
+	(action, region, command, app); the payload is the client Action shape. `when` gates the
+	placement contextually and `commandPatch` re-titles the placed Command only when this Action
+	wins its (region, command) competition — the override-of-a-default this slice ships."""
+	contributions = []
+	for app in _installed_os_apps():
+		for order, spec in enumerate(frappe.get_hooks("os_actions", app_name=app) or []):
+			payload = {
+				"command": spec["command"],
+				"region": spec["region"],
+				"sourceApp": app,
+			}
+			for key in ("when", "order", "group", "commandPatch"):
+				if spec.get(key) is not None:
+					payload[key] = spec[key]
+			contributions.append(
+				{
+					"type": "action",
+					"target": spec["region"],
+					"name": spec["command"],
+					"sourceApp": app,
+					"payload": payload,
+					"order": spec.get("order", order),
+				}
+			)
+	return contributions
+
+
 # Fieldtype → the list column "type" the renderer themes (DocView). Plain text otherwise.
 COLUMN_TYPES = {"Currency": "currency", "Int": "int"}
 
@@ -292,6 +349,8 @@ def get_registry():
 		contributions.append(_view_contribution(doctype, "list", "List", app, 0))
 		contributions.append(_view_contribution(doctype, "form", "Form", app, 1))
 	contributions.extend(_applet_contributions())
+	contributions.extend(_command_contributions())
+	contributions.extend(_action_contributions())
 	return {"schemaVersion": 1, "contributions": contributions}
 
 

@@ -94,6 +94,67 @@ The official Vite build configuration an app uses to compile an Applet so it ext
 the host's shared deps (Vue, frappe-ui, OS API) and loads as native ESM. Required for
 applets; Scripts need no build.
 
+**Command**:
+The *verb* — a named, identity-bearing capability the OS can invoke, independent of where
+it is surfaced. One Command exists once and is invocable from any region (command palette,
+menu, toolbar, keyboard shortcut). What a Command *does* is its Handler; *where* it appears
+is one or more Actions. Apps extend the OS by contributing Commands.
+_Avoid_: "command" loosely for any clickable thing — that is an Action. A Command is the
+placement-agnostic verb behind it.
+
+**Action**:
+A *placement* of a Command into a surface **region** (menu bar, toolbar, context menu,
+command palette, dock), carrying the conditions under which it appears there and its
+ordering within that region. One Command may have many Actions (the same verb surfaced in
+several places); an Action with no Command is meaningless. "Extending" the OS is
+contributing a Command and/or an Action; "overriding" is a same-identity Command or Action
+shadowing another (see Patch / Singleton-Collection). An overriding Action that re-presents the
+Command it places (e.g. a different label in its context) carries a **`commandPatch`** — an
+ADR-0007 Patch of the placed Command's presentation, applied only when that Action wins its
+`(region, command)` competition, so the global Command Singleton is never mutated.
+_Avoid_: "button", "menu item" (those are how an Action *renders* in a given region, not the
+concept); "command" (that is the verb the Action places).
+
+**Region**:
+A named area of OS chrome that hosts Actions — the menu bar, a window toolbar, a context
+menu, the command palette, the dock. The `target` of an Action's identity tuple. The OS
+owns the set of regions (closed-but-data-driven, like extension-point types — ADR-0004).
+
+**Handler**:
+What a Command does when invoked — one of a **closed set of kinds**. Currently: **navigate**
+(open a Surface — pure data, subsumes what an app-contributed "command" could do before: go
+somewhere) and **run** (execute behavior through the OS API, the imperative kind the menu-bar
+stubs and the palette's generated `run()` hint at). The kind set is closed and additive
+(ADR-0008); a Handler never carries raw code in its identity, only a reference the runtime
+**resolves by id**, the same way an Applet is resolved — never an imperative `register()`
+call. A `run` Handler is **fire-and-forget**: resolved lazily on first invoke, executed,
+done. It holds no long-lived state and owns no activation/teardown lifecycle (that is a
+separate, deferred concern). Eligibility is judged from Context *data* alone, so showing or
+ordering an Action never loads its Handler.
+
+**Context**:
+The OS's current focus situation, against which an Action's Eligibility is judged. A flat,
+fixed-shape snapshot derived from the single focused window — the active app, the window's
+role (app / record / settings), and the focused Surface's coordinates (doctype, record,
+view, applet). There is **no nested responder chain**: focus is one window deep, so Context
+is a depth-3 fact (global → active window → surface), not a tree. Selection is *not* part of
+Context yet (the window model tracks no selected rows); adding it later is additive.
+
+**Eligibility (`when`)**:
+The condition under which an Action appears in its Region — a structured predicate matched
+against the Context (e.g. "active app is CRM and the focused record is a Lead"). Distinct
+from *permission* (ADR-0010, server-side, "may this user see it at all") — Eligibility is
+*contextual* ("does it apply right **here**, right now"). More-specific predicates win when
+several Actions compete *for the same region+command* (the depth-3 specificity tiebreak that
+replaces a responder chain — see Action / Region). Specificity is the **lexicographic vector
+`(surface-key-count, window-key-count)`**, so the tier dominates the raw count — a one-key
+*surface* predicate outranks a two-key *window* one. Equal specificity falls through to layer
+(App<Site<User) → explicit order → a logged true tie. Evaluated as data, never `eval`
+(consistent with ADR-0006); an unknown `when` key degrades to no-match plus a loud warning
+(forward-compatible with additive Context fields).
+_Avoid_: "visibility" unqualified (ambiguous with permission filtering); say "eligibility"
+for the contextual axis, "permission" for the security axis.
+
 **Script**:
 A contribution carrying *behavior* — handler functions registered against the OS's closed
 **event surface** (onLoad, onChange, validate, addAction, formatRow, …), receiving only the

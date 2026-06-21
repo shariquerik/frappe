@@ -6,6 +6,7 @@
 import { computed } from "vue";
 import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
+import { fileMenuOptions } from "@/actions";
 import { initials } from "@/config/apps";
 import { windowRole } from "@/surface";
 import type { OsWindow } from "@/types";
@@ -24,9 +25,6 @@ function zoomActive() {
 }
 function minActive() {
 	if (activeWin.value) os.minimizeWin(activeWin.value.id);
-}
-function closeActive() {
-	if (activeWin.value) os.closeWin(activeWin.value.id);
 }
 function settingsActive() {
 	if (aid.value) os.openSettings(aid.value);
@@ -85,17 +83,10 @@ const appMenu = computed(() => [
 		items: [{ label: "Quit " + aname.value, onClick: quitActive }],
 	},
 ]);
-const fileMenu = [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [
-			{ label: "Open…", onClick: () => os.openPalette() },
-			{ label: "New window", onClick: () => {} },
-		],
-	},
-	{ group: "b", hideLabel: true, items: [{ label: "Close window", onClick: closeActive }] },
-];
+// The File menu is the first migrated Region: rendered from resolved first-party `frappe`
+// Actions (actions/menubar.ts), not a literal array. The other six menus stay hardcoded
+// pending later incremental migration (ADR-0001 dogfooding).
+const fileMenu = computed(() => fileMenuOptions(os));
 const editMenu = [
 	{
 		group: "a",
@@ -183,7 +174,7 @@ const btnCls = (bold: boolean) => [btn, bold ? "font-bold" : "font-medium"];
 			</button>
 		</OSDropdown>
 		<OSDropdown :options="fileMenu" placement="bottom-start"
-			><button :class="btnCls(false)">File</button></OSDropdown
+			><button :class="btnCls(false)" data-menu="file">File</button></OSDropdown
 		>
 		<OSDropdown :options="editMenu" placement="bottom-start"
 			><button :class="btnCls(false)">Edit</button></OSDropdown

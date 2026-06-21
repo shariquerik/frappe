@@ -44,7 +44,7 @@ A `programmatic`/`restoring` guard pair breaks the focus→push→restore loop �
 ## Files
 The `src/` tree is grouped by subsystem; each folder owns its logic AND a colocated
 `types.ts` (re-exported through the thin `src/types.ts` barrel, so `@/types` stays one
-stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `config/`
+stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions/` `config/`
 `routing/` `components/` `applets/` `brokers/`.
 - `desktop/` — the window-manager state machine, split to satisfy the file-size rule and
   re-assembled by `index.ts` `useOS()` (public surface stable; was `store/`). `state.ts`
@@ -61,8 +61,23 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `config/
   `boot()` in dev; seeds CSRF), `os-api.ts` (the ADR-0003 OS API seam handed to applets).
   The `@/data` barrel exposes only the public boot+seam; slices use `@/data/api`/`@/data/records`.
 - `registry/` — the client Registry seam (`index.ts` `useRegistry()`: apps/display-config/
-  views/cards projections over the merged Contribution[]; was `store/registry.ts`).
+  views/cards projections over the merged Contribution[]; was `store/registry.ts`). Also folds
+  the Action-model `command`/`action` contributions (`commands()`/`actions()`) the server
+  projects from each app's `os_commands`/`os_actions` hook (Slice 2), alongside `applet`.
 - `surface/` — `index.ts` Surface constructors + pure helpers (windowRole/sameSurface/…).
+- `actions/` — the Action/extension model engine (CONTEXT.md → Command/Action/Region/Handler/
+  Context/Eligibility). Pure-data resolver (no `eval`, no handler loading): `eligibility.ts`
+  (`isEligible` — equality-as-data, unknown `when` key → no-match+warn), `specificity.ts` (the
+  lexicographic `(surfaceCount,windowCount)` vector), `resolve.ts` (competition per
+  `(region,command)`; specificity→layer→order→logged `⚠ true-tie`; attributed shadows),
+  `context.ts` (`contextForOS` — the 6 fields from the active window), `contributions.ts`
+  (first-party `frappe` File Commands/Actions + `FIRST_PARTY_RUN` ref→fn map + `invoke`),
+  `menubar.ts` (`fileMenuOptions` — the File-menu render seam). Slice 1: only `menubar:file`
+  is migrated; MenuBar.vue's other six menus stay literal (incremental ADR-0001 dogfooding).
+  Slice 2: `menubar.ts` resolves over the first-party `FILE_*` ⊕ the registry-folded
+  `command`/`action` contributions, so an app's hook-declared override competes — e.g. erpnext
+  re-titles "New window" only for an erpnext window via a gated Action carrying a `commandPatch`
+  (ADR-0007 Patch of the Command's presentation); the shadowed default is attributed + logged.
 - `config/` — curated DISPLAY config: `apps.ts` (APP tree, dashboard card defs, initials/pill),
   `doctypes.ts` (per-doctype label/color/icon/columns + `getMeta`), `icons.ts` (ICON map).
 - `routing/` — the URL side-channel. `route-map.ts` (pure focus↔URL logic
@@ -92,7 +107,9 @@ yarn cypress       # Cypress interactive runner
 - **Vitest** (`tests/*.spec.js`) covers the pure logic: focus transitions + `hydrate`
   (`store.spec.js`), `pathForFocus`/`applyRoute` decision tables (`route-map.spec.js`), and
   the live record caches with `api.ts` mocked (`records.spec.js` — entry shape, load*
-  lifecycle, field-meta caching, write-through refresh).
+  lifecycle, field-meta caching, write-through refresh), and the `actions` resolver decision
+  tables (`actions.spec.js` — eligibility, the specificity vector, the tiebreak chain, shadow
+  logging, `invoke`, and `fileMenuOptions` rendering the File menu from resolved Actions).
 - **Cypress** (`cypress/e2e/routing.cy.js`) covers only what unit tests can't — the
   vue-router `/os/` base, cold-boot URL seeding, reload persistence, browser back/forward,
   and DOM-driven minimize. Asserts via `data-active-window` (desktop root) and

@@ -8,6 +8,41 @@ import {
   useRegistry, appForDoctype, getMeta, initRegistry, knownApplet, listApplets, loadApplet,
 } from '../src/registry'
 
+// Slice 2 (action model): the server folds command/action contributions into the registry
+// alongside applets, so an app's hook-declared Command/Action override (erpnext's New window)
+// competes against the first-party OS defaults. These pin the client fold of those two new
+// contribution types; the resolver tiebreak itself lives in tests/actions.spec.js.
+describe('server-projected command/action contributions', () => {
+  afterEach(() => initRegistry(null))
+
+  const boot = (contributions) =>
+    ({ user: 'a', csrf_token: 't', roles: [], registry: { schemaVersion: 1, contributions }, permissions: {} })
+  const command = (id, title, sourceApp) =>
+    ({ type: 'command', target: '', name: id, sourceApp, payload: { id, sourceApp, title, handler: { kind: 'run', ref: 'new-window' } } })
+  const action = (cmd, sourceApp, when) =>
+    ({ type: 'action', target: 'menubar:file', name: cmd, sourceApp, payload: { command: cmd, region: 'menubar:file', sourceApp, when } })
+
+  it('folds a server command contribution into the commands collection', () => {
+    initRegistry(boot([command('erpnext.window.new', 'New ERPNext window', 'erpnext')]))
+    expect(useRegistry().commands()).toContainEqual(
+      expect.objectContaining({ id: 'erpnext.window.new', sourceApp: 'erpnext', title: 'New ERPNext window' }),
+    )
+  })
+
+  it('folds a server action contribution into the actions collection', () => {
+    initRegistry(boot([action('frappe.window.new', 'erpnext', { activeApp: 'erpnext' })]))
+    expect(useRegistry().actions()).toContainEqual(
+      expect.objectContaining({ command: 'frappe.window.new', region: 'menubar:file', sourceApp: 'erpnext', when: { activeApp: 'erpnext' } }),
+    )
+  })
+
+  it('has empty command/action collections offline (first-party defaults stay in @/actions)', () => {
+    initRegistry(null)
+    expect(useRegistry().commands()).toEqual([])
+    expect(useRegistry().actions()).toEqual([])
+  })
+})
+
 describe('apps', () => {
   it('returns the installed apps in registry order', () => {
     expect(useRegistry().apps().map((a) => a.id)).toEqual(['frappe', 'crm', 'erpnext'])

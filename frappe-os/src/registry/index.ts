@@ -16,7 +16,8 @@ import type { Component } from 'vue'
 import { APP, APP_ORDER } from '@/config/apps'
 import { doctypes } from '@/config/doctypes'
 import type {
-  AppDef, BootData, Card, Contribution, DoctypeMeta, DoctypeViewPayload, OsRegistryData,
+  Action, AppDef, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload,
+  OsRegistryData,
 } from '@/types'
 
 // Extension-point types this client understands (ADR-0004 closed-but-data-driven set).
@@ -25,6 +26,8 @@ const DISPLAY = 'display-config'
 const VIEW = 'doctype-view'
 const CARD = 'dashboard-card'
 const APPLET = 'applet'
+const COMMAND = 'command'   // the Action model's verb (CONTEXT.md → Command)
+const ACTION = 'action'     // a verb's placement into a Region (CONTEXT.md → Action)
 
 // ── seed: config/* → the App-default Contribution[] (§2 shapes) ──────────────────
 // First app whose modules list a doctype owns it (registry order); else frappe.
@@ -78,6 +81,8 @@ interface RegistryIndex {
   cards: Record<string, Card[]>                 // ordered collection per app
   owner: Record<string, string>                 // doctype → owning app
   applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
+  commands: Command[]                           // Action-model verbs folded from app hooks
+  actions: Action[]                             // Action-model placements folded from app hooks
 }
 
 function ownerMap(apps: AppDef[]): Record<string, string> {
@@ -99,6 +104,11 @@ function addToIndex(ix: RegistryIndex, c: Contribution): void {
     const p = c.payload as AppletPayload
     ix.applets[p.appletId] = { appId: p.appId, label: p.label, assetUrl: p.assetUrl }
   }
+  // Command/Action are Collections (ADR-0007): each app's hook-declared contributions
+  // accumulate here, then compete against the first-party OS defaults in the resolver
+  // (the contextual override that lets erpnext re-title New window — Slice 2).
+  else if (c.type === COMMAND) ix.commands.push(c.payload as Command)
+  else if (c.type === ACTION) ix.actions.push(c.payload as Action)
 }
 
 function indexContributions(contribs: Contribution[]): RegistryIndex {
@@ -108,6 +118,7 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
     apps, appById: Object.fromEntries(apps.map((a) => [a.id, a])),
     display: {}, views: {}, cards: {}, owner: ownerMap(apps),
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
+    commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
   }
   for (const c of sorted) addToIndex(ix, c)
   return ix
@@ -291,5 +302,7 @@ export function useRegistry() {
     knownApplet,
     resolveApplet,
     listApplets,
+    commands: (): Command[] => ix.commands,
+    actions: (): Action[] => ix.actions,
   }
 }

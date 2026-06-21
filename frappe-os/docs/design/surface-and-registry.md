@@ -77,8 +77,8 @@ export interface Registry {
 export interface Contribution {
   // Identity tuple (ADR-0007): unique across the merged registry.
   type: string        // extension-point type, e.g. 'app' | 'doctype-view'
-                      //   | 'display-config' | 'dashboard-card' | 'menu-item'
-                      //   | 'command' | 'script' | 'applet' | 'widget' | ...
+                      //   | 'display-config' | 'dashboard-card' | 'command' | 'action'
+                      //   | 'script' | 'applet' | 'widget' | ...
   target: string      // what it attaches to: doctype, workspace, app id, '' for global
   name: string        // stable id within (type,target): 'list', 'kanban', a card slug...
   sourceApp: string   // 'erpnext' | 'crm' | a custom app | '__site__' | '__user__'
@@ -118,8 +118,23 @@ interface DoctypeViewPayload {
 interface CardPayload { label: string; sub: string; doctype: string;
   filters?: Record<string, FilterValue>; fieldname?: string }
 
-// type:'command'  target:''  — COLLECTION (command palette)
-interface CommandPayload { label: string; sub?: string; icon?: string; surface?: Surface }
+// type:'command'  target:''  — COLLECTION (the Action-model verb, CONTEXT.md → Command).
+// name = the command id. Handler is resolved by id (navigate = data; run = lazy ref), never
+// raw code. First-party OS commands stay bundled in @/actions; apps ship these via os_commands.
+interface CommandPayload {
+  id: string; sourceApp: string; title: string
+  handler: { kind: 'navigate'; surface: Surface } | { kind: 'run'; ref: string }
+}
+
+// type:'action'  target:<region>  — COLLECTION (the Action-model placement, CONTEXT.md → Action).
+// name = the placed command id, so a same-id Action competes per (region, command). `when` gates
+// it contextually; `commandPatch` is an ADR-0007 Patch of the placed Command's presentation,
+// applied only when this Action wins (e.g. erpnext re-titling New window for an erpnext window).
+interface ActionPayload {
+  command: string; region: string; sourceApp: string
+  when?: Record<string, string>; order?: number; group?: string
+  commandPatch?: { title?: string }
+}
 
 // type:'applet'  target:''  — COLLECTION (loadable applet registry, ADR-0009)
 interface AppletPayload { appletId: string; appId: string; assetUrl: string; minOsApi: number }
