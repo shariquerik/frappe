@@ -19,18 +19,18 @@ no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused*
 
 **A window** (`state.windows[]`):
 ```
-{ id, type:'app'|'record'|'settings', appId,
-  view?:{mode:'dashboard'|'list'|'form', doctype, recordName},  // app windows
-  doctype?, recordName?,                                        // record windows
-  back?, fwd?,                                                  // per-window nav history
-  settingsTab? }                                               // settings windows
+{ id,                          // identity + role (windowRole derives the role from the prefix)
+  surface,                     // WHAT it shows — builtin (dashboard/list/form/settings/wallpaper) or applet (ADR-0012)
+  back?, fwd? }                // per-window nav history (app windows only)
 ```
 - IDs: `app:<appId>` (canonical instance) · `app:<appId>#n` (extra instances, n ≥ 2) ·
-  `rec:<doctype>/<name>` · `settings:<appId>` · `wallpaper` (singleton system pane). One
-  window per id (deduped). An app may have **multiple instances** (File ▸ New window): the
-  first owns the bare `app:<id>`, extras get `#n`; the bare `/os/<app>` path addresses the
-  canonical and a twin is addressed by `?instance=n` (ADR-0016). `windowRole(id)` derives
-  the role from the id prefix (the `#n` suffix is still role `app`).
+  `settings:<appId>` · `wallpaper` (singleton system pane). One window per id (deduped). An
+  app may have **multiple instances** (File ▸ New window): the first owns the bare
+  `app:<id>`, extras get `#n`; the bare `/os/<app>` path addresses the canonical and a twin
+  is addressed by `?instance=n` (ADR-0016). `windowRole(id)` derives the role
+  (`app`|`settings`|`wallpaper`) from the id prefix (the `#n` suffix is still role `app`).
+  There is **no record/pop-out window kind**: opening a record in a new window mints an
+  ordinary app instance already on that record's form (ADR-0017).
 - **Geometry is separate**: `state.geo[id] = {x,y,w,h,z,min,max}`, merged over a by-index
   default in the `geoMap` computed. `bumpZ()` raises focus.
 
@@ -53,7 +53,7 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
 - `desktop/` — the window-manager state machine, split to satisfy the file-size rule and
   re-assembled by `index.ts` `useOS()` (public surface stable; was `store/`). `state.ts`
   (shared reactive singleton + clock), `windows.ts` (open*/in-window nav/lifecycle:
-  openApp/openListGlobal/openRecordGlobal/openNew/popOut/openSettings, openList/
+  openApp/newAppWindow/openListGlobal/openRecordGlobal/openNew/openSettings, openList/
   openRecordInline/goHome/winBack/winFwd, focusWin/activateWin/closeWin/minimizeWin/
   restoreWin/clearFocus/toggleZoom/toggleSidebar, enterSplit/exitSplit, theme/wallpaper/
   toggles), `geometry.ts` (geo defaults/drag/resize/`geoMap`/`bumpZ`), `palette.ts`,
@@ -93,10 +93,11 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   and `AppDashboard` (stats/recents/team); each child takes only `win`); `Views/` (the view seam:
   `DoctypeView` resolves a doctype's active view to a component via `registry.ts`'s
   `resolveView` — builtin `list`/`form` from a `BUILTIN_VIEWS` map, applet-backed views via
-  `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table) and `Form/` (`OSForm`
-  editable record screen) — the self-fetching builtin views, each with Save/New; `Settings`
+  `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table — a right-click row
+  menu opens the record in the same window or a new app instance, ADR-0017) and `Form/`
+  (`OSForm` editable record screen) — the self-fetching builtin views, each with Save/New; `Settings`
   (settings two-pane body), `MenuBar`, `Dock` (with window chooser), `CommandPalette`,
-  `WallpaperPicker`, `StatusPill`. The chrome **look** (Frappe-native ground/menu bar/
+  `WallpaperPicker`, `StatusPill`, `OSContextMenu` (generic cursor-pinned menu). The chrome **look** (Frappe-native ground/menu bar/
   windows/traffic dots + the adapt-behind dock) is specified in
   `docs/design/chrome-visual-language.md` — read it before restyling chrome.
 - `index.css` — frappe-ui style + Tailwind. Backend
