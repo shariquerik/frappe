@@ -19,13 +19,18 @@ const inSplit = computed(
 );
 const focused = computed(() => os.state.activeId === props.win.id);
 // The bar is static except the grab cursor (disabled when maximized/split).
+// Solid #f8f9fc surface with a hairline inset bottom (no border, no vibrancy).
 const barClass = computed(() => [
-	"relative flex items-center gap-2 h-11 px-2.5 flex-shrink-0 select-none border-b border-outline-gray-1 bg-surface-gray-1",
+	"relative flex items-center gap-2 h-11 px-2.5 flex-shrink-0 select-none bg-[#f8f9fc] shadow-[inset_0_-1px_0_rgba(0,0,0,0.06)]",
 	g.value.max || inSplit.value ? "cursor-default" : "cursor-grab",
 ]);
-// Reusable traffic-light / control button classes (close / minimize / zoom).
-const chromeBtn =
-	"inline-flex h-6 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-ink-gray-5";
+// Traffic dot: a neutral pill that fills with its semantic color on group-hover.
+const dot =
+	"grid h-[12px] w-[12px] cursor-pointer place-items-center rounded-full border-none bg-[var(--os-ctl-rest)] p-0 ring-1 ring-black/10 transition-colors";
+// Glyph: inline SVG (NOT the lucide sprite — it bakes a thin stroke we can't
+// thicken); hidden at rest, revealed on group-hover.
+const glyph =
+	"size-[9px] text-[var(--os-ctl-glyph)] opacity-0 transition-opacity group-hover:opacity-100";
 </script>
 
 <template>
@@ -34,15 +39,64 @@ const chromeBtn =
 		@pointerdown="os.startDrag(win.id, $event)"
 		@dblclick="os.toggleZoom(win.id)"
 	>
-		<span class="mr-1.5 flex flex-shrink-0 items-center gap-0.5" @pointerdown.stop>
-			<button :class="chromeBtn" title="Close" @click="os.closeWin(win.id)">
-				<span class="lucide-x size-[14px]"></span>
+		<span class="group mr-1.5 flex flex-shrink-0 items-center gap-2" @pointerdown.stop>
+			<button
+				:class="dot"
+				class="group-hover:bg-[var(--os-ctl-close)]"
+				title="Close"
+				@click="os.closeWin(win.id)"
+			>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.75"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					:class="glyph"
+				>
+					<path d="M18 6 6 18" />
+					<path d="m6 6 12 12" />
+				</svg>
 			</button>
-			<button :class="chromeBtn" title="Minimize" @click="os.minimizeWin(win.id)">
-				<span class="lucide-minus size-[14px]"></span>
+			<button
+				:class="dot"
+				class="group-hover:bg-[var(--os-ctl-min)]"
+				title="Minimize"
+				@click="os.minimizeWin(win.id)"
+			>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.75"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					:class="glyph"
+				>
+					<path d="M5 12h14" />
+				</svg>
 			</button>
-			<button :class="chromeBtn" title="Zoom" @click="os.toggleZoom(win.id)">
-				<span class="lucide-square size-[13px]"></span>
+			<button
+				:class="dot"
+				class="group-hover:bg-[var(--os-ctl-max)]"
+				title="Zoom"
+				@click="os.toggleZoom(win.id)"
+			>
+				<!-- chevrons-left-right rotated 45° -->
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.75"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					:class="glyph"
+					class="rotate-45"
+				>
+					<path d="m9 7-5 5 5 5" />
+					<path d="m15 7 5 5-5 5" />
+				</svg>
 			</button>
 		</span>
 		<slot>

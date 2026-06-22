@@ -9,6 +9,56 @@ import { windowRole, isBuiltin } from '@/surface'
 import type { OsWindow, BuiltinSurface } from '@/types'
 const os = useOS()
 
+// Adaptive backing: the dock floats trayless on the wallpaper, but grows an opaque tray
+// the moment a window sits behind it (a maximized list/form would otherwise wash the
+// glyphs out). Trayless, the glyphs adapt their ink to the wallpaper's darkness.
+const TRAY = 'rounded-[18px] border border-outline-gray-2 bg-surface-base shadow-[var(--shadow-xl)]'
+const dark = computed(() => os.currentWp.value.dark)
+
+// Is a non-minimized window covering the dock's bottom-center band?
+const behind = computed(() => {
+  if (os.state.split) return true
+  const dw = os.deskRef.w || 1280,
+    dh = os.deskRef.h || 800
+  const cx = dw / 2
+  const dockW = Math.min(dw - 40, (os.APP_ORDER.length + 1) * 53 + 40)
+  const left = cx - dockW / 2,
+    right = cx + dockW / 2,
+    bandTop = dh - 92
+  return os.state.windows.some((w) => {
+    const g = os.geoMap.value[w.id] || {}
+    if (g.min) return false
+    let x = g.x ?? 0,
+      y = g.y ?? 0,
+      ww = g.w ?? 0,
+      hh = g.h ?? 0
+    if (g.max) {
+      x = 0
+      y = 32
+      ww = dw
+      hh = dh
+    }
+    return x < right && x + ww > left && y + hh > bandTop
+  })
+})
+
+// Behind a window → opaque light tray + dark ink. On the bare wallpaper → floating
+// glyphs whose ink follows the wallpaper's darkness.
+const trayClass = computed(() => (behind.value ? TRAY : ''))
+const iconShadow = computed(() => (behind.value ? 'shadow-[var(--shadow-sm)]' : 'shadow-[var(--shadow-lg)]'))
+const dividerClass = computed(() =>
+  behind.value ? 'bg-[var(--outline-gray-2)]' : dark.value ? 'bg-white/25' : 'bg-black/10',
+)
+const dotClass = computed(() =>
+  !behind.value && dark.value ? 'bg-white/70' : 'bg-[var(--ink-gray-6)]',
+)
+const launchpadClass = computed(() => {
+  if (behind.value) return 'bg-surface-gray-3 text-ink-gray-7'
+  return dark.value
+    ? 'bg-white/15 text-white [backdrop-filter:blur(12px)]'
+    : 'bg-black/10 text-ink-gray-8 [backdrop-filter:blur(12px)]'
+})
+
 // A window's surface is always builtin in step 1 (applet windows come later).
 const sf = (w: OsWindow) => w.surface as BuiltinSurface
 
@@ -62,14 +112,15 @@ const closeMenu = () => { os.state.dockMenu = null }
   <div v-if="os.state.dockMenu" class="fixed inset-0 z-[89999]" @pointerdown="closeMenu"></div>
 
   <div class="absolute bottom-[10px] left-1/2 z-[90000] -translate-x-1/2">
-    <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex items-end gap-[7px] rounded-[18px] border border-outline-gray-1 bg-[var(--surface-alpha-white-6)] px-2.5 py-2 shadow-[var(--shadow-2xl)] [backdrop-filter:saturate(180%)_blur(20px)] [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1)]">
-      <div v-for="d in dockApps" :key="d.id" class="relative">
-        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.12s] hover:-translate-y-1.5" :title="d.name" @click="onIconClick(d)">
-          <img :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain shadow-[var(--shadow-sm)]" />
+    <!-- Trayless by default; an opaque tray fades in when a window sits behind the dock. -->
+    <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex items-end gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="trayClass">
+      <div v-for="d in dockApps" :key="d.id" class="relative flex items-end">
+        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s] hover:-translate-y-2" :title="d.name" @click="onIconClick(d)">
+          <img :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
           <!-- running indicator: a second dot hints at multiple windows -->
           <span v-if="d.count" class="absolute bottom-[-6px] left-1/2 flex -translate-x-1/2 items-center gap-[3px]">
-            <span class="h-1 w-1 rounded-full bg-[var(--ink-gray-6)]"></span>
-            <span v-if="d.count>1" class="h-1 w-1 rounded-full bg-[var(--ink-gray-6)]"></span>
+            <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
+            <span v-if="d.count>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
           </span>
         </button>
 
@@ -86,8 +137,8 @@ const closeMenu = () => { os.state.dockMenu = null }
           </button>
         </div>
       </div>
-      <div class="mx-0.5 h-[38px] w-px self-center bg-[var(--outline-gray-2)]"></div>
-      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-surface-gray-3 text-ink-gray-7 shadow-[var(--shadow-sm)] [transition:transform_.12s] hover:-translate-y-1.5" title="Launchpad" @click="os.openPalette()">
+      <div class="mx-0.5 h-[38px] w-px self-center" :class="dividerClass"></div>
+      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s] hover:-translate-y-2" :class="launchpadClass" title="Launchpad" @click="os.openPalette()">
         <span class="lucide-layout-grid size-[20px]"></span>
       </button>
     </div>

@@ -143,17 +143,36 @@ const helpMenu = [
 	},
 ];
 
-// Stretch the trigger to the full bar height so its hit area reaches the very
-// top screen edge (macOS-style) — a fixed 22px height left a dead strip above
-// each button that swallowed clicks aimed at the top edge.
+// Chrome over the wallpaper adapts to its darkness: white ink on dark grounds,
+// dark ink on light ones. The menu bar only ever sits over the wallpaper (windows
+// start below it at TOP=32), so wallpaper darkness alone decides legibility.
+const dark = computed(() => os.currentWp.value.dark);
+const barTextClass = computed(() => (dark.value ? "text-white" : "text-ink-gray-8"));
+const barStyle = computed(() => ({
+	background: dark.value
+		? "linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 100%)"
+		: "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%)",
+}));
+const dividerClass = computed(() => (dark.value ? "bg-white/25" : "bg-black/10"));
+const iconHover = computed(() => (dark.value ? "hover:bg-white/20" : "hover:bg-black/10"));
+const hoverCls = computed(() => (dark.value ? "hover:before:bg-white/20" : "hover:before:bg-black/10"));
+
+// Full-height trigger (hit area reaches the very top screen edge, macOS-style) but
+// the hover highlight is an INSET pseudo-element, so the pill doesn't fill the whole
+// bar height. `isolate` keeps the `before:-z-10` layer above the bar's own scrim;
+// text color is inherited from the bar (Tailwind preflight sets button color:inherit).
 const btn =
-	"inline-flex cursor-pointer items-center self-stretch rounded-md border-none bg-transparent px-[9px] text-[12.5px] text-ink-gray-8 [font-family:var(--font-sans)]";
-const btnCls = (bold: boolean) => [btn, bold ? "font-bold" : "font-medium"];
+	"relative isolate inline-flex cursor-pointer items-center self-stretch border-none bg-transparent px-[9px] text-[12.5px] [font-family:var(--font-sans)] before:absolute before:inset-x-0 before:inset-y-1 before:-z-10 before:rounded-md before:transition-colors before:content-['']";
+const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "font-medium"];
 </script>
 
 <template>
+	<!-- Transparent + soft top scrim (no frosted glass, no bottom hairline). Ink and
+	     scrim flip with the wallpaper's darkness so the menu reads on any ground. -->
 	<div
-		class="absolute left-0 right-0 top-0 z-[90000] flex h-8 items-center gap-0.5 border-b border-outline-gray-1 bg-[var(--surface-alpha-white-7)] px-2.5 [backdrop-filter:saturate(180%)_blur(18px)]"
+		class="absolute left-0 right-0 top-0 z-[90000] flex h-8 items-center gap-0.5 px-2.5"
+		:class="barTextClass"
+		:style="barStyle"
 	>
 		<OSDropdown :options="appleMenu" placement="bottom-start">
 			<button :class="btnCls(false)">
@@ -161,7 +180,7 @@ const btnCls = (bold: boolean) => [btn, bold ? "font-bold" : "font-medium"];
 			</button>
 		</OSDropdown>
 
-		<span class="h-[16px] w-px flex-shrink-0 bg-[var(--outline-gray-2)]"></span>
+		<span class="h-[16px] w-px flex-shrink-0" :class="dividerClass"></span>
 
 		<OSDropdown :options="appMenu" placement="bottom-start">
 			<button :class="btnCls(true)">
@@ -190,15 +209,14 @@ const btnCls = (bold: boolean) => [btn, bold ? "font-bold" : "font-medium"];
 		>
 		<div class="flex-1"></div>
 		<button
-			class="inline-flex h-6 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-ink-gray-7"
+			class="inline-flex h-6 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-transparent"
+			:class="iconHover"
 			title="Spotlight (⌘K)"
 			@click="os.openPalette()"
 		>
 			<span class="lucide-search size-[15px]"></span>
 		</button>
-		<span class="px-2 text-[12.5px] tabular-nums text-ink-gray-7">{{
-			os.clockText.value
-		}}</span>
+		<span class="px-2 text-[12.5px] tabular-nums">{{ os.clockText.value }}</span>
 		<span
 			class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ink-gray-8)] text-[10px] font-semibold text-white"
 			>{{ initials(userName) }}</span

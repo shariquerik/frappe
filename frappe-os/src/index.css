@@ -3,3 +3,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Window-control "traffic dot" trio — design-specific values with no espresso
+   token home (muted espresso, not Apple candy). Neutral at rest; the semantic
+   color + glyph reveal on title-bar group-hover. See WindowChrome.vue. */
+:root {
+  --os-ctl-rest: #cfcfd6;
+  --os-ctl-close: #c2554b;
+  --os-ctl-min: #cf9b46;
+  --os-ctl-max: #3f9e8c;
+  --os-ctl-glyph: rgba(0, 0, 0, 0.55);
+}
