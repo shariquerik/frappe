@@ -371,10 +371,10 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
   it('still runs the real New window handler when the override wins (patch is presentation-only)', () => {
     os.openApp('erpnext')
     const item = fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'New ERPNext window')
-    const openApp = vi.spyOn(os, 'openApp')
+    const newAppWindow = vi.spyOn(os, 'newAppWindow')
     item.onClick()
-    expect(openApp).toHaveBeenCalledWith('erpnext') // the real new-window Handler, unchanged
-    openApp.mockRestore()
+    expect(newAppWindow).toHaveBeenCalledWith('erpnext') // the real new-window Handler, unchanged
+    newAppWindow.mockRestore()
   })
 
   it('keeps the re-titled item in the OS default\'s slot — still two divider groups, not three', () => {

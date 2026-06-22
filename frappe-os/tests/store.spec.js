@@ -48,6 +48,64 @@ describe('focus state machine', () => {
   })
 })
 
+describe('newAppWindow stacks multiple windows of one app', () => {
+  it('first call uses the canonical id; a second call mints a distinct instance', () => {
+    const a = os.newAppWindow('crm')
+    const b = os.newAppWindow('crm')
+    expect(a.id).toBe('app:crm')
+    expect(b.id).toBe('app:crm#2')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
+    expect(os.state.activeId).toBe('app:crm#2') // the new one is focused
+  })
+
+  it('extra instances open un-maximized so they are visibly distinct', () => {
+    os.newAppWindow('crm')
+    const b = os.newAppWindow('crm')
+    expect(os.geoMap.value['app:crm'].max).toBe(true)
+    expect(os.geoMap.value[b.id].max).toBe(false)
+  })
+
+  it('fills the lowest free suffix after a middle window closes', () => {
+    os.newAppWindow('crm') // app:crm
+    os.newAppWindow('crm') // app:crm#2
+    os.newAppWindow('crm') // app:crm#3
+    os.closeWin('app:crm#2')
+    expect(os.newAppWindow('crm').id).toBe('app:crm#2')
+  })
+
+  it('unlike openApp, it never collapses into an existing window', () => {
+    os.openApp('crm')
+    os.newAppWindow('crm')
+    expect(os.state.windows.length).toBe(2)
+  })
+
+  it('openApp focuses a surviving extra instance instead of spawning a blank canonical', () => {
+    // Reload wart: close the canonical, keep app:crm#2, then a deep-link reopens 'crm'.
+    os.newAppWindow('crm')   // app:crm
+    os.newAppWindow('crm')   // app:crm#2
+    os.closeWin('app:crm')   // canonical gone, only #2 survives
+    os.clearFocus()
+    os.openApp('crm')        // deep-link / app-icon re-open
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm#2'])
+    expect(os.state.activeId).toBe('app:crm#2') // focused the survivor, minted nothing
+  })
+
+  it('a bare openApp focuses the canonical instance, not a more-recent twin', () => {
+    os.newAppWindow('crm')           // app:crm (canonical)
+    os.newAppWindow('crm')           // app:crm#2, now focused + on top
+    os.openApp('crm')                // bare path = canonical's address
+    expect(os.state.activeId).toBe('app:crm') // canonical wins; twin owns the URL only via ?instance
+    expect(os.state.windows.length).toBe(2)   // no new window
+  })
+
+  it('openApp(appId, n) targets a specific twin, respawning it if closed', () => {
+    os.openApp('crm')                // app:crm
+    os.openApp('crm', 2)             // respawn/focus app:crm#2 from a ?instance=2 URL
+    expect(os.state.activeId).toBe('app:crm#2')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
+  })
+})
+
 describe('hydrate preserves "nothing focused"', () => {
   const seed = (activeId) =>
     localStorage.setItem(

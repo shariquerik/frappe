@@ -20,7 +20,7 @@ import {
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
-  openApp, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome, popOut,
+  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome, popOut,
   focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit,
   setTheme, wallpaperDefs, currentWp, setWallpaper, openWallpaper, closeWallpaper, tog, isOn,
@@ -52,7 +52,7 @@ export function useOS() {
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
     // window lifecycle + navigation
-    openApp, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome, popOut,
+    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome, popOut,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp,

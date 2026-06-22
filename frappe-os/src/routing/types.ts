@@ -2,8 +2,20 @@
 
 // The route's path params, as parsed by the router. Any segment may be absent
 // (a bare desktop has none); dead doctype/record names degrade gracefully downstream.
+// `instance` is the parsed `?instance=n` query discriminator naming a non-canonical app
+// window instance (`app:<id>#n`); absent/null means the canonical instance.
 export interface RouteParams {
   app?: string
   doctype?: string
   name?: string
+  instance?: number | null
+}
+
+// What `pathForFocus` projects the focused window to: a content path plus a derived
+// query (only the reserved `instance` key today). Kept structured rather than a glued
+// string so the query composes safely with any future store-derived query (e.g. list
+// filters) instead of being concatenated onto a path that may already carry a `?`.
+export interface FocusLocation {
+  path: string
+  query: Record<string, string>
 }

@@ -2,21 +2,38 @@
 // decision tables (focus -> path, route -> store action) are unit-testable in
 // isolation: every function takes the `os` store explicitly and touches no router,
 // history, or window globals. main.js owns the wiring (guards, boot, watchers).
-import type { OsStore, RouteParams, Surface } from '@/types'
+import type { FocusLocation, OsStore, RouteParams, Surface } from '@/types'
 
-// Project the focused window to its canonical path (no /os prefix — the router's base
-// adds it). Doctype is authoritative over `:app` (recomputed via appForDoctype). A record
-// pop-out projects like an inline form; the window id in history state is what
-// distinguishes the two (they share a path).
-export function pathForFocus(os: OsStore): string {
+// Reserved query key naming a non-canonical app window instance (`app:<id>#n`). OS-owned:
+// apps and list filters must not use it (a leading-letter Frappe fieldname could otherwise
+// collide). Absent for the canonical instance, so single-window URLs are unchanged.
+export const INSTANCE_KEY = 'instance'
+
+const bare = (): FocusLocation => ({ path: '/', query: {} })
+
+// Project the focused window to its canonical content path (no /os prefix — the router's
+// base adds it) plus a derived query. Doctype is authoritative over `:app` (recomputed via
+// appForDoctype). A record pop-out projects like an inline form; the window id in history
+// state distinguishes the two (they share a path). Two app instances on the same surface
+// share a path too, but the `?instance=n` query keeps them individually addressable.
+export function pathForFocus(os: OsStore): FocusLocation {
   const id = os.state.activeId
-  if (!id) return '/'
+  if (!id) return bare()
   const w = os.state.windows.find((x) => x.id === id)
-  if (!w) return '/'
+  if (!w) return bare()
   // A minimized window isn't on screen, so it shouldn't own the URL — treat it as
   // a bare desktop. (activeId shouldn't point at a minimized window, but guard anyway.)
-  if ((os.geoMap?.value?.[id] || {}).min) return '/'
-  return pathForSurface(os, w.surface)
+  if ((os.geoMap?.value?.[id] || {}).min) return bare()
+  return { path: pathForSurface(os, w.surface), query: instanceQuery(id) }
+}
+
+// The `?instance=n` discriminator for a non-canonical app instance id `app:<id>#n`; empty
+// for the canonical `app:<id>` and for non-app windows. Gated on the `app:` prefix so a
+// record literally named "…#3" (id `rec:…#3`) can't masquerade as an instance.
+export function instanceQuery(id: string): Record<string, string> {
+  if (!id.startsWith('app:')) return {}
+  const match = /#(\d+)$/.exec(id)
+  return match ? { [INSTANCE_KEY]: match[1] } : {}
 }
 
 // The canonical path for one surface. An applet surface projects to
@@ -47,7 +64,7 @@ export function focusSig(os: OsStore): string {
 // Turn a cold deep-link / respawn route into store actions. `params` is the route's
 // { app, doctype, name }. Dead doctype/record degrade gracefully.
 export function applyRoute(os: OsStore, params: RouteParams): void {
-  const { app, doctype, name } = params
+  const { app, doctype, name, instance } = params
   // Path is authoritative: a bare /os means "no window in front", so clear focus
   // rather than letting a hydrated/restored activeId mirror itself back into the URL.
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
@@ -67,18 +84,19 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
     // A second segment that isn't a doctype may be an applet id (/<app>/<appletId>).
     // knownDoctype was checked first, so a real doctype never reaches here — doctype-wins
     // precedence falls out for free. Otherwise it's an app deep-link with a junk tail.
-    if (os.knownApplet(app, doctype)) { os.openApplet(app, doctype); return }
-    if (knownApp) os.openApp(app)
+    if (os.knownApplet(app, doctype)) { os.openApplet(app, doctype, undefined, instance); return }
+    if (knownApp) os.openApp(app, instance)
     return
   }
   // Records load live, so we can't prove a record exists synchronously: always open
   // the form for a known doctype + name and let the form view show a not-found state
-  // on a 404 (Phase 4). A doctype with no name opens its list.
+  // on a 404 (Phase 4). A doctype with no name opens its list. `instance` targets a
+  // specific app window when the URL carried `?instance=n` (else the canonical one).
   if (doctype && name) {
-    os.openRecordGlobal(doctype, name)
+    os.openRecordGlobal(doctype, name, instance)
   } else if (doctype) {
-    os.openListGlobal(doctype)
+    os.openListGlobal(doctype, instance)
   } else if (knownApp) {
-    os.openApp(app)
+    os.openApp(app, instance)
   }
 }

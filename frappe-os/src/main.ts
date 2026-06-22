@@ -1,5 +1,5 @@
 import { createApp, watch, nextTick } from 'vue'
-import type { RouteLocationNormalized, RouteParamsGeneric } from 'vue-router'
+import type { LocationQuery, RouteLocationNormalized, RouteParamsGeneric } from 'vue-router'
 // index.css imports frappe-ui/style.css then runs Tailwind's directives against THIS
 // project's content globs — without it only frappe-ui's prebuilt utilities exist and
 // app-specific classes silently no-op.
@@ -8,17 +8,21 @@ import App from './App.vue'
 import { useOS } from '@/desktop'
 import { getBoot, initOsApi } from '@/data'
 import { initRegistry } from '@/registry'
-import { router, pathForFocus, focusSig, applyRoute } from '@/routing'
+import { router, pathForFocus, focusSig, applyRoute, INSTANCE_KEY } from '@/routing'
 import { formSurface, listSurface, dashboardSurface, appletSurface } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
 
 const os = useOS()
 
-// vue-router's params are `string | string[]` per segment; our routes only ever bind
-// single segments, so collapse to the `{ app, doctype, name }` shape route-map expects.
-function routeParams(p: RouteParamsGeneric): RouteParams {
-  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined
-  return { app: one(p.app), doctype: one(p.doctype), name: one(p.name) }
+// vue-router's params/query are `string | string[]` per key; our routes only ever bind
+// single segments, so collapse to the `{ app, doctype, name, instance }` shape route-map
+// expects. `instance` parses the reserved `?instance=n` query (junk → null = canonical).
+function routeParams(loc: { params: RouteParamsGeneric; query: LocationQuery }): RouteParams {
+  const one = (v: string | (string | null)[] | undefined | null) => (Array.isArray(v) ? v[0] : v) || undefined
+  const raw = one(loc.query[INSTANCE_KEY])
+  const instance = raw ? Number.parseInt(raw, 10) : NaN
+  return { app: one(loc.params.app), doctype: one(loc.params.doctype), name: one(loc.params.name),
+    instance: Number.isInteger(instance) ? instance : null }
 }
 
 // ---- Frappe interop: /app/... -> /os/... -------------------------------------
@@ -57,13 +61,13 @@ const navState = () => ({ osWin: os.state.activeId || null })
 // (vue-router treats a same-path push as a no-op and wouldn't fire afterEach, which
 // would leave `programmatic` stuck true and swallow the next real navigation).
 function pushFocus() {
-  const path = pathForFocus(os)
-  // Compare against `path` (not `fullPath`): pathForFocus never emits a query/hash,
-  // so a fullPath carrying `?…`/`#…` would never match and we'd push a redundant
-  // entry on every focus tick — which also leaves `programmatic` stuck true.
-  if (router.currentRoute.value.path === path) return
+  const loc = pathForFocus(os)
+  // Compare resolved fullPaths so the reserved `?instance=n` query counts: two app
+  // instances on the same surface share a path but differ by query, and we DO want a
+  // timeline entry for that focus switch (so browser back/forward toggles them).
+  if (router.currentRoute.value.fullPath === router.resolve(loc).fullPath) return
   programmatic = true
-  router.push({ path, state: navState() })
+  router.push({ path: loc.path, query: loc.query, state: navState() })
 }
 
 // Browser back/forward: restore the (window, view) the popped entry encodes. The
@@ -73,7 +77,7 @@ function pushFocus() {
 function restoreFromHistory(to: RouteLocationNormalized) {
   const st = window.history.state || {}
   const winId: string | null = st.osWin || null
-  const { app, doctype, name } = routeParams(to.params)
+  const { app, doctype, name, instance } = routeParams(to)
 
   // Settings windows: path is /<app>/settings, state id is settings:<app>. Refocus
   // if still open, else respawn from the app segment (settings panes aren't persisted).
@@ -95,7 +99,7 @@ function restoreFromHistory(to: RouteLocationNormalized) {
   if (doctype && os.knownApplet(app, doctype)) {
     const surface = appletSurface(app, doctype)
     if (winId && os.restoreWin(winId, surface)) return
-    os.openApplet(app, doctype)
+    os.openApplet(app, doctype, undefined, instance)
     return
   }
 
@@ -109,7 +113,7 @@ function restoreFromHistory(to: RouteLocationNormalized) {
     os.popOut(doctype, name)
     return
   }
-  applyRoute(os, routeParams(to.params))
+  applyRoute(os, routeParams(to))
 }
 
 async function boot() {
@@ -138,9 +142,10 @@ async function boot() {
   //    3. seed the FIRST timeline entry with replace (not push) so back doesn't
   //    leave a stale pre-OS URL. Reset the guard explicitly: a same-path replace
   //    may not fire afterEach.
-  applyRoute(os, routeParams(router.currentRoute.value.params))
+  applyRoute(os, routeParams(router.currentRoute.value))
   programmatic = true
-  await router.replace({ path: pathForFocus(os), state: navState() }).catch(() => {})
+  const seed = pathForFocus(os)
+  await router.replace({ path: seed.path, query: seed.query, state: navState() }).catch(() => {})
   programmatic = false
 
   // 4. history -> store: only genuine pops (browser back/forward) restore focus;

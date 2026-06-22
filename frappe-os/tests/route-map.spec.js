@@ -15,38 +15,52 @@ beforeEach(() => {
 
 describe('pathForFocus', () => {
   it('bare desktop projects to /', () => {
-    expect(pathForFocus(os)).toBe('/')
+    expect(pathForFocus(os)).toEqual({ path: '/', query: {} })
   })
 
   it('an app home window projects to /<app>', () => {
     os.openApp('frappe')
-    expect(pathForFocus(os)).toBe('/frappe')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe', query: {} })
   })
 
   it('a list view projects to /<app>/<doctype>', () => {
     os.openListGlobal('ToDo')
-    expect(pathForFocus(os)).toBe('/frappe/ToDo')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/ToDo', query: {} })
   })
 
   it('a form view projects to /<app>/<doctype>/<name> (encoded)', () => {
     os.openRecordGlobal('CRM Lead', 'CRM-LEAD-2024-0042')
-    expect(pathForFocus(os)).toBe('/crm/CRM%20Lead/CRM-LEAD-2024-0042')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/CRM-LEAD-2024-0042', query: {} })
   })
 
   it('a settings window projects to /<app>/settings', () => {
     os.openSettings('frappe')
-    expect(pathForFocus(os)).toBe('/frappe/settings')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/settings', query: {} })
   })
 
   it('an applet window projects to /<app>/<appletId>', () => {
     os.openApplet('frappe', 'my-todos')
-    expect(pathForFocus(os)).toBe('/frappe/my-todos')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/my-todos', query: {} })
   })
 
   it('a minimized active window projects to / (never owns the URL)', () => {
     os.openApp('frappe')
     os.state.geo['app:frappe'] = { ...os.state.geo['app:frappe'], min: true }
-    expect(pathForFocus(os)).toBe('/')
+    expect(pathForFocus(os)).toEqual({ path: '/', query: {} })
+  })
+
+  it('the canonical instance carries no instance query; a #n twin carries ?instance=n', () => {
+    os.newAppWindow('crm') // app:crm (canonical)
+    expect(pathForFocus(os)).toEqual({ path: '/crm', query: {} })
+    os.newAppWindow('crm') // app:crm#2, now focused
+    expect(pathForFocus(os)).toEqual({ path: '/crm', query: { instance: '2' } })
+  })
+
+  it('the instance query rides alongside the twin’s own surface path', () => {
+    os.newAppWindow('crm')                          // app:crm
+    os.newAppWindow('crm')                          // app:crm#2 focused
+    os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the twin to a form
+    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: { instance: '2' } })
   })
 })
 
@@ -120,5 +134,24 @@ describe('applyRoute', () => {
     expect(os.state.activeId).toBe('app:frappe')
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface.kind).toBe('builtin')
+  })
+
+  it('?instance=n targets the matching twin, respawning it if closed (reload addressability)', () => {
+    applyRoute(os, { app: 'crm', instance: 2 }) // cold deep-link to a twin that isn't open yet
+    expect(os.state.activeId).toBe('app:crm#2')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm#2'])
+  })
+
+  it('a form deep-link with ?instance=n opens the form in that twin', () => {
+    os.openApp('crm') // canonical already open
+    applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-7', instance: 2 })
+    expect(os.state.activeId).toBe('app:crm#2')
+    const w = os.state.windows.find((x) => x.id === 'app:crm#2')
+    expect(w.surface).toMatchObject({ view: 'form', doctype: 'CRM Lead', recordName: 'L-7' })
+  })
+
+  it('no instance query falls back to the canonical / any open instance', () => {
+    applyRoute(os, { app: 'crm' })
+    expect(os.state.activeId).toBe('app:crm')
   })
 })

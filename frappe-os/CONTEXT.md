@@ -45,6 +45,22 @@ rendered by generic OS machinery *or* a reference to an Applet contribution reso
 runtime loader. Window chrome, geometry, focus, and URL projection are agnostic to which
 kind a Surface is. Replaces the POC's fixed `view: {mode, doctype, recordName}`.
 
+**Window**:
+A movable, focusable container on the desktop that hosts exactly one **Surface** at a time
+(and carries its own back/forward nav history). The container; the Surface is its content.
+
+**Instance**:
+One of several concurrent **Windows** hosting the same **App**. Opening an app a second time
+(File ▸ New window) mints a new instance rather than re-focusing the existing one. Instances
+of one app are independent (each navigates its own Surface) but group together in the dock.
+_Avoid_: "twin", "extra window", "duplicate" — say "instance".
+
+**Canonical instance**:
+The *first* **Instance** of an app — the one that owns the bare window id `app:<id>` and is
+the deterministic target a deep-link / cold-boot resolves to (later instances carry a
+suffixed id and are not individually URL-addressable). Deliberately privileged so deep-links
+have one unambiguous window to land on.
+
 **Doctype view**:
 A way of presenting one doctype — list, form, report, kanban, calendar, gantt, tree, etc.
 Some views are generic (list/form, rendered from data); others are applet-backed

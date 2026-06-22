@@ -11,11 +11,12 @@ import type { Action, Command } from './types'
 
 export const FILE_REGION = 'menubar:file'
 
-// Open a new window of the active app (or the frappe home when the desktop is bare). The OS
-// window model is one window per app today, so this focuses-or-creates that app's window.
+// Open a new window of the active app (or the frappe home when the desktop is bare). Always
+// mints a FRESH window instance — even when that app already has one open — so repeated "New
+// window" stacks windows the way the menu label promises (openApp would just re-focus the one).
 function newWindow(os: OsStore): void {
   const win = os.state.windows.find((w) => w.id === os.state.activeId)
-  os.openApp(win ? surfaceAppId(win.surface) : 'frappe')
+  os.newAppWindow(win ? surfaceAppId(win.surface) : 'frappe')
 }
 
 function closeActiveWindow(os: OsStore): void {

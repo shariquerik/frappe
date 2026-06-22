@@ -25,9 +25,12 @@ no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused*
   back?, fwd?,                                                  // per-window nav history
   settingsTab? }                                               // settings windows
 ```
-- IDs: `app:<appId>` · `rec:<doctype>/<name>` · `settings:<appId>` · `wallpaper` (singleton
-  system pane). One window per id (deduped); only ever one `app:<id>` per app, but
-  records/settings add more windows. `windowRole(id)` derives the role from the id prefix.
+- IDs: `app:<appId>` (canonical instance) · `app:<appId>#n` (extra instances, n ≥ 2) ·
+  `rec:<doctype>/<name>` · `settings:<appId>` · `wallpaper` (singleton system pane). One
+  window per id (deduped). An app may have **multiple instances** (File ▸ New window): the
+  first owns the bare `app:<id>`, extras get `#n`; the bare `/os/<app>` path addresses the
+  canonical and a twin is addressed by `?instance=n` (ADR-0016). `windowRole(id)` derives
+  the role from the id prefix (the `#n` suffix is still role `app`).
 - **Geometry is separate**: `state.geo[id] = {x,y,w,h,z,min,max}`, merged over a by-index
   default in the `geoMap` computed. `bumpZ()` raises focus.
 

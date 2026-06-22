@@ -51,23 +51,78 @@ export function winFwd(id: string) {
 }
 
 // ---- opening apps / lists / records ------------------------------------------
-function ensureApp(appId: string, surface: Surface | null) {
-  const id = 'app:' + appId
+// App window ids: the first ("canonical") instance owns the bare `app:<id>`; extras get
+// `app:<id>#n` (n ≥ 2). Keeping the first on the plain id leaves its URL/deep-link/
+// persistence behaviour unchanged; the suffix is still role 'app' and still groups under
+// the app in the dock. `instance` ≥ 2 maps to a suffixed id; anything else is canonical.
+const canonicalId = (appId: string) => 'app:' + appId
+const instanceId = (appId: string, n?: number | null) =>
+  n && n >= 2 ? canonicalId(appId) + '#' + n : canonicalId(appId)
+
+// Open windows that are instances of an app, identified by id — NOT by current surface,
+// since an instance navigated onto another app's doctype is still this app's window. The
+// `#` guard stops `crm` matching `crm2`.
+const appInstances = (appId: string) =>
+  state.windows.filter((w) => w.id === canonicalId(appId) || w.id.startsWith(canonicalId(appId) + '#'))
+// The instance to bring forward when re-opening an app: the focused one if it's already
+// this app, else the top of the z-order.
+const topInstance = (wins: OsWindow[]): OsWindow | undefined =>
+  wins.slice().sort((a, b) => (geoMap.value[b.id]?.z || 0) - (geoMap.value[a.id]?.z || 0))[0]
+
+// Create a window at an explicit id and focus it. Extras (#n) open un-maximized so they
+// read as visibly distinct from the window already on screen — two maximized windows look
+// identical and a fresh one reads as "nothing happened".
+function spawnWindow(id: string, appId: string, surface: Surface | null): OsWindow {
+  const win: OsWindow = { id, surface: surface || initialSurface(appId), back: [], fwd: [] }
+  state.windows.push(win)
   const z = bumpZ()
-  const exists = state.windows.some((w) => w.id === id)
-  if (!exists) state.windows.push({ id, surface: surface || initialSurface(appId), back: [], fwd: [] })
-  else if (surface) { const w = state.windows.find((x) => x.id === id)!; pushHist(w, surface); w.surface = surface }
-  setGeo(id, { z, min: false })
+  setGeo(id, id === canonicalId(appId) ? { z, min: false } : { z, min: false, max: false })
   state.activeId = id
   state.menu = null
   state.paletteOpen = false
+  return win
 }
-export const openApp = (appId: string) => ensureApp(appId, null)
-export const openListGlobal = (dt: string) => ensureApp(appForDoctype(dt), listSurface(dt))
-export const openRecordGlobal = (dt: string, name: string) => ensureApp(appForDoctype(dt), formSurface(dt, name))
+
+// Focus-or-create a window for an app, giving it `surface` if provided.
+//  - `instance` set (from a `?instance=n` URL): target that EXACT id, respawning it if a
+//    reload/deep-link lands on a closed instance — so a twin stays URL-addressable.
+//  - `instance` omitted (app icon, plain deep-link): the bare path is the CANONICAL
+//    instance's address, so focus the canonical when it exists; else fall back to any
+//    surviving twin (so closing the canonical doesn't spawn a blank one on reload — the
+//    #n scheme's wart); else mint the canonical. Canonical-first keeps `/os/<app>` stable:
+//    a twin only owns the URL via its own `?instance=n`, never the bare path.
+function ensureApp(appId: string, surface: Surface | null, instance?: number | null) {
+  const open = appInstances(appId)
+  const target = instance != null
+    ? open.find((w) => w.id === instanceId(appId, instance))
+    : open.find((w) => w.id === canonicalId(appId)) || topInstance(open)
+  if (!target) return void spawnWindow(instance != null ? instanceId(appId, instance) : canonicalId(appId), appId, surface)
+  if (surface) { pushHist(target, surface); target.surface = surface }
+  const z = bumpZ(); setGeo(target.id, { z, min: false }); state.activeId = target.id
+  state.menu = null
+  state.paletteOpen = false
+}
+export const openApp = (appId: string, instance?: number | null) => ensureApp(appId, null, instance)
+
+// The next free window id for an app: the canonical `app:<id>` if unused, else the lowest
+// `app:<id>#n` (n ≥ 2) not already taken.
+function freshAppWindowId(appId: string): string {
+  if (!state.windows.some((w) => w.id === canonicalId(appId))) return canonicalId(appId)
+  let n = 2
+  while (state.windows.some((w) => w.id === instanceId(appId, n))) n += 1
+  return instanceId(appId, n)
+}
+
+// Open a BRAND-NEW window for an app even when one is already open (File ▸ New window).
+// Unlike openApp (focus-or-create), this always mints a fresh instance.
+export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
+  spawnWindow(freshAppWindowId(appId), appId, surface ?? null)
+
+export const openListGlobal = (dt: string, instance?: number | null) => ensureApp(appForDoctype(dt), listSurface(dt), instance)
+export const openRecordGlobal = (dt: string, name: string, instance?: number | null) => ensureApp(appForDoctype(dt), formSurface(dt, name), instance)
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
-export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>) =>
-  ensureApp(appId, appletSurface(appId, appletId, props))
+export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
+  ensureApp(appId, appletSurface(appId, appletId, props), instance)
 
 // Open ANY surface in its owning app window — the generic primitive the OS API seam
 // dispatches arbitrary surfaces through (the typed openers above are shorthands over
@@ -91,7 +146,7 @@ export const goHome = (winId: string) => navFocus(winId, dashboardSurface(window
 // The app a window belongs to (read off its current surface; falls back to the id).
 function windowAppId(winId: string): string {
   const w = state.windows.find((x) => x.id === winId)
-  return (w && isBuiltin(w.surface) && w.surface.appId) || winId.replace(/^app:/, '')
+  return (w && isBuiltin(w.surface) && w.surface.appId) || winId.replace(/^app:/, '').replace(/#\d+$/, '')
 }
 
 export function popOut(dt: string, name: string) {
