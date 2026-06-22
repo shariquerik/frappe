@@ -259,6 +259,7 @@ interface AppletPayload {
 
 const FIRST_PARTY: Record<string, AppletEntry> = {
   'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos') },
+  'customizations': { appId: 'frappe', label: 'Customizations', load: () => import('@/applets/Customizations') },
 }
 
 // One enumerable applet info row (palette entry points read this).
