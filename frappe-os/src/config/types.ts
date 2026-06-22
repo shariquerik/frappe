@@ -115,7 +115,8 @@ export interface ViewProps {
   recordName?: string | null
   meta: DoctypeMeta | null
   presence: { label: string }[]
-  onOpen?: (doctype: string, name: string) => void // open a record (list → form)
+  onOpen?: (doctype: string, name: string) => void // open a record (list → form), same window
+  onOpenNewWindow?: (doctype: string, name: string) => void // open a record in a fresh app instance
   onNew?: (doctype: string) => void // start a blank create form
   onCreated?: (doctype: string, name: string) => void // after a create succeeds
 }

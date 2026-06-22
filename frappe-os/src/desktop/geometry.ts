@@ -31,7 +31,6 @@ export const syncTopZ = (windows: OsWindow[], geo: Record<string, Partial<Geo>>)
 }
 
 const defAppGeo = (i: number): Geo => ({ x: 70 + (i % 5) * 36, y: 56 + (i % 5) * 30, w: 1080, h: 700, z: i + 1, min: false, max: true })
-const defRecGeo = (i: number): Geo => ({ x: 220 + (i % 6) * 34, y: 110 + (i % 6) * 28, w: 760, h: 600, z: i + 1, min: false, max: false })
 const defSettingsGeo = (i: number): Geo => ({ x: 200 + (i % 6) * 30, y: 92 + (i % 6) * 26, w: 720, h: 560, z: i + 1, min: false, max: false })
 // A compact, roughly-centered gallery window (singleton, so the by-index offset never applies).
 const defWallpaperGeo = (i: number): Geo => ({ x: 330, y: 150, w: 640, h: 470, z: i + 1, min: false, max: false })
@@ -41,7 +40,7 @@ export const geoMap = computed<Record<string, Geo>>(() => {
   const map: Record<string, Geo> = {}
   state.windows.forEach((w, i) => {
     const role = windowRole(w.id)
-    const base = role === 'app' ? defAppGeo(i) : role === 'settings' ? defSettingsGeo(i) : role === 'wallpaper' ? defWallpaperGeo(i) : defRecGeo(i)
+    const base = role === 'app' ? defAppGeo(i) : role === 'settings' ? defSettingsGeo(i) : defWallpaperGeo(i)
     map[w.id] = Object.assign(base, state.geo[w.id] || {})
   })
   return map

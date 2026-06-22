@@ -50,10 +50,13 @@ A movable, focusable container on the desktop that hosts exactly one **Surface**
 (and carries its own back/forward nav history). The container; the Surface is its content.
 
 **Instance**:
-One of several concurrent **Windows** hosting the same **App**. Opening an app a second time
-(File ▸ New window) mints a new instance rather than re-focusing the existing one. Instances
-of one app are independent (each navigates its own Surface) but group together in the dock.
-_Avoid_: "twin", "extra window", "duplicate" — say "instance".
+One of several concurrent **Windows** hosting the same **App**. Minted whenever the user
+asks for a *new* window of an app rather than re-using an open one — File ▸ New window, or
+"Open in New Window" on a list row (which mints an instance already showing that record).
+Instances of one app are independent (each navigates its own Surface) but group together in
+the dock. There is no separate "record window" kind: a record opened in a new window is just
+an instance whose Surface starts on that record's form.
+_Avoid_: "twin", "extra window", "duplicate", "pop-out" — say "instance".
 
 **Canonical instance**:
 The *first* **Instance** of an app — the one that owns the bare window id `app:<id>` and is

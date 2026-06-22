@@ -44,12 +44,12 @@ describe('specificity (lexicographic surface,window vector)', () => {
     expect(specificity({})).toEqual([0, 0])
     expect(specificity({ activeApp: 'crm' })).toEqual([0, 1])
     expect(specificity({ doctype: 'CRM Lead' })).toEqual([1, 0])
-    expect(specificity({ doctype: 'CRM Lead', activeApp: 'crm', windowRole: 'record' })).toEqual([1, 2])
+    expect(specificity({ doctype: 'CRM Lead', activeApp: 'crm', windowRole: 'settings' })).toEqual([1, 2])
   })
 
   it('a one-key surface predicate outranks a two-key window predicate (tier dominates count)', () => {
     expect(compareSpecificity(specificity({ doctype: 'CRM Lead' }),
-      specificity({ activeApp: 'crm', windowRole: 'record' }))).toBeGreaterThan(0)
+      specificity({ activeApp: 'crm', windowRole: 'settings' }))).toBeGreaterThan(0)
   })
 
   it('within the same tier, more keys win', () => {

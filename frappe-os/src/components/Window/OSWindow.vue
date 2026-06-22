@@ -2,7 +2,7 @@
 // A desktop window — the thin dispatcher. This file owns only the macOS geometry (drag/
 // resize/split/maximize → `styleWin`) and the window-type branch; the title bar
 // (WindowChrome), the app nav (AppToolbar/AppSidebar) and the dashboard body (AppDashboard)
-// are extracted siblings. App/record bodies render through DoctypeView, settings through
+// are extracted siblings. App bodies (list/form) render through DoctypeView, settings through
 // SettingsDialog, and applet-backed surfaces (ADR-0012) through a resolved component.
 import { computed, provide, shallowRef, watch } from "vue";
 import type { Component } from "vue";
@@ -16,7 +16,7 @@ import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT } from "./toolbar";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
-import { windowRole } from "@/surface";
+import { windowRole, formSurface } from "@/surface";
 // OsWindow feeds defineProps, so these come from concrete modules, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/surface/types";
@@ -26,7 +26,7 @@ import type { ViewProps } from "@/config/types";
 const props = defineProps<{ win: OsWindow }>();
 const os = useOS();
 
-// Window role (app/record/settings) is derived from the id; the surface is the content.
+// Window role (app/settings/wallpaper) is derived from the id; the surface is the content.
 const role = computed(() => windowRole(props.win.id));
 const s = computed<BuiltinSurface>(() => props.win.surface as BuiltinSurface);
 
@@ -125,11 +125,13 @@ const viewProps = computed<ViewProps>(() => {
 		meta: dt ? os.getMeta(dt) : null,
 		presence: os.presenceFor(s.value).map((p) => ({ label: p.label })),
 	};
-	if (role.value === "record") return { ...base, view: "form" };
 	return {
 		...base,
 		view: mode.value,
 		onOpen: (d, name) => os.openRecordInline(props.win.id, d, name),
+		// "Open in New Window" (list-row menu): mint a fresh app instance already on the
+		// record's form — an ordinary Instance, not a record-only window (ADR-0017).
+		onOpenNewWindow: (d, name) => os.newAppWindow(os.appForDoctype(d), formSurface(d, name)),
 		onNew: (d) => os.openNew(props.win.id, d),
 		onCreated: (d, name) => os.openRecordInline(props.win.id, d, name),
 	};
@@ -185,14 +187,6 @@ const viewProps = computed<ViewProps>(() => {
 				<WindowChrome :win="win" title="Wallpaper" :logo="app.logo" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 					<WallpaperPicker />
-				</div>
-			</template>
-
-			<!-- ===== RECORD WINDOW ===== -->
-			<template v-else>
-				<WindowChrome :win="win" :title="s.recordName" :logo="app.logo" />
-				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-					<DoctypeView v-bind="viewProps" />
 				</div>
 			</template>
 		</div>

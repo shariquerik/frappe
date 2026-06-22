@@ -40,7 +40,10 @@ a reload restores the exact instance.
   composes with any future store-derived query instead of being string-concatenated.
 - The canonical instance is **deliberately privileged** (owns the bare id and path). This
   asymmetry is the cost of leaving the common case untouched; it is intentional, not a wart.
-- **Out of scope (deferred):** pop-out (`rec:`) windows are a separate id space and are *not*
-  yet toggle-able via back/forward the way instances now are — they share a path with their
-  inline form and rely solely on `history.state.osWin`. Folding pop-outs into the same
-  addressing model is a distinct decision left to a later session.
+- **Pop-out windows (resolved in ADR-0017):** the original `rec:` pop-out windows shared a
+  content-path with their inline form and relied solely on `history.state.osWin`, so they were
+  the one window kind back/forward couldn't toggle. Rather than fold them into this addressing
+  model with a second reserved query key, ADR-0017 **removed** the `rec:` window kind: "open a
+  record in a new window" now mints an ordinary app **instance**, which this ADR already makes
+  toggle-able and reload-restorable. With that, pop-outs are gone and `instance` is the *only*
+  shared-path discriminator — no further window kind shares a path.

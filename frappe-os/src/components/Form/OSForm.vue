@@ -102,12 +102,7 @@ const saveLabel = computed(() => (saving.value ? 'Saving…' : isNew.value ? 'Cr
 // Null for a popped-out record window — the form then keeps its full inline header.
 const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
 
-function popOut() {
-  os.popOut(doctype.value!, props.recordName!)
-}
-// Pop-out only makes sense from an inline (chrome-backed) form; a record window is already out.
 const formMenu = computed(() => [
-  ...(toolbarSlot.value ? [{ label: 'Pop out', onClick: popOut }] : []),
   { label: 'Duplicate', onClick: () => {} },
   { label: 'Print', onClick: () => {} },
   { label: 'Delete', onClick: () => {} },

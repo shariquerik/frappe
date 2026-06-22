@@ -44,9 +44,9 @@ export function serialize() {
 }
 
 // Restore the desktop from storage. Defensive: drop any window/surface whose doctype is
-// no longer a known doctype (fall an app window back to its dashboard; drop a record
-// pop-out for an unknown doctype). A record whose doctype is known is kept — the form
-// loads it live. Incompatible blob shapes are discarded whole.
+// no longer a known doctype (fall an app window back to its dashboard). Legacy `rec:`
+// pop-out windows (ADR-0017 removed the role) are dropped wholesale — disposable POC
+// sessions, no migration. Incompatible blob shapes are discarded whole.
 export function hydrate(): boolean {
   // Untrusted JSON: read as `any` and validate defensively below.
   let blob: any = null
@@ -55,18 +55,14 @@ export function hydrate(): boolean {
   const reg = useRegistry()
   const windows: OsWindow[] = []
   for (const w of blob.windows || []) {
+    if (w.id?.startsWith('rec:')) continue // legacy pop-out window (ADR-0017) -> drop
     const appId = w.surface?.appId
-    if (windowRole(w.id) === 'record') {
-      if (!validSurface(w.surface)) continue // unknown doctype -> drop
-      windows.push({ id: w.id, surface: w.surface })
-    } else {
-      if (!reg.app(appId)) continue
-      const surface = validSurface(w.surface) ? w.surface : initialSurface(appId) // dead -> dashboard
-      windows.push({
-        id: w.id, surface,
-        back: (w.back || []).filter(validSurface), fwd: (w.fwd || []).filter(validSurface),
-      })
-    }
+    if (!reg.app(appId)) continue
+    const surface = validSurface(w.surface) ? w.surface : initialSurface(appId) // dead -> dashboard
+    windows.push({
+      id: w.id, surface,
+      back: (w.back || []).filter(validSurface), fwd: (w.fwd || []).filter(validSurface),
+    })
   }
   const ids = new Set(windows.map((w) => w.id))
   state.windows = windows

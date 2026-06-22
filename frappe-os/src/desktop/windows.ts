@@ -149,14 +149,6 @@ function windowAppId(winId: string): string {
   return (w && isBuiltin(w.surface) && w.surface.appId) || winId.replace(/^app:/, '').replace(/#\d+$/, '')
 }
 
-export function popOut(dt: string, name: string) {
-  const id = 'rec:' + dt + '/' + name
-  const z = bumpZ()
-  if (!state.windows.some((w) => w.id === id)) state.windows.push({ id, surface: formSurface(dt, name) })
-  setGeo(id, { z, min: false })
-  state.activeId = id
-}
-
 // ---- focus / minimize / close ------------------------------------------------
 export const focusWin = (id: string) => { const z = bumpZ(); setGeo(id, { z }); state.activeId = id }
 // Bring a specific window to the front from anywhere (e.g. the dock chooser):

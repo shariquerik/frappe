@@ -71,9 +71,9 @@ function pushFocus() {
 }
 
 // Browser back/forward: restore the (window, view) the popped entry encodes. The
-// window id comes from history state (it disambiguates a pop-out from an inline
-// form, which share a path). If that window is still open, just refocus + restore
-// its view; if it was closed, respawn it from the path.
+// window id comes from history state (it disambiguates two app instances sharing a
+// surface, which share a path but differ by `?instance=n`). If that window is still
+// open, just refocus + restore its view; if it was closed, respawn it from the path.
 function restoreFromHistory(to: RouteLocationNormalized) {
   const st = window.history.state || {}
   const winId: string | null = st.osWin || null
@@ -109,10 +109,6 @@ function restoreFromHistory(to: RouteLocationNormalized) {
   else surface = dashboardSurface(app)
 
   if (winId && os.restoreWin(winId, surface)) return
-  if (winId && winId.indexOf('rec:') === 0 && doctype && name) {
-    os.popOut(doctype, name)
-    return
-  }
   applyRoute(os, routeParams(to))
 }
 

@@ -46,10 +46,10 @@ export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.ta
 
 // Window role is encoded by the id prefix (the id is built from the role at open time),
 // so it is derived, never stored — the Surface describes the *content*, the id describes
-// the window *instance*. 'record' = a pinned form pop-out, 'settings' = a settings pane,
-// 'wallpaper' = the singleton wallpaper picker, everything else is a navigable 'app' window.
-export function windowRole(id: string): 'app' | 'record' | 'settings' | 'wallpaper' {
-  if (id.startsWith('rec:')) return 'record'
+// the window *instance*. 'settings' = a settings pane, 'wallpaper' = the singleton
+// wallpaper picker, everything else is a navigable 'app' window (a record opened in a new
+// window is an ordinary app Instance, ADR-0017 — there is no record-only window role).
+export function windowRole(id: string): 'app' | 'settings' | 'wallpaper' {
   if (id.startsWith('settings:')) return 'settings'
   if (id === 'wallpaper') return 'wallpaper'
   return 'app'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Auto-hiding dock overlay (reveal handled in store.onPointerMove via setDockEl).
-// An app icon may own several windows now (its app window, record pop-outs, its
-// settings pane). Clicking an icon with >1 window opens a chooser popover above it
+// An app icon may own several windows now (multiple app instances, its settings
+// pane). Clicking an icon with >1 window opens a chooser popover above it
 // so any one window can be brought to the front; 0 or 1 window focuses directly.
 import { computed } from 'vue'
 import { useOS } from '@/desktop'
@@ -75,7 +75,6 @@ function winTitle(w: OsWindow): string | undefined {
 }
 function winSub(w: OsWindow): string {
   const role = windowRole(w.id), s = sf(w)
-  if (role === 'record') return 'Pop-out'
   if (role === 'settings') return 'Settings'
   if (role === 'wallpaper') return 'Appearance'
   if (s.view === 'form') return s.doctype!

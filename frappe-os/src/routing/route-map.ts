@@ -13,9 +13,8 @@ const bare = (): FocusLocation => ({ path: '/', query: {} })
 
 // Project the focused window to its canonical content path (no /os prefix — the router's
 // base adds it) plus a derived query. Doctype is authoritative over `:app` (recomputed via
-// appForDoctype). A record pop-out projects like an inline form; the window id in history
-// state distinguishes the two (they share a path). Two app instances on the same surface
-// share a path too, but the `?instance=n` query keeps them individually addressable.
+// appForDoctype). Two app instances on the same surface share a path, so the `?instance=n`
+// query keeps them individually addressable.
 export function pathForFocus(os: OsStore): FocusLocation {
   const id = os.state.activeId
   if (!id) return bare()
@@ -28,8 +27,8 @@ export function pathForFocus(os: OsStore): FocusLocation {
 }
 
 // The `?instance=n` discriminator for a non-canonical app instance id `app:<id>#n`; empty
-// for the canonical `app:<id>` and for non-app windows. Gated on the `app:` prefix so a
-// record literally named "…#3" (id `rec:…#3`) can't masquerade as an instance.
+// for the canonical `app:<id>` and for non-app windows (settings/wallpaper). Gated on the
+// `app:` prefix so only real app-instance ids ever carry the query.
 export function instanceQuery(id: string): Record<string, string> {
   if (!id.startsWith('app:')) return {}
   const match = /#(\d+)$/.exec(id)

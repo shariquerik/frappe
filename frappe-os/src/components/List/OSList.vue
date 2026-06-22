@@ -76,6 +76,7 @@ const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
       :loading="listState.loading"
       :error="listState.error"
       :on-open="onOpen"
+      :on-open-new-window="onOpenNewWindow"
     />
     <!-- footer -->
     <div class="flex flex-shrink-0 items-center gap-3 border-t border-outline-gray-1 bg-surface-gray-1 px-[14px] py-[7px] text-[12px] text-ink-gray-5">
