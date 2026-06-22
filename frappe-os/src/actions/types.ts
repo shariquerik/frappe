@@ -57,6 +57,12 @@ export interface CommandPatch {
   title?: string
 }
 
+// `removed` makes a winning Action a SUPPRESSION instead of a render (ADR-0014): an app may
+// *remove* shared chrome, not just override it. A removal still competes per (region, command);
+// when it wins, the resolver omits it from the rendered items and logs a `reason:'removal'`
+// shadow attributed to the removing app — never silent. Reversibility holds for free: the
+// App < Site < User layer order lets a higher-layer Action without `removed` outrank it and
+// re-render the item, so an app never has the final word over a person.
 export interface Action {
   command: string
   region: string
@@ -67,6 +73,7 @@ export interface Action {
   group?: string
   layer?: Layer
   commandPatch?: CommandPatch
+  removed?: boolean
 }
 
 // One resolved winner: the placement (Action) joined to its verb (Command), ready to render.
@@ -76,11 +83,12 @@ export interface ResolvedAction {
 }
 
 // A shadowed Action — never silently dropped (ADR-0007/0014). `reason` distinguishes a clean
-// `override` (the winner strictly outranked it) from a `true-tie` (indistinguishable winner).
+// `override` (the winner strictly outranked it), a `true-tie` (indistinguishable winner), and a
+// `removal` (the winner suppressed the slot via `removed`, ADR-0014 — the item renders nothing).
 export interface ShadowEvent {
   region: string
   command: string
   winner: Action
   loser: Action
-  reason: 'override' | 'true-tie'
+  reason: 'override' | 'true-tie' | 'removal'
 }

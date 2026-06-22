@@ -166,6 +166,58 @@ describe('resolve (tiebreak chain: specificity → layer → order → true-tie)
   })
 })
 
+// Slice 3 (ADR-0014 removal): a removal is an ordinary Action carrying `removed:true` instead of
+// a commandPatch — same (region, command) identity. It still COMPETES; when it WINS it is a
+// SUPPRESSION (absent from the rendered items), logged with a new `reason:'removal'` attributed to
+// the removing app. Reversibility (ADR-0014 item 2) falls out of the layer order: a higher-layer
+// Action without `removed` beats an App-layer removal and the item re-renders.
+describe('resolve (removal — a winning removed Action is suppressed, attributed + logged)', () => {
+  let warn
+  beforeEach(() => { warn = vi.spyOn(console, 'warn').mockImplementation(() => {}) })
+  afterEach(() => warn.mockRestore())
+
+  it('a winning removal suppresses the item (absent from render) and logs reason:removal', () => {
+    const dflt = act('close', { sourceApp: 'frappe' }) // global [0,0]
+    const removal = act('close', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, removed: true }) // window [0,1]
+    const { items, shadows } = resolve([dflt, removal], 'menubar:file', { activeApp: 'erpnext' })
+    expect(items).toEqual([]) // the removal won and renders nothing — the item is gone
+    expect(shadows).toHaveLength(1)
+    expect(shadows[0]).toMatchObject({ command: 'close', reason: 'removal' })
+    expect(shadows[0].winner.sourceApp).toBe('erpnext') // attributed to the removing app
+    expect(shadows[0].loser.sourceApp).toBe('frappe') // the suppressed OS default
+  })
+
+  it('logs the removal loudly, attributed (never a silent strip)', () => {
+    const dflt = act('close', { sourceApp: 'frappe' })
+    const removal = act('close', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, removed: true })
+    resolve([dflt, removal], 'menubar:file', { activeApp: 'erpnext' })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('removal'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext')) // attributed
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('true-tie'))
+  })
+
+  it('the OS default re-appears where the removal is ineligible (its when does not match)', () => {
+    const dflt = act('close', { sourceApp: 'frappe' })
+    const removal = act('close', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, removed: true })
+    const { items } = resolve([dflt, removal], 'menubar:file', { activeApp: 'crm' })
+    expect(items.map((i) => i.command)).toEqual(['close']) // removal not eligible → default renders
+  })
+
+  // Reversibility (ADR-0014 item 2): the App < Site < User order means a higher-layer Action without
+  // `removed` outranks the App-layer removal — the item re-renders, the audit log showing the
+  // restoration shadowing the removal. An app never has the final word over a person.
+  it('a higher-layer Action without removed beats an App-layer removal — the item re-renders', () => {
+    const removal = act('close', { sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, layer: 'app', removed: true })
+    const restore = act('close', { sourceApp: 'frappe', when: { activeApp: 'erpnext' }, layer: 'user' }) // no removed
+    const { items, shadows } = resolve([removal, restore], 'menubar:file', { activeApp: 'erpnext' })
+    expect(items.map((i) => i.command)).toEqual(['close']) // restored — the user layer wins
+    expect(items[0].removed).toBeFalsy() // the rendered winner is the non-removal Action
+    expect(shadows).toHaveLength(1)
+    expect(shadows[0]).toMatchObject({ command: 'close', reason: 'override' }) // restoration shadows the removal
+    expect(shadows[0].loser.removed).toBe(true) // the shadowed loser is the App-layer removal
+  })
+})
+
 // The first-party `frappe` File Commands + their run Handlers, resolved through the open
 // RUN_HANDLERS map (an app registers its own the same way — no server round-trip for the OS's
 // own defaults). Run against the real store, reset between cases (module singleton).
@@ -330,6 +382,64 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
     const opts = fileMenuOptions(os)
     expect(opts.map((g) => g.group)).toEqual(['a', 'b']) // override inherits group 'a', no stray '' group
     expect(opts.find((g) => g.group === 'a').items.map((i) => i.label)).toEqual(['Open…', 'New ERPNext window'])
+  })
+})
+
+// Slice 3: erpnext's hook-declared REMOVAL of `frappe`'s Close window (command
+// `frappe.window.close`), folded from the server registry into the File menu and gated
+// `when:{activeApp:'erpnext'}` with `removed:true`. The removal competes in the
+// (menubar:file, frappe.window.close) slot; when it wins (an erpnext window focused) the item is
+// suppressed — absent from the rendered menu — and the strip is attributed to erpnext and logged
+// as `removal`. For every other app the OS default re-appears (the removal's `when` is ineligible).
+describe('erpnext Close window removal (registry-folded, when-gated, suppressed + logged)', () => {
+  const os = useOS()
+  const removalAction = {
+    type: 'action', target: 'menubar:file', name: 'frappe.window.close', sourceApp: 'erpnext',
+    payload: {
+      command: 'frappe.window.close', region: 'menubar:file', sourceApp: 'erpnext',
+      when: { activeApp: 'erpnext' }, removed: true,
+    },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: {
+      schemaVersion: 1,
+      contributions: [
+        app('frappe', 'Frappe', 0), app('crm', 'CRM', 1), app('erpnext', 'ERPNext', 2),
+        removalAction,
+      ],
+    },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.activeId = null
+    os.state.paletteOpen = false
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  const labels = () => fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label)
+
+  it('suppresses Close window when an erpnext window is focused', () => {
+    os.openApp('erpnext')
+    expect(labels()).toEqual(['Open…', 'New window']) // Close window is gone, the others stay
+  })
+
+  it('keeps Close window when a non-erpnext window is focused (removal ineligible)', () => {
+    os.openApp('crm')
+    expect(labels()).toEqual(['Open…', 'New window', 'Close window'])
+  })
+
+  it('logs the removal attributed to erpnext (never a silent strip)', () => {
+    os.openApp('erpnext')
+    fileMenuOptions(os)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('removal'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.close'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext'))
   })
 })
 

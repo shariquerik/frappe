@@ -204,8 +204,10 @@ def _command_contributions():
 # Optional Action fields copied through to the client payload when present (ADR-0007): `when`
 # gates the placement, `order` is its ascending RENDER position within the Region, `priority` the
 # competition tiebreak (higher wins — a separate axis from render `order`), `layer` its override
-# layer (App<Site<User), `commandPatch` re-titles the placed Command only when this Action wins.
-_ACTION_PAYLOAD_KEYS = ("when", "order", "priority", "group", "layer", "commandPatch")
+# layer (App<Site<User), `commandPatch` re-titles the placed Command only when this Action wins,
+# `removed` makes a winning Action a suppression instead of a render (ADR-0014 — an app may remove
+# shared chrome; the strip is attributed + logged client-side, never silent).
+_ACTION_PAYLOAD_KEYS = ("when", "order", "priority", "group", "layer", "commandPatch", "removed")
 
 
 def _action_contributions():

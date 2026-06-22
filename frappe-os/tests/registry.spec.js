@@ -36,6 +36,17 @@ describe('server-projected command/action contributions', () => {
     )
   })
 
+  it('carries a removal action (removed:true) through the fold unchanged (ADR-0014)', () => {
+    const removal = {
+      type: 'action', target: 'menubar:file', name: 'frappe.window.close', sourceApp: 'erpnext',
+      payload: { command: 'frappe.window.close', region: 'menubar:file', sourceApp: 'erpnext', when: { activeApp: 'erpnext' }, removed: true },
+    }
+    initRegistry(boot([removal]))
+    expect(useRegistry().actions()).toContainEqual(
+      expect.objectContaining({ command: 'frappe.window.close', sourceApp: 'erpnext', removed: true }),
+    )
+  })
+
   it('has empty command/action collections offline (first-party defaults stay in @/actions)', () => {
     initRegistry(null)
     expect(useRegistry().commands()).toEqual([])
