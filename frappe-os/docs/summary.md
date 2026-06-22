@@ -96,7 +96,7 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   `WallpaperPicker`, `StatusPill`. The chrome **look** (Frappe-native ground/menu bar/
   windows/traffic dots + the adapt-behind dock) is specified in
   `docs/design/chrome-visual-language.md` — read it before restyling chrome.
-- `index.css` — frappe-ui style + Tailwind (+ the `--os-ctl-*` traffic-dot tokens). Backend
+- `index.css` — frappe-ui style + Tailwind. Backend
   host page: `frappe/www/os.{py,html}`.
 
 ## Tests

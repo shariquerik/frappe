@@ -57,12 +57,14 @@ read.
   kept literal to match the judged pixels) with an `inset 0 -1px 0 rgba(0,0,0,.06)` hairline
   instead of a border.
 - **Window controls (traffic dots):** three dots on the LEFT — close / minimize / zoom.
-  Neutral `--os-ctl-rest` at rest with **no glyph**; on title-bar **group-hover** each fills
-  with its muted-espresso color (`--os-ctl-close/min/max`) and reveals a glyph. Glyphs are
-  **inline `<svg>`** (NOT the frappe-ui lucide sprite — the sprite bakes a thin stroke that
-  can't be thickened), `stroke-width="2.75"`, color `--os-ctl-glyph`. Zoom = a
-  `chevrons-left-right` rotated 45°. The dots are real buttons wired to
-  `closeWin`/`minimizeWin`/`toggleZoom`.
+  Neutral `surface-gray-5` at rest with **no glyph**; on title-bar **group-hover** each fills
+  with its semantic espresso token (`surface-red-6` / `surface-yellow-6` / `surface-green-6`)
+  and reveals a glyph. Glyphs are **imported lucide icons** (`~icons/lucide/*`, which render a
+  real `<svg>` — NOT the mask-based `lucide-*` utility, whose stroke is baked into the pack-wide
+  1.5 and can't be overridden per icon) with `:stroke-width="3"` to read at 9px, tinted
+  `text-ink-gray-8` at `--tw-text-opacity:0.55`. Zoom = a `chevrons-left-right` (outward/expand)
+  rotated 45°, flipping to `chevrons-right-left` (inward/collapse) while the window is
+  full-screen. The dots are real buttons wired to `closeWin`/`minimizeWin`/`toggleZoom`.
 
 ## Dock — adaptive-behind
 
@@ -88,11 +90,9 @@ the tray grows in. App/title icons use the live `app_logo_url` SVGs (`config/app
 
 ## Tokens
 
-Design-specific, token-less chrome values are named in `index.css` `:root` so they aren't
-magic numbers scattered across components:
-
-- `--os-ctl-rest` `#cfcfd6` · `--os-ctl-close` `#c2554b` · `--os-ctl-min` `#cf9b46` ·
-  `--os-ctl-max` `#3f9e8c` · `--os-ctl-glyph` `rgba(0,0,0,.55)` — the traffic-dot trio.
+The traffic-dot trio now maps to espresso `surface-*` tokens directly on the elements
+(`surface-gray-5` rest; `surface-red-6` / `surface-yellow-6` / `surface-green-6` on hover) —
+no chrome-specific CSS vars.
 
 The Product Duotone gradient stays in `wallpaperDefs()` (its existing data home, alongside
 the other wallpapers), not a CSS var. Window surfaces, hairlines and text map to existing
