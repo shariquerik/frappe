@@ -15,6 +15,12 @@ export interface Contribution {
   order?: number
 }
 
+// How the OS classifies a contributing app from its Registry contributions alone (ADR-0014
+// item 4): a `feature` app ships a doctype/view/applet/card surface; a `pure-customization`
+// app contributes only chrome (command/action/patch). Used to decide whether a chrome removal
+// is the surprising case (warned loudly) or the everyday one (quiet).
+export type AppKind = 'feature' | 'pure-customization'
+
 // The server-merged, permission-filtered Registry the boot payload carries
 // (ADR-0005/0010). `schemaVersion` is tolerant (ADR-0008): the client indexes the
 // contribution types it knows and ignores the rest, so newer/older servers degrade.

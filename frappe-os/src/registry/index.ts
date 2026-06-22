@@ -15,8 +15,9 @@
 import type { Component } from 'vue'
 import { APP, APP_ORDER } from '@/config/apps'
 import { doctypes } from '@/config/doctypes'
+import { classifyApp } from './classify'
 import type {
-  Action, AppDef, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload,
+  Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload,
   OsRegistryData,
 } from '@/types'
 
@@ -83,6 +84,7 @@ interface RegistryIndex {
   applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
   commands: Command[]                           // Action-model verbs folded from app hooks
   actions: Action[]                             // Action-model placements folded from app hooks
+  appKinds: Record<string, Set<string>>         // sourceApp → contributed kinds (ADR-0014 item 4)
 }
 
 function ownerMap(apps: AppDef[]): Record<string, string> {
@@ -94,6 +96,9 @@ function ownerMap(apps: AppDef[]): Record<string, string> {
 // Fold one contribution into the index: singletons shallow patch-merge (ADR-0007, so a
 // later partial layer can add/override fields); collections accumulate in sorted order.
 function addToIndex(ix: RegistryIndex, c: Contribution): void {
+  // Record every contribution's kind under its sourceApp first, so appKind() can classify the app
+  // from the folded registry alone (ADR-0014 item 4) — feature vs pure-customization, no per-app config.
+  (ix.appKinds[c.sourceApp] ??= new Set()).add(c.type)
   if (c.type === DISPLAY) {
     ix.display[c.target] = { ...ix.display[c.target], ...(c.payload as DoctypeMeta) }
     ix.owner[c.target] ??= c.sourceApp // server projects ownership via _app_of (fills uncurated)
@@ -119,6 +124,7 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
     display: {}, views: {}, cards: {}, owner: ownerMap(apps),
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
+    appKinds: {}, // sourceApp → contributed kinds, filled per contribution by addToIndex
   }
   for (const c of sorted) addToIndex(ix, c)
   return ix
@@ -304,5 +310,6 @@ export function useRegistry() {
     listApplets,
     commands: (): Command[] => ix.commands,
     actions: (): Action[] => ix.actions,
+    appKind: (appId: string): AppKind => classifyApp(ix.appKinds[appId] ?? []),
   }
 }

@@ -443,6 +443,56 @@ describe('erpnext Close window removal (registry-folded, when-gated, suppressed 
   })
 })
 
+// Slice 5 (ADR-0014 item 4): the same Close-window removal is classified by the REMOVING app's
+// kind and warned about accordingly through the live File-menu projection. erpnext ships a feature
+// surface (here an applet), so its removal is the SURPRISING case — a loud `feature app` warning on
+// top of the uniform removal log. A synthetic pure-customization app ('tweaks') that contributes
+// ONLY the removal is doing its whole job — it passes quietly (no `feature app` warning). The
+// classifier is derived from the folded registry alone, with nothing declared per app.
+describe('feature-vs-customization removal warning (fileMenuOptions, ADR-0014 item 4)', () => {
+  const os = useOS()
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const removal = (sourceApp, when) => ({
+    type: 'action', target: 'menubar:file', name: 'frappe.window.close', sourceApp,
+    payload: { command: 'frappe.window.close', region: 'menubar:file', sourceApp, when, removed: true },
+  })
+  // What makes erpnext a FEATURE app in this fixture: it ships an applet (a feature surface), not
+  // merely chrome customizations. 'tweaks' ships only the removal action → pure-customization.
+  const erpnextApplet = {
+    type: 'applet', target: '', name: 'erpnext.report', sourceApp: 'erpnext',
+    payload: { appletId: 'erpnext.report', appId: 'erpnext', assetUrl: '/assets/erpnext/report.js', label: 'Report' },
+  }
+  const boot = (contributions) =>
+    ({ user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions } })
+  let warn
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.activeId = null
+    os.state.paletteOpen = false
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  it('warns loudly when a FEATURE app (erpnext, ships an applet) removes Close window', () => {
+    initRegistry(boot([app('frappe', 'Frappe', 0), app('erpnext', 'ERPNext', 1), erpnextApplet, removal('erpnext', { activeApp: 'erpnext' })]))
+    os.openApp('erpnext')
+    fileMenuOptions(os)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('feature app'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('menubar:file/frappe.window.close'))
+  })
+
+  it('stays quiet when a PURE-CUSTOMIZATION app (tweaks, only the removal) removes the same chrome', () => {
+    initRegistry(boot([app('frappe', 'Frappe', 0), app('crm', 'CRM', 1), app('tweaks', 'Tweaks', 2), removal('tweaks', { activeApp: 'crm' })]))
+    os.openApp('crm')
+    fileMenuOptions(os)
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('feature app'))
+    // ...but the removal is still recorded by the resolver's uniform log — never silent (slice 3).
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('removal'))
+  })
+})
+
 // An Action whose Command id has no contribution can't render. The File-menu projection must
 // warn and skip it — never a silent drop (an app shipping os_actions but forgetting os_commands).
 describe('Action referencing a missing Command (warned, not silently dropped)', () => {

@@ -52,6 +52,15 @@ describe('server-projected command/action contributions', () => {
     expect(useRegistry().commands()).toEqual([])
     expect(useRegistry().actions()).toEqual([])
   })
+
+  // ADR-0014 item 4: appKind classifies each contributing app from the folded registry alone —
+  // a feature app ships a doctype/view/applet/card; a pure-customization app only chrome.
+  it('classifies an app shipping an applet as a feature app, and a chrome-only app as pure-customization', () => {
+    const applet = { type: 'applet', target: '', name: 'erpnext.r', sourceApp: 'erpnext', payload: { appletId: 'erpnext.r', appId: 'erpnext', assetUrl: '/r.js', label: 'R' } }
+    initRegistry(boot([applet, action('frappe.window.close', 'tweaks', { activeApp: 'crm' })]))
+    expect(useRegistry().appKind('erpnext')).toBe('feature')
+    expect(useRegistry().appKind('tweaks')).toBe('pure-customization')
+  })
 })
 
 describe('apps', () => {

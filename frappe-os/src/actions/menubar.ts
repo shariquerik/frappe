@@ -10,6 +10,7 @@
 import { useRegistry } from '@/registry'
 import { contextForOS } from './context'
 import { FILE_ACTIONS, FILE_COMMANDS, FILE_REGION, invoke } from './contributions'
+import { warnFeatureAppRemovals } from './removals'
 import { resolve } from './resolve'
 import type { Action, Command } from './types'
 import type { OsStore } from '@/types'
@@ -66,7 +67,10 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
 // The File menu, resolved against the live Context and grouped into its divider sections.
 export function fileMenuOptions(os: OsStore): MenuGroup[] {
   const { byId, actions } = merged()
-  const { items } = resolve(actions, FILE_REGION, contextForOS(os))
+  const { items, shadows } = resolve(actions, FILE_REGION, contextForOS(os))
+  // ADR-0014 item 4: on top of the resolver's uniform removal log, warn loudly when the app that
+  // stripped chrome is a feature app (the surprising case) — classified from the folded registry.
+  warnFeatureAppRemovals(shadows, useRegistry().appKind)
   const groups: MenuGroup[] = []
   for (const action of items) {
     const command = byId.get(action.command)
