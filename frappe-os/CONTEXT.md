@@ -194,6 +194,18 @@ The three layers are **App-default** (files in the app), **Site customization** 
 admin-editable, no deploy), and **User preference** (DB records scoped to one user), in
 increasing precedence.
 
+**Customizations view**:
+The one human-facing surface that lists the overrides and removals apps impose on a site —
+the OS analogue of Frappe's Property Setter / Customize Form listing (ADR-0014 item 3,
+ADR-0015). A **structural catalog**: it reads the declared Action set and describes each
+customizing contender (its source app, layer, `override`/`removal` reason, and the `when`
+scope it applies under), grouped by app. It is *not* a replay of the resolver's live output —
+shadows are Context-relative and unstored, so the view describes the *contest and its
+conditions*, never a single live winner. Read-only in its first slice (the per-row restore
+button is the deferred write-path half of ADR-0014's reversibility guarantee).
+_Avoid_: calling it a "shadow log" or "audit log" — there is no stored ledger; it is a
+projection over the contribution set, not a record of past resolutions.
+
 ## Example dialogue
 
 > **Dev:** Does CRM get to register its Kanban view in some special core path?

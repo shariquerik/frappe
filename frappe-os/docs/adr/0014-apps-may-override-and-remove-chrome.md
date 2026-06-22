@@ -50,3 +50,9 @@ reversibility, not prohibition**:
   *authority* rule (who may hide) is widened, plus removals join overrides in the audit log.
 - v1 / tracer-bullet scope is items 1–2 only (attributed-and-logged + reversible-by-layering),
   both essentially free. The Customizations view (3) and the auto-flag (4) are follow-ups.
+- **Update:** items 3 and 4 are now settled by **ADR-0015** — the Customizations view is a
+  read-only *structural catalog* of declared customizations (grouped by app, surfacing the
+  feature-app flag), built from the contribution set rather than the resolver's ephemeral
+  live output. Item 2's human-facing *restore button* (reversible-by-a-human, not just by
+  layering) is deferred to a named write-path slice, with its authority ("restore at the layer
+  you operate at") and persistence (Projection-backed Site/User Action record) settled there.
