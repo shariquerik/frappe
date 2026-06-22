@@ -16,6 +16,9 @@ export const formSurface = (doctype: string, recordName: string): BuiltinSurface
   ({ kind: 'builtin', view: 'form', doctype, recordName, appId: appForDoctype(doctype) })
 export const settingsSurface = (appId: string, tab = 'General'): BuiltinSurface =>
   ({ kind: 'builtin', view: 'settings', appId, params: { tab } })
+// The wallpaper picker — a system (not app-scoped) pane. Owned by the framework app so
+// chrome/asset scoping has a real app to resolve, but opened as its own singleton window.
+export const wallpaperSurface = (): BuiltinSurface => ({ kind: 'builtin', view: 'wallpaper', appId: 'frappe' })
 // An applet surface (ADR-0012): `appletId` resolves to a Vue component at
 // mount; `props` are the serializable view-params handed to it via v-bind (os is never one).
 export const appletSurface = (appId: string, appletId: string, props?: Record<string, unknown>): AppletSurface =>
@@ -44,10 +47,11 @@ export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.ta
 // Window role is encoded by the id prefix (the id is built from the role at open time),
 // so it is derived, never stored — the Surface describes the *content*, the id describes
 // the window *instance*. 'record' = a pinned form pop-out, 'settings' = a settings pane,
-// everything else is a navigable 'app' window.
-export function windowRole(id: string): 'app' | 'record' | 'settings' {
+// 'wallpaper' = the singleton wallpaper picker, everything else is a navigable 'app' window.
+export function windowRole(id: string): 'app' | 'record' | 'settings' | 'wallpaper' {
   if (id.startsWith('rec:')) return 'record'
   if (id.startsWith('settings:')) return 'settings'
+  if (id === 'wallpaper') return 'wallpaper'
   return 'app'
 }
 

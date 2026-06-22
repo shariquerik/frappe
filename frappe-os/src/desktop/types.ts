@@ -19,7 +19,6 @@ export interface OsState {
   paletteQuery: string
   theme: Theme
   wallpaper: string | null
-  wpPicker: boolean
   toggles: Record<string, boolean>
   sidebarHidden: Record<string, boolean>
   dockMenu: string | null

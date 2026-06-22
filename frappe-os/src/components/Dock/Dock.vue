@@ -15,6 +15,7 @@ const sf = (w: OsWindow) => w.surface as BuiltinSurface
 function winTitle(w: OsWindow): string | undefined {
   const role = windowRole(w.id), s = sf(w)
   if (role === 'settings') return os.DATA.APP[s.appId!].name + ' settings'
+  if (role === 'wallpaper') return 'Wallpaper'
   if (s.view === 'form') {
     const m = os.getMeta(s.doctype!), r = os.recordObj(s.doctype!, s.recordName!)
     return (r && (r[m?.titleField || ''] || r.name)) || s.recordName!
@@ -26,6 +27,7 @@ function winSub(w: OsWindow): string {
   const role = windowRole(w.id), s = sf(w)
   if (role === 'record') return 'Pop-out'
   if (role === 'settings') return 'Settings'
+  if (role === 'wallpaper') return 'Appearance'
   if (s.view === 'form') return s.doctype!
   if (s.view === 'list') return 'List'
   return 'Dashboard'

@@ -10,7 +10,7 @@ import { useOS } from "@/desktop";
 import { OS_KEY, tryGetOsApi } from "@/data/os-api";
 import { resolveApplet as resolveOsApplet } from "@/registry";
 import { DoctypeView } from "@/components/Views";
-import { SettingsDialog } from "@/components/Settings";
+import { SettingsDialog, WallpaperPicker } from "@/components/Settings";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT } from "./toolbar";
@@ -68,6 +68,13 @@ const app = computed(() => os.DATA.APP[s.value.appId!]);
 const TOP = 32,
 	GAP = 1;
 
+// "Frappe card" frame: a constant hairline ring (ring-1 ring-black/10) folded into
+// the box-shadow — an inline box-shadow would otherwise override Tailwind's ring —
+// plus a focus-dependent contained drop shadow.
+const RING = "0 0 0 1px rgba(0,0,0,0.1)";
+const SHADOW_ACTIVE = `${RING}, 0 16px 40px -16px rgba(20,16,50,0.45), 0 4px 12px -6px rgba(0,0,0,0.25)`;
+const SHADOW_INACTIVE = `${RING}, 0 10px 28px -18px rgba(20,16,50,0.35)`;
+
 // Only the runtime geometry lives inline (arbitrary px from the drag/resize store,
 // focus-dependent border/shadow). The static box — absolute/flex/col/bg/overflow —
 // is Tailwind on the root element.
@@ -81,7 +88,7 @@ const styleWin = computed(() => {
 	}
 	if (g.value.max)
 		return `left:0;top:${TOP}px;right:0;bottom:0;z-index:${g.value.z};border:none;`;
-	return `border-radius:12px;left:${g.value.x}px;top:${g.value.y}px;width:${g.value.w}px;height:${g.value.h}px;z-index:${g.value.z};border:1px solid ${focused.value ? "var(--outline-gray-4)" : "var(--outline-gray-2)"};box-shadow:${focused.value ? "var(--shadow-2xl)" : "var(--shadow-lg)"};`;
+	return `border-radius:10px;left:${g.value.x}px;top:${g.value.y}px;width:${g.value.w}px;height:${g.value.h}px;z-index:${g.value.z};box-shadow:${focused.value ? SHADOW_ACTIVE : SHADOW_INACTIVE};`;
 });
 const resizable = computed(() => !g.value.max && !inSplit.value);
 
@@ -144,6 +151,14 @@ const viewProps = computed<ViewProps>(() => {
 			<WindowChrome :win="win" :title="`${app.name} settings`" :logo="app.logo" />
 			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 				<SettingsDialog :win="win" />
+			</div>
+		</template>
+
+		<!-- ===== WALLPAPER WINDOW (singleton system pane) ===== -->
+		<template v-else-if="role === 'wallpaper'">
+			<WindowChrome :win="win" title="Wallpaper" :logo="app.logo" />
+			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
+				<WallpaperPicker />
 			</div>
 		</template>
 

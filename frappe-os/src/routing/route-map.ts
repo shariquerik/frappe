@@ -26,6 +26,7 @@ function pathForSurface(os: OsStore, s: Surface): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
   if (s.view === 'settings') return `/${s.appId}/settings` // self-describing; not aliased to /
+  if (s.view === 'wallpaper') return '/wallpaper' // singleton system pane, no app segment
   if (s.view === 'form') return `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}/${seg(s.recordName!)}`
   if (s.view === 'list') return `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}`
   // Every app — including frappe — projects to /os/<appId>. Bare /os is reserved for the
@@ -52,6 +53,8 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
   // over the path, or a cold /os redirects to /os/<app> of the last focused window.)
   if (!app) { os.clearFocus(); return }
+  // The wallpaper picker is a singleton system pane at a bare `/wallpaper` (no app segment).
+  if (app === 'wallpaper' && !doctype) { os.openWallpaper(); return }
   // A doctype derives its own app (appForDoctype), so a valid doctype can open even
   // when the app segment is junk. But if NEITHER the app nor the doctype is real, the
   // route points at nothing — clear focus so the seeded URL settles on the bare

@@ -1,8 +1,8 @@
 // Session persistence: the URL only holds *focus*; the rest of the desktop (which
 // windows exist, their geometry, z-order, split, per-window nav history, theme,
 // wallpaper, toggles) lives in one localStorage blob, debounced 250ms. Ephemeral
-// overlay flags (palette / picker / menu) and the transient settings windows are
-// excluded — a refresh never restores an open overlay or a settings pane.
+// overlay flags (palette / menu) and the transient settings / wallpaper windows are
+// excluded — a refresh never restores an open overlay or a system pane.
 import { watch } from 'vue'
 import { useRegistry, getMeta, knownApplet } from '@/registry'
 import { state } from './state'
@@ -33,7 +33,7 @@ export function validSurface(s?: Surface | null): boolean {
 export function serialize() {
   return {
     version: BLOB_VERSION,
-    windows: state.windows.filter((w) => windowRole(w.id) !== 'settings').map((w) => ({
+    windows: state.windows.filter((w) => !['settings', 'wallpaper'].includes(windowRole(w.id))).map((w) => ({
       id: w.id, surface: w.surface,
       back: (w.back || []).slice(-HIST_CAP), fwd: (w.fwd || []).slice(-HIST_CAP),
     })),

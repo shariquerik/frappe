@@ -7,7 +7,7 @@ import { appForDoctype } from '@/registry'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
-  dashboardSurface, listSurface, formSurface, settingsSurface, appletSurface,
+  dashboardSurface, listSurface, formSurface, settingsSurface, wallpaperSurface, appletSurface,
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
 } from '@/surface'
 import type { OsWindow, Surface, Theme, WallpaperDef } from '@/types'
@@ -203,6 +203,9 @@ export const setTheme = (t: Theme) => { state.theme = t }
 
 export function wallpaperDefs(): WallpaperDef[] {
   return [
+    // The OS default ground: "Product Duotone" — ERPNext indigo → CRM teal. A
+    // colored (not neutral) gradient; dark, so chrome reads white over it.
+    { id: 'duotone', label: 'Duotone', bg: 'radial-gradient(150% 130% at 12% -10%, #5b54e6 0%, #2c3a9e 42%, #0f7d78 100%)', dark: true },
     { id: 'mist', label: 'Mist', bg: 'radial-gradient(140% 130% at 0% 0%, #f8fafc 0%, #eef1f5 46%, #e1e6ec 100%)', dark: false },
     { id: 'linen', label: 'Linen', bg: 'radial-gradient(140% 130% at 0% 0%, #faf7f3 0%, #f2ece4 50%, #e8ddd0 100%)', dark: false },
     { id: 'sky', label: 'Sky', bg: 'radial-gradient(130% 130% at 100% 0%, #ecf5fe 0%, #d6e8fb 54%, #bdd6f3 100%)', dark: false },
@@ -214,13 +217,22 @@ export function wallpaperDefs(): WallpaperDef[] {
   ]
 }
 export const currentWp = computed(() => {
-  const id = state.wallpaper || 'sky'
+  const id = state.wallpaper || 'duotone'
   const list = wallpaperDefs()
   return list.find((w) => w.id === id) || list[0]
 })
 export const setWallpaper = (id: string) => { state.wallpaper = id }
-export const openWallpaper = () => { state.wpPicker = true; state.menu = null }
-export const closeWallpaper = () => { state.wpPicker = false }
+// The wallpaper picker is a singleton window (like a settings pane): open focuses the
+// existing one or spawns it; close just removes it. Transient — never persisted.
+export function openWallpaper() {
+  const id = 'wallpaper'
+  const z = bumpZ()
+  if (!state.windows.find((x) => x.id === id)) state.windows.push({ id, surface: wallpaperSurface() })
+  setGeo(id, { z, min: false })
+  state.activeId = id
+  state.menu = null
+}
+export const closeWallpaper = (id = 'wallpaper') => closeWin(id)
 
 export const tog = (k: string, def: boolean) => { state.toggles[k] = !(state.toggles[k] == null ? def : state.toggles[k]) }
 export const isOn = (k: string, def: boolean): boolean => { const v = state.toggles[k]; return v == null ? def : v }

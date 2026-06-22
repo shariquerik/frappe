@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Frappe OS desktop root: wallpaper, desktop icons, windows, split-exit pill,
-// menu bar, dock, command palette, wallpaper picker. Owns the global keyboard
+// menu bar, dock, command palette. Owns the global keyboard
 // (⌘K / Esc), pointer (drag/resize + dock auto-hide) listeners, and the
 // data-theme attribute that drives frappe-ui's light/dark tokens.
 import { computed, onMounted, onBeforeUnmount } from "vue";
@@ -10,7 +10,6 @@ import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
 import { OSWindow } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
-import { WallpaperPicker } from "./components/Settings";
 
 const os = useOS();
 const ICON = os.DATA.ICON;
@@ -37,7 +36,6 @@ function onKey(e: KeyboardEvent) {
 	if (e.key === "Escape") {
 		os.state.paletteOpen = false;
 		os.state.menu = null;
-		os.state.wpPicker = false;
 	}
 }
 const move = (e: PointerEvent) => os.onPointerMove(e);
@@ -70,7 +68,7 @@ onBeforeUnmount(() => {
 		<div
 			class="absolute inset-0 z-0"
 			:style="{ background: wp.bg }"
-			@contextmenu.prevent="os.state.wpPicker = true"
+			@contextmenu.prevent="os.openWallpaper()"
 		></div>
 
 		<!-- desktop icons -->
@@ -121,7 +119,6 @@ onBeforeUnmount(() => {
 		<MenuBar />
 		<Dock />
 		<CommandPalette />
-		<WallpaperPicker />
 		<ToastProvider />
 		<div id="os-popover-layer" class="absolute z-[94000]"></div>
 	</div>

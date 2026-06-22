@@ -15,7 +15,6 @@ export const state = reactive<OsState>({
   paletteQuery: '',
   theme: 'light',
   wallpaper: null,
-  wpPicker: false,
   toggles: {},
   sidebarHidden: {},
   dockMenu: null, // appId whose dock window-chooser popover is open

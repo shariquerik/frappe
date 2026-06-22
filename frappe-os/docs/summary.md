@@ -25,14 +25,15 @@ no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused*
   back?, fwd?,                                                  // per-window nav history
   settingsTab? }                                               // settings windows
 ```
-- IDs: `app:<appId>` · `rec:<doctype>/<name>` · `settings:<appId>`. One window per id
-  (deduped); only ever one `app:<id>` per app, but records/settings add more windows.
+- IDs: `app:<appId>` · `rec:<doctype>/<name>` · `settings:<appId>` · `wallpaper` (singleton
+  system pane). One window per id (deduped); only ever one `app:<id>` per app, but
+  records/settings add more windows. `windowRole(id)` derives the role from the id prefix.
 - **Geometry is separate**: `state.geo[id] = {x,y,w,h,z,min,max}`, merged over a by-index
   default in the `geoMap` computed. `bumpZ()` raises focus.
 
 **Persistence**: one localStorage blob (`frappe-os:desktop`) holds windows/geo/split/
 activeId/theme/wallpaper/toggles, debounced 250ms (`startAutosave`). Excluded: ephemeral
-overlays (palette/picker/menu) and **settings windows** (respawned from URL, never saved).
+overlays (palette/menu) and the transient **settings / wallpaper windows** (respawned from URL, never saved).
 `hydrate()` runs before routing and defensively drops windows whose doctype/record no
 longer resolves.
 
@@ -92,8 +93,11 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table) and `Form/` (`OSForm`
   editable record screen) — the self-fetching builtin views, each with Save/New; `Settings`
   (settings two-pane body), `MenuBar`, `Dock` (with window chooser), `CommandPalette`,
-  `WallpaperPicker`, `StatusPill`.
-- `index.css` — frappe-ui style + Tailwind. Backend host page: `frappe/www/os.{py,html}`.
+  `WallpaperPicker`, `StatusPill`. The chrome **look** (Frappe-native ground/menu bar/
+  windows/traffic dots + the adapt-behind dock) is specified in
+  `docs/design/chrome-visual-language.md` — read it before restyling chrome.
+- `index.css` — frappe-ui style + Tailwind (+ the `--os-ctl-*` traffic-dot tokens). Backend
+  host page: `frappe/www/os.{py,html}`.
 
 ## Tests
 ```
@@ -135,5 +139,6 @@ yarn cypress       # Cypress interactive runner
 ## Known gaps vs original
 - Menu-bar keyboard-shortcut chips omitted (frappe-ui Dropdown is label + action only).
 - FormLayout Link fields render as disabled inputs; long Text fields don't span both columns.
-- Command palette + wallpaper picker are custom blurred overlays (frappe-ui Dialog doesn't
-  match the macOS sheet look).
+- Command palette is a custom blurred overlay (frappe-ui Dialog doesn't match the macOS
+  sheet look). The wallpaper picker is a singleton desktop window (`wallpaper` role), not
+  an overlay — opened from the desktop context-menu / menu bar, deep-linkable at `/wallpaper`.

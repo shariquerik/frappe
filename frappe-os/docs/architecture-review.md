@@ -71,7 +71,7 @@ The General tab renders selects as static `<div>`s with a chevron (non-functiona
 `frappe-ui` `FormControl` (already in the type shim, unused) is the standard control.
 
 ### Justified custom UI — leave as-is
-Command palette, wallpaper picker, and the macOS window chrome / list table are
+Command palette and the macOS window chrome / list table are
 intentionally hand-built (frappe-ui `Dialog`/`ListView` don't match the macOS look). Sound
 call — worth a one-line note that `ListView` was considered and rejected so nobody "fixes" it.
 
