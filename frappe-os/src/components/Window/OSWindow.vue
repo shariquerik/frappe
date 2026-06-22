@@ -20,6 +20,7 @@ import { windowRole } from "@/surface";
 // OsWindow feeds defineProps, so these come from concrete modules, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/surface/types";
+import type { ResizeDir } from "@/desktop/geometry";
 import type { ViewProps } from "@/config/types";
 
 const props = defineProps<{ win: OsWindow }>();
@@ -92,6 +93,25 @@ const styleWin = computed(() => {
 });
 const resizable = computed(() => !g.value.max && !inSplit.value);
 
+// Rounding + clipping live on the inner content layer, but only for free-floating
+// windows — maximized/split windows are flush, no corners.
+const contentClass = computed(() => (g.value.max || inSplit.value ? "" : "rounded-[10px]"));
+
+// Resize grips: 4 edge strips (z-50) under 4 corner squares (z-[60]) so the diagonal
+// cursor wins at the overlaps. Each band straddles the border — 7px outside, 3px in —
+// so the cursor appears mostly outside the window. `dir` is the edge mask the store
+// resolves into x/y/w/h.
+const resizeHandles: { dir: ResizeDir; cls: string }[] = [
+	{ dir: "n", cls: "-top-[7px] inset-x-0 z-50 h-[10px] [cursor:ns-resize]" },
+	{ dir: "s", cls: "-bottom-[7px] inset-x-0 z-50 h-[10px] [cursor:ns-resize]" },
+	{ dir: "w", cls: "inset-y-0 -left-[7px] z-50 w-[10px] [cursor:ew-resize]" },
+	{ dir: "e", cls: "inset-y-0 -right-[7px] z-50 w-[10px] [cursor:ew-resize]" },
+	{ dir: "nw", cls: "-top-[7px] -left-[7px] z-[60] h-[16px] w-[16px] [cursor:nwse-resize]" },
+	{ dir: "ne", cls: "-top-[7px] -right-[7px] z-[60] h-[16px] w-[16px] [cursor:nesw-resize]" },
+	{ dir: "sw", cls: "-bottom-[7px] -left-[7px] z-[60] h-[16px] w-[16px] [cursor:nesw-resize]" },
+	{ dir: "se", cls: "-bottom-[7px] -right-[7px] z-[60] h-[16px] w-[16px] [cursor:nwse-resize]" },
+];
+
 // view model for app windows: `mode` is the surface's built-in view name.
 const mode = computed(() => s.value.view);
 const showSidebar = computed(() => !os.state.sidebarHidden[props.win.id]);
@@ -120,61 +140,74 @@ const viewProps = computed<ViewProps>(() => {
 	<div
 		v-show="!g.min"
 		:data-win-id="win.id"
-		class="absolute flex flex-col overflow-hidden bg-surface-base"
+		class="absolute"
 		:style="styleWin"
 		@pointerdown="os.focusWin(win.id)"
 	>
-		<!-- ===== APPLET WINDOW (ADR-0012 polymorphic surface) ===== -->
-		<template v-if="isApplet">
-			<WindowChrome :win="win" :title="app.name" :logo="app.logo" />
-			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-				<component :is="resolved" v-if="resolved" v-bind="applet.props" />
-			</div>
-		</template>
-
-		<!-- ===== APP WINDOW ===== -->
-		<template v-else-if="role === 'app'">
-			<WindowChrome :win="win">
-				<AppToolbar :win="win" />
-			</WindowChrome>
-			<div class="flex min-h-0 flex-1 bg-surface-base">
-				<AppSidebar v-if="showSidebar" :win="win" />
-				<div class="flex min-w-0 flex-1 flex-col">
-					<AppDashboard v-if="mode === 'dashboard'" :win="win" />
-					<DoctypeView v-else v-bind="viewProps" />
-				</div>
-			</div>
-		</template>
-
-		<!-- ===== SETTINGS WINDOW ===== -->
-		<template v-else-if="role === 'settings'">
-			<WindowChrome :win="win" :title="`${app.name} settings`" :logo="app.logo" />
-			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-				<SettingsDialog :win="win" />
-			</div>
-		</template>
-
-		<!-- ===== WALLPAPER WINDOW (singleton system pane) ===== -->
-		<template v-else-if="role === 'wallpaper'">
-			<WindowChrome :win="win" title="Wallpaper" :logo="app.logo" />
-			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-				<WallpaperPicker />
-			</div>
-		</template>
-
-		<!-- ===== RECORD WINDOW ===== -->
-		<template v-else>
-			<WindowChrome :win="win" :title="s.recordName" :logo="app.logo" />
-			<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-				<DoctypeView v-bind="viewProps" />
-			</div>
-		</template>
-
-		<!-- resize handle -->
+		<!-- Clipped content layer: rounding + overflow live here so the resize grips
+		     (siblings below) can extend past the window edge without being clipped. -->
 		<div
-			v-if="resizable"
-			@pointerdown="os.startResize(win.id, $event)"
-			class="absolute bottom-px right-px z-[60] h-[18px] w-[18px] [cursor:nwse-resize]"
-		></div>
+			class="absolute inset-0 flex flex-col overflow-hidden bg-surface-base"
+			:class="contentClass"
+		>
+			<!-- ===== APPLET WINDOW (ADR-0012 polymorphic surface) ===== -->
+			<template v-if="isApplet">
+				<WindowChrome :win="win" :title="app.name" :logo="app.logo" />
+				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
+					<component :is="resolved" v-if="resolved" v-bind="applet.props" />
+				</div>
+			</template>
+
+			<!-- ===== APP WINDOW ===== -->
+			<template v-else-if="role === 'app'">
+				<WindowChrome :win="win">
+					<AppToolbar :win="win" />
+				</WindowChrome>
+				<div class="flex min-h-0 flex-1 bg-surface-base">
+					<AppSidebar v-if="showSidebar" :win="win" />
+					<div class="flex min-w-0 flex-1 flex-col">
+						<AppDashboard v-if="mode === 'dashboard'" :win="win" />
+						<DoctypeView v-else v-bind="viewProps" />
+					</div>
+				</div>
+			</template>
+
+			<!-- ===== SETTINGS WINDOW ===== -->
+			<template v-else-if="role === 'settings'">
+				<WindowChrome :win="win" :title="`${app.name} settings`" :logo="app.logo" />
+				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
+					<SettingsDialog :win="win" />
+				</div>
+			</template>
+
+			<!-- ===== WALLPAPER WINDOW (singleton system pane) ===== -->
+			<template v-else-if="role === 'wallpaper'">
+				<WindowChrome :win="win" title="Wallpaper" :logo="app.logo" />
+				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
+					<WallpaperPicker />
+				</div>
+			</template>
+
+			<!-- ===== RECORD WINDOW ===== -->
+			<template v-else>
+				<WindowChrome :win="win" :title="s.recordName" :logo="app.logo" />
+				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
+					<DoctypeView v-bind="viewProps" />
+				</div>
+			</template>
+		</div>
+
+		<!-- resize handles: 4 edges + 4 corners straddling the window border (mostly
+		     outside it). Edges are thin strips, corners are squares stacked above them
+		     (z order) so the diagonal cursor wins at the overlaps. -->
+		<template v-if="resizable">
+			<div
+				v-for="h in resizeHandles"
+				:key="h.dir"
+				@pointerdown="os.startResize(win.id, h.dir, $event)"
+				class="absolute"
+				:class="h.cls"
+			></div>
+		</template>
 	</div>
 </template>

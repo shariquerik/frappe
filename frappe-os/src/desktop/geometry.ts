@@ -9,9 +9,13 @@ import { windowRole } from '@/surface'
 import type { Geo, OsWindow } from '@/types'
 
 // Non-reactive pointer-loop bookkeeping: the window being dragged/resized and the
-// pointer/geometry origin captured on press.
+// pointer/geometry origin captured on press. A resize tracks its edge mask `dir`
+// (any of n/s/e/w) so the same loop serves all 8 corners and edges.
+export type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 interface DragState { id: string; sx: number; sy: number; ox: number; oy: number }
-interface ResizeState { id: string; sx: number; sy: number; ow: number; oh: number }
+interface ResizeState { id: string; dir: ResizeDir; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number }
+
+const MIN_W = 420, MIN_H = 300, TOP_BOUND = 34
 
 let topZ = 0
 let drag: DragState | null = null
@@ -56,11 +60,29 @@ export function startDrag(id: string, e: PointerEvent): void {
   document.body.style.userSelect = 'none'
 }
 
-export function startResize(id: string, e: PointerEvent): void {
+export function startResize(id: string, dir: ResizeDir, e: PointerEvent): void {
   e.preventDefault(); e.stopPropagation()
   const g = geoMap.value[id] || {}
-  resize = { id, sx: e.clientX, sy: e.clientY, ow: g.w || 760, oh: g.h || 600 }
+  resize = { id, dir, sx: e.clientX, sy: e.clientY, ox: g.x || 0, oy: g.y || 0, ow: g.w || 760, oh: g.h || 600 }
   document.body.style.userSelect = 'none'
+}
+
+// The active edges decide which of x/y/w/h move. East/south grow from the fixed
+// top-left; west/north move the edge, so they shift the origin too. Each axis is
+// clamped to the minimum size and the desktop bounds (left ≥ 0, top ≥ TOP_BOUND).
+function resizePatch(r: ResizeState, e: PointerEvent): Partial<Geo> {
+  const patch: Partial<Geo> = {}
+  if (r.dir.includes('e')) patch.w = Math.max(MIN_W, r.ow + (e.clientX - r.sx))
+  if (r.dir.includes('s')) patch.h = Math.max(MIN_H, r.oh + (e.clientY - r.sy))
+  if (r.dir.includes('w')) {
+    const dx = Math.max(Math.min(e.clientX - r.sx, r.ow - MIN_W), -r.ox)
+    patch.x = r.ox + dx; patch.w = r.ow - dx
+  }
+  if (r.dir.includes('n')) {
+    const dy = Math.max(Math.min(e.clientY - r.sy, r.oh - MIN_H), TOP_BOUND - r.oy)
+    patch.y = r.oy + dy; patch.h = r.oh - dy
+  }
+  return patch
 }
 
 export function onPointerMove(e: PointerEvent): void {
@@ -78,7 +100,7 @@ export function onPointerMove(e: PointerEvent): void {
     dockRef.el.style.transform = dockShown ? 'translateY(0)' : 'translateY(155%)'
   }
   if (drag) setGeo(drag.id, { x: Math.max(0, drag.ox + (e.clientX - drag.sx)), y: Math.max(34, drag.oy + (e.clientY - drag.sy)) })
-  else if (resize) setGeo(resize.id, { w: Math.max(420, resize.ow + (e.clientX - resize.sx)), h: Math.max(300, resize.oh + (e.clientY - resize.sy)) })
+  else if (resize) setGeo(resize.id, resizePatch(resize, e))
 }
 
 export function onPointerUp(): void {
