@@ -4,6 +4,7 @@
 // them). topZ/drag/resize are deliberately non-reactive bookkeeping.
 import { computed } from 'vue'
 import { state } from './state'
+import { shouldShowDock } from './dock-visibility'
 import { windowRole } from '@/surface'
 import type { Geo, OsWindow } from '@/types'
 
@@ -17,6 +18,7 @@ let drag: DragState | null = null
 let resize: ResizeState | null = null
 const deskRef: { el: HTMLElement | null; w: number; h: number } = { el: null, w: 1280, h: 800 }
 const dockRef: { el: HTMLElement | null } = { el: null }
+let dockShown = true // last applied dock visibility; feeds the hysteresis
 
 export const bumpZ = (): number => { topZ += 1; return topZ }
 // Re-seed topZ above every restored window after hydrate, so the next focus wins.
@@ -65,8 +67,15 @@ export function onPointerMove(e: PointerEvent): void {
   // auto-hide dock
   if (dockRef.el) {
     const dh = deskRef.h || (deskRef.el ? deskRef.el.clientHeight : 800)
-    const show = state.windows.length === 0 || state.dockMenu || e.clientY > dh - 90
-    dockRef.el.style.transform = show ? 'translateY(0)' : 'translateY(155%)'
+    dockShown = shouldShowDock({
+      windowCount: state.windows.length,
+      dockMenu: state.dockMenu,
+      gestureActive: !!(drag || resize),
+      clientY: e.clientY,
+      deskH: dh,
+      currentlyShown: dockShown,
+    })
+    dockRef.el.style.transform = dockShown ? 'translateY(0)' : 'translateY(155%)'
   }
   if (drag) setGeo(drag.id, { x: Math.max(0, drag.ox + (e.clientX - drag.sx)), y: Math.max(34, drag.oy + (e.clientY - drag.sy)) })
   else if (resize) setGeo(resize.id, { w: Math.max(420, resize.ow + (e.clientX - resize.sx)), h: Math.max(300, resize.oh + (e.clientY - resize.sy)) })
