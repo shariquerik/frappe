@@ -1,7 +1,13 @@
 # Customizations view — list app-originated overrides and removals
 
-Status: ready-for-agent — the UX/authority/grouping forks are settled (ADR-0015; ADR-0014
-items 3/4 amended; `CONTEXT.md` → "Customizations view"). Design below is AFK-ready.
+Status: ✅ DONE (2026-06-22) — read-only catalog shipped. Implementation: pure projection
+`src/actions/customizations.ts` (`customizationGroups` over `useRegistry().actions()`, no
+`resolve()`/Context; `describeWhen`; `isUnexpectedRemoval` reusing removals.ts's predicate) →
+first-party applet `src/applets/Customizations/` at `/os/frappe/customizations` (registered in
+`registry/index.ts` `FIRST_PARTY`), rendering per-app groups with `useRegistry().appKind` and the
+feature-app removal marker. Restore/revert deferred (rows already carry sourceApp/region/command/
+layer/removed — additive). Tests: `tests/customizations.spec.js`, `cypress/e2e/customizations-view.cy.js`
+(green against the bench-served build). Design: ADR-0015; vocabulary: `CONTEXT.md` → "Customizations view".
 
 ## What to build
 
@@ -51,18 +57,18 @@ removals apps impose on this site. **Read-only this slice.** Design: ADR-0015; v
 
 - [x] The UX/authority/grouping forks are resolved and recorded (ADR-0015; ADR-0014 amended;
       `CONTEXT.md` → "Customizations view").
-- [ ] A Customizations view, built as a **pure structural projection over
+- [x] A Customizations view, built as a **pure structural projection over
       `useRegistry().actions()`** (no `resolve()` call, no Context dependency), lists app
       customizations grouped by app; each row shows source app, region/command, reason
       (override/removal), and the `when` scope.
-- [ ] Each app group shows its kind (`useRegistry().appKind`); feature-app removal rows carry
+- [x] Each app group shows its kind (`useRegistry().appKind`); feature-app removal rows carry
       the "review this" marker; pure-customization removals are quiet.
-- [ ] Read-only — no restore/revert action in this slice; the projection's row shape leaves
+- [x] Read-only — no restore/revert action in this slice; the projection's row shape leaves
       room for one to be added additively later.
-- [ ] Vitest covers the projection as a pure function over an `Action[]` fixture (a contextual
+- [x] Vitest covers the projection as a pure function over an `Action[]` fixture (a contextual
       override, an always-on removal, a feature-app removal, a pure-customization removal);
       a Cypress spec asserts the view lists a known erpnext override and a known removal.
-- [ ] `yarn typecheck && yarn test && yarn build` are green; Cypress passes against the
+- [x] `yarn typecheck && yarn test && yarn build` are green; Cypress passes against the
       bench-served build.
 
 ## Blocked by

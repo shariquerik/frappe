@@ -1,6 +1,12 @@
 # Render the File menu from first-party contributions (actions engine + client render)
 
-Status: ready-for-agent
+Status: ✅ DONE (2026-06-21) — shipped. Implementation: the pure `actions` engine
+(`src/actions/` — `eligibility.ts`, `specificity.ts`, `resolve.ts`, `context.ts`,
+`contributions.ts` first-party `FILE_*` Commands/Actions + `RUN_HANDLERS`, `menubar.ts`
+`fileMenuOptions`); `MenuBar.vue`'s File menu renders from `resolve('menubar:file', context)`, the
+other six menus stay literal. Tests: `tests/actions.spec.js` (eligibility, the specificity vector,
+the tiebreak chain, shadow logging, `invoke`, and the File-menu render). See
+`docs/design/action-model-next-steps.md` (Slice 1).
 
 ## What to build
 
@@ -27,13 +33,13 @@ Context is the 6 fields derivable from the active window (`activeApp, windowRole
 
 ## Acceptance criteria
 
-- [ ] An `actions` module exposes a pure resolver that, given a region id + Context, returns the eligible Actions per `(region, command)` with the winner chosen by `(surfaceCount, windowCount)` specificity → layer → `order` → logged true-tie.
-- [ ] Eligibility is equality-only and evaluated as data; an `undefined`-valued Context key is a non-match; an **unknown** `when` key yields no-match **and** emits a loud warning.
-- [ ] Shadowed Actions are logged (attributed), distinguishing a clean override from a `⚠ true-tie`.
-- [ ] `New window` is a first-party `frappe` Command + Action with a real **run** handler resolved through a `FIRST_PARTY`-style map; it no longer no-ops.
-- [ ] `MenuBar.vue`'s File menu renders from resolved Actions; the other six menus are unchanged and still hardcoded.
-- [ ] Vitest decision-table specs cover eligibility, the lexicographic specificity vector, the tiebreak chain, and shadow logging; a render test asserts the File menu's items come from the resolver.
-- [ ] `yarn typecheck && yarn test && yarn build` are green.
+- [x] An `actions` module exposes a pure resolver that, given a region id + Context, returns the eligible Actions per `(region, command)` with the winner chosen by `(surfaceCount, windowCount)` specificity → layer → `order` → logged true-tie.
+- [x] Eligibility is equality-only and evaluated as data; an `undefined`-valued Context key is a non-match; an **unknown** `when` key yields no-match **and** emits a loud warning.
+- [x] Shadowed Actions are logged (attributed), distinguishing a clean override from a `⚠ true-tie`.
+- [x] `New window` is a first-party `frappe` Command + Action with a real **run** handler resolved through a `FIRST_PARTY`-style map; it no longer no-ops.
+- [x] `MenuBar.vue`'s File menu renders from resolved Actions; the other six menus are unchanged and still hardcoded.
+- [x] Vitest decision-table specs cover eligibility, the lexicographic specificity vector, the tiebreak chain, and shadow logging; a render test asserts the File menu's items come from the resolver.
+- [x] `yarn typecheck && yarn test && yarn build` are green.
 
 ## Blocked by
 
