@@ -6,14 +6,22 @@
 import { useRegistry, appForDoctype } from '@/registry'
 import type { Surface, BuiltinSurface, AppletSurface } from '@/types'
 
+// The Aspect set + helpers live in a pure leaf module (no store/registry deps); re-export
+// them through the surface barrel so consumers keep one import path.
+export * from './aspects'
+import { DEFAULT_ASPECT } from './aspects'
+
 // ---- constructors ------------------------------------------------------------
 // `appId` is always populated (chrome/asset scoping need it); for doctype-bound views
 // it is derived from the doctype so the doctype stays authoritative over the app.
 export const dashboardSurface = (appId: string): BuiltinSurface => ({ kind: 'builtin', view: 'dashboard', appId })
 export const listSurface = (doctype: string): BuiltinSurface =>
   ({ kind: 'builtin', view: 'list', doctype, recordName: null, appId: appForDoctype(doctype) })
-export const formSurface = (doctype: string, recordName: string): BuiltinSurface =>
-  ({ kind: 'builtin', view: 'form', doctype, recordName, appId: appForDoctype(doctype) })
+// `aspect` is the form's selected facet (ADR-0018); omitted/default ('details') stays off the
+// descriptor so an existing form surface/URL is byte-for-byte unchanged.
+export const formSurface = (doctype: string, recordName: string, aspect?: string): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'form', doctype, recordName, appId: appForDoctype(doctype),
+     ...(aspect && aspect !== DEFAULT_ASPECT ? { aspect } : {}) })
 export const settingsSurface = (appId: string, tab = 'General'): BuiltinSurface =>
   ({ kind: 'builtin', view: 'settings', appId, params: { tab } })
 // The wallpaper picker — a system (not app-scoped) pane. Owned by the framework app so
@@ -41,6 +49,13 @@ export function surfaceAppId(s: Surface): string {
 // ---- pure helpers ------------------------------------------------------------
 export const isBuiltin = (s?: Surface | null): s is BuiltinSurface => !!s && s.kind === 'builtin'
 
+// Which sidebar a window's Surface drives (ADR-0018): a form shows the Aspect rail, every
+// other surface keeps the app nav rail. The sidebar is the one chrome element that follows
+// the Surface — geometry, focus and URL-projection mechanics stay surface-agnostic (ADR-0012).
+export function sidebarKind(s?: Surface | null): 'aspect' | 'nav' {
+  return isBuiltin(s) && s.view === 'form' ? 'aspect' : 'nav'
+}
+
 // The settings tab a settings surface carries (defaults to General).
 export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.tab as string)) || 'General'
 
@@ -60,5 +75,8 @@ export function sameSurface(a?: Surface | null, b?: Surface | null): boolean {
   if (!a || !b || a.kind !== b.kind) return false
   if (a.kind === 'applet') return a.appletId === (b as typeof a).appletId
   const y = b as BuiltinSurface
-  return a.view === y.view && (a.doctype || '') === (y.doctype || '') && (a.recordName || '') === (y.recordName || '')
+  // The Aspect is part of a form's content address (ADR-0018), so two aspects of one record are
+  // NOT the same place — per-window history then steps between them like any other navigation.
+  return a.view === y.view && (a.doctype || '') === (y.doctype || '')
+    && (a.recordName || '') === (y.recordName || '') && (a.aspect || '') === (y.aspect || '')
 }

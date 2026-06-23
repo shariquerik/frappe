@@ -1,5 +1,11 @@
 # Remove pop-out windows; open a record in a new window as an app instance
 
+> **Updated by ADR-0018:** "Left-click is unchanged (same window)" below is now the *default*,
+> not a fixed rule — because an inline open swaps the window's sidebar (nav rail → Aspect rail),
+> the row open-target is a per-user preference (inline by default, flippable to open-in-new-
+> window). The context menu is unchanged and always offers both Open and Open in New Window.
+
+
 We removed the `rec:` "pop-out" window kind (role `record`). Opening a record in a new
 window now mints an ordinary app **Instance** whose Surface starts on that record's form
 (`newAppWindow(appForDoctype(dt), formSurface(dt, name))`), and a list row exposes the

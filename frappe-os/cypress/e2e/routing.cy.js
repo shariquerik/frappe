@@ -97,6 +97,48 @@ describe('history + DOM interaction', () => {
   })
 })
 
+describe('form Aspects are addressable in the URL (ADR-0018)', () => {
+  // A form Surface carries an Aspect coordinate projected as a trailing path segment; Details
+  // is the default (bare path). The record need not exist — the form Surface (and its Aspect
+  // rail) render regardless; records load live and the body shows its own not-found state.
+  // Needs a live bench behind `yarn dev`, like the specs above.
+  const FORM = '/os/frappe/ToDo/ASPECT-TEST-1'
+  beforeEach(() => cy.clearLocalStorage())
+
+  it('selecting a non-default Aspect updates the URL to the trailing segment', () => {
+    cy.visit(FORM)
+    cy.get('[data-win-id="app:frappe"]').should('be.visible')
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1') // Details = bare path
+    cy.get('[data-aspect="activities"]').click()
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/activities')
+    cy.get('[data-win-id="app:frappe"]').contains('Coming soon')
+  })
+
+  it('a reload on a non-default Aspect restores that Aspect', () => {
+    cy.visit(FORM + '/activities')
+    cy.get('[data-win-id="app:frappe"]').should('be.visible').contains('Coming soon')
+    cy.reload()
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/activities')
+    cy.get('[data-win-id="app:frappe"]').contains('Coming soon')
+  })
+
+  it('browser back/forward steps between Aspects of the same record', () => {
+    cy.visit(FORM) // Details
+    cy.get('[data-aspect="email"]').click()
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/email')
+    cy.go('back')
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1') // back to Details
+    cy.go('forward')
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/email')
+  })
+
+  it('an unknown trailing segment produces no phantom Aspect (settles on the bare form)', () => {
+    cy.visit(FORM + '/not-an-aspect')
+    cy.get('[data-win-id="app:frappe"]').should('be.visible')
+    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1')
+  })
+})
+
 describe('multiple instances of one app are individually addressable', () => {
   // A second window of the same app is a distinct INSTANCE: the first owns the bare
   // `/os/<app>`, extras carry `?instance=n`. The query keeps twins addressable without

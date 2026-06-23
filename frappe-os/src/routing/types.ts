@@ -8,6 +8,9 @@ export interface RouteParams {
   app?: string
   doctype?: string
   name?: string
+  // The trailing path segment after the record name — read as a form Aspect id only when it
+  // matches a known Aspect (ADR-0018); otherwise ignored (no phantom Aspect).
+  aspect?: string
   instance?: number | null
 }
 

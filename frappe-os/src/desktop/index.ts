@@ -20,10 +20,10 @@ import {
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
-  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome,
+  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit,
-  setTheme, wallpaperDefs, currentWp, setWallpaper, openWallpaper, closeWallpaper, tog, isOn,
+  setTheme, wallpaperDefs, currentWp, setWallpaper, openWallpaper, closeWallpaper, setRowOpenTarget, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
 import { hydrate, startAutosave } from './persistence'
@@ -52,12 +52,12 @@ export function useOS() {
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
     // window lifecycle + navigation
-    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, goHome,
+    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp,
     toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit, setTheme,
-    setWallpaper, openWallpaper, closeWallpaper, tog, isOn, openPalette, closePalette,
+    setWallpaper, openWallpaper, closeWallpaper, setRowOpenTarget, tog, isOn, openPalette, closePalette,
     setDeskEl, setDockEl, deskRef,
   }
 }

@@ -10,6 +10,7 @@ function reset() {
   os.state.geo = {}
   os.state.activeId = null
   os.state.split = null
+  os.state.rowOpenTarget = 'inline'
   localStorage.clear()
 }
 
@@ -103,6 +104,59 @@ describe('newAppWindow stacks multiple windows of one app', () => {
     os.openApp('crm', 2)             // respawn/focus app:crm#2 from a ?instance=2 URL
     expect(os.state.activeId).toBe('app:crm#2')
     expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
+  })
+})
+
+describe('openAspect selects a form Aspect on the same window', () => {
+  it('re-navigates the record form to the chosen Aspect and records history', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1') // app:crm on the bare (details) form
+    os.openAspect('app:crm', 'activities')
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', aspect: 'activities' })
+    expect(w.back.length).toBe(1) // the details form is now back-navigable
+  })
+
+  it('is a no-op when the window does not host a form', () => {
+    os.openApp('crm') // dashboard surface
+    os.openAspect('app:crm', 'activities')
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface.view).toBe('dashboard')
+  })
+})
+
+describe('openRow follows the row open-target preference (ADR-0018)', () => {
+  it("defaults to 'inline' — left-click opens the record in the same window", () => {
+    os.openListGlobal('CRM Lead') // app:crm on a list
+    expect(os.state.rowOpenTarget).toBe('inline')
+    os.openRow('app:crm', 'CRM Lead', 'L-1')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm']) // no new window
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
+  })
+
+  it("with 'new-window', left-click mints a fresh app instance on the record's form", () => {
+    os.openListGlobal('CRM Lead') // app:crm on a list
+    os.setRowOpenTarget('new-window')
+    os.openRow('app:crm', 'CRM Lead', 'L-1')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
+    const twin = os.state.windows.find((x) => x.id === 'app:crm#2')
+    expect(twin.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
+    const orig = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(orig.surface.view).toBe('list') // the original list window is untouched
+  })
+
+  it('restores the saved preference on hydrate', () => {
+    localStorage.setItem('frappe-os:desktop', JSON.stringify({ version: 2, windows: [], geo: {}, rowOpenTarget: 'new-window' }))
+    os.state.rowOpenTarget = 'inline' // simulate a fresh boot default
+    os.hydrate()
+    expect(os.state.rowOpenTarget).toBe('new-window')
+  })
+
+  it('falls back to inline when the blob has no saved preference', () => {
+    localStorage.setItem('frappe-os:desktop', JSON.stringify({ version: 2, windows: [], geo: {} }))
+    os.state.rowOpenTarget = 'new-window'
+    os.hydrate()
+    expect(os.state.rowOpenTarget).toBe('inline')
   })
 })
 

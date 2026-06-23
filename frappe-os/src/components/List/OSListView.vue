@@ -23,7 +23,8 @@ const props = withDefaults(defineProps<{
   meta?: DoctypeMeta | null
   loading?: boolean
   error?: string | null
-  onOpen?: (doctype: string, name: string) => void
+  onOpen?: (doctype: string, name: string) => void // left-click: follows the row open-target preference
+  onOpenInline?: (doctype: string, name: string) => void // context-menu "Open": always same window
   onOpenNewWindow?: (doctype: string, name: string) => void
 }>(), {
   columns: () => [],
@@ -36,9 +37,10 @@ const listColumns = computed(() => toListViewColumns(props.columns))
 const statusThemes = computed(() => props.meta?.statusThemes || {})
 
 // Right-click a row → a small menu offering the two built-in opens (ADR-0017): Open (same
-// window, identical to the left-click) and Open in New Window (a fresh app instance). Direct
-// core row behaviour, deliberately NOT routed through the Command/Action model — Context has
-// no selection and Handlers can't carry the clicked row (see ADR-0017).
+// window) and Open in New Window (a fresh app instance). Both are explicit and ALWAYS offered
+// regardless of the left-click open-target preference (ADR-0018) — the context menu is the
+// per-row escape hatch. Direct core row behaviour, deliberately NOT routed through the Command/
+// Action model — Context has no selection and Handlers can't carry the clicked row (see ADR-0017).
 const rowMenu = ref<{ x: number; y: number; name: string } | null>(null)
 
 // Resolve the record under a right-click anywhere in the list — cell text, an empty "—"
@@ -68,7 +70,7 @@ const rowMenuItems = computed(() => {
   const name = rowMenu.value?.name
   if (!name) return []
   return [
-    { label: 'Open', onClick: () => props.onOpen?.(props.doctype, name) },
+    { label: 'Open', onClick: () => (props.onOpenInline || props.onOpen)?.(props.doctype, name) },
     { label: 'Open in New Window', onClick: () => props.onOpenNewWindow?.(props.doctype, name) },
   ]
 })

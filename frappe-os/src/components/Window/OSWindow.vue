@@ -16,7 +16,9 @@ import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT } from "./toolbar";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
-import { windowRole, formSurface } from "@/surface";
+import AspectRail from "./AspectRail.vue";
+import AspectPane from "./AspectPane.vue";
+import { windowRole, formSurface, sidebarKind, DEFAULT_ASPECT, aspectById } from "@/surface";
 // OsWindow feeds defineProps, so these come from concrete modules, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/surface/types";
@@ -116,6 +118,18 @@ const resizeHandles: { dir: ResizeDir; cls: string }[] = [
 const mode = computed(() => s.value.view);
 const showSidebar = computed(() => !os.state.sidebarHidden[props.win.id]);
 
+// The window sidebar is surface-driven (ADR-0018): a form shows the Aspect rail (the record's
+// Aspects), every other surface keeps the app nav rail (AppSidebar).
+const sidebar = computed(() => sidebarKind(surf.value));
+
+// Selected Aspect — a coordinate ON the form Surface (ADR-0018), so it is URL-addressable,
+// restored on reload and stepped by browser back/forward. Absent = the default ('details').
+const aspect = computed(() => (surf.value.kind === "builtin" && surf.value.aspect) || DEFAULT_ASPECT);
+const activeAspect = computed(() => aspectById(aspect.value));
+// A non-Details Aspect of a form swaps the main pane to its (placeholder) pane; Details and
+// every non-form surface keep the generic DoctypeView / dashboard body.
+const showAspectPane = computed(() => sidebar.value === "aspect" && aspect.value !== DEFAULT_ASPECT);
+
 // view props for DoctypeView (each view fetches its own list/doc/field-schema from the store)
 const viewProps = computed<ViewProps>(() => {
 	const dt = s.value.doctype!;
@@ -128,7 +142,10 @@ const viewProps = computed<ViewProps>(() => {
 	return {
 		...base,
 		view: mode.value,
-		onOpen: (d, name) => os.openRecordInline(props.win.id, d, name),
+		// Primary open (left-click): follows the user's row open-target preference (ADR-0018).
+		onOpen: (d, name) => os.openRow(props.win.id, d, name),
+		// Explicit same-window open (context-menu "Open") — always inline, ignores the preference.
+		onOpenInline: (d, name) => os.openRecordInline(props.win.id, d, name),
 		// "Open in New Window" (list-row menu): mint a fresh app instance already on the
 		// record's form — an ordinary Instance, not a record-only window (ADR-0017).
 		onOpenNewWindow: (d, name) => os.newAppWindow(os.appForDoctype(d), formSurface(d, name)),
@@ -166,9 +183,14 @@ const viewProps = computed<ViewProps>(() => {
 					<AppToolbar :win="win" />
 				</WindowChrome>
 				<div class="flex min-h-0 flex-1 bg-surface-base">
-					<AppSidebar v-if="showSidebar" :win="win" />
+					<!-- surface-driven sidebar (ADR-0018): Aspect rail for a form, nav rail otherwise -->
+					<template v-if="showSidebar">
+						<AspectRail v-if="sidebar === 'aspect'" :selected="aspect" @select="os.openAspect(win.id, $event)" />
+						<AppSidebar v-else :win="win" />
+					</template>
 					<div class="flex min-w-0 flex-1 flex-col">
 						<AppDashboard v-if="mode === 'dashboard'" :win="win" />
+						<AspectPane v-else-if="showAspectPane && activeAspect" :aspect="activeAspect" />
 						<DoctypeView v-else v-bind="viewProps" />
 					</div>
 				</div>

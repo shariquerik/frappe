@@ -9,7 +9,7 @@ import { useOS } from '@/desktop'
 import { getBoot, initOsApi } from '@/data'
 import { initRegistry } from '@/registry'
 import { router, pathForFocus, focusSig, applyRoute, INSTANCE_KEY } from '@/routing'
-import { formSurface, listSurface, dashboardSurface, appletSurface } from '@/surface'
+import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
 
 const os = useOS()
@@ -22,6 +22,7 @@ function routeParams(loc: { params: RouteParamsGeneric; query: LocationQuery }):
   const raw = one(loc.query[INSTANCE_KEY])
   const instance = raw ? Number.parseInt(raw, 10) : NaN
   return { app: one(loc.params.app), doctype: one(loc.params.doctype), name: one(loc.params.name),
+    aspect: one(loc.params.aspect),
     instance: Number.isInteger(instance) ? instance : null }
 }
 
@@ -77,7 +78,7 @@ function pushFocus() {
 function restoreFromHistory(to: RouteLocationNormalized) {
   const st = window.history.state || {}
   const winId: string | null = st.osWin || null
-  const { app, doctype, name, instance } = routeParams(to)
+  const { app, doctype, name, instance, aspect } = routeParams(to)
 
   // Settings windows: path is /<app>/settings, state id is settings:<app>. Refocus
   // if still open, else respawn from the app segment (settings panes aren't persisted).
@@ -104,7 +105,8 @@ function restoreFromHistory(to: RouteLocationNormalized) {
   }
 
   let surface: Surface
-  if (doctype && name) surface = formSurface(doctype, name)
+  // A known trailing Aspect rides the restored form surface; an unknown tail is ignored (default).
+  if (doctype && name) surface = formSurface(doctype, name, isAspectId(aspect) ? aspect : undefined)
   else if (doctype) surface = listSurface(doctype)
   else surface = dashboardSurface(app)
 

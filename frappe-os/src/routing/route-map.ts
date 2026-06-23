@@ -2,6 +2,7 @@
 // decision tables (focus -> path, route -> store action) are unit-testable in
 // isolation: every function takes the `os` store explicitly and touches no router,
 // history, or window globals. main.js owns the wiring (guards, boot, watchers).
+import { DEFAULT_ASPECT, isAspectId } from '@/surface/aspects'
 import type { FocusLocation, OsStore, RouteParams, Surface } from '@/types'
 
 // Reserved query key naming a non-canonical app window instance (`app:<id>#n`). OS-owned:
@@ -43,7 +44,12 @@ function pathForSurface(os: OsStore, s: Surface): string {
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
   if (s.view === 'settings') return `/${s.appId}/settings` // self-describing; not aliased to /
   if (s.view === 'wallpaper') return '/wallpaper' // singleton system pane, no app segment
-  if (s.view === 'form') return `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}/${seg(s.recordName!)}`
+  if (s.view === 'form') {
+    // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
+    // default and stays on the bare record path, so existing form URLs are unchanged.
+    const base = `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}/${seg(s.recordName!)}`
+    return s.aspect && s.aspect !== DEFAULT_ASPECT ? `${base}/${seg(s.aspect)}` : base
+  }
   if (s.view === 'list') return `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}`
   // Every app — including frappe — projects to /os/<appId>. Bare /os is reserved for the
   // focus-less desktop, so the frappe home window is /os/frappe (no alias), otherwise
@@ -57,13 +63,18 @@ export function focusSig(os: OsStore): string {
   if (!w) return ''
   const s = w.surface
   if (s.kind === 'applet') return `${w.id}|applet|${s.appletId}`
-  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}`
+  // Include the Aspect so switching facets of one record changes the signature and pushes a
+  // timeline entry — browser back/forward then steps between Aspects (ADR-0018).
+  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}`
 }
 
 // Turn a cold deep-link / respawn route into store actions. `params` is the route's
 // { app, doctype, name }. Dead doctype/record degrade gracefully.
 export function applyRoute(os: OsStore, params: RouteParams): void {
   const { app, doctype, name, instance } = params
+  // Read the trailing segment as an Aspect ONLY when it matches a known id (ADR-0018), so a
+  // record name is never misread as `record/aspect` and an unknown tail produces no phantom Aspect.
+  const aspect = isAspectId(params.aspect) ? params.aspect : undefined
   // Path is authoritative: a bare /os means "no window in front", so clear focus
   // rather than letting a hydrated/restored activeId mirror itself back into the URL.
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
@@ -92,7 +103,7 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // on a 404 (Phase 4). A doctype with no name opens its list. `instance` targets a
   // specific app window when the URL carried `?instance=n` (else the canonical one).
   if (doctype && name) {
-    os.openRecordGlobal(doctype, name, instance)
+    os.openRecordGlobal(doctype, name, instance, aspect)
   } else if (doctype) {
     os.openListGlobal(doctype, instance)
   } else if (knownApp) {

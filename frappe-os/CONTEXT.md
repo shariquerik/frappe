@@ -49,6 +49,23 @@ kind a Surface is. Replaces the POC's fixed `view: {mode, doctype, recordName}`.
 A movable, focusable container on the desktop that hosts exactly one **Surface** at a time
 (and carries its own back/forward nav history). The container; the Surface is its content.
 
+**Aspect**:
+A facet of a single record that the **form** Surface can present — Details (the field
+form itself), Activities (the record's timeline), Email (its communications), etc. The form
+Surface selects one Aspect at a time; the Aspect is a **coordinate on the form Surface**
+(alongside doctype + record), not a Surface kind of its own — so it is URL-addressable,
+restored on reload and stepped by browser back/forward, while "form" stays one Surface kind
+(ADR-0012). Details is the default Aspect and projects to the bare form URL.
+_Avoid_: "tab" (that is how an Aspect may *render* in the rail, and collides with the form's
+own meta tabs inside Details), "view" (a Doctype view is list/form/report — an Aspect is a
+facet *within* the form view), "section" (reserved for doctype-meta field groupings).
+
+**Nav rail / Aspect rail**:
+The window **sidebar is surface-driven**, not a fixed per-window chrome. A list/dashboard
+Surface shows the **nav rail** (the app's modules → doctypes, with live counts); a form
+Surface shows the **Aspect rail** (the record's Aspects). The sidebar's content is chosen by
+the Surface the window currently hosts.
+
 **Instance**:
 One of several concurrent **Windows** hosting the same **App**. Minted whenever the user
 asks for a *new* window of an app rather than re-using an open one — File ▸ New window, or

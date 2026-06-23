@@ -85,6 +85,19 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
                 <span class="lucide-chevron-down size-[13px] text-ink-gray-4"></span>
               </div>
             </div>
+            <!-- Per-user list-row open-target (ADR-0018): plain left-click opens inline (same
+                 window) by default, flippable to a new window. The right-click menu still offers both. -->
+            <div class="mb-3 mt-5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">BEHAVIOR</div>
+            <div class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
+              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span class="text-[13px] text-ink-gray-8">Open list rows in a new window</span>
+                <span class="text-[11.5px] text-ink-gray-5">Left-click a row to open it in a new window instead of the same one</span>
+              </div>
+              <Switch
+                :modelValue="os.state.rowOpenTarget === 'new-window'"
+                @update:modelValue="os.setRowOpenTarget($event ? 'new-window' : 'inline')"
+              />
+            </div>
           </template>
 
           <template v-else-if="tab==='Members'">

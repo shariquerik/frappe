@@ -15,6 +15,8 @@ export const router = createRouter({
   // `/os/` by the `os-base-slash-redirect` middleware in vite.config.js.
   history: createWebHistory('/os'),
   // Single catch-all. `:app` is redundant for list/form (derivable from doctype)
-  // but kept so the URL is self-describing and dashboards have a path.
-  routes: [{ path: '/:app?/:doctype?/:name?', component: Empty }],
+  // but kept so the URL is self-describing and dashboards have a path. The optional
+  // `:aspect?` 4th segment carries a form's selected Aspect (ADR-0018); route-map reads it
+  // as an Aspect only when it matches a known id, so a record name never spills into it.
+  routes: [{ path: '/:app?/:doctype?/:name?/:aspect?', component: Empty }],
 })

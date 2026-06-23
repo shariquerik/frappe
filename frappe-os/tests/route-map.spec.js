@@ -62,6 +62,23 @@ describe('pathForFocus', () => {
     os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the twin to a form
     expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: { instance: '2' } })
   })
+
+  it('the default Aspect (details) projects to the bare record path (URL unchanged)', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1', null, 'details')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: {} })
+  })
+
+  it('a non-default Aspect projects to a trailing path segment', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1', null, 'activities')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1/activities', query: {} })
+  })
+
+  it('the Aspect segment composes with the ?instance=n query', () => {
+    os.newAppWindow('crm')                          // app:crm
+    os.newAppWindow('crm')                          // app:crm#2 focused
+    os.openRecordGlobal('CRM Lead', 'L-1', 2, 'email')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1/email', query: { instance: '2' } })
+  })
 })
 
 describe('applyRoute', () => {
@@ -153,5 +170,25 @@ describe('applyRoute', () => {
   it('no instance query falls back to the canonical / any open instance', () => {
     applyRoute(os, { app: 'crm' })
     expect(os.state.activeId).toBe('app:crm')
+  })
+
+  it('a known trailing Aspect rides the opened form surface', () => {
+    applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-1', aspect: 'activities' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', aspect: 'activities' })
+  })
+
+  it('the default Aspect leaves the form surface bare (no aspect coordinate)', () => {
+    applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-1', aspect: 'details' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface.view).toBe('form')
+    expect(w.surface.aspect).toBeUndefined()
+  })
+
+  it('an unknown trailing segment produces no phantom Aspect (still opens the form)', () => {
+    applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-1', aspect: 'not-an-aspect' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
+    expect(w.surface.aspect).toBeUndefined()
   })
 })

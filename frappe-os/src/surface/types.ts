@@ -16,6 +16,11 @@ export interface BuiltinSurface {
   doctype?: string
   recordName?: string | null
   appId?: string
+  // The selected Aspect of a form Surface (ADR-0018) — a coordinate on the form alongside
+  // doctype + record, not a Surface kind of its own. URL-addressable (trailing path segment),
+  // restored on reload and stepped by browser back/forward. Absent = the default ('details'),
+  // which projects to the bare form path. Only meaningful when view === 'form'.
+  aspect?: string
   params?: Record<string, unknown>
 }
 

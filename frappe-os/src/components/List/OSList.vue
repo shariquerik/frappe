@@ -76,6 +76,7 @@ const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
       :loading="listState.loading"
       :error="listState.error"
       :on-open="onOpen"
+      :on-open-inline="onOpenInline"
       :on-open-new-window="onOpenNewWindow"
     />
     <!-- footer -->

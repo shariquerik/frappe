@@ -1,5 +1,11 @@
 # A window hosts a polymorphic Surface, not a fixed view-mode
 
+> **Narrowed by ADR-0018:** the claim below that "window chrome … do[es] not care which kind
+> a Surface is" no longer holds for the **sidebar** — it is now surface-driven (nav rail for
+> list/dashboard, Aspect rail for forms). Geometry, focus, and the URL-projection mechanics
+> are still surface-agnostic; only the sidebar's content follows the Surface.
+
+
 Today a window's content is `view: { mode: 'list'|'form'|'dashboard', doctype, recordName }`
 (`src/types.ts`), and `WindowType`/`ViewMode` are closed unions. This bakes the POC's
 three-view worldview into the core and has no way to express "this window hosts applet X

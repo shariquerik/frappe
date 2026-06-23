@@ -10,7 +10,7 @@ import {
   dashboardSurface, listSurface, formSurface, settingsSurface, wallpaperSurface, appletSurface,
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
 } from '@/surface'
-import type { OsWindow, Surface, Theme, WallpaperDef } from '@/types'
+import type { OsWindow, RowOpenTarget, Surface, Theme, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
 // Presence dots shown on a window. The real backend has no viewer source yet, so a form
@@ -119,7 +119,9 @@ export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
   spawnWindow(freshAppWindowId(appId), appId, surface ?? null)
 
 export const openListGlobal = (dt: string, instance?: number | null) => ensureApp(appForDoctype(dt), listSurface(dt), instance)
-export const openRecordGlobal = (dt: string, name: string, instance?: number | null) => ensureApp(appForDoctype(dt), formSurface(dt, name), instance)
+// `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.
+export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string) =>
+  ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance)
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)
@@ -137,7 +139,26 @@ function navFocus(winId: string, surface: Surface) {
   state.activeId = winId
 }
 export const openList = (winId: string, dt: string) => navFocus(winId, listSurface(dt))
-export const openRecordInline = (winId: string, dt: string, name: string) => navFocus(winId, formSurface(dt, name))
+export const openRecordInline = (winId: string, dt: string, name: string, aspect?: string) => navFocus(winId, formSurface(dt, name, aspect))
+
+// A plain left-click on a list row opens the record per the user's preference (ADR-0018):
+// 'inline' re-uses the same window (swapping its sidebar to the Aspect rail); 'new-window'
+// mints a fresh app instance already on that record's form (the ADR-0017 path). The
+// right-click menu's explicit Open / Open in New Window bypass this and are always available.
+export function openRow(winId: string, dt: string, name: string) {
+  if (state.rowOpenTarget === 'new-window') newAppWindow(appForDoctype(dt), formSurface(dt, name))
+  else openRecordInline(winId, dt, name)
+}
+
+// Select a form Aspect (ADR-0018) in a window: re-navigate the same record's form to the new
+// Aspect coordinate. Goes through navFocus so it pushes the window's history and the focusSig
+// watcher mirrors the trailing-segment URL — the Aspect is real, addressable navigation, not
+// local UI state. No-op unless the window currently hosts that record's form.
+export function openAspect(winId: string, aspect: string) {
+  const w = state.windows.find((x) => x.id === winId)
+  if (!w || !isBuiltin(w.surface) || w.surface.view !== 'form') return
+  navFocus(winId, formSurface(w.surface.doctype!, w.surface.recordName!, aspect))
+}
 // A blank create form. `'new'` is the sentinel record name: the form renders empty
 // and OSForm creates the doc on Save, then navigates to the real record.
 export const openNew = (winId: string, dt: string) => navFocus(winId, formSurface(dt, 'new'))
@@ -280,6 +301,9 @@ export function openWallpaper() {
   state.menu = null
 }
 export const closeWallpaper = (id = 'wallpaper') => closeWin(id)
+
+// The per-user list-row open-target preference (ADR-0018), persisted like sidebarHidden.
+export const setRowOpenTarget = (t: RowOpenTarget) => { state.rowOpenTarget = t }
 
 export const tog = (k: string, def: boolean) => { state.toggles[k] = !(state.toggles[k] == null ? def : state.toggles[k]) }
 export const isOn = (k: string, def: boolean): boolean => { const v = state.toggles[k]; return v == null ? def : v }
