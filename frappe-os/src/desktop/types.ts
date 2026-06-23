@@ -29,6 +29,9 @@ export interface OsState {
   // Per-user list-row left-click open-target (ADR-0018). 'inline' (default) opens in the same
   // window; 'new-window' mints a fresh app instance. Persisted like sidebarHidden.
   rowOpenTarget: RowOpenTarget
+  // When true (default), a window reopens at the size/position it was last left at; when
+  // false, it always opens at the standard small size. Persisted like rowOpenTarget.
+  rememberWindowSize: boolean
   dockMenu: string | null
   // Logged-in display name for the dashboard greeting. Not seeded yet (the shell
   // hardcodes a fallback), so it stays optional until boot wires the real user.

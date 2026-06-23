@@ -59,11 +59,39 @@ describe('newAppWindow stacks multiple windows of one app', () => {
     expect(os.state.activeId).toBe('app:crm#2') // the new one is focused
   })
 
-  it('extra instances open un-maximized so they are visibly distinct', () => {
+  it('windows open small by default — canonical and extras alike', () => {
     os.newAppWindow('crm')
     const b = os.newAppWindow('crm')
-    expect(os.geoMap.value['app:crm'].max).toBe(true)
+    expect(os.geoMap.value['app:crm'].max).toBe(false)
     expect(os.geoMap.value[b.id].max).toBe(false)
+  })
+
+  it('remembers a window size/position across close + reopen (default on)', () => {
+    os.openApp('crm')
+    os.state.geo['app:crm'] = { ...os.state.geo['app:crm'], w: 1280, h: 900, max: true } // simulate a user resize/maximize
+    os.closeWin('app:crm')
+    os.openApp('crm')
+    expect(os.geoMap.value['app:crm'].max).toBe(true)
+    expect(os.geoMap.value['app:crm'].w).toBe(1280)
+  })
+
+  it('with remember off, a window resets to the small default on reopen', () => {
+    os.openApp('crm')
+    os.state.geo['app:crm'] = { ...os.state.geo['app:crm'], w: 1280, h: 900, max: true }
+    os.closeWin('app:crm')
+    os.setRememberWindowSize(false)
+    os.openApp('crm')
+    expect(os.geoMap.value['app:crm'].max).toBe(false)
+    expect(os.geoMap.value['app:crm'].w).toBe(1080)
+  })
+
+  it('extras always reset to small (distinct) even with a stale saved size', () => {
+    os.openApp('crm')
+    const b = os.newAppWindow('crm')
+    os.state.geo[b.id] = { ...os.state.geo[b.id], w: 1280, max: true }
+    os.closeWin(b.id)
+    const b2 = os.newAppWindow('crm') // reuses the freed #2 id
+    expect(os.geoMap.value[b2.id].max).toBe(false)
   })
 
   it('fills the lowest free suffix after a middle window closes', () => {

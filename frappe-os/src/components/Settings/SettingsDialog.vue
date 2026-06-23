@@ -98,6 +98,18 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
                 @update:modelValue="os.setRowOpenTarget($event ? 'new-window' : 'inline')"
               />
             </div>
+            <!-- Windows always open small; when this is on (default) a window reopens at the
+                 size/position it was last left at (ADR-0019). -->
+            <div class="flex items-center gap-3 py-[11px]">
+              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span class="text-[13px] text-ink-gray-8">Remember window size</span>
+                <span class="text-[11.5px] text-ink-gray-5">Reopen each window at the size and position you last left it</span>
+              </div>
+              <Switch
+                :modelValue="os.state.rememberWindowSize"
+                @update:modelValue="os.setRememberWindowSize($event)"
+              />
+            </div>
           </template>
 
           <template v-else-if="tab==='Members'">

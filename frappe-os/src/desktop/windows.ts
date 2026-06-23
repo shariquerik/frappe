@@ -69,18 +69,27 @@ const appInstances = (appId: string) =>
 const topInstance = (wins: OsWindow[]): OsWindow | undefined =>
   wins.slice().sort((a, b) => (geoMap.value[b.id]?.z || 0) - (geoMap.value[a.id]?.z || 0))[0]
 
-// Create a window at an explicit id and focus it. Extras (#n) open un-maximized so they
-// read as visibly distinct from the window already on screen — two maximized windows look
-// identical and a fresh one reads as "nothing happened".
+// Create a window at an explicit id and focus it, sizing it per the user's preference.
 function spawnWindow(id: string, appId: string, surface: Surface | null): OsWindow {
   const win: OsWindow = { id, surface: surface || initialSurface(appId), back: [], fwd: [] }
   state.windows.push(win)
-  const z = bumpZ()
-  setGeo(id, id === canonicalId(appId) ? { z, min: false } : { z, min: false, max: false })
+  applyOpenSize(id, id !== canonicalId(appId))
   state.activeId = id
   state.menu = null
   state.paletteOpen = false
   return win
+}
+
+// Size a freshly-spawned window (ADR-0019). Windows always open small, with one twist:
+// when `rememberWindowSize` is on (default), a canonical window keeps whatever geometry is
+// already saved for its id — closing leaves state.geo[id] intact, so reopening reuses the
+// last size/position (including a maximized one the user left it at); a never-opened app
+// falls back to the small by-index default (defAppGeo). When remember is off, the saved size
+// is dropped so it resets to the small default. Extras (#n) always reset to small so a fresh
+// twin reads as visibly distinct from the window already on screen.
+function applyOpenSize(id: string, isExtra: boolean): void {
+  if (!state.rememberWindowSize || isExtra) delete state.geo[id]
+  setGeo(id, { z: bumpZ(), min: false })
 }
 
 // Focus-or-create a window for an app, giving it `surface` if provided.
@@ -304,6 +313,10 @@ export const closeWallpaper = (id = 'wallpaper') => closeWin(id)
 
 // The per-user list-row open-target preference (ADR-0018), persisted like sidebarHidden.
 export const setRowOpenTarget = (t: RowOpenTarget) => { state.rowOpenTarget = t }
+
+// Whether a window reopens at its last size/position (ADR-0019), persisted like
+// rowOpenTarget. Off makes every window open at the standard small size.
+export const setRememberWindowSize = (on: boolean) => { state.rememberWindowSize = on }
 
 export const tog = (k: string, def: boolean) => { state.toggles[k] = !(state.toggles[k] == null ? def : state.toggles[k]) }
 export const isOn = (k: string, def: boolean): boolean => { const v = state.toggles[k]; return v == null ? def : v }

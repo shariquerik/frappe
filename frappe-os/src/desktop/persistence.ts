@@ -40,7 +40,7 @@ export function serialize() {
     geo: state.geo, split: state.split, activeId: state.activeId,
     theme: state.theme, wallpaper: state.wallpaper,
     toggles: state.toggles, sidebarHidden: state.sidebarHidden,
-    rowOpenTarget: state.rowOpenTarget,
+    rowOpenTarget: state.rowOpenTarget, rememberWindowSize: state.rememberWindowSize,
   }
 }
 
@@ -79,6 +79,7 @@ export function hydrate(): boolean {
   state.toggles = blob.toggles || {}
   state.sidebarHidden = blob.sidebarHidden || {}
   state.rowOpenTarget = blob.rowOpenTarget === 'new-window' ? 'new-window' : 'inline'
+  state.rememberWindowSize = blob.rememberWindowSize !== false // default on
   syncTopZ(windows, state.geo)
   return true
 }
@@ -90,7 +91,7 @@ export function hydrate(): boolean {
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 export function startAutosave(): void {
   watch(
-    () => [state.windows, state.geo, state.split, state.activeId, state.theme, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget],
+    () => [state.windows, state.geo, state.split, state.activeId, state.theme, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize],
     () => {
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { try { localStorage.setItem(BLOB_KEY, JSON.stringify(serialize())) } catch { /* quota / private mode: skip */ } }, 250)

@@ -18,6 +18,7 @@ export const state = reactive<OsState>({
   toggles: {},
   sidebarHidden: {},
   rowOpenTarget: 'inline', // list-row left-click opens in the same window by default (ADR-0018)
+  rememberWindowSize: true, // reopen a window at its last size/position (else always small)
   dockMenu: null, // appId whose dock window-chooser popover is open
 })
 
