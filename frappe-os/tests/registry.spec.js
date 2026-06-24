@@ -63,6 +63,53 @@ describe('server-projected command/action contributions', () => {
   })
 })
 
+// Slice 04 (ADR-0021): os.py projects an app's os_app.default_surface as a SEPARATE
+// `default-surface` contribution (target = appId), kept apart from the `app` identity
+// contribution so the two layer independently. The client reads the merged reference via
+// useRegistry().defaultSurface(app); the resolver that turns it into a Surface is slice 05.
+describe('default-surface contributions', () => {
+  afterEach(() => initRegistry(null))
+
+  const boot = (contributions) =>
+    ({ user: 'a', csrf_token: 't', roles: [], registry: { schemaVersion: 1, contributions }, permissions: {} })
+  const app = (id, name) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order: 0 })
+  const surface = (appId, ref, name = 'default', order = 0) =>
+    ({ type: 'default-surface', target: appId, name, sourceApp: appId, payload: ref, order })
+
+  it('reads an app applet reference (the own-app shape)', () => {
+    initRegistry(boot([app('raven', 'Raven'), surface('raven', { applet: 'chat' })]))
+    expect(useRegistry().defaultSurface('raven')).toEqual({ applet: 'chat' })
+  })
+
+  it('carries an app-qualified cross-app reference through as data', () => {
+    initRegistry(boot([app('erpnext', 'ERPNext'), surface('erpnext', { dashboard: true, app: 'crm' })]))
+    expect(useRegistry().defaultSurface('erpnext')).toEqual({ dashboard: true, app: 'crm' })
+  })
+
+  it('is null for an app that declares no default surface', () => {
+    initRegistry(boot([app('crm', 'CRM')]))
+    expect(useRegistry().defaultSurface('crm')).toBeNull()
+  })
+
+  it('is independent of the app identity contribution (separate layering)', () => {
+    // An app may carry identity but no landing; identity is unaffected by the absence.
+    initRegistry(boot([app('crm', 'CRM Live')]))
+    expect(useRegistry().app('crm')?.name).toBe('CRM Live')
+    expect(useRegistry().defaultSurface('crm')).toBeNull()
+  })
+
+  it('layers App<Site<User via the existing singleton patch-merge (higher order wins)', () => {
+    // App-default applet, then a User-layer override of the SAME singleton (target=app): the
+    // partial higher-layer patch replaces only the landing — the same shallow merge display uses.
+    initRegistry(boot([
+      app('raven', 'Raven'),
+      surface('raven', { applet: 'chat' }, 'default', 0),       // App-default layer
+      surface('raven', { applet: 'reports' }, 'user', 2),        // User layer (sorted later → wins)
+    ]))
+    expect(useRegistry().defaultSurface('raven')).toEqual({ applet: 'reports' })
+  })
+})
+
 describe('apps', () => {
   it('returns the installed apps in registry order', () => {
     expect(useRegistry().apps().map((a) => a.id)).toEqual(['frappe', 'crm', 'erpnext'])

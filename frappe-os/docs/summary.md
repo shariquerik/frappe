@@ -67,8 +67,17 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
 - `registry/` — the client Registry seam (`index.ts` `useRegistry()`: apps/display-config/
   views/cards projections over the merged Contribution[]; was `store/registry.ts`). Also folds
   the Action-model `command`/`action` contributions (`commands()`/`actions()`) the server
-  projects from each app's `os_commands`/`os_actions` hook (Slice 2), alongside `applet`.
-- `surface/` — `index.ts` Surface constructors + pure helpers (windowRole/sameSurface/…).
+  projects from each app's `os_commands`/`os_actions` hook (Slice 2), alongside `applet`. Also
+  exposes `defaultSurface(appId)` (the merged `default-surface` Singleton, App<Site<User — the
+  resolver's rung-1 input, ADR-0021) and `appletKind(appletId)` (`'native'|'framed'`, ADR-0020).
+- `surface/` — `index.ts` Surface constructors + pure helpers (windowRole/sameSurface/…), plus
+  the **default-surface resolver** `initialSurface(appId)` (ADR-0021): rung 1 `resolveRef`
+  (declared own- **and** cross-app refs `{applet}`/`{dashboard}`/`{doctype,view}`, the latter two
+  permission-gated via `appVisible` and falling through on denial) → rung 2 the app's dashboard →
+  rung 3 first doctype list (**DORMANT** no-op, awaits the nav-source decision) → rung 4
+  `emptyAppSurface` (the OS-owned "no default screen" placeholder). `sidebarKind` returns `'none'`
+  for a framed applet (full-window) and `'aspect'`/`'nav'` otherwise. A cross-app ref keeps the
+  window's opened-app identity while the surface's `appId` scopes chrome/nav (ADR-0012/0016).
 - `actions/` — the Action/extension model engine (CONTEXT.md → Command/Action/Region/Handler/
   Context/Eligibility). Pure-data resolver (no `eval`, no handler loading): `eligibility.ts`
   (`isEligible` — equality-as-data, unknown `when` key → no-match+warn), `specificity.ts` (the
@@ -95,13 +104,18 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   `resolveView` — builtin `list`/`form` from a `BUILTIN_VIEWS` map, applet-backed views via
   `resolveApplet`); `List/` (`OSList` list screen + `OSListView` table — a right-click row
   menu opens the record in the same window or a new app instance, ADR-0017) and `Form/`
-  (`OSForm` editable record screen) — the self-fetching builtin views, each with Save/New; `Settings`
+  (`OSForm` editable record screen) — the self-fetching builtin views, each with Save/New;
+  `EmptyAppPane` (the resolver's rung-4 placeholder naming the app); `Settings`
   (settings two-pane body), `MenuBar`, `Dock` (with window chooser), `CommandPalette`,
   `WallpaperPicker`, `StatusPill`, `OSContextMenu` (generic cursor-pinned menu). The chrome **look** (Frappe-native ground/menu bar/
   windows/traffic dots + the adapt-behind dock) is specified in
   `docs/design/chrome-visual-language.md` — read it before restyling chrome.
 - `index.css` — frappe-ui style + Tailwind. Backend
-  host page: `frappe/www/os.{py,html}`.
+  host page: `frappe/www/os.{py,html}`. `os.py` reads each app's **`os_app` hook** for OS opt-in
+  + identity (`_installed_os_apps`/`_os_app_decl`; the old `OS_APPS` list and `add_to_apps_screen`
+  scrape are retired, ADR-0021) and projects two separate layered contributions per app — `app`
+  (identity) and `default-surface` (`os_app.default_surface`, shape-validated) — plus `applet`
+  contributions carrying `kind` (`'native'|'framed'`, ADR-0020).
 
 ## Tests
 ```
@@ -135,6 +149,16 @@ yarn cypress       # Cypress interactive runner
 - **Changing the window-id scheme or URL projection?** Update together: `pathForFocus`/
   `applyRoute` (`routing/route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
   `desktop/windows.ts`, and the `route-map.spec.js` decision tables.
+- **Framed applet 404 / blank window**: a framed applet (e.g. raven's `chat`) loads its asset
+  from `/assets/<app>/os-applets/<fileName>.js`, which is a **build output, not auto-generated**.
+  After renaming/changing an applet, rebuild it (`cd apps/<app>/<app>/os-applets/<name> && yarn
+  build`) or the dynamic `import()` 404s and the window stays blank. `sites/assets/<app>` must
+  symlink the app's `public/` (it does after `bench build`/`bench setup`).
+- **Dev proxy is a generic catch-all** (`vite.config.js`): the OS dev server owns only `/os/*`
+  + Vite internals (`/src`, `/@*`, `/node_modules`, `/__*`); everything else forwards to the bench
+  (ADR-0020). Never name a framed app (`^/raven`) in the config — that was the retired
+  privileged-core leak. A framed applet's iframe loads an origin-relative path, so without the
+  catch-all it would recurse into Vite's SPA fallback.
 - **Dev white-screen** (`init_shared_esm_bundler is not defined`): keep
   `optimizeDeps.exclude:['frappe-ui','@framework/ui']` in `vite.config.js`; keep their CJS
   leaf deps (feather-icons, socket.io/`debug`, prosemirror, vuedraggable, dompurify) in

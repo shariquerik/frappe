@@ -78,7 +78,7 @@ export interface Contribution {
   // Identity tuple (ADR-0007): unique across the merged registry.
   type: string        // extension-point type, e.g. 'app' | 'doctype-view'
                       //   | 'display-config' | 'dashboard-card' | 'command' | 'action'
-                      //   | 'script' | 'applet' | 'widget' | ...
+                      //   | 'default-surface' | 'script' | 'applet' | 'widget' | ...
   target: string      // what it attaches to: doctype, workspace, app id, '' for global
   name: string        // stable id within (type,target): 'list', 'kanban', a card slug...
   sourceApp: string   // 'erpnext' | 'crm' | a custom app | '__site__' | '__user__'
@@ -137,7 +137,16 @@ interface ActionPayload {
 }
 
 // type:'applet'  target:''  — COLLECTION (loadable applet registry, ADR-0009)
-interface AppletPayload { appletId: string; appId: string; assetUrl: string; minOsApi: number }
+// `kind` ('native'|'framed', ADR-0020) is how the content is produced; absent → 'native'.
+interface AppletPayload { appletId: string; appId: string; assetUrl: string; minOsApi: number; kind?: 'native' | 'framed' }
+
+// type:'default-surface'  target:<appId>  — SINGLETON, patch-merged App<Site<User (ADR-0021)
+// The app's declared landing, as a stable app-qualified surface REFERENCE (never a Surface
+// descriptor). The resolver parses it; a per-user default is just a User-layer override.
+type SurfaceRef =
+  | { applet: string; app?: string }
+  | { doctype: string; view: string }     // the doctype names its owning app
+  | { dashboard: true; app?: string }
 
 // type:'script'  target:<doctype|'global'>  — COLLECTION (ADR-0006)
 interface ScriptPayload { assetUrl?: string; source?: string; events: string[] }
@@ -504,6 +513,57 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 >   → `dashboard-card`, Client Script → Script, Report/Kanban → `doctype-view` as before. `minOsApi`
 >   is emitted but not yet gate-enforced client-side (additive, ADR-0008).
 
+> **Default surface + framed applets as built** (ADR-0020/0021, issues `.scratch/default-surface/
+> 01–07`; `frappe/www/os.py`, `raven`/`crm`/`erpnext`/`frappe` `hooks.py`, `frappe-os/vite.config.js`,
+> `src/registry/{index,types}.ts`, `src/surface/index.ts`, `src/components/Window/{OSWindow,EmptyAppPane}.vue`,
+> raven's `os-applets/raven` (now built to `chat.js`); `tests/surface.spec.js` + registry specs —
+> all green: typecheck + 235 Vitest; `os.py` verified live on `f2.localhost`):
+> - **Apps self-declare via the `os_app` hook** (ADR-0021). `os.py` `_os_app_decl(app)` reads it
+>   (with a recursive `_unwrap_hook` — Frappe's `append_hook` list-wraps **nested** dict leaves, so
+>   `default_surface` arrives as `{"applet":["chat"]}`); `_installed_os_apps()` = installed apps that
+>   ship `os_app` (the hardcoded `OS_APPS` list and the `add_to_apps_screen` branding scrape are
+>   **gone**). frappe/crm/erpnext/raven each declare `os_app` (identity), so the apps screen is
+>   unchanged; an app without `os_app` is not an OS app.
+> - **Two separate layered contributions from one hook.** `_app_contribution` projects identity
+>   (`app`); `_default_surface_contribution` projects `os_app.default_surface` (`default-surface`,
+>   shape-validated by `_valid_surface_ref`, internal Surface descriptors never leaked). They layer
+>   **independently** (App<Site<User) via the existing display-config patch-merge — a per-user default
+>   is a User-layer `default-surface` override touching only the landing, never the logo. The client
+>   `default-surface` Singleton is `useRegistry().defaultSurface(appId)`.
+> - **The resolver replaces the hardcoded landing priority** (`src/surface/index.ts`
+>   `initialSurface(appId)`, first-match-wins): rung 1 `resolveRef` (declared ref → Surface) → rung 2
+>   the app's dashboard (how frappe/crm/erpnext still land on their dashboard — now *via* the
+>   resolver) → rung 3 first doctype list (**DORMANT** no-op, comment-only, slots in additively once
+>   the nav-source decision lands) → rung 4 `emptyAppSurface` → `EmptyAppPane.vue` ("no default
+>   screen configured for *App*"), so every declared OS app stays openable.
+> - **`resolveRef(openedApp, ref)` handles own- and cross-app refs.** `refApp = ref.app || openedApp`;
+>   it builds the Surface against `refApp` (applet/dashboard) or the doctype's owning app (`{doctype,
+>   view:'list'}`). **Cross-app refs are permission-gated** via `appVisible(app) = !!registry.app(app)`
+>   — the Registry is already server-permission-filtered (ADR-0010), so *presence is the client
+>   permission signal*; a ref the viewer can't see returns `null` → falls through to rung 2/4 (a
+>   redirect never grants access). Own-app refs stay ungated (slice-05 behaviour preserved).
+> - **Window identity ≠ surface ownership** needed no new plumbing — the split already existed: the
+>   window `id` is minted from the *opened* app (`app:<openedApp>`, dock/icon/`?instance`, ADR-0016),
+>   while chrome/nav already read the *surface's* `appId` (`OSWindow.vue` title/logo, `sidebarKind`).
+>   A cross-app default just returns a surface owned by another app and the scoping falls out.
+> - **Framed applets are full-window** (ADR-0020). The `kind` flag rides the `os_applets` hook →
+>   `AppletPayload.kind` → `appletKind(appletId)`; `sidebarKind(surface)` returns `'none'` for a
+>   framed applet surface (no nav rail — the framed SPA owns its chrome) and the per-window
+>   hide-sidebar toggle is a graceful no-op there. **One gap fixed mid-implementation:** the server
+>   wasn't forwarding `kind` (slice 02 added it client-side only), so `os.py`'s applet projection now
+>   passes `spec.get("kind","native")`.
+> - **Raven is the worked example.** `raven/hooks.py` declares `default_surface:{"applet":"chat"}`
+>   + the `chat` applet `kind:"framed"`; opening Raven lands directly on `chat` (rung 1), full-window.
+>   The dev proxy is now a generic catch-all (`vite.config.js`: owns `/os/*` + Vite internals, forwards
+>   the rest to the bench), retiring the bespoke `^/raven` rule — no framed app named in build config.
+> - **Build gotcha (no silent caps):** the `chat` applet asset is a build output. It 404'd in the
+>   first live test because `public/os-applets/` was empty after the raven→chat rename; built via the
+>   official preset (`os-applets/raven` → `yarn build`) → `chat.js`. Applets must be (re)built when
+>   their source/name changes; this is not chained into the main host build.
+> - **Deliberately deferred (need separate grilling):** rung 3 (first doctype list) pending the
+>   exposed-doctype / nav source; the dashboard concept (rung 2) is provisional; the write-path UI for
+>   editing Site/User `default-surface` overrides (the *resolver* honours them already).
+
 ## 3. OS API seam (ADR-0003) — minimum surface to start
 
 The one object applets & scripts receive. Keep it *narrow* and additive-only (ADR-0008).
@@ -552,4 +612,5 @@ interface OsApi {
 | Applet tracer bullet ✅ | `os-api.ts` (`OS_KEY`/`tryGetOsApi`/`resolveApplet`/caps), `surface.ts` (`appletSurface`), `store/registry.ts` (local map + `knownApplet`/`resolveApplet`/`listApplets`), `store/windows.ts` (`openApplet`), `store/{index,persistence,palette}.ts`, `route-map.ts`, `main.ts`, `OSWindow.vue` + new `MyTodos.vue`; specs + Cypress | done — first real **applet** (app-contributed full-window screen; implemented as a Vue component, but "component" stays the Vue mechanism) end-to-end (render + OS-API + persistence + URL). provide/inject entry contract (`OS_KEY`); "My open ToDos" grouped by due date; URL `/<app>/<appletId>` (doctype-wins); external loader + server `applet` emission deferred behind `resolveApplet` |
 | Applet loader (B) ✅ | new `src/brokers/{vue,frappe-ui,api}.ts`, `preset/applet.js`; `vite.config.js` (`osImportMap()` mode-aware import map + `preserveEntrySignatures:'strict'` + broker entries), `store/registry.ts` (`assetUrl` branch + `loadApplet` + `erp-hello`), `App.vue` + `types/frappe-ui.d.ts` (`ToastProvider`), `frappe/hooks.py` (`/os/<path>` route), `package.json` (applet scripts); new `apps/erpnext/erpnext/os-applets/hello/*` (SFC + preset config + stub-OS harness); `registry.spec.js` +3, new `cypress/e2e/applet-loader.cy.js` | done — separately-built erpnext applet loaded at runtime as native ESM, sharing the host's single Vue/frappe-ui/OS-API via import map + brokers (Strategy 2). Official Build preset shipped; `import(assetUrl)` branch; **5-check Cypress green bar PASSED via a DIRECT deep-link visit on the bench-served build (:8016)**. **also PASSES in the `yarn dev` server** via the mode-aware import map. Mounted `ToastProvider` (ui.notify was a no-op); added the `/os/<path>` SPA route (deep links 404'd). Server `applet` emission (A) now done (next row); doctype-view applet, Scripts still deferred |
 | Server applet emission (A) ✅ | `frappe/www/os.py` (`_applet_contributions`/`get_registry`), `erpnext/erpnext/hooks.py` (`os_applets`), `frappe-os/src/store/registry.ts` (`FIRST_PARTY` ⊕ server fold; `erp-hello` removed from the bundled map); `registry.spec.js` | done — apps declare applets via the `os_applets` hook `{appletId,label,fileName,minOsApi?}`; the server projects one `type:'applet'` contribution each with `assetUrl=/assets/{app}/os-applets/{fileName}` (installed OS apps only); the client folds them into `ix.applets` at boot. The hardcoded `APPLETS` map is retired — `erp-hello` arrives from erpnext's hook. doctype-view applet (`DoctypeViewPayload.appletId`, now unblocked) + Scripts (ADR-0006) still deferred |
+| Default surface + framed applets ✅ | `frappe/www/os.py` (`_os_app_decl`/`_unwrap_hook`/`_installed_os_apps`/`_app_contribution`/`_default_surface_contribution`/`_valid_surface_ref`; applet `kind`); `raven`/`crm`/`erpnext`/`frappe` `hooks.py` (`os_app`); `vite.config.js` (generic catch-all proxy); `src/registry/{index,types}.ts` (`defaultSurface`/`appletKind`/`SurfaceRef`/`default-surface` Singleton); `src/surface/index.ts` (`initialSurface` resolver + `resolveRef` + `appVisible`); `OSWindow.vue`, new `EmptyAppPane.vue`; raven `os-applets/raven` built → `chat.js`; `tests/surface.spec.js` + registry specs | done (ADR-0020/0021) — apps self-declare via `os_app` (opt-in + identity, retiring `OS_APPS`/`add_to_apps_screen`); one hook → separate layered `app` + `default-surface` contributions; resolver declared→dashboard→[DORMANT list]→empty-app pane, cross-app refs permission-gated (presence-in-registry) with window-identity≠surface-ownership; framed applets full-window (`sidebarKind 'none'`); raven lands on framed `chat`. Rung 3 / nav-source / dashboard-replacement / override-editing UI deferred |
 ```

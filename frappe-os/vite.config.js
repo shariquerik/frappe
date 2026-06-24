@@ -125,5 +125,32 @@ export default defineConfig({
       'dompurify',
     ],
   },
-  server: { port: 5273, open: false, fs: { allow: ['..'] } },
+  server: {
+    port: 5273,
+    open: false,
+    fs: { allow: ['..'] },
+    // Generic catch-all proxy (ADR-0020). A framed applet's iframe loads an origin-relative path
+    // (e.g. `/raven`); in production the OS and the framed SPA share the bench origin so it just
+    // works, but in dev the OS is served by Vite (a different origin) and that path would hit
+    // Vite's SPA fallback — serving the OS shell back into the iframe, which re-opens the framed
+    // applet → infinite recursion. The fix is a catch-all, never a per-app rule: the OS dev server
+    // owns ONLY `/os/*` and Vite's own internals; everything else forwards to the bench with the
+    // site-preserving router (host header → site cookie binding). No framed app may ever be named
+    // here (the retired `^/raven` rule was a privileged-core leak, ADR-0001/0004).
+    proxy: {
+      '^/': {
+        target: 'http://127.0.0.1:8016',
+        // No `ws: true`: a catch-all `^/` ws proxy would also intercept Vite's HMR upgrade
+        // (protocol `vite-hmr` on `/`) and fight Vite's own HMR server for the socket. HMR must
+        // stay local; framed SPAs load over HTTP, which this rule forwards.
+        router: (req) => `http://${req.headers.host.split(':')[0]}:8016`,
+        // Keep the paths the OS dev server owns local — return the original url to skip the
+        // proxy and let Vite's own middleware serve it. `/os/*` is the OS app (base `/os/`),
+        // `/src` are the unbundled host/broker modules, `/@*` are Vite's virtual/fs modules,
+        // `/node_modules` are pre-bundled deps, `/__*` are Vite endpoints (ping, open-in-editor).
+        bypass: (req) =>
+          /^\/(os(\/|$)|src\/|node_modules\/|@|__)/.test(req.url) ? req.url : undefined,
+      },
+    },
+  },
 })

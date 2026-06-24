@@ -97,15 +97,30 @@ def _readable_meta(doctype):
 	return frappe.get_meta(doctype)
 
 
-# OS apps the shell renders, in registry order. The frontend seed (config/apps.ts)
-# supplies their branding; the Registry just says which are installed for this site.
-OS_APPS = ["frappe", "crm", "erpnext"]
-APP_TITLES = {"frappe": "Frappe", "crm": "CRM", "erpnext": "ERPNext"}
+def _unwrap_hook(value):
+	"""Reverse `append_hook`'s shape: it list-wraps each scalar leaf and recurses into nested
+	dicts (e.g. `default_surface`). So a list → its last-declared element, a dict → recursed,
+	anything else → itself. Keeps `_os_app_decl` correct for nested-dict os_app fields."""
+	if isinstance(value, dict):
+		return {key: _unwrap_hook(inner) for key, inner in value.items()}
+	if isinstance(value, list):
+		return _unwrap_hook(value[-1]) if value else None
+	return value
+
+
+def _os_app_decl(app):
+	"""An app's OS-native `os_app` hook (ADR-0021) as a flat dict, or {} if it ships none.
+	`get_hooks` list-wraps each leaf and recurses into nested dicts (append_hook), so unwrap
+	recursively to the last-declared value (handles flat identity + nested `default_surface`)."""
+	raw = frappe.get_hooks("os_app", app_name=app) or {}
+	return _unwrap_hook(raw)
 
 
 def _installed_os_apps():
-	installed = frappe.get_installed_apps()
-	return [app for app in OS_APPS if app in installed]
+	"""Installed apps that opt into Frappe OS by shipping an `os_app` hook (ADR-0021). Opt-in
+	*is* the declaration — there is no hardcoded core list; an app without `os_app` is not an OS
+	app. Ordered by install order (frappe first), which drives the apps screen + contribution order."""
+	return [app for app in frappe.get_installed_apps() if _os_app_decl(app)]
 
 
 def _app_of(doctype):
@@ -113,6 +128,61 @@ def _app_of(doctype):
 	module = frappe.db.get_value("DocType", doctype, "module")
 	app = frappe.db.get_value("Module Def", module, "app_name") if module else None
 	return app or "frappe"
+
+
+# Optional OS-native presentation keys an `os_app` may carry beyond title/logo, copied through
+# to the `app` (identity) contribution when present (ADR-0021). Curated apps still overlay
+# config/apps.ts client-side; an uncurated app rides on what its `os_app` declares.
+_APP_PRESENTATION_KEYS = ("color", "glyph")
+
+
+def _app_contribution(app, order):
+	"""The `app` (identity) contribution for an OS app, projected from its `os_app` hook
+	(ADR-0021): title, logo, and optional OS-native presentation. This is the *opt-in + identity*
+	half of `os_app`; its `default_surface` field layers as a separate contribution (see slice 04).
+	A logo/presentation key is carried only when declared, so a curated app keeps its config/apps.ts
+	value (the client merges curated ⊕ server)."""
+	decl = _os_app_decl(app)
+	payload = {"id": app, "name": decl.get("title") or app.title()}
+	if decl.get("logo"):
+		payload["logo"] = decl["logo"]
+	for key in _APP_PRESENTATION_KEYS:
+		if decl.get(key):
+			payload[key] = decl[key]
+	return {"type": "app", "target": "", "name": app, "sourceApp": app, "payload": payload, "order": order}
+
+
+def _valid_surface_ref(ref):
+	"""True if `ref` is one of the stable surface-reference shapes (ADR-0021) — an applet, a
+	doctype+view, or the dashboard — with an optional `app:` qualifier. Shape only: the value is
+	carried through as data and the *client* resolver parses/resolves it (slice 05), so the server
+	never leaks an internal Surface descriptor here. A ref failing every shape is malformed."""
+	if not isinstance(ref, dict):
+		return False
+	if ref.get("applet"):
+		return True
+	if ref.get("doctype") and ref.get("view"):
+		return True
+	if ref.get("dashboard"):
+		return True
+	return False
+
+
+def _default_surface_contribution(app):
+	"""The `default-surface` contribution for an OS app (ADR-0021), projected from the optional
+	`default_surface` field of its `os_app` hook. This is the *landing* half of `os_app`, kept
+	SEPARATE from the `app` identity contribution so the two layer independently (App-default <
+	Site < User) — a per-user default surface is just a User-layer override of this Singleton,
+	touching only the landing and never the logo. The payload is the stable, app-qualified surface
+	REFERENCE vocabulary; shape is validated, a malformed ref is logged and dropped (never crashes
+	boot). None when the app declares no default_surface — it then rides the resolver fallback."""
+	ref = _os_app_decl(app).get("default_surface")
+	if ref is None:
+		return None
+	if not _valid_surface_ref(ref):
+		frappe.logger("frappe_os").warning(f"Skipped malformed os_app.default_surface from {app}: {ref!r}")
+		return None
+	return {"type": "default-surface", "target": app, "name": "default", "sourceApp": app, "payload": ref, "order": 0}
 
 
 def _valid_contribution(spec, required, app, hook):
@@ -178,6 +248,9 @@ def _applet_contributions():
 			"assetUrl": f"/assets/{app}/os-applets/{spec['fileName']}",
 			"label": spec.get("label", applet_id),
 			"minOsApi": spec.get("minOsApi", 1),
+			# How the window content is produced (ADR-0020): "native" Vue component vs "framed"
+			# iframe. The client defaults absent → native, so only emit when the app declares it.
+			"kind": spec.get("kind", "native"),
 		}
 
 	return _hook_contributions("os_applets", ("appletId", "fileName"), project)
@@ -317,8 +390,10 @@ def _display_patch(doctype, setters):
 
 
 def get_registry():
-	"""The merged, permission-filtered Registry (ADR-0005/0010): app + display-config +
-	doctype-view contributions the user may see. Identity tuple per ADR-0007; tolerant
+	"""The merged, permission-filtered Registry (ADR-0005/0010): app + default-surface +
+	display-config + doctype-view contributions the user may see. An app's os_app projects two
+	independent contributions — `app` (identity) and `default-surface` (landing, ADR-0021).
+	Identity tuple per ADR-0007; tolerant
 	schemaVersion per ADR-0008. Display-config payloads are projected from Desk meta
 	(label/title/columns/status, ADR-0011); the client overlays OS-native presentation
 	(branding, icons, status palettes, curated cards) Desk has no equivalent for. This
@@ -326,16 +401,10 @@ def get_registry():
 	(ADR-0007 App-default ⊕ Site-layer), the base carrying the app-default title."""
 	contributions = []
 	for order, app in enumerate(_installed_os_apps()):
-		contributions.append(
-			{
-				"type": "app",
-				"target": "",
-				"name": app,
-				"sourceApp": app,
-				"payload": {"id": app, "name": APP_TITLES.get(app, app.title())},
-				"order": order,
-			}
-		)
+		contributions.append(_app_contribution(app, order))
+		surface = _default_surface_contribution(app)
+		if surface:
+			contributions.append(surface)
 	property_setters = _doctype_property_setters()
 	for doctype in REGISTRY_DOCTYPES:
 		meta = _readable_meta(doctype)

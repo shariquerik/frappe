@@ -561,3 +561,11 @@ add_to_apps_screen = [
 		"has_permission": "frappe.permissions.check_app_permission",
 	}
 ]
+
+# Frappe OS identity + opt-in (ADR-0021). Shipping `os_app` is what makes an app an OS app —
+# it replaces the hardcoded OS_APPS list and Desk's add_to_apps_screen as the OS's source of
+# app identity. Curated OS presentation (glyph/cards) stays in frappe-os/src/config/apps.ts.
+os_app = {
+	"title": app_title,
+	"logo": app_logo_url,
+}

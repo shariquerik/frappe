@@ -16,6 +16,7 @@ import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT } from "./toolbar";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
+import EmptyAppPane from "./EmptyAppPane.vue";
 import AspectRail from "./AspectRail.vue";
 import AspectPane from "./AspectPane.vue";
 import { windowRole, formSurface, sidebarKind, DEFAULT_ASPECT, aspectById } from "@/surface";
@@ -170,10 +171,17 @@ const viewProps = computed<ViewProps>(() => {
 			:class="contentClass"
 		>
 			<!-- ===== APPLET WINDOW (ADR-0012 polymorphic surface) ===== -->
+			<!-- A native applet keeps the app nav rail (its landing stays navigable); a framed
+			     applet is full-window with no rail (sidebar === 'none') because the framed SPA
+			     owns its own chrome (ADR-0020). The rail choice follows sidebarKind, like every
+			     other surface — geometry/focus/URL stay surface-agnostic. -->
 			<template v-if="isApplet">
 				<WindowChrome :win="win" :title="app.name" :logo="app.logo" />
-				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-					<component :is="resolved" v-if="resolved" v-bind="applet.props" />
+				<div class="flex min-h-0 flex-1 bg-surface-base">
+					<AppSidebar v-if="sidebar === 'nav' && showSidebar" :win="win" />
+					<div class="flex min-w-0 flex-1 flex-col">
+						<component :is="resolved" v-if="resolved" v-bind="applet.props" />
+					</div>
 				</div>
 			</template>
 
@@ -190,6 +198,7 @@ const viewProps = computed<ViewProps>(() => {
 					</template>
 					<div class="flex min-w-0 flex-1 flex-col">
 						<AppDashboard v-if="mode === 'dashboard'" :win="win" />
+						<EmptyAppPane v-else-if="mode === 'empty'" :app-name="app.name" />
 						<AspectPane v-else-if="showAspectPane && activeAspect" :aspect="activeAspect" />
 						<DoctypeView v-else v-bind="viewProps" />
 					</div>

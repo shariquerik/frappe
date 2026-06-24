@@ -21,6 +21,11 @@ A unit that contributes things into Frappe OS (its icon, dashboards, doctype vie
 Built-in apps (frappe, crm, erpnext) and third-party/custom apps are the **same kind of
 thing** — they contribute through one identical mechanism, with no privileged core. The
 built-ins are simply the first apps to ship in the box.
+An app declares its **OS identity** (logo, title, presentation, default surface) and **opts
+into** the OS through one **OS-native** declaration — *not* by being hand-listed in the OS or
+by borrowing Desk's apps-screen hook. Participating in the OS is itself a contribution: an app
+is an OS app *because it declares one*, so a third-party app gets exactly the same identity and
+presentation power the built-ins have (no curated-vs-uncurated asymmetry).
 _Avoid_: "plugin", "module" (a module is a grouping *inside* an app — see below).
 
 **Module**:
@@ -48,6 +53,32 @@ kind a Surface is. Replaces the POC's fixed `view: {mode, doctype, recordName}`.
 **Window**:
 A movable, focusable container on the desktop that hosts exactly one **Surface** at a time
 (and carries its own back/forward nav history). The container; the Surface is its content.
+
+**Default surface**:
+The **Surface** an app's **Window** opens on when the app is launched (dock/logo click, or a
+cold-boot deep-link to the bare app). Resolved by one uniform rule: the app's **declared**
+custom default if it sets one (today only ever an **Applet** — e.g. Raven → its chat applet);
+otherwise the app's **dashboard**; otherwise its **first doctype list**. So an ordinary app
+(CRM, ERPNext) declares nothing and rides the fallback, while an app with a bespoke front door
+(Raven) declares it — no app is special-cased in the OS, there is one rule with one optional
+override. A **Framed applet** default is **full-window** (no nav rail — the framed SPA owns its
+own chrome); a dashboard/list default carries the doctype **nav rail**. Replaces the POC's fixed
+dashboard→modules→applet inference.
+The declared default is **layered** like any contribution (App-default < Site < User), so a
+*per-user* default surface is just a User-layer override of the same Singleton — no separate
+subsystem (see Customization). The app authors its App-default layer once (alongside its OS
+identity); the value is a stable **surface reference** (which applet / which doctype list /
+the dashboard), never the internal Surface descriptor — so apps and users depend on a stable
+vocabulary, not OS internals.
+The surface reference is **app-qualified** and may point into *another* app — an app/site/user
+default can land on a different app's applet, list or dashboard (the owning app is explicit,
+defaulting to the app being opened). This is what lets Customization redirect an app's landing
+across app boundaries. When it does, **window identity stays separate from surface ownership**:
+the Window is still the opened app's Instance (dock, icon), while the hosted Surface is owned by
+its referenced app (chrome/nav scope to the *surface's* app, not the window's). A cross-app
+reference is still **permission-gated** (ADR-0010): honoured only if the viewer may see that
+surface, else it falls back to the standard default — a redirect never grants access.
+_Avoid_: "home surface", "landing page", "home screen" — say "default surface".
 
 **Aspect**:
 A facet of a single record that the **form** Surface can present — Details (the field
@@ -124,6 +155,27 @@ externals + the host import map). This is the whole point — Frappe OS exists s
 shipping their own separate Vue apps (as CRM's `frontend` SPA does today). The contributing app
 is just an **identity (`appId`) and an asset home (`/assets/<app>/…`)**; its own frontend stack
 is irrelevant to the applet it ships.
+Applets come in **two kinds** (see Native applet / Framed applet) — the distinction is *how the
+window content is produced*, not a difference in how the contribution is declared, loaded, or
+URL-projected (those are uniform).
+
+**Native applet**:
+The default, intended kind of **Applet** — a Vue component that renders the OS window's content
+directly, binding to the host's shared Vue/frappe-ui/OS-API. Ships no runtime of its own. MyTodos
+is the reference example. When unqualified, "applet" means this kind.
+
+**Framed applet**:
+An **Applet** whose component is a *thin* host that mounts an `<iframe>` over a separate,
+origin-relative SPA on a **foreign stack** (e.g. Raven, a React app served at `/raven`). The
+permanent escape hatch for apps the OS can't render natively — not a temporary hack. It honours
+the letter of "ships no Vue runtime" (the applet file is a one-line iframe), but a whole second
+SPA lives *behind* the frame, so it is the deliberate exception to "no second SPA," confined to
+foreign-stack apps. The frame is kept **minimal**: just the iframe + the OS-owned window chrome
+around it; no per-app bridging logic creeps into the OS. Same-origin so the framed SPA rides the
+shared session cookie. A framed applet is what forces the OS dev server to forward the framed
+path to the bench (otherwise the iframe recurses into the OS's own SPA fallback) — that
+forwarding must be **generic to all framed applets**, never named per-app.
+_Avoid_: "embed", "wrapper app", "micro-frontend" — say "framed applet".
 
 **Build preset**:
 The official Vite build configuration an app uses to compile an Applet so it externalizes

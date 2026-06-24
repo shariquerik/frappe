@@ -18,7 +18,7 @@ import { doctypes } from '@/config/doctypes'
 import { classifyApp } from './classify'
 import type {
   Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload,
-  OsRegistryData,
+  OsRegistryData, SurfaceRef,
 } from '@/types'
 
 // Extension-point types this client understands (ADR-0004 closed-but-data-driven set).
@@ -29,6 +29,7 @@ const CARD = 'dashboard-card'
 const APPLET = 'applet'
 const COMMAND = 'command'   // the Action model's verb (CONTEXT.md → Command)
 const ACTION = 'action'     // a verb's placement into a Region (CONTEXT.md → Action)
+const DEFAULT_SURFACE = 'default-surface' // an app's declared landing reference (ADR-0021)
 
 // ── seed: config/* → the App-default Contribution[] (§2 shapes) ──────────────────
 // First app whose modules list a doctype owns it (registry order); else frappe.
@@ -84,6 +85,7 @@ interface RegistryIndex {
   applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
   commands: Command[]                           // Action-model verbs folded from app hooks
   actions: Action[]                             // Action-model placements folded from app hooks
+  defaultSurface: Record<string, SurfaceRef>    // app → merged landing reference (singleton, ADR-0021)
   appKinds: Record<string, Set<string>>         // sourceApp → contributed kinds (ADR-0014 item 4)
 }
 
@@ -107,13 +109,21 @@ function addToIndex(ix: RegistryIndex, c: Contribution): void {
   else if (c.type === CARD) (ix.cards[c.target] ||= []).push(c.payload as Card)
   else if (c.type === APPLET) {
     const p = c.payload as AppletPayload
-    ix.applets[p.appletId] = { appId: p.appId, label: p.label, assetUrl: p.assetUrl }
+    // `kind` is the ADR-0020 content-production flag (native | framed); a declaration that
+    // omits it is a native applet (the default kind) — the core holds no per-app knowledge.
+    ix.applets[p.appletId] = { appId: p.appId, label: p.label, assetUrl: p.assetUrl, kind: p.kind ?? 'native' }
   }
   // Command/Action are Collections (ADR-0007): each app's hook-declared contributions
   // accumulate here, then compete against the first-party OS defaults in the resolver
   // (the contextual override that lets erpnext re-title New window — Slice 2).
   else if (c.type === COMMAND) ix.commands.push(c.payload as Command)
   else if (c.type === ACTION) ix.actions.push(c.payload as Action)
+  // default-surface is a Singleton per app (target=appId), layered App<Site<User: the SAME
+  // shallow patch-merge as display-config (ADR-0007), so a higher-layer override (sorted later by
+  // `order`) wins, and a partial User-layer patch touches only the landing — no new merge code.
+  else if (c.type === DEFAULT_SURFACE) {
+    ix.defaultSurface[c.target] = { ...ix.defaultSurface[c.target], ...(c.payload as SurfaceRef) }
+  }
 }
 
 function indexContributions(contribs: Contribution[]): RegistryIndex {
@@ -124,6 +134,7 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
     display: {}, views: {}, cards: {}, owner: ownerMap(apps),
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
+    defaultSurface: {}, // app → merged landing reference, filled per contribution by addToIndex
     appKinds: {}, // sourceApp → contributed kinds, filled per contribution by addToIndex
   }
   for (const c of sorted) addToIndex(ix, c)
@@ -242,24 +253,32 @@ export function getMeta(doctype: string): DoctypeMeta | null {
 // SEPARATELY-BUILT applet shipped in another app's public assets, loaded at runtime as native
 // ESM (ADR-0009). The assetUrl path is the architecture's real promise — no OS rebuild when
 // the app ships a new applet; the import map binds its externals to the host's singletons.
+// The two applet kinds (ADR-0020), distinguished only by how the window content is produced:
+// a `native` applet renders a Vue component directly against the host; a `framed` applet is a
+// thin host mounting an <iframe> over a foreign-stack SPA, shown full-window with no nav rail.
+export type AppletKind = 'native' | 'framed'
+
 interface AppletEntry {
   appId: string
   label: string
   load?: () => Promise<{ default: Component }>
   assetUrl?: string
+  kind: AppletKind
 }
 
 // The server `applet` contribution payload (ADR-0009, projected from the `os_applets` hook).
+// `kind` is optional on the wire (ADR-0020) — absent means a native applet.
 interface AppletPayload {
   appletId: string
   appId: string
   assetUrl: string
   label: string
+  kind?: AppletKind
 }
 
 const FIRST_PARTY: Record<string, AppletEntry> = {
-  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos') },
-  'customizations': { appId: 'frappe', label: 'Customizations', load: () => import('@/applets/Customizations') },
+  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos'), kind: 'native' },
+  'customizations': { appId: 'frappe', label: 'Customizations', load: () => import('@/applets/Customizations'), kind: 'native' },
 }
 
 // One enumerable applet info row (palette entry points read this).
@@ -267,6 +286,13 @@ export interface AppletInfo { appletId: string; appId: string; label: string }
 
 export function listApplets(): AppletInfo[] {
   return Object.entries(ensureIndex().applets).map(([appletId, c]) => ({ appletId, appId: c.appId, label: c.label }))
+}
+
+// The content-production kind of an applet (ADR-0020), looked up by id. An unknown or
+// flag-less applet is native (the default kind) — so the surface dispatch treats only a
+// declared `framed` applet as full-window, and the core never names a specific app.
+export function appletKind(appletId: string): AppletKind {
+  return ensureIndex().applets[appletId]?.kind ?? 'native'
 }
 
 // Sync existence check: an applet id known AND owned by the given app (the URL scheme
@@ -307,10 +333,15 @@ export function useRegistry() {
     views: (doctype: string): DoctypeViewPayload[] => ix.views[doctype] || [],
     cards: (appId: string): Card[] => ix.cards[appId] || [],
     knownApplet,
+    appletKind,
     resolveApplet,
     listApplets,
     commands: (): Command[] => ix.commands,
     actions: (): Action[] => ix.actions,
+    // The app's declared landing reference after the layered App<Site<User merge (ADR-0021),
+    // or null if it declares none — the resolver (slice 05) then falls through to dashboard →
+    // empty-app pane. A stable reference, never a Surface descriptor: the resolver parses it.
+    defaultSurface: (appId: string): SurfaceRef | null => ix.defaultSurface[appId] ?? null,
     appKind: (appId: string): AppKind => classifyApp(ix.appKinds[appId] ?? []),
   }
 }
