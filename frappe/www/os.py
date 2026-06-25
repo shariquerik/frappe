@@ -550,6 +550,48 @@ def get_placements():
 	return merge_placements(APP_DEFAULT_PLACEMENTS, _site_placements(), _user_overrides(), _ref_visible)
 
 
+def _canonical_json(value):
+	"""A surface reference / position normalised to a stable canonical JSON string. Storing the
+	reference canonically (sorted keys) is what lets the upsert below find an existing override by
+	exact match — the same identity key the resolver dedups on (ADR-0023)."""
+	if value is None:
+		return None
+	return json.dumps(frappe.parse_json(value) if isinstance(value, str) else value, sort_keys=True)
+
+
+def _own_override(region, ref):
+	"""The current user's existing OS Placement Override row for one (region, surface-reference)
+	identity, or None — the upsert/delete target. Owner-scoped: a user only ever touches their own."""
+	return frappe.db.get_value(
+		"OS Placement Override", {"owner": frappe.session.user, "region": region, "surface_ref": ref}
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_placement_override(region: str, surface_ref: str, position: str | None = None, hidden: int = 0):
+	"""Upsert the current user's User-layer OS Placement Override for one (region, surface-reference)
+	identity — the frontend's ONLY placement write path (ADR-0023). A move carries `position`, a
+	personal hide sets `hidden`, a brand-new pin carries both a fresh reference and a position. Only
+	the caller's own row is ever created/updated; baseline and Site rows are untouched. `surface_ref`
+	and `position` arrive as JSON strings and are stored canonically so the identity match holds."""
+	ref = _canonical_json(surface_ref)
+	existing = _own_override(region, ref)
+	doc = frappe.get_doc("OS Placement Override", existing) if existing else frappe.new_doc("OS Placement Override")
+	doc.update({"region": region, "surface_ref": ref, "position": _canonical_json(position), "hidden": int(hidden)})
+	doc.save() if existing else doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_placement_override(region: str, surface_ref: str):
+	"""Clear the caller's own override delta for a (region, surface-reference) — e.g. un-hiding a pin
+	or resetting a personal move back to the resolved baseline/Site position. No-op if none exists."""
+	name = _own_override(region, _canonical_json(surface_ref))
+	if name:
+		frappe.delete_doc("OS Placement Override", name)
+	return {"deleted": bool(name)}
+
+
 def get_permissions():
 	"""Standard per-doctype permission map (read/write/create/delete) so the desktop can
 	gate actions upfront; the server stays the enforcement boundary (ADR-0010)."""

@@ -51,6 +51,21 @@ export async function call(method: string, params: Record<string, unknown> = {})
   return (await parse(res)).message
 }
 
+// Whitelisted method call over POST (writes) — CSRF-signed like the REST writes. Used by the
+// placement write seam (ADR-0023) where the GET `call` won't do for a mutating method.
+export async function callPost(method: string, params: Record<string, unknown> = {}): Promise<any> {
+  const res = await fetch(`/api/method/${method}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-Frappe-CSRF-Token': getCsrf(),
+    },
+    body: JSON.stringify(params),
+  })
+  return (await parse(res)).message
+}
+
 export async function getList(
   doctype: string,
   { fields, limit = 50, order_by = 'modified desc', filters }: GetListOptions = {},

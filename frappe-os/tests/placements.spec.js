@@ -5,7 +5,7 @@
 // presentation, and (4) resolves a reference to the Surface a click opens. The layered merge
 // itself is the server's job (tested in the Python resolver suite) — never re-tested here.
 import { afterEach, describe, expect, it } from 'vitest'
-import { initPlacements, usePlacements, placementView, placementKey } from '../src/placements'
+import { initPlacements, usePlacements, placementView, placementKey, applyLocalOverride } from '../src/placements'
 import { initRegistry } from '../src/registry'
 import { placementSurface, isAppRef } from '../src/surface'
 
@@ -31,6 +31,26 @@ describe('the resolved placement list', () => {
     expect(usePlacements().desktop()).toEqual([])
     initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {} })
     expect(usePlacements().desktop()).toEqual([])
+  })
+})
+
+describe('applyLocalOverride — the optimistic local patch of the write seam', () => {
+  it('moves a matching pin in place (a position delta)', () => {
+    initPlacements(boot([desktop({ app: 'frappe' }, { column: 0, row: 0 })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, position: { column: 2, row: 1 } })
+    expect(usePlacements().desktop()).toEqual([{ region: 'desktop', ref: { app: 'frappe' }, position: { column: 2, row: 1 } }])
+  })
+
+  it('drops a matching pin when hidden (tombstone)', () => {
+    initPlacements(boot([desktop({ app: 'frappe' }), desktop({ app: 'erpnext' })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, hidden: true })
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'erpnext' }])
+  })
+
+  it('appends an unseen reference as a brand-new pin', () => {
+    initPlacements(boot([desktop({ app: 'frappe' })]))
+    applyLocalOverride({ region: 'desktop', ref: { doctype: 'ToDo', view: 'list' }, position: { column: 1, row: 0 } })
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'frappe' }, { doctype: 'ToDo', view: 'list' }])
   })
 })
 
