@@ -1,0 +1,70 @@
+// The Finder's Locations (ADR-0024) — the pure projections behind the sidebar. The Finder is the
+// OS's cross-app navigator and the principal drag-source for Placements; each Location is a list of
+// draggable items, every item expressed as the SAME app-qualified surface reference (ADR-0021)
+// Placements and Default surface use. Kept Vue-free so vitest covers the reprojection without a DOM.
+//
+// Two of the three Locations REPROJECT data that already lives elsewhere rather than introduce a new
+// store: Doctypes flattens the registry `module → doctype` catalog the per-app nav rail reads, and
+// Favorites mirrors the viewer's resolved desktop + dock Placements. Only Applications is assembled
+// fresh, from the permission-filtered app list.
+import { useRegistry } from '@/registry'
+import { placementView, usePlacements, type PlacementView } from '@/placements'
+import type { ResolvedPlacement, SurfaceRef } from '@/types'
+
+// One draggable Finder tile: a surface reference plus its derived presentation. Presentation is
+// reused from placementView (the Registry-derived label/icon the desktop + dock already use), so a
+// Finder tile and the pin it creates look identical.
+export interface FinderItem extends PlacementView {}
+
+// The v1 Locations (Recents is deferred to #06). Open list, not a closed union — additive.
+export const LOCATIONS = ['Applications', 'Doctypes', 'Favorites'] as const
+export type Location = (typeof LOCATIONS)[number]
+
+// Project a surface reference to a Finder tile, reusing the desktop/dock presentation deriver so a
+// tile and the placement a drag-out creates share one label/icon. `region` is irrelevant to the
+// view, so a throwaway desktop placement is built purely to drive placementView.
+function itemFor(ref: SurfaceRef): FinderItem {
+  return placementView({ region: 'desktop', ref })
+}
+
+// Applications — every app the viewer may see (the Registry is permission-filtered server-side, so
+// presence IS the permission signal, ADR-0010) as a bare-app reference, plus a Settings entry that
+// opens System Settings. The launcher and the primary drag-source.
+export function applicationItems(): FinderItem[] {
+  return useRegistry().apps().map((app) => itemFor({ app: app.id }))
+}
+
+// Doctypes — a flattened cross-app catalog REPROJECTED from the registry `module → doctype` data the
+// per-app nav rail already reads (NOT a second store). Each doctype becomes a list reference; the
+// catalog is de-duped (a doctype listed in several apps' modules appears once) and stably ordered by
+// registry app order. Drag one out → a list Placement.
+export function doctypeItems(): FinderItem[] {
+  const seen = new Set<string>()
+  const out: FinderItem[] = []
+  for (const app of useRegistry().apps()) {
+    for (const mod of app.modules || []) {
+      for (const doctype of mod.doctypes) {
+        if (seen.has(doctype)) continue
+        seen.add(doctype)
+        out.push(itemFor({ doctype, view: 'list' }))
+      }
+    }
+  }
+  return out
+}
+
+// Favorites — a read-only MIRROR of the viewer's resolved desktop + dock Placements (see what you've
+// pinned). It is NOT a third placement region; drag-out still targets desktop/dock only, and the
+// "remove" affordance clears the user's own pin (removePlacementOverride). Mirrors the live resolved
+// list, so a pin added/removed elsewhere reflects here without a reload.
+export function favoritePlacements(): ResolvedPlacement[] {
+  const places = usePlacements()
+  return [...places.desktop(), ...places.dock()]
+}
+
+// The items for a Location name (Favorites is rendered from its placements, so it returns []).
+export function itemsFor(location: Location): FinderItem[] {
+  if (location === 'Applications') return applicationItems()
+  if (location === 'Doctypes') return doctypeItems()
+  return []
+}

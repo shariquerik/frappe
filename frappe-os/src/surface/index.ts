@@ -34,6 +34,12 @@ export const emptyAppSurface = (appId: string): BuiltinSurface => ({ kind: 'buil
 // `section` selects the pane.
 export const systemSettingsSurface = (section = 'General'): BuiltinSurface =>
   ({ kind: 'builtin', view: 'system-settings', appId: 'frappe', params: { section } })
+// The Finder (ADR-0024) — the OS's cross-app navigator and the principal drag-source for
+// Placements. Like System Settings it is a desktop-wide singleton `system`-role window owned
+// by the framework app (so chrome/asset scoping resolves), respawned-from-URL and never
+// persisted. `location` selects the sidebar Location (Applications / Doctypes / Favorites).
+export const finderSurface = (location = 'Applications'): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'finder', appId: 'frappe', params: { location } })
 // An applet surface (ADR-0012): `appletId` resolves to a Vue component at
 // mount; `props` are the serializable view-params handed to it via v-bind (os is never one).
 export const appletSurface = (appId: string, appletId: string, props?: Record<string, unknown>): AppletSurface =>
@@ -143,12 +149,13 @@ export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.ta
 
 // Window role is encoded by the id prefix (the id is built from the role at open time),
 // so it is derived, never stored — the Surface describes the *content*, the id describes
-// the window *instance*. 'settings' = a per-app settings pane, 'system' = the singleton
-// System Settings window, everything else is a navigable 'app' window (a record opened in a
-// new window is an ordinary app Instance, ADR-0017 — there is no record-only window role).
+// the window *instance*. 'settings' = a per-app settings pane, 'system' = a singleton
+// system-wide window (System Settings or the Finder, ADR-0024 — both share the system role's
+// chrome and the hydrate/routing/persistence exclusions), everything else is a navigable
+// 'app' window (a record opened in a new window is an ordinary app Instance, ADR-0017).
 export function windowRole(id: string): 'app' | 'settings' | 'system' {
   if (id.startsWith('settings:')) return 'settings'
-  if (id === 'system-settings') return 'system'
+  if (id === 'system-settings' || id === 'finder') return 'system'
   return 'app'
 }
 

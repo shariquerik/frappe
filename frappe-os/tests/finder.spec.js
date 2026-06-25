@@ -1,0 +1,138 @@
+// The Finder (ADR-0024): the OS's cross-app navigator + the principal drag-source for Placements.
+// These specs pin (1) the singleton system-role window lifecycle (open focuses-or-spawns, retargets
+// its Location, closes, and is excluded from persistence like System Settings), (2) the Doctypes
+// Location REPROJECTS the registry module→doctype catalog (no second store, de-duped), (3) Favorites
+// MIRRORS the viewer's resolved desktop+dock Placements, and (4) a Location drag-out resolves to a
+// User-layer desktop Placement override through the one write path. The layered placement merge and
+// the URL bridge are tested elsewhere (placements.spec / route-map.spec) — not re-tested here.
+import { beforeEach, afterEach, describe, expect, it } from 'vitest'
+import { useOS } from '../src/desktop/index'
+import { windowRole } from '../src/surface'
+import { serialize } from '../src/desktop/persistence'
+import { initRegistry } from '../src/registry'
+import { initPlacements, usePlacements, applyLocalOverride } from '../src/placements'
+import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../src/components/Finder/locations'
+
+const os = useOS()
+
+function reset() {
+  os.state.windows = []
+  os.state.geo = {}
+  os.state.activeId = null
+  os.state.split = null
+  localStorage.clear()
+  initRegistry(null) // config seed → apps frappe/crm/erpnext with modules + doctypes
+  initPlacements(null)
+}
+beforeEach(reset)
+afterEach(() => initPlacements(null))
+
+describe('the Finder singleton system-role window (System Settings precedent)', () => {
+  it('opens a single system-role window and focuses it', () => {
+    os.openFinder()
+    expect(os.state.windows.map((w) => w.id)).toEqual(['finder'])
+    expect(os.state.activeId).toBe('finder')
+    expect(windowRole('finder')).toBe('system')
+  })
+
+  it('a second open focuses the existing window — never a duplicate (singleton)', () => {
+    os.openFinder()
+    os.openApp('crm') // steal focus
+    os.openFinder('Doctypes') // re-open, retargeting the Location
+    expect(os.state.windows.filter((w) => w.id === 'finder')).toHaveLength(1)
+    expect(os.state.activeId).toBe('finder')
+    expect(os.state.windows.find((w) => w.id === 'finder').surface.params.location).toBe('Doctypes')
+  })
+
+  it('setFinderLocation retargets the open window without spawning another', () => {
+    os.openFinder('Applications')
+    os.setFinderLocation('Favorites')
+    expect(os.state.windows.find((w) => w.id === 'finder').surface.params.location).toBe('Favorites')
+  })
+
+  it('closeFinder removes the window', () => {
+    os.openFinder()
+    os.closeFinder()
+    expect(os.state.windows.find((w) => w.id === 'finder')).toBeUndefined()
+  })
+
+  it('is excluded from persistence — a refresh never restores the Finder (transient)', () => {
+    os.openApp('frappe')
+    os.openFinder()
+    const ids = serialize().windows.map((w) => w.id)
+    expect(ids).toContain('app:frappe')
+    expect(ids).not.toContain('finder')
+  })
+})
+
+describe('Applications Location', () => {
+  it('lists every app the viewer may see as a bare-app reference', () => {
+    const apps = applicationItems()
+    expect(apps.map((a) => a.ref)).toEqual([{ app: 'frappe' }, { app: 'crm' }, { app: 'erpnext' }])
+    // A bare-app tile renders as the app's branded label/logo (reused placementView).
+    expect(apps[0].label).toBe('Frappe')
+    expect(apps[0].logo).toBeTruthy()
+  })
+
+  it('itemsFor returns the same set as applicationItems', () => {
+    expect(itemsFor('Applications').map((a) => a.ref)).toEqual(applicationItems().map((a) => a.ref))
+  })
+})
+
+describe('Doctypes Location — reprojects the registry module→doctype catalog', () => {
+  it('flattens every app module doctype into a de-duped list of list references', () => {
+    const items = doctypeItems()
+    const doctypes = items.map((i) => i.ref.doctype)
+    // Drawn straight from the seed modules (config/apps.ts), cross-app and flattened.
+    expect(doctypes).toContain('ToDo') // frappe/Core
+    expect(doctypes).toContain('CRM Lead') // crm/Sales
+    expect(doctypes).toContain('Sales Invoice') // erpnext/Selling
+    // Every tile is a list reference (drag one out → a list Placement).
+    expect(items.every((i) => i.ref.view === 'list')).toBe(true)
+    // De-duped: no doctype appears twice even if several modules list it.
+    expect(new Set(doctypes).size).toBe(doctypes.length)
+  })
+})
+
+describe('Favorites Location — mirrors the viewer\'s resolved desktop + dock Placements', () => {
+  it('reflects the live resolved placement list (desktop then dock), read-only', () => {
+    initPlacements({
+      user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {},
+      placements: [
+        { region: 'desktop', ref: { app: 'frappe' }, position: null },
+        { region: 'dock', ref: { app: 'crm' }, position: { order: 0 } },
+      ],
+    })
+    expect(favoritePlacements().map((p) => [p.region, p.ref])).toEqual([
+      ['desktop', { app: 'frappe' }],
+      ['dock', { app: 'crm' }],
+    ])
+  })
+
+  it('reflects a pin added through the write path without a reload (live mirror)', () => {
+    initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
+    expect(favoritePlacements()).toEqual([])
+    applyLocalOverride({ region: 'desktop', ref: { doctype: 'ToDo', view: 'list' }, position: { column: 0, row: 0 } })
+    expect(favoritePlacements().map((p) => p.ref)).toEqual([{ doctype: 'ToDo', view: 'list' }])
+  })
+})
+
+describe('a Location drag-out → a desktop Placement (the User-layer write path)', () => {
+  // The drag-out wiring (drag.ts) snaps the released pointer to a grid cell, then upserts a desktop
+  // Placement override for the dragged reference. Here we drive the seam it funnels through (a brand-
+  // new desktop override at a cell) and read it back through the resolver — the same contract App.vue
+  // uses for an icon move. The pointer-snap math itself is covered in grid.spec.
+  it('a dragged doctype reference reads back as a new desktop list Placement', () => {
+    initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
+    applyLocalOverride({ region: 'desktop', ref: { doctype: 'ToDo', view: 'list' }, position: { column: 1, row: 0 } })
+    const pin = usePlacements().desktop().find((p) => p.ref.doctype === 'ToDo')
+    expect(pin).toBeTruthy()
+    expect(pin.position).toEqual({ column: 1, row: 0 })
+  })
+
+  it('a dragged app reference reads back as a new desktop app Placement', () => {
+    initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
+    applyLocalOverride({ region: 'desktop', ref: { app: 'crm' }, position: { column: 0, row: 0 } })
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'crm' }])
+  })
+})

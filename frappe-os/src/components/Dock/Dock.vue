@@ -106,7 +106,7 @@ const sf = (w: OsWindow) => w.surface as BuiltinSurface
 function winTitle(w: OsWindow): string | undefined {
   const role = windowRole(w.id), s = sf(w)
   if (role === 'settings') return os.DATA.APP[s.appId!].name + ' settings'
-  if (role === 'system') return 'System Settings'
+  if (role === 'system') return s.view === 'finder' ? 'Finder' : 'System Settings'
   if (s.view === 'form') {
     const m = os.getMeta(s.doctype!), r = os.recordObj(s.doctype!, s.recordName!)
     return (r && (r[m?.titleField || ''] || r.name)) || s.recordName!
@@ -117,7 +117,7 @@ function winTitle(w: OsWindow): string | undefined {
 function winSub(w: OsWindow): string {
   const role = windowRole(w.id), s = sf(w)
   if (role === 'settings') return 'Settings'
-  if (role === 'system') return 'Settings'
+  if (role === 'system') return s.view === 'finder' ? 'Navigator' : 'Settings'
   if (s.view === 'form') return s.doctype!
   if (s.view === 'list') return 'List'
   return 'Dashboard'
@@ -319,7 +319,7 @@ const ctxOptions = computed(() => [
       </div>
 
       <div class="self-center" :class="[dividerShape, dividerClass]"></div>
-      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[launchpadClass, hoverLift]" title="Launchpad" @click="os.openPalette()">
+      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[launchpadClass, hoverLift]" title="Finder" @click="os.openFinder()">
         <span class="lucide-layout-grid size-[20px]"></span>
       </button>
     </div>

@@ -1,8 +1,22 @@
 # Finder window + Locations (Applications, Doctypes, Favorites) as Placement drag-source
 
-Status: 📋 Ready (2026-06-25)
+Status: ✅ DONE (2026-06-25)
 
 Triage: ready-for-agent (AFK)
+
+Implementation note: a new builtin **`finder` Surface** (`finderSurface(location)` in
+`src/surface/index.ts`) in a **singleton `system`-role window** (`windowRole('finder') === 'system'`),
+reusing the System Settings precedent wholesale — `openFinder`/`closeFinder`/`setFinderLocation`
+(`desktop/windows.ts`) mirror `openSystemSettings`; `serialize()` already excludes `system` roles so
+it is never persisted; `route-map.ts` projects `/finder` and respawns it (deep-linkable). `OSWindow`
+renders `<Finder>` for `role==='system' && view==='finder'`; the Dock launcher button now calls
+`os.openFinder()` (⌘K still opens the palette), and Dock window-chooser titles disambiguate Finder
+from System Settings (both share the `system` role). UI: `components/Finder/{Finder,FinderBody}.vue`
++ `locations.ts` (Applications + a Settings entry; **Doctypes** REPROJECTS the registry
+`module→doctype` catalog — no second store; **Favorites** mirrors the viewer's resolved desktop+dock
+Placements). `drag.ts` reuses the one pointer-drag machinery (`startIconDrag` + `occupiedDesktopCells`)
+and the one write path (`writePlacementOverride`) for drag-out → a desktop Placement; Favorites'
+remove reuses #04's `removeResolvedPlacement` (inherited → tombstone). Recents is deferred to #06.
 
 ## What to build
 
@@ -32,17 +46,17 @@ expressed as the ADR-0021 surface reference.
 
 ## Acceptance criteria
 
-- [ ] A `finder` builtin Surface opens in a singleton `system`-role window (System Settings
+- [x] A `finder` builtin Surface opens in a singleton `system`-role window (System Settings
       precedent — not persisted, respawned from URL, deep-linkable).
-- [ ] Applications lists every app the viewer may see plus a Settings entry and launches them.
-- [ ] Doctypes renders a cross-app catalog reprojected from the registry `module → doctype` data
+- [x] Applications lists every app the viewer may see plus a Settings entry and launches them.
+- [x] Doctypes renders a cross-app catalog reprojected from the registry `module → doctype` data
       (no second store).
-- [ ] Favorites read-only-mirrors the viewer's current desktop + dock Placements and can remove one
+- [x] Favorites read-only-mirrors the viewer's current desktop + dock Placements and can remove one
       (personal hide).
-- [ ] The dock launcher button opens the Finder; ⌘K still opens the command palette.
-- [ ] Dragging an item from a Location onto the desktop / dock creates a Placement (User-layer
+- [x] The dock launcher button opens the Finder; ⌘K still opens the command palette.
+- [x] Dragging an item from a Location onto the desktop / dock creates a Placement (User-layer
       override upsert).
-- [ ] Tests cover the singleton-window lifecycle, the Doctypes reprojection, the Favorites mirror,
+- [x] Tests cover the singleton-window lifecycle, the Doctypes reprojection, the Favorites mirror,
       and a Location drag-out → placement.
 
 ## Blocked by

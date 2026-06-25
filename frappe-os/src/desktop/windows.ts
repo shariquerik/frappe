@@ -7,7 +7,7 @@ import { appForDoctype } from '@/registry'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
-  dashboardSurface, listSurface, formSurface, settingsSurface, systemSettingsSurface, appletSurface,
+  dashboardSurface, listSurface, formSurface, settingsSurface, systemSettingsSurface, finderSurface, appletSurface,
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
 } from '@/surface'
 import type { DockPosition, OsWindow, RowOpenTarget, Surface, Theme, WallpaperDef } from '@/types'
@@ -318,6 +318,28 @@ export const closeSystemSettings = (id = 'system-settings') => closeWin(id)
 export function setSystemSettingsSection(section: string) {
   const w = state.windows.find((x) => x.id === 'system-settings')
   if (w && isBuiltin(w.surface)) w.surface.params = { section }
+}
+
+// ---- Finder (ADR-0024) -------------------------------------------------------
+// The Finder is a singleton `system`-role window like System Settings (respawned-from-URL,
+// never persisted): open focuses the existing one or spawns it, re-targeting its sidebar
+// `location`; close just removes it. The dock launcher button opens it.
+export function openFinder(location = 'Applications') {
+  const id = 'finder'
+  const z = bumpZ()
+  const w = state.windows.find((x) => x.id === id)
+  if (!w) state.windows.push({ id, surface: finderSurface(location) })
+  else if (isBuiltin(w.surface)) w.surface.params = { location }
+  setGeo(id, { z, min: false })
+  state.activeId = id
+  state.menu = null
+  state.paletteOpen = false
+}
+export const closeFinder = (id = 'finder') => closeWin(id)
+// Switch the open Finder window to a different sidebar Location (left-nav click).
+export function setFinderLocation(location: string) {
+  const w = state.windows.find((x) => x.id === 'finder')
+  if (w && isBuiltin(w.surface)) w.surface.params = { location }
 }
 
 // The per-user list-row open-target preference (ADR-0018), persisted like sidebarHidden.

@@ -6,7 +6,8 @@ import { computed, reactive } from 'vue'
 import { state } from './state'
 import { shouldShowDock } from './dock-visibility'
 import { windowRole } from '@/surface'
-import { resolveDrop, type Cell } from './grid'
+import { resolveDrop, layoutDesktop, type Cell } from './grid'
+import { usePlacements } from '@/placements'
 import type { Geo, OsWindow } from '@/types'
 
 // Non-reactive pointer-loop bookkeeping: the window being dragged/resized and the
@@ -48,13 +49,18 @@ const defAppGeo = (i: number): Geo => ({ x: 70 + (i % 5) * 36, y: 56 + (i % 5) *
 const defSettingsGeo = (i: number): Geo => ({ x: 200 + (i % 6) * 30, y: 92 + (i % 6) * 26, w: 720, h: 560, z: i + 1, min: false, max: false })
 // A roughly-centered two-pane System Settings window (singleton, so the by-index offset never applies).
 const defSystemGeo = (i: number): Geo => ({ x: 290, y: 110, w: 780, h: 540, z: i + 1, min: false, max: false })
+// The Finder (ADR-0024) is a wider two-pane navigator (Locations sidebar + a tile grid), so it
+// opens larger than System Settings; also a singleton, so the by-index offset never applies.
+const defFinderGeo = (i: number): Geo => ({ x: 230, y: 96, w: 880, h: 580, z: i + 1, min: false, max: false })
 
 // Effective geometry per window: default-by-index merged with any saved patch.
 export const geoMap = computed<Record<string, Geo>>(() => {
   const map: Record<string, Geo> = {}
   state.windows.forEach((w, i) => {
     const role = windowRole(w.id)
-    const base = role === 'app' ? defAppGeo(i) : role === 'settings' ? defSettingsGeo(i) : defSystemGeo(i)
+    const base = role === 'app' ? defAppGeo(i)
+      : role === 'settings' ? defSettingsGeo(i)
+      : w.id === 'finder' ? defFinderGeo(i) : defSystemGeo(i)
     map[w.id] = Object.assign(base, state.geo[w.id] || {})
   })
   return map
@@ -158,6 +164,13 @@ export function onPointerUp(): void {
     iconDragState.dy = 0
     document.body.style.userSelect = ''
   }
+}
+
+// Every desktop pin's currently-resolved grid cell — the occupancy a fresh drop (an icon move or a
+// Finder drag-out, ADR-0024) must flow off so two pins never stack. Reuses layoutDesktop, the same
+// resolved-list→cells projection the desktop render uses, against the live desktop height.
+export function occupiedDesktopCells(): Cell[] {
+  return layoutDesktop(usePlacements().desktop(), deskRef.h)
 }
 
 export const setDeskEl = (el: HTMLElement | null): void => { if (el) { deskRef.el = el; deskRef.w = el.clientWidth; deskRef.h = el.clientHeight } }

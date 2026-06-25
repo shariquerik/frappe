@@ -44,6 +44,7 @@ function pathForSurface(os: OsStore, s: Surface): string {
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
   if (s.view === 'settings') return `/${s.appId}/settings` // self-describing; not aliased to /
   if (s.view === 'system-settings') return '/system-settings' // singleton system pane, no app segment
+  if (s.view === 'finder') return '/finder' // singleton Finder window, no app segment (ADR-0024)
   if (s.view === 'form') {
     // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
     // default and stays on the bare record path, so existing form URLs are unchanged.
@@ -82,6 +83,8 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   if (!app) { os.clearFocus(); return }
   // System Settings is a singleton system pane at a bare `/system-settings` (no app segment).
   if (app === 'system-settings' && !doctype) { os.openSystemSettings(); return }
+  // The Finder is a singleton system window at a bare `/finder` (no app segment, ADR-0024).
+  if (app === 'finder' && !doctype) { os.openFinder(); return }
   // A doctype derives its own app (appForDoctype), so a valid doctype can open even
   // when the app segment is junk. But if NEITHER the app nor the doctype is real, the
   // route points at nothing — clear focus so the seeded URL settles on the bare
