@@ -52,6 +52,18 @@ describe('applyLocalOverride — the optimistic local patch of the write seam', 
     applyLocalOverride({ region: 'desktop', ref: { doctype: 'ToDo', view: 'list' }, position: { column: 1, row: 0 } })
     expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'frappe' }, { doctype: 'ToDo', view: 'list' }])
   })
+
+  // A drag (#02) is a position OverrideDelta funnelled through the same local-patch path. This pins
+  // the write→read-back: a moved icon's new cell is visible through the resolver immediately (and so
+  // survives a reload, since the server re-folds the persisted override into the next boot list).
+  it('a desktop drag override reads back through the resolver as the new grid cell', () => {
+    initPlacements(boot([desktop({ app: 'frappe' }, { column: 0, row: 0 }), desktop({ app: 'crm' }, { column: 0, row: 1 })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, position: { column: 3, row: 2 } })
+    const moved = usePlacements().desktop().find((p) => p.ref.app === 'frappe')
+    expect(moved.position).toEqual({ column: 3, row: 2 })
+    // The OTHER pin (and its baseline cell) is untouched — a drag writes only the dragged pin's row.
+    expect(usePlacements().desktop().find((p) => p.ref.app === 'crm').position).toEqual({ column: 0, row: 1 })
+  })
 })
 
 describe('placementView — a reference projected to its presentation', () => {

@@ -2,10 +2,11 @@
 // loop and the desktop/dock element refs. Geometry is kept separate from window
 // identity — state.geo[id] is a sparse patch over a by-index default (geoMap merges
 // them). topZ/drag/resize are deliberately non-reactive bookkeeping.
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { state } from './state'
 import { shouldShowDock } from './dock-visibility'
 import { windowRole } from '@/surface'
+import { resolveDrop, type Cell } from './grid'
 import type { Geo, OsWindow } from '@/types'
 
 // Non-reactive pointer-loop bookkeeping: the window being dragged/resized and the
@@ -20,7 +21,18 @@ const MIN_W = 420, MIN_H = 300, TOP_BOUND = 34
 let topZ = 0
 let drag: DragState | null = null
 let resize: ResizeState | null = null
-const deskRef: { el: HTMLElement | null; w: number; h: number } = { el: null, w: 1280, h: 800 }
+
+// Desktop-icon drag is its own gesture: a pointer press on an icon, a live pixel offset while
+// moving (so the icon follows the cursor without yet committing a cell), and on release a snap to
+// a grid cell that the consumer persists as a User-layer override. `key` is the pin's placementKey;
+// `occupied` is every OTHER pin's current cell, so the drop can flow off a collision deterministically.
+interface IconDragState { key: string; sx: number; sy: number; ox: number; oy: number; occupied: Cell[]; commit: (cell: Cell, moved: boolean) => void }
+let iconDrag: IconDragState | null = null
+// The live drag offset, reactive so the rendered icon follows the cursor; null when not dragging.
+export const iconDragState = reactive<{ key: string | null; dx: number; dy: number }>({ key: null, dx: 0, dy: 0 })
+// Reactive so the desktop size is a single source: the cell→pixel projection, the live drag clamp,
+// AND the drop-snap on release all read it, and re-run when the viewport resizes (syncDeskSize).
+const deskRef = reactive<{ el: HTMLElement | null; w: number; h: number }>({ el: null, w: 1280, h: 800 })
 const dockRef: { el: HTMLElement | null } = { el: null }
 let dockShown = true // last applied dock visibility; feeds the hysteresis
 
@@ -68,6 +80,21 @@ export function startResize(id: string, dir: ResizeDir, e: PointerEvent): void {
   document.body.style.userSelect = 'none'
 }
 
+// Begin dragging a desktop icon. `ox/oy` are the icon's current top-left in desktop-local pixels
+// (its pre-drag cell projected), so the drop pixel is origin + pointer delta. `commit` is called
+// once on release with the resolved cell — the consumer turns it into a User-layer override write.
+export function startIconDrag(
+  key: string, ox: number, oy: number, occupied: Cell[], commit: (cell: Cell, moved: boolean) => void, e: PointerEvent,
+): void {
+  if (e.button != null && e.button !== 0) return
+  e.preventDefault()
+  iconDrag = { key, sx: e.clientX, sy: e.clientY, ox, oy, occupied, commit }
+  iconDragState.key = key
+  iconDragState.dx = 0
+  iconDragState.dy = 0
+  document.body.style.userSelect = 'none'
+}
+
 // The active edges decide which of x/y/w/h move. East/south grow from the fixed
 // top-left; west/north move the edge, so they shift the origin too. Each axis is
 // clamped to the minimum size and the desktop bounds (left ≥ 0, top ≥ TOP_BOUND).
@@ -111,12 +138,31 @@ export function onPointerMove(e: PointerEvent): void {
   }
   if (drag) setGeo(drag.id, { x: Math.max(0, drag.ox + (e.clientX - drag.sx)), y: Math.max(34, drag.oy + (e.clientY - drag.sy)) })
   else if (resize) setGeo(resize.id, resizePatch(resize, e))
+  else if (iconDrag) { iconDragState.dx = e.clientX - iconDrag.sx; iconDragState.dy = e.clientY - iconDrag.sy }
 }
 
 export function onPointerUp(): void {
   if (drag || resize) { drag = null; resize = null; document.body.style.userSelect = '' }
+  if (iconDrag) {
+    // The drop pixel is the icon's pre-drag top-left plus the pointer delta; snap it to a cell,
+    // flowing off any other pin's cell, then hand the cell to the consumer to persist.
+    const dropX = iconDrag.ox + iconDragState.dx
+    const dropY = iconDrag.oy + iconDragState.dy
+    const cell = resolveDrop({ x: dropX, y: dropY }, iconDrag.occupied, deskRef.w, deskRef.h)
+    // A press that barely moved is a click, not a move — let the consumer open instead of writing.
+    const moved = Math.abs(iconDragState.dx) > 4 || Math.abs(iconDragState.dy) > 4
+    iconDrag.commit(cell, moved)
+    iconDrag = null
+    iconDragState.key = null
+    iconDragState.dx = 0
+    iconDragState.dy = 0
+    document.body.style.userSelect = ''
+  }
 }
 
 export const setDeskEl = (el: HTMLElement | null): void => { if (el) { deskRef.el = el; deskRef.w = el.clientWidth; deskRef.h = el.clientHeight } }
+// Refresh the cached desktop size from the live element — called on mount and on window resize so
+// every consumer (render, drag clamp, drop-snap) stays on one up-to-date source.
+export const syncDeskSize = (): void => { if (deskRef.el) { deskRef.w = deskRef.el.clientWidth; deskRef.h = deskRef.el.clientHeight } }
 export const setDockEl = (el: HTMLElement | null): void => { if (el) dockRef.el = el }
 export { deskRef }
