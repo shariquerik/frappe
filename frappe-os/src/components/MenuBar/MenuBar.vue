@@ -55,8 +55,8 @@ const appleMenu = [
 		group: "b",
 		hideLabel: true,
 		items: [
-			{ label: "System settings…", onClick: settingsActive },
-			{ label: "Change wallpaper…", onClick: () => os.openWallpaper() },
+			{ label: "System settings…", onClick: () => os.openSystemSettings() },
+			{ label: "Change wallpaper…", onClick: () => os.openSystemSettings("Wallpaper") },
 		],
 	},
 	{

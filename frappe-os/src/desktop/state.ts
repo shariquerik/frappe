@@ -19,7 +19,10 @@ export const state = reactive<OsState>({
   sidebarHidden: {},
   rowOpenTarget: 'inline', // list-row left-click opens in the same window by default (ADR-0018)
   rememberWindowSize: true, // reopen a window at its last size/position (else always small)
+  dockPosition: 'left', // which screen edge the dock sits on (ADR-0022)
+  dockAutoHide: true, // dock slides away when a window nears it; off keeps it pinned
   dockMenu: null, // appId whose dock window-chooser popover is open
+  dockContextOpen: false, // dock right-click menu open (keeps the dock revealed)
 })
 
 function clockNow() {

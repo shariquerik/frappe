@@ -32,6 +32,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
     StatusPill: typeof import('./src/components/StatusPill.vue')['default']
+    SystemSettings: typeof import('./src/components/Settings/SystemSettings.vue')['default']
     WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
     WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
   }
@@ -59,6 +60,7 @@ declare global {
   const RouterView: typeof import('vue-router')['RouterView']
   const SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
   const StatusPill: typeof import('./src/components/StatusPill.vue')['default']
+  const SystemSettings: typeof import('./src/components/Settings/SystemSettings.vue')['default']
   const WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
   const WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
 }

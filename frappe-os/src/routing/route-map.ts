@@ -28,7 +28,7 @@ export function pathForFocus(os: OsStore): FocusLocation {
 }
 
 // The `?instance=n` discriminator for a non-canonical app instance id `app:<id>#n`; empty
-// for the canonical `app:<id>` and for non-app windows (settings/wallpaper). Gated on the
+// for the canonical `app:<id>` and for non-app windows (settings/system). Gated on the
 // `app:` prefix so only real app-instance ids ever carry the query.
 export function instanceQuery(id: string): Record<string, string> {
   if (!id.startsWith('app:')) return {}
@@ -43,7 +43,7 @@ function pathForSurface(os: OsStore, s: Surface): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
   if (s.view === 'settings') return `/${s.appId}/settings` // self-describing; not aliased to /
-  if (s.view === 'wallpaper') return '/wallpaper' // singleton system pane, no app segment
+  if (s.view === 'system-settings') return '/system-settings' // singleton system pane, no app segment
   if (s.view === 'form') {
     // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
     // default and stays on the bare record path, so existing form URLs are unchanged.
@@ -80,8 +80,8 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
   // over the path, or a cold /os redirects to /os/<app> of the last focused window.)
   if (!app) { os.clearFocus(); return }
-  // The wallpaper picker is a singleton system pane at a bare `/wallpaper` (no app segment).
-  if (app === 'wallpaper' && !doctype) { os.openWallpaper(); return }
+  // System Settings is a singleton system pane at a bare `/system-settings` (no app segment).
+  if (app === 'system-settings' && !doctype) { os.openSystemSettings(); return }
   // A doctype derives its own app (appForDoctype), so a valid doctype can open even
   // when the app segment is junk. But if NEITHER the app nor the doctype is real, the
   // route points at nothing — clear focus so the seeded URL settles on the bare

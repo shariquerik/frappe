@@ -34,15 +34,15 @@ export const syncTopZ = (windows: OsWindow[], geo: Record<string, Partial<Geo>>)
 // windowOpenMode preference can override this per-open (see applyOpenMode in windows.ts).
 const defAppGeo = (i: number): Geo => ({ x: 70 + (i % 5) * 36, y: 56 + (i % 5) * 30, w: 1080, h: 700, z: i + 1, min: false, max: false })
 const defSettingsGeo = (i: number): Geo => ({ x: 200 + (i % 6) * 30, y: 92 + (i % 6) * 26, w: 720, h: 560, z: i + 1, min: false, max: false })
-// A compact, roughly-centered gallery window (singleton, so the by-index offset never applies).
-const defWallpaperGeo = (i: number): Geo => ({ x: 330, y: 150, w: 640, h: 470, z: i + 1, min: false, max: false })
+// A roughly-centered two-pane System Settings window (singleton, so the by-index offset never applies).
+const defSystemGeo = (i: number): Geo => ({ x: 290, y: 110, w: 780, h: 540, z: i + 1, min: false, max: false })
 
 // Effective geometry per window: default-by-index merged with any saved patch.
 export const geoMap = computed<Record<string, Geo>>(() => {
   const map: Record<string, Geo> = {}
   state.windows.forEach((w, i) => {
     const role = windowRole(w.id)
-    const base = role === 'app' ? defAppGeo(i) : role === 'settings' ? defSettingsGeo(i) : defWallpaperGeo(i)
+    const base = role === 'app' ? defAppGeo(i) : role === 'settings' ? defSettingsGeo(i) : defSystemGeo(i)
     map[w.id] = Object.assign(base, state.geo[w.id] || {})
   })
   return map
@@ -89,16 +89,25 @@ function resizePatch(r: ResizeState, e: PointerEvent): Partial<Geo> {
 export function onPointerMove(e: PointerEvent): void {
   // auto-hide dock
   if (dockRef.el) {
+    const dw = deskRef.w || (deskRef.el ? deskRef.el.clientWidth : 1280)
     const dh = deskRef.h || (deskRef.el ? deskRef.el.clientHeight : 800)
+    const pos = state.dockPosition
+    // Distance from the dock's own screen edge along its perpendicular axis (ADR-0022).
+    const distFromEdge = pos === 'left' ? e.clientX : pos === 'right' ? dw - e.clientX : dh - e.clientY
+    // A fullscreen window (the active window maximized, or split view) hides the dock even when
+    // it's pinned — matching macOS, where a fullscreen Space auto-hides the Dock (ADR-0022).
+    const fullscreen = !!state.split || !!(state.activeId && geoMap.value[state.activeId]?.max)
     dockShown = shouldShowDock({
       windowCount: state.windows.length,
-      dockMenu: state.dockMenu,
+      menuOpen: !!state.dockMenu || state.dockContextOpen,
       gestureActive: !!(drag || resize),
-      clientY: e.clientY,
-      deskH: dh,
+      autoHide: state.dockAutoHide || fullscreen,
+      distFromEdge,
       currentlyShown: dockShown,
     })
-    dockRef.el.style.transform = dockShown ? 'translateY(0)' : 'translateY(155%)'
+    // Slide the dock off its own edge when hidden; the outer wrapper owns the centering transform.
+    const hidden = pos === 'left' ? 'translateX(-155%)' : pos === 'right' ? 'translateX(155%)' : 'translateY(155%)'
+    dockRef.el.style.transform = dockShown ? '' : hidden
   }
   if (drag) setGeo(drag.id, { x: Math.max(0, drag.ox + (e.clientX - drag.sx)), y: Math.max(34, drag.oy + (e.clientY - drag.sy)) })
   else if (resize) setGeo(resize.id, resizePatch(resize, e))

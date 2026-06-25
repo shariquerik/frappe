@@ -2,7 +2,8 @@
 // Per-app Settings — a custom centered/blurred overlay (frappe-ui Dialog can't
 // reproduce the exact macOS-style two-pane settings sheet), composed from
 // frappe-ui Switch / FormControl / Button. Tabs: General / Members /
-// Notifications / Integrations / Customize / Theme + working light/dark toggle.
+// Notifications / Integrations / Customize. Desktop-global prefs (theme, window
+// behavior, wallpaper) live in System Settings, not here.
 import { computed, watch } from 'vue'
 import { Switch, Button } from 'frappe-ui'
 import { useOS } from '@/desktop'
@@ -11,7 +12,6 @@ import { surfaceTab } from '@/surface'
 // OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { OsWindow } from '@/surface/types'
-import type { Theme } from '@/desktop/types'
 
 const props = defineProps<{ win: OsWindow }>()
 const os = useOS()
@@ -19,8 +19,8 @@ const appId = computed(() => (props.win.surface as { appId?: string }).appId!)
 const app = computed(() => os.DATA.APP[appId.value])
 const ICON = os.DATA.ICON
 
-const tabs = ['General', 'Members', 'Notifications', 'Integrations', 'Customize', 'Theme']
-const tabIcon: Record<string, string> = { General: ICON.cog, Members: ICON.users, Notifications: ICON.bell, Integrations: ICON.plug, Customize: ICON.sliders, Theme: ICON.palette }
+const tabs = ['General', 'Members', 'Notifications', 'Integrations', 'Customize']
+const tabIcon: Record<string, string> = { General: ICON.cog, Members: ICON.users, Notifications: ICON.bell, Integrations: ICON.plug, Customize: ICON.sliders }
 const tab = computed(() => surfaceTab(props.win.surface))
 
 const generalFields = computed(() => [
@@ -51,17 +51,9 @@ const customizeRows = computed(() => {
   ;(app.value.modules || []).forEach((mod) => mod.doctypes.forEach((dt) => rows.push({ label: dt, sub: mod.name, key: 'cust_' + dt, def: true })))
   return rows
 })
-const themeToggles = [
-  { label: 'Compact density', sub: 'Tighter rows and spacing', key: 'theme_compact', def: false },
-  { label: 'Reduce motion', sub: 'Minimize window animations', key: 'theme_motion', def: false },
-]
 const k = (key: string) => appId.value + ':' + key
 function toggleVal(key: string, def: boolean) { return os.isOn(k(key), def) }
 function flip(key: string, def: boolean) { os.tog(k(key), def) }
-const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; card: string }[] = [
-  { label: 'Light', value: 'light', previewBg: '#ffffff', bar: '#eef0f2', card: '#dfe3e7' },
-  { label: 'Dark', value: 'dark', previewBg: '#1c1c1c', bar: '#2e2e2e', card: '#3a3a3a' },
-]
 </script>
 
 <template>
@@ -84,31 +76,6 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
                 <span class="flex-1">{{ f.value }}</span>
                 <span class="lucide-chevron-down size-[13px] text-ink-gray-4"></span>
               </div>
-            </div>
-            <!-- Per-user list-row open-target (ADR-0018): plain left-click opens inline (same
-                 window) by default, flippable to a new window. The right-click menu still offers both. -->
-            <div class="mb-3 mt-5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">BEHAVIOR</div>
-            <div class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span class="text-[13px] text-ink-gray-8">Open list rows in a new window</span>
-                <span class="text-[11.5px] text-ink-gray-5">Left-click a row to open it in a new window instead of the same one</span>
-              </div>
-              <Switch
-                :modelValue="os.state.rowOpenTarget === 'new-window'"
-                @update:modelValue="os.setRowOpenTarget($event ? 'new-window' : 'inline')"
-              />
-            </div>
-            <!-- Windows always open small; when this is on (default) a window reopens at the
-                 size/position it was last left at (ADR-0019). -->
-            <div class="flex items-center gap-3 py-[11px]">
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span class="text-[13px] text-ink-gray-8">Remember window size</span>
-                <span class="text-[11.5px] text-ink-gray-5">Reopen each window at the size and position you last left it</span>
-              </div>
-              <Switch
-                :modelValue="os.state.rememberWindowSize"
-                @update:modelValue="os.setRememberWindowSize($event)"
-              />
             </div>
           </template>
 
@@ -147,26 +114,6 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
             <div v-for="(r, i) in customizeRows" :key="i" class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
               <div class="flex min-w-0 flex-1 flex-col gap-0.5"><span class="text-[13px] text-ink-gray-8">{{ r.label }}</span><span class="text-[11.5px] text-ink-gray-5">{{ r.sub }}</span></div>
               <Switch :modelValue="toggleVal(r.key, r.def)" @update:modelValue="flip(r.key, r.def)" />
-            </div>
-          </template>
-
-          <template v-else-if="tab==='Theme'">
-            <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">APPEARANCE</div>
-            <div class="mb-2 flex gap-3">
-              <button v-for="op in themeOpts" :key="op.value" @click="os.setTheme(op.value)" class="flex-1 cursor-pointer rounded-[10px] bg-surface-base p-2.5 text-left"
-                :style="{ border: os.state.theme===op.value ? '1px solid var(--outline-gray-4)' : '1px solid var(--outline-gray-2)', boxShadow: os.state.theme===op.value ? 'var(--shadow-sm)' : 'none' }">
-                <span class="relative mb-2 block h-[54px] w-full overflow-hidden rounded-[7px] border border-outline-gray-2" :style="{ background: op.previewBg }">
-                  <span class="absolute left-[7px] right-[7px] top-[7px] h-[9px] rounded-[3px]" :style="{ background: op.bar }"></span>
-                  <span class="absolute left-[7px] top-[22px] h-5 w-[55%] rounded" :style="{ background: op.card }"></span>
-                </span>
-                <span class="flex items-center gap-1.5 text-[12.5px] text-ink-gray-8">
-                  <span class="inline-block h-[15px] w-[15px] flex-shrink-0 rounded-full bg-white" :style="{ border: os.state.theme===op.value ? '4px solid var(--surface-gray-9)' : '1.5px solid var(--outline-gray-3)' }"></span>{{ op.label }}
-                </span>
-              </button>
-            </div>
-            <div v-for="(t, i) in themeToggles" :key="i" class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5"><span class="text-[13px] text-ink-gray-8">{{ t.label }}</span><span class="text-[11.5px] text-ink-gray-5">{{ t.sub }}</span></div>
-              <Switch :modelValue="toggleVal(t.key, t.def)" @update:modelValue="flip(t.key, t.def)" />
             </div>
           </template>
         </div>

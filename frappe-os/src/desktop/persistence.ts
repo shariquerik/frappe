@@ -33,7 +33,7 @@ export function validSurface(s?: Surface | null): boolean {
 export function serialize() {
   return {
     version: BLOB_VERSION,
-    windows: state.windows.filter((w) => !['settings', 'wallpaper'].includes(windowRole(w.id))).map((w) => ({
+    windows: state.windows.filter((w) => !['settings', 'system'].includes(windowRole(w.id))).map((w) => ({
       id: w.id, surface: w.surface,
       back: (w.back || []).slice(-HIST_CAP), fwd: (w.fwd || []).slice(-HIST_CAP),
     })),
@@ -41,6 +41,7 @@ export function serialize() {
     theme: state.theme, wallpaper: state.wallpaper,
     toggles: state.toggles, sidebarHidden: state.sidebarHidden,
     rowOpenTarget: state.rowOpenTarget, rememberWindowSize: state.rememberWindowSize,
+    dockPosition: state.dockPosition, dockAutoHide: state.dockAutoHide,
   }
 }
 
@@ -80,6 +81,8 @@ export function hydrate(): boolean {
   state.sidebarHidden = blob.sidebarHidden || {}
   state.rowOpenTarget = blob.rowOpenTarget === 'new-window' ? 'new-window' : 'inline'
   state.rememberWindowSize = blob.rememberWindowSize !== false // default on
+  state.dockPosition = ['bottom', 'left', 'right'].includes(blob.dockPosition) ? blob.dockPosition : 'left'
+  state.dockAutoHide = blob.dockAutoHide !== false // default on
   syncTopZ(windows, state.geo)
   return true
 }
@@ -91,7 +94,7 @@ export function hydrate(): boolean {
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 export function startAutosave(): void {
   watch(
-    () => [state.windows, state.geo, state.split, state.activeId, state.theme, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize],
+    () => [state.windows, state.geo, state.split, state.activeId, state.theme, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
     () => {
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { try { localStorage.setItem(BLOB_KEY, JSON.stringify(serialize())) } catch { /* quota / private mode: skip */ } }, 250)

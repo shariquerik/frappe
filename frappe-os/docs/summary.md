@@ -20,15 +20,15 @@ no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused*
 **A window** (`state.windows[]`):
 ```
 { id,                          // identity + role (windowRole derives the role from the prefix)
-  surface,                     // WHAT it shows — builtin (dashboard/list/form/settings/wallpaper) or applet (ADR-0012)
+  surface,                     // WHAT it shows — builtin (dashboard/list/form/settings/system-settings) or applet (ADR-0012)
   back?, fwd? }                // per-window nav history (app windows only)
 ```
 - IDs: `app:<appId>` (canonical instance) · `app:<appId>#n` (extra instances, n ≥ 2) ·
-  `settings:<appId>` · `wallpaper` (singleton system pane). One window per id (deduped). An
+  `settings:<appId>` · `system-settings` (singleton system pane). One window per id (deduped). An
   app may have **multiple instances** (File ▸ New window): the first owns the bare
   `app:<id>`, extras get `#n`; the bare `/os/<app>` path addresses the canonical and a twin
   is addressed by `?instance=n` (ADR-0016). `windowRole(id)` derives the role
-  (`app`|`settings`|`wallpaper`) from the id prefix (the `#n` suffix is still role `app`).
+  (`app`|`settings`|`system`) from the id prefix (the `#n` suffix is still role `app`).
   There is **no record/pop-out window kind**: opening a record in a new window mints an
   ordinary app instance already on that record's form (ADR-0017).
 - **Geometry is separate**: `state.geo[id] = {x,y,w,h,z,min,max}`, merged over a by-index
@@ -36,7 +36,7 @@ no `<router-view>` UI. The URL is a side-channel that only mirrors the *focused*
 
 **Persistence**: one localStorage blob (`frappe-os:desktop`) holds windows/geo/split/
 activeId/theme/wallpaper/toggles, debounced 250ms (`startAutosave`). Excluded: ephemeral
-overlays (palette/menu) and the transient **settings / wallpaper windows** (respawned from URL, never saved).
+overlays (palette/menu) and the transient **settings / system-settings windows** (respawned from URL, never saved).
 `hydrate()` runs before routing and defensively drops windows whose doctype/record no
 longer resolves.
 
@@ -168,5 +168,6 @@ yarn cypress       # Cypress interactive runner
 - Menu-bar keyboard-shortcut chips omitted (frappe-ui Dropdown is label + action only).
 - FormLayout Link fields render as disabled inputs; long Text fields don't span both columns.
 - Command palette is a custom blurred overlay (frappe-ui Dialog doesn't match the macOS
-  sheet look). The wallpaper picker is a singleton desktop window (`wallpaper` role), not
-  an overlay — opened from the desktop context-menu / menu bar, deep-linkable at `/wallpaper`.
+  sheet look). System Settings is a singleton desktop window (`system` role) with the
+  desktop-wide prefs (Appearance/wallpaper, Dock), not an overlay — opened from the desktop
+  context-menu / menu bar / dock right-click, deep-linkable at `/system-settings`.

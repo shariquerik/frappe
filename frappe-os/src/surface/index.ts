@@ -28,9 +28,12 @@ export const settingsSurface = (appId: string, tab = 'General'): BuiltinSurface 
 // no dashboard (rung 4 of the resolver, ADR-0021) — keeps every declared OS app openable
 // rather than blank. The terminal fallback the dormant rung-3 doctype-list will replace.
 export const emptyAppSurface = (appId: string): BuiltinSurface => ({ kind: 'builtin', view: 'empty', appId })
-// The wallpaper picker — a system (not app-scoped) pane. Owned by the framework app so
+// System Settings — a desktop-wide (not app-scoped) pane holding the global preferences
+// (General/window behavior, Appearance/theme, Wallpaper, Dock). Owned by the framework app so
 // chrome/asset scoping has a real app to resolve, but opened as its own singleton window.
-export const wallpaperSurface = (): BuiltinSurface => ({ kind: 'builtin', view: 'wallpaper', appId: 'frappe' })
+// `section` selects the pane.
+export const systemSettingsSurface = (section = 'General'): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'system-settings', appId: 'frappe', params: { section } })
 // An applet surface (ADR-0012): `appletId` resolves to a Vue component at
 // mount; `props` are the serializable view-params handed to it via v-bind (os is never one).
 export const appletSurface = (appId: string, appletId: string, props?: Record<string, unknown>): AppletSurface =>
@@ -122,12 +125,12 @@ export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.ta
 
 // Window role is encoded by the id prefix (the id is built from the role at open time),
 // so it is derived, never stored — the Surface describes the *content*, the id describes
-// the window *instance*. 'settings' = a settings pane, 'wallpaper' = the singleton
-// wallpaper picker, everything else is a navigable 'app' window (a record opened in a new
-// window is an ordinary app Instance, ADR-0017 — there is no record-only window role).
-export function windowRole(id: string): 'app' | 'settings' | 'wallpaper' {
+// the window *instance*. 'settings' = a per-app settings pane, 'system' = the singleton
+// System Settings window, everything else is a navigable 'app' window (a record opened in a
+// new window is an ordinary app Instance, ADR-0017 — there is no record-only window role).
+export function windowRole(id: string): 'app' | 'settings' | 'system' {
   if (id.startsWith('settings:')) return 'settings'
-  if (id === 'wallpaper') return 'wallpaper'
+  if (id === 'system-settings') return 'system'
   return 'app'
 }
 

@@ -23,7 +23,7 @@ import {
   openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit,
-  setTheme, wallpaperDefs, currentWp, setWallpaper, openWallpaper, closeWallpaper, setRowOpenTarget, setRememberWindowSize, tog, isOn,
+  setTheme, wallpaperDefs, currentWp, setWallpaper, openSystemSettings, closeSystemSettings, setSystemSettingsSection, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
 import { hydrate, startAutosave } from './persistence'
@@ -57,7 +57,7 @@ export function useOS() {
     focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp,
     toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit, setTheme,
-    setWallpaper, openWallpaper, closeWallpaper, setRowOpenTarget, setRememberWindowSize, tog, isOn, openPalette, closePalette,
+    setWallpaper, openSystemSettings, closeSystemSettings, setSystemSettingsSection, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
     setDeskEl, setDockEl, deskRef,
   }
 }

@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
 		<div
 			class="absolute inset-0 z-0"
 			:style="{ background: wp.bg }"
-			@contextmenu.prevent="os.openWallpaper()"
+			@contextmenu.prevent="os.openSystemSettings('Wallpaper')"
 		></div>
 
 		<!-- desktop icons -->

@@ -10,7 +10,7 @@ import { useOS } from "@/desktop";
 import { OS_KEY, tryGetOsApi } from "@/data/os-api";
 import { resolveApplet as resolveOsApplet } from "@/registry";
 import { DoctypeView } from "@/components/Views";
-import { SettingsDialog, WallpaperPicker } from "@/components/Settings";
+import { SettingsDialog, SystemSettings } from "@/components/Settings";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT } from "./toolbar";
@@ -29,7 +29,7 @@ import type { ViewProps } from "@/config/types";
 const props = defineProps<{ win: OsWindow }>();
 const os = useOS();
 
-// Window role (app/settings/wallpaper) is derived from the id; the surface is the content.
+// Window role (app/settings/system) is derived from the id; the surface is the content.
 const role = computed(() => windowRole(props.win.id));
 const s = computed<BuiltinSurface>(() => props.win.surface as BuiltinSurface);
 
@@ -213,11 +213,11 @@ const viewProps = computed<ViewProps>(() => {
 				</div>
 			</template>
 
-			<!-- ===== WALLPAPER WINDOW (singleton system pane) ===== -->
-			<template v-else-if="role === 'wallpaper'">
-				<WindowChrome :win="win" title="Wallpaper" :logo="app.logo" />
+			<!-- ===== SYSTEM SETTINGS WINDOW (singleton system pane) ===== -->
+			<template v-else-if="role === 'system'">
+				<WindowChrome :win="win" title="System Settings" :logo="app.logo" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-					<WallpaperPicker />
+					<SystemSettings :win="win" />
 				</div>
 			</template>
 		</div>

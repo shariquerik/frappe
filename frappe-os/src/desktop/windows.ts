@@ -7,10 +7,10 @@ import { appForDoctype } from '@/registry'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
-  dashboardSurface, listSurface, formSurface, settingsSurface, wallpaperSurface, appletSurface,
+  dashboardSurface, listSurface, formSurface, settingsSurface, systemSettingsSurface, appletSurface,
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
 } from '@/surface'
-import type { OsWindow, RowOpenTarget, Surface, Theme, WallpaperDef } from '@/types'
+import type { DockPosition, OsWindow, RowOpenTarget, Surface, Theme, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
 // Presence dots shown on a window. The real backend has no viewer source yet, so a form
@@ -299,17 +299,26 @@ export const currentWp = computed(() => {
   return list.find((w) => w.id === id) || list[0]
 })
 export const setWallpaper = (id: string) => { state.wallpaper = id }
-// The wallpaper picker is a singleton window (like a settings pane): open focuses the
-// existing one or spawns it; close just removes it. Transient — never persisted.
-export function openWallpaper() {
-  const id = 'wallpaper'
+// System Settings is a singleton window (like a settings pane) holding the desktop-wide
+// preferences (General/window behavior, Appearance/theme, Wallpaper, Dock): open focuses the
+// existing one or spawns it, re-targeting its `section` pane; close just removes it.
+// Transient — never persisted.
+export function openSystemSettings(section = 'General') {
+  const id = 'system-settings'
   const z = bumpZ()
-  if (!state.windows.find((x) => x.id === id)) state.windows.push({ id, surface: wallpaperSurface() })
+  const w = state.windows.find((x) => x.id === id)
+  if (!w) state.windows.push({ id, surface: systemSettingsSurface(section) })
+  else if (isBuiltin(w.surface)) w.surface.params = { section }
   setGeo(id, { z, min: false })
   state.activeId = id
   state.menu = null
 }
-export const closeWallpaper = (id = 'wallpaper') => closeWin(id)
+export const closeSystemSettings = (id = 'system-settings') => closeWin(id)
+// Switch the open System Settings window to a different pane (left-nav click).
+export function setSystemSettingsSection(section: string) {
+  const w = state.windows.find((x) => x.id === 'system-settings')
+  if (w && isBuiltin(w.surface)) w.surface.params = { section }
+}
 
 // The per-user list-row open-target preference (ADR-0018), persisted like sidebarHidden.
 export const setRowOpenTarget = (t: RowOpenTarget) => { state.rowOpenTarget = t }
@@ -317,6 +326,11 @@ export const setRowOpenTarget = (t: RowOpenTarget) => { state.rowOpenTarget = t 
 // Whether a window reopens at its last size/position (ADR-0019), persisted like
 // rowOpenTarget. Off makes every window open at the standard small size.
 export const setRememberWindowSize = (on: boolean) => { state.rememberWindowSize = on }
+
+// Dock placement and reveal behaviour (ADR-0022), persisted like rememberWindowSize. Position
+// is one of bottom/left/right; auto-hide off pins the dock so it never slides away.
+export const setDockPosition = (p: DockPosition) => { state.dockPosition = p }
+export const setDockAutoHide = (on: boolean) => { state.dockAutoHide = on }
 
 export const tog = (k: string, def: boolean) => { state.toggles[k] = !(state.toggles[k] == null ? def : state.toggles[k]) }
 export const isOn = (k: string, def: boolean): boolean => { const v = state.toggles[k]; return v == null ? def : v }
