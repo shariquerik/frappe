@@ -15,7 +15,6 @@ const os = useOS();
 const ICON = os.DATA.ICON;
 
 const wp = computed(() => os.currentWp.value);
-const noWindows = computed(() => os.state.windows.length === 0);
 const desktopIcons = [
 	{ label: "Frappe Cloud", icon: ICON.drive, open: () => os.openApp("frappe") },
 	{ label: "Reports", icon: ICON.grid, open: () => os.openApp("erpnext") },
@@ -86,22 +85,6 @@ onBeforeUnmount(() => {
 				</span>
 				<span :style="deskLabelStyle">{{ di.label }}</span>
 			</button>
-		</div>
-
-		<!-- empty hint -->
-		<div
-			v-if="noWindows"
-			class="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center gap-3"
-			:style="
-				wp.dark
-					? 'color:rgba(255,255,255,0.78);text-shadow:0 1px 3px rgba(0,0,0,0.4);'
-					: 'color:var(--ink-gray-5);'
-			"
-		>
-			<span class="lucide-app-window size-[44px]"></span>
-			<div class="max-w-[280px] text-center text-[13.5px] leading-normal">
-				Open an app from the dock below to get started.
-			</div>
 		</div>
 
 		<!-- windows -->
