@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-06-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "region",
+  "role",
+  "surface_ref",
+  "position"
+ ],
+ "fields": [
+  {
+   "default": "desktop",
+   "fieldname": "region",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Region",
+   "options": "desktop\ndock",
+   "reqd": 1
+  },
+  {
+   "description": "The role this placement is scoped to. Leave blank to offer it to every user. A user receives the union of every role-scoped placement they qualify for (ADR-0023).",
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Role",
+   "options": "Role"
+  },
+  {
+   "description": "The stable, app-qualified surface reference this pin targets (ADR-0021): a bare app, a dashboard, an applet, or a doctype + view. Stored as data; the client resolves it.",
+   "fieldname": "surface_ref",
+   "fieldtype": "JSON",
+   "label": "Surface Reference",
+   "reqd": 1
+  },
+  {
+   "description": "Region-appropriate position (ADR-0023): an edge-anchored grid cell {column, row} for the desktop, a 1-D {order} for the dock. Never raw pixels.",
+   "fieldname": "position",
+   "fieldtype": "JSON",
+   "label": "Position"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Desk",
+ "name": "OS Placement",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

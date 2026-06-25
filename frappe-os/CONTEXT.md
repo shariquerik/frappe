@@ -204,9 +204,53 @@ _Avoid_: "button", "menu item" (those are how an Action *renders* in a given reg
 concept); "command" (that is the verb the Action places).
 
 **Region**:
-A named area of OS chrome that hosts Actions — the menu bar, a window toolbar, a context
-menu, the command palette, the dock. The `target` of an Action's identity tuple. The OS
+A named area of OS chrome that hosts **Actions and Placements** — the menu bar, a window
+toolbar, a context menu, the command palette, the dock, the desktop. For an Action it is the
+`target` of the identity tuple; for a Placement it is where the pinned reference lives. The OS
 owns the set of regions (closed-but-data-driven, like extension-point types — ADR-0004).
+_Avoid_: treating Region as Actions-only — the dock and desktop also host Placements.
+
+**Placement**:
+A user-arrangeable pin of a **surface reference** into a **Region** (today the **desktop** or
+the **dock**), carrying a region-appropriate **position** (the desktop a 2-D spot, the dock a 1-D
+order). One concept spans both: a Placement in the desktop region is colloquially a *desktop
+icon / shortcut*, one in the dock region a *dock pin*. Unlike an **Action**, a Placement is
+**unconditional** — it has no `when`/Eligibility and never enters the resolver's specificity
+contest; it just sits where the user put it. Placements are a **Collection** resolved across the
+**App < Site < User** layers (members de-duped by id, ordered, individually hideable): an
+OS/App-default baseline, ∪ **Site** members scoped to the user's **roles** (Role is a *scope on
+the Site layer*, not a fourth rung — see Customization), ⊕ the user's personal **override layer**.
+That override layer is the copy-on-write half: a user's first move/hide/add materialises per-member
+**Patches** over the resolved base, so admin changes to a role's desktop still flow through to
+customised users (not a frozen snapshot). The reference is the same app-qualified, permission-gated
+**surface reference** used by Default surface — a role-scoped or cross-app pin is honoured only if
+the viewer may see that surface.
+_Avoid_: "shortcut"/"dock pin" as separate concepts (they are one Placement differing only by
+region + position), "snapshot"/"copy" for the user layer (it is an override layer of Patches).
+
+**Finder**:
+The OS's **cross-app navigator** — a single `system`-style singleton **Window** (like System
+Settings: respawned-from-URL, not persisted) whose sidebar holds **Locations**. The one place to
+launch any app and to **drag a destination out** onto the desktop or dock (creating a
+**Placement**). Despite the macOS-borrowed name it is **not a file browser** — Frappe OS has no
+files; it navigates apps and destinations. Opened from the dock's launcher button (which no longer
+opens the command palette — the two are now distinct, Finder = launch/browse, ⌘K palette = command
+search). Subsumes the "app launcher" idea: the launcher is simply the **Applications** Location.
+_Avoid_: "file manager"/"file browser" (no files), "Launchpad"/"App Launcher" as a separate
+surface (it is the Applications Location of the Finder), "Spotlight" (that is the command palette).
+
+**Location**:
+A named entry in the **Finder** sidebar — one navigable source of destinations. The shipped set:
+**Applications** (every app the viewer may see, plus a Settings entry — the launcher and primary
+drag-source), **Doctypes** (a cross-app catalog of doctypes, a *flattened projection of the same
+registry module→doctype data the per-app nav rail uses* — a different projection, not a second
+store), **Recents** (a per-user, time-ordered log of recently opened **surface references** —
+*OS-tracked*, server-side and roaming), and **Favorites** (a read-only *mirror/manager* of the
+viewer's existing desktop+dock **Placements** — **not** a third placement region; the only
+placement regions remain desktop and dock). Dragging any item out of a Location creates a
+Placement; the dragged thing is always expressed as a **surface reference**.
+_Avoid_: calling Favorites a placement region (it mirrors Placements, it does not host them),
+treating the Doctypes Location as a separate doctype store (it reprojects the registry).
 
 **Handler**:
 What a Command does when invoked — one of a **closed set of kinds**. Currently: **navigate**

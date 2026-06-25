@@ -19,6 +19,7 @@ function fromWindow(): BootData {
     roles: Array.isArray(w.roles) ? w.roles : [],
     registry: w.registry || [],
     permissions: w.permissions || {},
+    placements: Array.isArray(w.placements) ? w.placements : [],
   }
 }
 

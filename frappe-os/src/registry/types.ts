@@ -55,4 +55,8 @@ export interface BootData {
   roles: string[]
   registry: OsRegistryData | unknown[]
   permissions: Record<string, Record<string, boolean>>
+  // The server-resolved desktop/dock Placements (ADR-0023): App-default baseline ∪ role-scoped
+  // Site ⊕ User overrides, already merged + permission-gated. Tolerant like `registry` (ADR-0008):
+  // an older server omits it, so the placements seam guards the shape (→ empty desktop/dock).
+  placements?: unknown[]
 }

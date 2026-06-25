@@ -6,6 +6,7 @@
 # and form views from live meta; the curated display config (icons, grouping,
 # dashboard cards) lives in the frontend. Modeled on the /x shell host page (x.py).
 
+import json
 from urllib.parse import urlencode
 
 import frappe
@@ -79,6 +80,7 @@ def get_boot():
 		"roles": frappe.get_roles(),
 		"registry": get_registry(),
 		"permissions": get_permissions(),
+		"placements": get_placements(),
 	}
 
 
@@ -164,6 +166,11 @@ def _valid_surface_ref(ref):
 	if ref.get("doctype") and ref.get("view"):
 		return True
 	if ref.get("dashboard"):
+		return True
+	# A bare-app reference ({"app": "frappe"}, no applet/doctype/dashboard) — "open the app's
+	# default surface". ADR-0023 lists "an app" as a surface-reference kind; here `app` carries
+	# it alone rather than only qualifying one of the others.
+	if ref.get("app"):
 		return True
 	return False
 
@@ -438,6 +445,109 @@ def get_registry():
 	contributions.extend(_command_contributions())
 	contributions.extend(_action_contributions())
 	return {"schemaVersion": 1, "contributions": contributions}
+
+
+# ── Placements (ADR-0023): a layered, role-scoped desktop and dock ────────────────
+# The App-default baseline — OS-shipped pins reproducing today's desktop set for a fresh user
+# (the desktop analog of APP_ORDER). OS-owned for v1; each is a structural placement (region +
+# surface reference + position), its presentation overlaid client-side from the reference. The
+# two seed icons land on the frappe and erpnext apps; a ref to an app the viewer can't see is
+# dropped by the resolver, so an uninstalled app simply yields one fewer icon.
+APP_DEFAULT_PLACEMENTS = [
+	{"region": "desktop", "ref": {"app": "frappe"}, "position": {"column": 0, "row": 0}},
+	{"region": "desktop", "ref": {"app": "erpnext"}, "position": {"column": 0, "row": 1}},
+]
+
+
+def _ref_key(ref):
+	"""Canonical identity key for a surface reference — the dedup/override target. A Placement's
+	identity is (region, surface-reference) (ADR-0023); this folds the reference half into a stable
+	string so two layers pinning the same destination collapse to one."""
+	return json.dumps(ref, sort_keys=True)
+
+
+def merge_placements(baseline, site, overrides, can_see):
+	"""Fold the three Placement layers into one resolved list in precedence order App < Site <
+	User (ADR-0023). Pure — `can_see(ref) -> bool` is the injected permission gate (ADR-0010), so
+	the merge logic is testable without a site. Baseline ∪ role-scoped Site are unioned and
+	de-duped by identity (region, ref); then each User override mutates the matching base entry in
+	place — a hide (tombstone) drops it, a position delta moves it, a reference not already present
+	is a brand-new user pin appended at the end. A user override never mutates a baseline/Site row,
+	only the user's own resolved view. Finally drop any pin whose reference the viewer may not see."""
+	by_key, order = {}, []
+	for placement in [*baseline, *site]:
+		key = (placement["region"], _ref_key(placement["ref"]))
+		if key not in by_key:
+			by_key[key] = dict(placement)
+			order.append(key)
+	for override in overrides:
+		key = (override["region"], _ref_key(override["ref"]))
+		if override.get("hidden"):
+			by_key.pop(key, None)
+		elif key in by_key:
+			if override.get("position") is not None:
+				by_key[key]["position"] = override["position"]
+		else:
+			by_key[key] = {"region": override["region"], "ref": override["ref"], "position": override.get("position")}
+			order.append(key)
+	return [by_key[key] for key in order if key in by_key and can_see(by_key[key]["ref"])]
+
+
+def _ref_visible(ref):
+	"""May the viewer see the surface a reference points at (ADR-0010)? A doctype reference is
+	gated by readable meta; every other shape (bare app / dashboard / applet) needs its owning app
+	to be an installed OS app the viewer participates in. A redirect never grants access."""
+	if not isinstance(ref, dict):
+		return False
+	if ref.get("doctype"):
+		return _readable_meta(ref["doctype"]) is not None
+	app = ref.get("app")
+	return bool(app) and app in _installed_os_apps()
+
+
+def _layer_rows(doctype, fields, filters=None):
+	"""This site's stored rows for a placement layer, or [] before the DocType is migrated (boot
+	must never crash). Reading the config table itself is not sensitive — the genuine gate is the
+	per-reference permission check in the resolver (ADR-0010) — so this reads with permissions off
+	and the resolver applies role-scoping / visibility."""
+	if not frappe.db.exists("DocType", doctype):
+		return []
+	return frappe.get_all(doctype, filters=filters or {}, fields=fields, ignore_permissions=True)
+
+
+def _parse_placement(row, hidden=False):
+	"""One stored row → the resolver's dict shape, parsing its JSON reference and position."""
+	placement = {"region": row.region, "ref": frappe.parse_json(row.surface_ref)}
+	placement["position"] = frappe.parse_json(row.position) if row.position else None
+	if hidden:
+		placement["hidden"] = bool(row.hidden)
+	return placement
+
+
+def _site_placements():
+	"""The Site layer for this user: every OS Placement row scoped to a role they hold (or to no
+	role — offered to all). Role is a scope applied here by the same per-user visibility filter the
+	Registry uses (ADR-0010), NOT a fourth precedence rung."""
+	roles = set(frappe.get_roles())
+	rows = _layer_rows("OS Placement", ["region", "surface_ref", "position", "role"])
+	return [_parse_placement(row) for row in rows if not row.role or row.role in roles]
+
+
+def _user_overrides():
+	"""The User layer: this user's own OS Placement Override deltas (move / hide / new pin)."""
+	rows = _layer_rows(
+		"OS Placement Override",
+		["region", "surface_ref", "position", "hidden"],
+		filters={"owner": frappe.session.user},
+	)
+	return [_parse_placement(row, hidden=True) for row in rows]
+
+
+def get_placements():
+	"""The resolved desktop/dock placement list for the boot payload (ADR-0023): App-default
+	baseline ∪ role-scoped Site ⊕ User overrides, permission-gated. The frontend receives only this
+	merged result and never sees the layers; its sole write path is its own User-layer overrides."""
+	return merge_placements(APP_DEFAULT_PLACEMENTS, _site_placements(), _user_overrides(), _ref_visible)
 
 
 def get_permissions():

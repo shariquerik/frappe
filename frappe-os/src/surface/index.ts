@@ -98,6 +98,24 @@ export function initialSurface(appId: string): Surface {
   return emptyAppSurface(appId)
 }
 
+// Resolve a Placement's surface reference (ADR-0023) into the Surface to open. Unlike resolveRef
+// (the default-surface rung-1 resolver) this does NO permission gating: a resolved placement is
+// ALREADY permission-filtered server-side, so re-gating here would be redundant and could only
+// wrongly drop a pin the server already cleared. A bare-app reference ({app}) has no Surface of
+// its own — it means "open the app's default surface" — so it returns null and the caller routes
+// it through openApp instead (see App.vue's openPlacement).
+export function placementSurface(ref: SurfaceRef): Surface | null {
+  if (ref.applet && ref.app) return appletSurface(ref.app, ref.applet)
+  if (ref.dashboard && ref.app) return dashboardSurface(ref.app)
+  if (ref.doctype && ref.view === 'list') return listSurface(ref.doctype)
+  return null
+}
+
+// A bare-app reference ({app:'frappe'}, no applet/doctype/dashboard) — pin/open the app itself
+// (its default surface), the desktop analog of clicking the dock icon (ADR-0023).
+export const isAppRef = (ref: SurfaceRef): boolean =>
+  !!ref.app && !ref.applet && !ref.doctype && !ref.dashboard
+
 // The app a surface belongs to — explicit on every constructed surface; for a bare
 // doctype-bound surface fall back to its owning app, and never null (chrome/asset
 // scoping always need one). The generic `openSurface` action routes through here.

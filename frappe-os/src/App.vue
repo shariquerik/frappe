@@ -6,19 +6,28 @@
 import { computed, onMounted, onBeforeUnmount } from "vue";
 import { ToastProvider } from "frappe-ui";
 import { useOS } from "@/desktop";
+import { usePlacements, placementView } from "@/placements";
+import { placementSurface, isAppRef } from "@/surface";
+import type { SurfaceRef } from "@/types";
 import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
 import { OSWindow } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
 
 const os = useOS();
-const ICON = os.DATA.ICON;
 
 const wp = computed(() => os.currentWp.value);
-const desktopIcons = [
-	{ label: "Frappe Cloud", icon: ICON.drive, open: () => os.openApp("frappe") },
-	{ label: "Reports", icon: ICON.grid, open: () => os.openApp("erpnext") },
-];
+// The desktop icons are no longer hardcoded — they are the server-resolved `desktop` Placements
+// (ADR-0023), projected to their presentation (label/icon, derived from the reference) here.
+const desktopIcons = computed(() => usePlacements().desktop().map(placementView));
+
+// Open a desktop pin: a bare-app reference opens the app's default surface (like the dock icon);
+// any other reference resolves to its Surface and opens in the owning app's window.
+function openPlacement(ref: SurfaceRef): void {
+	if (isAppRef(ref)) return os.openApp(ref.app!);
+	const surface = placementSurface(ref);
+	if (surface) os.openSurface(surface);
+}
 const deskLabelStyle = computed(() =>
 	wp.value.dark
 		? "font-size:11.5px;max-width:74px;text-align:center;line-height:1.2;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.45);"
@@ -73,12 +82,19 @@ onBeforeUnmount(() => {
 		<!-- desktop icons -->
 		<div class="absolute right-[18px] top-[46px] z-[1] flex flex-col gap-[14px]">
 			<button
-				v-for="(di, i) in desktopIcons"
-				:key="i"
+				v-for="di in desktopIcons"
+				:key="di.key"
 				class="flex w-[76px] cursor-pointer flex-col items-center gap-[5px] rounded-lg border-none bg-transparent px-0.5 py-1.5 hover:bg-[var(--surface-alpha-white-3)]"
-				@click="di.open()"
+				@click="openPlacement(di.ref)"
 			>
+				<img
+					v-if="di.logo"
+					:src="di.logo"
+					:alt="di.label"
+					class="h-[46px] w-[46px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]"
+				/>
 				<span
+					v-else
 					class="inline-flex h-[46px] w-[46px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]"
 				>
 					<span :class="di.icon" class="size-[22px]"></span>
