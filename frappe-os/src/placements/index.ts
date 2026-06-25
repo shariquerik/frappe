@@ -63,7 +63,11 @@ export function placementView(p: ResolvedPlacement): PlacementView {
   const ref = p.ref
   if (ref.doctype) {
     const meta = getMeta(ref.doctype)
-    return { key, ref, label: meta?.label || ref.doctype, icon: meta?.icon || 'lucide-table-2' }
+    const icon = meta?.icon || 'lucide-table-2'
+    // A form reference (a Recents entry / form Placement, ADR-0024) labels by its record name; a
+    // list reference labels by the doctype. Same doctype icon either way.
+    if (ref.view === 'form' && ref.name) return { key, ref, label: ref.name, icon }
+    return { key, ref, label: meta?.label || ref.doctype, icon }
   }
   const app = ref.app ? useRegistry().app(ref.app) : undefined
   if (ref.applet) {

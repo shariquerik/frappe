@@ -59,8 +59,13 @@ const keyOf = placementKey
   <div class="flex min-w-0 flex-1 flex-col overflow-auto px-[22px] py-5">
     <div class="mb-3 mt-1 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">{{ location.toUpperCase() }}</div>
 
-    <!-- Applications / Doctypes — draggable tile grid -->
-    <div v-if="location !== 'Favorites'" class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1">
+    <!-- Recents starts empty until a record is opened; the other tile Locations are never empty. -->
+    <div v-if="location === 'Recents' && !tiles.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
+      No recent records yet. Open a record and it shows up here.
+    </div>
+
+    <!-- Applications / Doctypes / Recents — draggable tile grid -->
+    <div v-else-if="location !== 'Favorites'" class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1">
       <button v-for="item in tiles" :key="item.key"
         class="flex cursor-grab flex-col items-center gap-[7px] rounded-lg border-none bg-transparent px-1 py-2.5 hover:bg-surface-gray-2 active:cursor-grabbing"
         @pointerdown="onTilePointerDown(item, $event)" @click="launch(item)">

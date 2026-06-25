@@ -7,10 +7,11 @@
 // the URL bridge are tested elsewhere (placements.spec / route-map.spec) — not re-tested here.
 import { beforeEach, afterEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
-import { windowRole } from '../src/surface'
+import { windowRole, placementSurface } from '../src/surface'
 import { serialize } from '../src/desktop/persistence'
 import { initRegistry } from '../src/registry'
 import { initPlacements, usePlacements, applyLocalOverride } from '../src/placements'
+import { initRecents } from '../src/recents'
 import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../src/components/Finder/locations'
 
 const os = useOS()
@@ -23,9 +24,13 @@ function reset() {
   localStorage.clear()
   initRegistry(null) // config seed → apps frappe/crm/erpnext with modules + doctypes
   initPlacements(null)
+  initRecents(null)
 }
 beforeEach(reset)
-afterEach(() => initPlacements(null))
+afterEach(() => {
+  initPlacements(null)
+  initRecents(null)
+})
 
 describe('the Finder singleton system-role window (System Settings precedent)', () => {
   it('opens a single system-role window and focuses it', () => {
@@ -134,5 +139,27 @@ describe('a Location drag-out → a desktop Placement (the User-layer write path
     initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
     applyLocalOverride({ region: 'desktop', ref: { app: 'crm' }, position: { column: 0, row: 0 } })
     expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'crm' }])
+  })
+})
+
+describe('Recents Location (ADR-0024) — renders the resolved log, drags out a form Placement', () => {
+  const formRef = (name) => ({ doctype: 'ToDo', name, view: 'form' })
+
+  it('itemsFor projects the recents store newest-first, each tile labeled by its record name', () => {
+    initRecents({
+      user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {},
+      recents: [{ ref: formRef('task-1') }, { ref: formRef('task-2') }],
+    })
+    const items = itemsFor('Recents')
+    expect(items.map((i) => i.ref)).toEqual([formRef('task-1'), formRef('task-2')])
+    expect(items[0].label).toBe('task-1') // a form reference labels by its record name, not the doctype
+  })
+
+  it('a recent dragged out reads back as a form Placement that resolves to the record', () => {
+    initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
+    applyLocalOverride({ region: 'desktop', ref: formRef('task-1'), position: { column: 0, row: 0 } })
+    const pin = usePlacements().desktop().find((p) => p.ref.name === 'task-1')
+    expect(pin).toBeTruthy()
+    expect(placementSurface(pin.ref)).toMatchObject({ kind: 'builtin', view: 'form', doctype: 'ToDo', recordName: 'task-1' })
   })
 })

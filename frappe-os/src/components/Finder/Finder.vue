@@ -22,6 +22,7 @@ const ICON = os.DATA.ICON
 const locationIcon: Record<Location, string> = {
   Applications: ICON.grid,
   Doctypes: ICON.table,
+  Recents: 'lucide-clock',
   Favorites: 'lucide-star',
 }
 const location = computed<Location>(() =>

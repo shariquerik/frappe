@@ -7,6 +7,7 @@
 //   data/types.ts      — the data-layer doc/cache/list-options shapes + the OS API seam
 //   registry/types.ts  — Registry contributions + the boot payload
 //   placements/types.ts — Placements: resolved desktop/dock pins (ADR-0023)
+//   recents/types.ts    — Recents: resolved per-user record-open log (ADR-0024)
 //   desktop/types.ts   — the window-manager's Theme + OsState
 //   routing/types.ts   — the parsed RouteParams
 //   actions/types.ts   — the Action/extension model (Command/Action/Region/Handler/Context)
@@ -15,6 +16,7 @@ export * from './config/types'
 export * from './data/types'
 export * from './registry/types'
 export * from './placements/types'
+export * from './recents/types'
 export * from './desktop/types'
 export * from './routing/types'
 export * from './actions/types'

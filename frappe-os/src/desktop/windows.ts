@@ -4,6 +4,7 @@
 // comes from config/*. This slice owns "what windows exist and what they show".
 import { computed } from 'vue'
 import { appForDoctype } from '@/registry'
+import { recordRecent } from '@/recents'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
@@ -129,8 +130,12 @@ export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
 
 export const openListGlobal = (dt: string, instance?: number | null) => ensureApp(appForDoctype(dt), listSurface(dt), instance)
 // `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.
-export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string) =>
-  ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance)
+// A real record open is the one event that feeds Recents (ADR-0024) — both global and inline form
+// openers note it (debounced server-side); list/app/dashboard opens deliberately do not.
+export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string) => {
+  recordRecent(dt, name)
+  return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance)
+}
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)
@@ -148,15 +153,27 @@ function navFocus(winId: string, surface: Surface) {
   state.activeId = winId
 }
 export const openList = (winId: string, dt: string) => navFocus(winId, listSurface(dt))
-export const openRecordInline = (winId: string, dt: string, name: string, aspect?: string) => navFocus(winId, formSurface(dt, name, aspect))
+export const openRecordInline = (winId: string, dt: string, name: string, aspect?: string) => {
+  recordRecent(dt, name)
+  navFocus(winId, formSurface(dt, name, aspect))
+}
 
 // A plain left-click on a list row opens the record per the user's preference (ADR-0018):
 // 'inline' re-uses the same window (swapping its sidebar to the Aspect rail); 'new-window'
 // mints a fresh app instance already on that record's form (the ADR-0017 path). The
 // right-click menu's explicit Open / Open in New Window bypass this and are always available.
 export function openRow(winId: string, dt: string, name: string) {
-  if (state.rowOpenTarget === 'new-window') newAppWindow(appForDoctype(dt), formSurface(dt, name))
+  if (state.rowOpenTarget === 'new-window') openRecordNewWindow(dt, name)
   else openRecordInline(winId, dt, name)
+}
+
+// Open a record in a BRAND-NEW app window (the ADR-0017 path). Like the focus-or-create openers it
+// is a real record open, so it feeds Recents (ADR-0024) — the shared seam both the 'new-window' row
+// preference and the explicit "Open in New Window" menu action funnel through, so neither bypasses
+// the recent-on-open write.
+export const openRecordNewWindow = (dt: string, name: string): OsWindow => {
+  recordRecent(dt, name)
+  return newAppWindow(appForDoctype(dt), formSurface(dt, name))
 }
 
 // Select a form Aspect (ADR-0018) in a window: re-navigate the same record's form to the new

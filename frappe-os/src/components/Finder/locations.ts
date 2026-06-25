@@ -9,6 +9,7 @@
 // fresh, from the permission-filtered app list.
 import { useRegistry } from '@/registry'
 import { placementView, usePlacements, type PlacementView } from '@/placements'
+import { useRecents } from '@/recents'
 import type { ResolvedPlacement, SurfaceRef } from '@/types'
 
 // One draggable Finder tile: a surface reference plus its derived presentation. Presentation is
@@ -16,8 +17,8 @@ import type { ResolvedPlacement, SurfaceRef } from '@/types'
 // Finder tile and the pin it creates look identical.
 export interface FinderItem extends PlacementView {}
 
-// The v1 Locations (Recents is deferred to #06). Open list, not a closed union — additive.
-export const LOCATIONS = ['Applications', 'Doctypes', 'Favorites'] as const
+// The Locations (ADR-0024). Open list, not a closed union — additive.
+export const LOCATIONS = ['Applications', 'Doctypes', 'Recents', 'Favorites'] as const
 export type Location = (typeof LOCATIONS)[number]
 
 // Project a surface reference to a Finder tile, reusing the desktop/dock presentation deriver so a
@@ -53,6 +54,14 @@ export function doctypeItems(): FinderItem[] {
   return out
 }
 
+// Recents — the per-user, server-resolved log of recently opened records (ADR-0024), newest-first,
+// deduped by reference and capped server-side. Each entry is a form reference, so a tile labels by
+// its record name (placementView) and a drag-out → a form Placement. Reprojects the live recents
+// store (useRecents), so a record opened this session shows here without a reload.
+export function recentItems(): FinderItem[] {
+  return useRecents().map((recent) => itemFor(recent.ref))
+}
+
 // Favorites — a read-only MIRROR of the viewer's resolved desktop + dock Placements (see what you've
 // pinned). It is NOT a third placement region; drag-out still targets desktop/dock only, and the
 // "remove" affordance clears the user's own pin (removePlacementOverride). Mirrors the live resolved
@@ -66,5 +75,6 @@ export function favoritePlacements(): ResolvedPlacement[] {
 export function itemsFor(location: Location): FinderItem[] {
   if (location === 'Applications') return applicationItems()
   if (location === 'Doctypes') return doctypeItems()
+  if (location === 'Recents') return recentItems()
   return []
 }

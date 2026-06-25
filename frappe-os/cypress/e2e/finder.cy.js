@@ -47,4 +47,13 @@ describe('Finder singleton window (ADR-0024)', () => {
     cy.get('[data-win-id="finder"]').should('be.visible') // still the one singleton window
     cy.location('pathname').should('eq', '/os/finder') // Location rides params, not the URL
   })
+
+  it('the Recents Location renders from the live boot recents key (ADR-0024)', () => {
+    // Exercises the new Location end-to-end: the sidebar entry, the boot `recents` key being read
+    // into the store, and the body rendering its (possibly empty) projection without throwing.
+    cy.visit('/os/finder')
+    cy.get('[data-win-id="finder"]').should('be.visible')
+    cy.get('[data-win-id="finder"]').contains('Recents').click()
+    cy.get('[data-win-id="finder"]').contains('RECENTS').should('be.visible') // the body header
+  })
 })

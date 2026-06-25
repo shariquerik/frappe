@@ -27,6 +27,9 @@ export interface SurfaceRef {
   applet?: string
   doctype?: string
   view?: string
+  // The record a form reference targets (ADR-0024): a Recents entry / form Placement pins a
+  // {doctype, name, view:'form'}. Absent for the list/app/dashboard/applet shapes.
+  name?: string
   dashboard?: boolean
   app?: string
 }
@@ -59,4 +62,7 @@ export interface BootData {
   // Site ⊕ User overrides, already merged + permission-gated. Tolerant like `registry` (ADR-0008):
   // an older server omits it, so the placements seam guards the shape (→ empty desktop/dock).
   placements?: unknown[]
+  // The server-resolved per-user Recents log (ADR-0024): record opens, newest-first, deduped +
+  // permission-gated + capped. Tolerant like `placements` — an older server omits it (→ empty Recents).
+  recents?: unknown[]
 }

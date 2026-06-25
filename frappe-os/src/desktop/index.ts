@@ -20,7 +20,7 @@ import {
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
-  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, openAspect, openRow, goHome,
+  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openSettings, closeSettings, setSettingsTab, enterSplit, exitSplit,
   setTheme, wallpaperDefs, currentWp, setWallpaper, openSystemSettings, closeSystemSettings, setSystemSettingsSection, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
@@ -52,7 +52,7 @@ export function useOS() {
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
     // window lifecycle + navigation
-    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openNew, openAspect, openRow, goHome,
+    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,

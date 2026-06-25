@@ -113,6 +113,9 @@ export function initialSurface(appId: string): Surface {
 export function placementSurface(ref: SurfaceRef): Surface | null {
   if (ref.applet && ref.app) return appletSurface(ref.app, ref.applet)
   if (ref.dashboard && ref.app) return dashboardSurface(ref.app)
+  // A form reference (a Recents entry dragged out to a Placement, ADR-0024) reopens the record;
+  // a list reference opens the list.
+  if (ref.doctype && ref.view === 'form' && ref.name) return formSurface(ref.doctype, ref.name)
   if (ref.doctype && ref.view === 'list') return listSurface(ref.doctype)
   return null
 }

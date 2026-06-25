@@ -110,6 +110,12 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   `WallpaperPicker`, `StatusPill`, `OSContextMenu` (generic cursor-pinned menu). The chrome **look** (Frappe-native ground/menu bar/
   windows/traffic dots + the adapt-behind dock) is specified in
   `docs/design/chrome-visual-language.md` — read it before restyling chrome.
+- **Customizable Desktop (DONE — ADR-0023/0024, slices #01–#06)**: user-arrangeable desktop/dock
+  **Placements** (`src/placements/`, server-resolved App<Site<User layers in `os.py`), the **Finder**
+  cross-app navigator + drag-source (`src/components/Finder/`), and a per-user **Recents** log of
+  record opens (`src/recents/` + the `OS Recent` DocType; the OS owns the definition, not Desk's
+  route log). Boot ships the resolved `placements` + `recents`; the frontend's only writes are its own
+  User-layer override rows and a record-on-open recent.
 - `index.css` — frappe-ui style + Tailwind. Backend
   host page: `frappe/www/os.{py,html}`. `os.py` reads each app's **`os_app` hook** for OS opt-in
   + identity (`_installed_os_apps`/`_os_app_decl`; the old `OS_APPS` list and `add_to_apps_screen`

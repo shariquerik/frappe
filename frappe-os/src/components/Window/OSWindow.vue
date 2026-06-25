@@ -20,7 +20,7 @@ import AppDashboard from "./AppDashboard.vue";
 import EmptyAppPane from "./EmptyAppPane.vue";
 import AspectRail from "./AspectRail.vue";
 import AspectPane from "./AspectPane.vue";
-import { windowRole, formSurface, sidebarKind, DEFAULT_ASPECT, aspectById } from "@/surface";
+import { windowRole, sidebarKind, DEFAULT_ASPECT, aspectById } from "@/surface";
 // OsWindow feeds defineProps, so these come from concrete modules, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { BuiltinSurface, AppletSurface, Geo, OsWindow, Surface } from "@/surface/types";
@@ -150,7 +150,7 @@ const viewProps = computed<ViewProps>(() => {
 		onOpenInline: (d, name) => os.openRecordInline(props.win.id, d, name),
 		// "Open in New Window" (list-row menu): mint a fresh app instance already on the
 		// record's form — an ordinary Instance, not a record-only window (ADR-0017).
-		onOpenNewWindow: (d, name) => os.newAppWindow(os.appForDoctype(d), formSurface(d, name)),
+		onOpenNewWindow: (d, name) => os.openRecordNewWindow(d, name),
 		onNew: (d) => os.openNew(props.win.id, d),
 		onCreated: (d, name) => os.openRecordInline(props.win.id, d, name),
 	};

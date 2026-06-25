@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-06-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "surface_ref",
+  "opened_at"
+ ],
+ "fields": [
+  {
+   "description": "The stable, app-qualified surface reference this open targets (ADR-0021/0024): a record's form reference {doctype, name, view}. Stored as data; the client resolves it. The identity a re-open dedups on.",
+   "fieldname": "surface_ref",
+   "fieldtype": "JSON",
+   "label": "Surface Reference",
+   "reqd": 1
+  },
+  {
+   "description": "When this surface was last opened. A re-open bumps it (one row per reference, ADR-0024); the server orders newest-first and trims to the cap on it.",
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Opened At",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Desk",
+ "name": "OS Recent",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "if_owner": 1,
+   "read": 1,
+   "role": "Desk User",
+   "write": 1
+  }
+ ],
+ "sort_field": "opened_at",
+ "sort_order": "DESC",
+ "states": []
+}
