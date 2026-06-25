@@ -10,6 +10,7 @@
 import { useRegistry } from '@/registry'
 import { contextForOS } from './context'
 import { FILE_ACTIONS, FILE_COMMANDS, FILE_REGION, invoke } from './contributions'
+import { PLACEMENT_ACTIONS, PLACEMENT_COMMANDS, suppressedPlacementCommands } from './placement-verbs'
 import { warnFeatureAppRemovals } from './removals'
 import { resolve } from './resolve'
 import type { Action, Command } from './types'
@@ -48,8 +49,8 @@ function merged(): Merged {
   const sourceCommands = useRegistry().commands()
   const sourceActions = useRegistry().actions()
   if (!cache || cache.sourceCommands !== sourceCommands || cache.sourceActions !== sourceActions) {
-    const byId = commandsById([...FILE_COMMANDS, ...sourceCommands])
-    cache = { sourceCommands, sourceActions, byId, actions: [...FILE_ACTIONS, ...sourceActions] }
+    const byId = commandsById([...FILE_COMMANDS, ...PLACEMENT_COMMANDS, ...sourceCommands])
+    cache = { sourceCommands, sourceActions, byId, actions: [...FILE_ACTIONS, ...PLACEMENT_ACTIONS, ...sourceActions] }
   }
   return cache
 }
@@ -68,11 +69,16 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
 export function fileMenuOptions(os: OsStore): MenuGroup[] {
   const { byId, actions } = merged()
   const { items, shadows } = resolve(actions, FILE_REGION, contextForOS(os))
+  // Each region's Add/Remove pair both resolve (distinct command ids never compete); the dead half
+  // — Add when already pinned, Remove when not — is dropped by pin state, so only the live verb of
+  // each pair renders. The inverse "Remove…" thus appears only on an already-pinned surface (#04).
+  const dead = suppressedPlacementCommands(os)
+  const live = items.filter((a) => !dead.has(a.command))
   // ADR-0014 item 4: on top of the resolver's uniform removal log, warn loudly when the app that
   // stripped chrome is a feature app (the surprising case) — classified from the folded registry.
   warnFeatureAppRemovals(shadows, useRegistry().appKind)
   const groups: MenuGroup[] = []
-  for (const action of items) {
+  for (const action of live) {
     const command = byId.get(action.command)
     if (!command) {
       // An Action whose Command id has no contribution can't render — warn, never silently drop

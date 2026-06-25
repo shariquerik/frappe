@@ -379,7 +379,7 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
 
   it('keeps the re-titled item in the OS default\'s slot — still two divider groups, not three', () => {
     os.openApp('erpnext')
-    const opts = fileMenuOptions(os)
+    const opts = fileMenuOptions(os).filter((g) => g.group !== 'p') // 'p' = the #04 Add/Remove verbs
     expect(opts.map((g) => g.group)).toEqual(['a', 'b']) // override inherits group 'a', no stray '' group
     expect(opts.find((g) => g.group === 'a').items.map((i) => i.label)).toEqual(['Open…', 'New ERPNext window'])
   })
@@ -422,7 +422,9 @@ describe('erpnext Close window removal (registry-folded, when-gated, suppressed 
   })
   afterEach(() => { warn.mockRestore(); initRegistry(null) })
 
-  const labels = () => fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label)
+  // Exclude the #04 Add/Remove placement verbs (group 'p') — this suite covers the Close-window
+  // removal, not the placement verbs, which now also render for a focused window.
+  const labels = () => fileMenuOptions(os).filter((g) => g.group !== 'p').flatMap((g) => g.items).map((i) => i.label)
 
   it('suppresses Close window when an erpnext window is focused', () => {
     os.openApp('erpnext')

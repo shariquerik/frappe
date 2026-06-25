@@ -1,0 +1,130 @@
+// The "Add to / Remove from Desktop / Dock" verbs (issue #04, ADR-0023) as first-party `frappe`
+// contributions, surfaced through the SAME Action machinery the File menu dogfoods (ADR-0001) —
+// four Commands placed by Actions into the `menubar:file` Region, NOT bespoke menu wiring. Each
+// pins/unpins WHATEVER the active window shows (its surface reference, ADR-0021), from ANY surface.
+//
+// The resolver is equality-only (`when`), so it can't express "is this surface already pinned".
+// That toggle (Add ↔ Remove) is a pure function of the current pin state, decided at PROJECTION
+// time by suppressedPlacementCommands (which fileMenuOptions in menubar.ts filters through) —
+// exactly where fileMenuOptions picks labels/handlers — so the verbs stay genuine resolved Actions
+// while the inverse only appears when its identity matches.
+import { surfaceAppId, windowRole } from '@/surface'
+import { usePlacements, placementKey, writePlacementOverride, removeResolvedPlacement } from '@/placements'
+import { nextDockOrder } from '@/desktop/dock-model'
+import { nextFreeCell, layoutDesktop } from '@/desktop/grid'
+import type { OsStore, Surface, SurfaceRef, PlacementRegion } from '@/types'
+import type { Action, Command } from './types'
+import { FILE_REGION, registerRunHandlers } from './contributions'
+
+// The surface reference (ADR-0021) a pin stores for what a window currently shows. Mirrors the
+// pinnable shapes placementSurface resolves back (applet / dashboard / doctype-list), so a pin
+// round-trips to the same Surface on open. A form (a record — not a placement shape) and every
+// other surface (empty/settings) pin the BARE APP, the most honest reusable destination.
+export function surfaceToRef(surface: Surface): SurfaceRef {
+  if (surface.kind === 'applet') return { app: surface.appId, applet: surface.appletId }
+  if (surface.view === 'dashboard') return { app: surface.appId, dashboard: true }
+  if (surface.view === 'list' && surface.doctype) return { doctype: surface.doctype, view: 'list' }
+  return { app: surfaceAppId(surface) }
+}
+
+// The active window's surface reference, or null when there is nothing to pin: a bare desktop (no
+// window), or a non-`app` window — the Finder / System Settings / a settings pane (windowRole !==
+// 'app') are OS chrome, not a destination, so the verbs never offer to pin the bare framework app.
+function activeRef(os: OsStore): SurfaceRef | null {
+  const win = os.state.windows.find((w) => w.id === os.state.activeId)
+  if (!win || windowRole(win.id) !== 'app') return null
+  return surfaceToRef(win.surface)
+}
+
+// Is `ref` already pinned in `region`? Identity match on (region, surface-reference) — the same
+// key the override seam dedups on — so the inverse "Remove…" verb appears only when it applies.
+function isPinned(region: PlacementRegion, ref: SurfaceRef): boolean {
+  const key = placementKey({ region, ref })
+  const list = region === 'desktop' ? usePlacements().desktop() : usePlacements().dock()
+  return list.some((p) => placementKey(p) === key)
+}
+
+// "Add to Desktop": upsert a User-layer new pin into the next free grid cell (#02), so it never
+// stacks on an existing icon. The desktop's free-cell math needs a height; the live desk size is
+// the store's deskRef.
+function addToDesktop(os: OsStore): void {
+  const ref = activeRef(os)
+  if (!ref) return
+  const deskHeight = os.deskRef.h
+  const taken = new Set(layoutDesktop(usePlacements().desktop(), deskHeight).map((c) => c.column + ',' + c.row))
+  const cell = nextFreeCell(taken, deskHeight)
+  void writePlacementOverride({ region: 'desktop', ref, position: cell })
+}
+
+// "Add to Dock": upsert a User-layer new pin appended past the current max order (#03), so a fresh
+// pin lands at the end of the dock rather than colliding with an existing one.
+function addToDock(os: OsStore): void {
+  const ref = activeRef(os)
+  if (!ref) return
+  void writePlacementOverride({ region: 'dock', ref, position: { order: nextDockOrder(usePlacements().dock()) } })
+}
+
+// "Remove from Desktop/Dock": a non-destructive personal removal. Find the resolved pin for the
+// active surface and hand it to the shared remove path, which clears an OWN row or tombstones an
+// INHERITED pin off the server's `inherited` flag — never a row delete on a shared layer (ADR-0023).
+function removeFrom(os: OsStore, region: PlacementRegion): void {
+  const ref = activeRef(os)
+  if (!ref) return
+  const list = region === 'desktop' ? usePlacements().desktop() : usePlacements().dock()
+  const pin = list.find((p) => placementKey(p) === placementKey({ region, ref }))
+  if (pin) void removeResolvedPlacement(pin)
+}
+
+// The four verbs as run Handlers, registered into the OPEN RUN_HANDLERS map the same way the File
+// menu's own defaults are (registerRunHandlers) — no privileged core, the general app seam.
+export const PLACEMENT_RUN_HANDLERS = {
+  'add-to-desktop': addToDesktop,
+  'add-to-dock': addToDock,
+  'remove-from-desktop': (os: OsStore) => removeFrom(os, 'desktop'),
+  'remove-from-dock': (os: OsStore) => removeFrom(os, 'dock'),
+}
+
+// Wire the verbs into the open RUN_HANDLERS map on import (the same seam an app uses), so the
+// File-menu projector that imports these constants also makes their `run` refs invocable.
+registerRunHandlers(PLACEMENT_RUN_HANDLERS)
+
+// The verb Commands. Add and Remove share a (region, command) identity per region so the menu
+// shows exactly ONE of each pair (decided by pin state in the projector below), competing in the
+// `menubar:file` Region like every other File item.
+export const PLACEMENT_COMMANDS: Command[] = [
+  { id: 'frappe.placement.add-desktop', sourceApp: 'frappe', title: 'Add to Desktop', handler: { kind: 'run', ref: 'add-to-desktop' } },
+  { id: 'frappe.placement.remove-desktop', sourceApp: 'frappe', title: 'Remove from Desktop', handler: { kind: 'run', ref: 'remove-from-desktop' } },
+  { id: 'frappe.placement.add-dock', sourceApp: 'frappe', title: 'Add to Dock', handler: { kind: 'run', ref: 'add-to-dock' } },
+  { id: 'frappe.placement.remove-dock', sourceApp: 'frappe', title: 'Remove from Dock', handler: { kind: 'run', ref: 'remove-from-dock' } },
+]
+
+// Both Add and Remove are placed into the File Region (a new divider group 'p'); which of each
+// pair renders is the projector's pin-state decision, so an inverse only shows when it applies.
+export const PLACEMENT_ACTIONS: Action[] = [
+  { command: 'frappe.placement.add-desktop', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 10 },
+  { command: 'frappe.placement.remove-desktop', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 10 },
+  { command: 'frappe.placement.add-dock', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 11 },
+  { command: 'frappe.placement.remove-dock', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 11 },
+]
+
+// Which verb of a region's Add/Remove pair is live right now: Remove when the active surface is
+// already pinned there, else Add. Returns the command id to keep (its inverse is dropped from the
+// rendered menu). A bare desktop (no active surface) keeps Add — a harmless no-op verb, never a
+// dangling Remove.
+export function liveVerb(os: OsStore, region: PlacementRegion): string {
+  const ref = activeRef(os)
+  const pinned = !!ref && isPinned(region, ref)
+  if (region === 'desktop') return pinned ? 'frappe.placement.remove-desktop' : 'frappe.placement.add-desktop'
+  return pinned ? 'frappe.placement.remove-dock' : 'frappe.placement.add-dock'
+}
+
+// The set of placement command ids to DROP from a resolved File menu: the dead half of each
+// Add/Remove pair. The projector (menubar.ts) filters resolved items through this so exactly the
+// live Add-or-Remove of each region renders. A bare desktop (no active surface to pin) drops ALL
+// four — a verb that could only no-op never shows.
+export function suppressedPlacementCommands(os: OsStore): Set<string> {
+  const all = new Set(PLACEMENT_COMMANDS.map((c) => c.id))
+  if (!activeRef(os)) return all
+  const live = new Set([liveVerb(os, 'desktop'), liveVerb(os, 'dock')])
+  return new Set([...all].filter((id) => !live.has(id)))
+}

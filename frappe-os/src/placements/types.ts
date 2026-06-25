@@ -25,4 +25,8 @@ export interface ResolvedPlacement {
   region: PlacementRegion
   ref: SurfaceRef
   position?: PlacementPosition | null
+  // Server-stamped: true when an App-default/Site layer backs this pin (a pure User-created pin has
+  // none). Removing it is a personal hide (tombstone), never a row delete on a shared layer — the
+  // authoritative own-vs-inherited signal, since a baseline pin carries a position too (ADR-0023).
+  inherited?: boolean
 }

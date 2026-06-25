@@ -6,6 +6,7 @@
 #   bench run-tests --module frappe.desk.doctype.os_placement.test_os_placement
 # or standalone:  ./env/bin/python -m unittest frappe.desk.doctype.os_placement.test_os_placement
 
+import json
 import unittest
 
 from frappe.www.os import merge_placements
@@ -13,6 +14,10 @@ from frappe.www.os import merge_placements
 
 def desktop(ref, position=None, **extra):
 	return {"region": "desktop", "ref": ref, "position": position, **extra}
+
+
+def _json(ref):
+	return json.dumps(ref, sort_keys=True)
 
 
 SEE_ALL = lambda ref: True
@@ -63,6 +68,20 @@ class TestPlacementResolver(unittest.TestCase):
 		overrides = [desktop({"doctype": "ToDo", "view": "list"}, {"column": 1, "row": 0})]
 		resolved = merge_placements(baseline, [], overrides, SEE_ALL)
 		self.assertEqual([p["ref"] for p in resolved], [{"app": "frappe"}, {"doctype": "ToDo", "view": "list"}])
+
+	def test_inherited_flag_marks_layer_not_position(self):
+		# A baseline/Site pin is stamped `inherited` so the client Remove hides (tombstones) it rather
+		# than deleting a non-existent own row — even when the user MOVED it (so it carries a position).
+		# A pin the user created themselves is NOT inherited and is removed by deleting its row.
+		baseline = [desktop({"app": "frappe"})]
+		overrides = [
+			desktop({"app": "frappe"}, {"column": 2, "row": 1}),  # user moved an inherited pin
+			desktop({"doctype": "ToDo", "view": "list"}, {"column": 1, "row": 0}),  # user's own new pin
+		]
+		resolved = merge_placements(baseline, [], overrides, SEE_ALL)
+		by_ref = {_json(p["ref"]): p for p in resolved}
+		self.assertTrue(by_ref[_json({"app": "frappe"})]["inherited"])  # moved-but-inherited stays inherited
+		self.assertFalse(by_ref[_json({"doctype": "ToDo", "view": "list"})].get("inherited"))  # own pin
 
 	def test_permission_filter_drops_invisible_refs(self):
 		baseline = [desktop({"app": "frappe"}), desktop({"app": "erpnext"})]

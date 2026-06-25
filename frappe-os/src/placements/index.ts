@@ -129,3 +129,13 @@ export async function removePlacementOverride(region: PlacementRegion, ref: Surf
     surface_ref: JSON.stringify(ref),
   }).catch((error) => console.error('delete_placement_override failed', error))
 }
+
+// Remove a resolved pin from the caller's OWN view (ADR-0023): an inherited (App-default/Site) pin
+// is suppressed with a `hidden` tombstone — its source row and every other user are untouched; a
+// pin the user created themselves is cleared by deleting that override row. Keys off the server's
+// `inherited` flag, NOT the position (a baseline pin carries one too). The single Remove path the
+// menu-bar verbs (#04) and Favorites (#05) share, so own-vs-inherited is decided in ONE place.
+export async function removeResolvedPlacement(pin: ResolvedPlacement): Promise<void> {
+  if (pin.inherited) return writePlacementOverride({ region: pin.region, ref: pin.ref, hidden: true })
+  return removePlacementOverride(pin.region, pin.ref)
+}

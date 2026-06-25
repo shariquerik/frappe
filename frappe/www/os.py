@@ -483,7 +483,10 @@ def merge_placements(baseline, site, overrides, can_see):
 	for placement in [*baseline, *site]:
 		key = (placement["region"], _ref_key(placement["ref"]))
 		if key not in by_key:
-			by_key[key] = dict(placement)
+			# `inherited`: this pin is backed by the App-default/Site layer, so the client's Remove
+			# suppresses it with a hide tombstone rather than deleting a (non-existent) own row. A
+			# baseline pin carries a position too (ADR-0023), so layer — not position — is authoritative.
+			by_key[key] = {**dict(placement), "inherited": True}
 			order.append(key)
 	for override in overrides:
 		key = (override["region"], _ref_key(override["ref"]))
@@ -493,6 +496,8 @@ def merge_placements(baseline, site, overrides, can_see):
 			if override.get("position") is not None:
 				by_key[key]["position"] = override["position"]
 		else:
+			# A reference not in any base layer is the user's OWN new pin (no `inherited`): Remove
+			# deletes its row outright.
 			by_key[key] = {"region": override["region"], "ref": override["ref"], "position": override.get("position")}
 			order.append(key)
 	return [by_key[key] for key in order if key in by_key and can_see(by_key[key]["ref"])]
