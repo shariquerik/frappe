@@ -76,7 +76,8 @@ const TOP = 32,
 // "Frappe card" frame: a constant hairline ring (ring-1 ring-black/10) folded into
 // the box-shadow — an inline box-shadow would otherwise override Tailwind's ring —
 // plus a focus-dependent contained drop shadow.
-const RING = "0 0 0 1px rgba(0,0,0,0.1)";
+// Outline token (not a hardcoded black ring) so the frame stays visible in dark mode.
+	const RING = "0 0 0 1px var(--outline-gray-2)";
 const SHADOW_ACTIVE = `${RING}, 0 16px 40px -16px rgba(20,16,50,0.45), 0 4px 12px -6px rgba(0,0,0,0.25)`;
 const SHADOW_INACTIVE = `${RING}, 0 10px 28px -18px rgba(20,16,50,0.35)`;
 

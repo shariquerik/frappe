@@ -20,9 +20,10 @@ const focused = computed(() => os.state.activeId === props.win.id);
 const maximized = computed(() => !!os.geoMap.value[props.win.id]?.max);
 // The bar is static and uses the default arrow cursor everywhere (no grab cursor —
 // it flickered against the controls/menubar which use their own cursors).
-// Solid #f8f9fc surface with a hairline inset bottom (no border, no vibrancy).
+// Theme-aware menu-bar surface (gray-50 light / gray-900 dark) with a hairline inset
+// bottom from the outline token so the seam stays visible in dark mode (no vibrancy).
 const barClass =
-	"relative flex items-center gap-2 h-11 px-2.5 flex-shrink-0 select-none cursor-default bg-[#f8f9fc] shadow-[inset_0_-1px_0_rgba(0,0,0,0.06)]";
+	"relative flex items-center gap-2 h-11 px-2.5 flex-shrink-0 select-none cursor-default bg-surface-menu-bar shadow-[inset_0_-1px_0_var(--outline-gray-1)]";
 // Traffic dot: a neutral pill that fills with its semantic color on group-hover.
 const dot =
 	"grid h-[12px] w-[12px] cursor-pointer place-items-center rounded-full border-none bg-surface-gray-5 p-0 transition-colors";
