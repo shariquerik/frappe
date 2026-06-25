@@ -5,9 +5,11 @@
 // so any one window can be brought to the front; 0 or 1 window focuses directly.
 import { computed, ref } from 'vue'
 import { useOS } from '@/desktop'
-import { windowRole, isBuiltin } from '@/surface'
+import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-model'
+import { windowRole, isBuiltin, isAppRef, placementSurface } from '@/surface'
+import { usePlacements, placementView, writePlacementOverride } from '@/placements'
 import OSDropdown from '../OSDropdown.vue'
-import type { OsWindow, BuiltinSurface } from '@/types'
+import type { OsWindow, BuiltinSurface, SurfaceRef } from '@/types'
 const os = useOS()
 
 // Adaptive backing: the dock floats trayless on the wallpaper, but grows an opaque tray
@@ -43,9 +45,9 @@ const popoverPlace = computed(() => ({
 }[pos.value]))
 const dividerShape = computed(() => (vertical.value ? 'h-px w-[38px] my-0.5' : 'w-px h-[38px] mx-0.5'))
 
-// The dock's extent along its run (icon count + launchpad), clamped to the screen.
+// The dock's extent along its run (pinned + transient icons + launchpad), clamped to the screen.
 const dockSpan = computed(() => {
-  const along = (os.APP_ORDER.length + 1) * 53 + 40
+  const along = (dockItems.value.length + 1) * 53 + 40
   const limit = (vertical.value ? os.deskRef.h || 800 : os.deskRef.w || 1280) - 40
   return Math.min(limit, along)
 })
@@ -121,28 +123,103 @@ function winSub(w: OsWindow): string {
   return 'Dashboard'
 }
 
-const dockApps = computed(() =>
-  os.APP_ORDER.map((id) => {
-    const a = os.DATA.APP[id]
-    const wins = os.state.windows.filter((w) => isBuiltin(w.surface) && w.surface.appId === id)
-    return {
-      id, name: a.name, logo: a.logo, count: wins.length,
-      windows: wins.map((w) => ({
-        id: w.id, title: winTitle(w), sub: winSub(w),
-        min: !!(os.geoMap.value[w.id] || {}).min, active: os.state.activeId === w.id,
-      })),
-    }
+// The dock is no longer APP_ORDER. It is the resolved `dock` Placements (pinned, ordered by their
+// 1-D `order`) ∪ a separator ∪ the running-but-unpinned apps (transient — they vanish when their
+// last window closes). Each item carries enough to render its icon, its running dots, and its
+// window chooser; presentation is derived from the reference (placementView) / the app (registry).
+const dockPins = computed(() => orderedDockPins(usePlacements().dock()))
+
+// Open app ids in first-opened order — the transient partition's input. A window's app is its
+// surface's owning app (builtin surfaces only in this slice, mirroring the chooser below). Filtered
+// to KNOWN apps: a window whose surface has no/unknown appId can't render a sensible dock tile (no
+// name, no logo), so it yields no transient item rather than a blank one.
+const openAppIds = computed(() =>
+  os.state.windows
+    .filter((w) => isBuiltin(w.surface))
+    .map((w) => (w.surface as BuiltinSurface).appId)
+    .filter((id): id is string => !!id && !!os.DATA.APP[id]),
+)
+
+// The app a dock item is "about", so its open windows light its running dots and feed its chooser.
+// A bare-app / transient item is that app; a doctype/applet pin resolves to its surface's owner.
+function refAppId(ref: SurfaceRef): string {
+  if (isAppRef(ref)) return ref.app || ''
+  const surface = placementSurface(ref)
+  return (surface && isBuiltin(surface) && surface.appId) || ref.app || ''
+}
+
+function winsFor(appId: string) {
+  const wins = os.state.windows.filter((w) => isBuiltin(w.surface) && (w.surface as BuiltinSurface).appId === appId)
+  return wins.map((w) => ({
+    id: w.id, title: winTitle(w), sub: winSub(w),
+    min: !!(os.geoMap.value[w.id] || {}).min, active: os.state.activeId === w.id,
+  }))
+}
+
+interface DockItem {
+  key: string
+  name: string
+  logo?: string
+  icon?: string
+  ref?: SurfaceRef // present on a pinned item (drives open); absent on a transient app item
+  appId: string
+  windows: ReturnType<typeof winsFor>
+}
+
+const pinnedItems = computed<DockItem[]>(() =>
+  dockPins.value.map((p) => {
+    const view = placementView(p)
+    const appId = refAppId(p.ref)
+    return { key: view.key, name: view.label, logo: view.logo, icon: view.icon, ref: p.ref, appId, windows: winsFor(appId) }
   }),
 )
-type DockApp = (typeof dockApps)['value'][number]
 
-function onIconClick(d: DockApp) {
-  if (d.count === 0) { os.openApp(d.id); os.state.dockMenu = null; return }
-  if (d.count === 1) { os.activateWin(d.windows[0].id); os.state.dockMenu = null; return }
-  os.state.dockMenu = os.state.dockMenu === d.id ? null : d.id
+const transientItems = computed<DockItem[]>(() =>
+  transientAppIds(usePlacements().dock(), openAppIds.value).map((id) => {
+    const a = os.DATA.APP[id]
+    return { key: 'transient:' + id, name: a?.name || id, logo: a?.logo, appId: id, windows: winsFor(id) }
+  }),
+)
+
+// All items along the run (pinned then transient) — the span estimate and v-for both read this.
+const dockItems = computed(() => [...pinnedItems.value, ...transientItems.value])
+
+function openItem(d: DockItem) {
+  // A pinned non-app reference opens its surface; an app reference (pinned or transient) opens the
+  // app's default surface — the same routing the desktop pins use (App.vue's openPlacement).
+  if (d.ref && !isAppRef(d.ref)) {
+    const surface = placementSurface(d.ref)
+    if (surface) os.openSurface(surface)
+    return
+  }
+  os.openApp(d.appId)
+}
+
+function onIconClick(d: DockItem) {
+  const count = d.windows.length
+  if (count === 0) { openItem(d); os.state.dockMenu = null; return }
+  if (count === 1) { os.activateWin(d.windows[0].id); os.state.dockMenu = null; return }
+  os.state.dockMenu = os.state.dockMenu === d.key ? null : d.key
 }
 function pick(winId: string) { os.activateWin(winId); os.state.dockMenu = null }
 const closeMenu = () => { os.state.dockMenu = null }
+
+// Reorder a pinned item to a new slot: persist one User-layer `order` override per pin whose
+// position changed (the whole new arrangement), through the write seam — the current user's own
+// rows only; baseline / Site rows are untouched. Optimistic, so the row re-sorts without a reload.
+function reorderPin(fromKey: string, toIndex: number) {
+  for (const { placement, order } of reorderDeltas(usePlacements().dock(), fromKey, toIndex)) {
+    void writePlacementOverride({ region: 'dock', ref: placement.ref, position: { order } })
+  }
+}
+
+// Native drag-to-reorder of the pinned set: pick up a pin, drop it on another pinned slot, and
+// the write seam persists the new order. Transient items aren't draggable — they aren't pinned.
+const draggingKey = ref<string | null>(null)
+function onPinDrop(targetIndex: number) {
+  if (draggingKey.value) reorderPin(draggingKey.value, targetIndex)
+  draggingKey.value = null
+}
 
 // Right-click dock settings (macOS-style). A Dropdown opens on a click, so to anchor it at the
 // cursor we drive it in controlled mode against a 1px trigger parked where the user right-clicked
@@ -185,19 +262,25 @@ const ctxOptions = computed(() => [
   <div class="absolute z-[90000]" :class="wrapClass">
     <!-- Trayless by default; an opaque tray fades in when a window sits behind the dock. -->
     <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]" @contextmenu="onDockContext">
-      <div v-for="d in dockApps" :key="d.id" class="relative flex items-end">
+      <!-- pinned dock placements (ADR-0023), draggable to reorder → a User-layer order override -->
+      <div v-for="(d, i) in pinnedItems" :key="d.key" class="relative flex items-end" draggable="true"
+        @dragstart="draggingKey = d.key" @dragend="draggingKey = null"
+        @dragover.prevent @drop.prevent="onPinDrop(i)">
         <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
-          <img :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
+          <img v-if="d.logo" :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
+          <span v-else class="inline-flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-outline-gray-2 bg-surface-base text-ink-gray-6" :class="iconShadow">
+            <span :class="d.icon" class="size-[20px]"></span>
+          </span>
           <!-- running indicator: a second dot hints at multiple windows -->
-          <span v-if="d.count" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
+          <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
             <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
-            <span v-if="d.count>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
+            <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
           </span>
         </button>
 
         <!-- window chooser popover -->
-        <div v-if="os.state.dockMenu===d.id" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
-          <div class="px-[9px] pb-[6px] pt-[5px] text-[11px] font-semibold text-ink-gray-5">{{ d.name }} — {{ d.count }} windows</div>
+        <div v-if="os.state.dockMenu===d.key" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
+          <div class="px-[9px] pb-[6px] pt-[5px] text-[11px] font-semibold text-ink-gray-5">{{ d.name }} — {{ d.windows.length }} windows</div>
           <button v-for="w in d.windows" :key="w.id" class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-[9px] py-[7px] text-left hover:!bg-surface-gray-2" @click="pick(w.id)"
             :style="{ background: w.active ? 'var(--surface-gray-3)' : 'transparent' }">
             <span class="inline-flex h-[7px] w-[7px] flex-shrink-0 rounded-full" :style="{ background: w.min ? 'var(--outline-gray-3)' : 'var(--surface-green-5)' }"></span>
@@ -208,6 +291,33 @@ const ctxOptions = computed(() => [
           </button>
         </div>
       </div>
+
+      <!-- separator between pinned and the running-but-unpinned (transient) set -->
+      <div v-if="transientItems.length" class="self-center" :class="[dividerShape, dividerClass]"></div>
+
+      <!-- transient running-but-unpinned apps: gone when their last window closes -->
+      <div v-for="d in transientItems" :key="d.key" class="relative flex items-end">
+        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
+          <img :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
+          <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
+            <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
+            <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
+          </span>
+        </button>
+
+        <div v-if="os.state.dockMenu===d.key" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
+          <div class="px-[9px] pb-[6px] pt-[5px] text-[11px] font-semibold text-ink-gray-5">{{ d.name }} — {{ d.windows.length }} windows</div>
+          <button v-for="w in d.windows" :key="w.id" class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-[9px] py-[7px] text-left hover:!bg-surface-gray-2" @click="pick(w.id)"
+            :style="{ background: w.active ? 'var(--surface-gray-3)' : 'transparent' }">
+            <span class="inline-flex h-[7px] w-[7px] flex-shrink-0 rounded-full" :style="{ background: w.min ? 'var(--outline-gray-3)' : 'var(--surface-green-5)' }"></span>
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-ink-gray-8">{{ w.title }}</span>
+              <span class="text-[11px] text-ink-gray-5">{{ w.sub }}{{ w.min ? ' · minimized' : '' }}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
       <div class="self-center" :class="[dividerShape, dividerClass]"></div>
       <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[launchpadClass, hoverLift]" title="Launchpad" @click="os.openPalette()">
         <span class="lucide-layout-grid size-[20px]"></span>

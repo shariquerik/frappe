@@ -456,6 +456,11 @@ def get_registry():
 APP_DEFAULT_PLACEMENTS = [
 	{"region": "desktop", "ref": {"app": "frappe"}, "position": {"column": 0, "row": 0}},
 	{"region": "desktop", "ref": {"app": "erpnext"}, "position": {"column": 0, "row": 1}},
+	# Dock baseline — reproduces today's APP_ORDER (frappe, crm, erpnext) as pinned dock items
+	# for a fresh user. Bare-app refs; the resolver drops any app the viewer can't see.
+	{"region": "dock", "ref": {"app": "frappe"}, "position": {"order": 0}},
+	{"region": "dock", "ref": {"app": "crm"}, "position": {"order": 1}},
+	{"region": "dock", "ref": {"app": "erpnext"}, "position": {"order": 2}},
 ]
 
 
