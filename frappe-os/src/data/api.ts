@@ -1,7 +1,7 @@
 // Minimal Frappe data layer for Frappe OS (ported from the /x shell's api.js).
 // Reads go through whitelisted GET calls (no CSRF needed); writes use the REST
 // resource API with the CSRF token from boot.
-import type { FilterValue, FrappeDoc, GetListOptions } from '@/types'
+import type { ListFilters, FrappeDoc, GetListOptions } from '@/types'
 
 // The server seeds the CSRF token onto the global as a fallback for direct page loads.
 declare global {
@@ -68,12 +68,13 @@ export async function callPost(method: string, params: Record<string, unknown> =
 
 export async function getList(
   doctype: string,
-  { fields, limit = 50, order_by = 'modified desc', filters }: GetListOptions = {},
+  { fields, limit = 50, start = 0, order_by = 'modified desc', filters }: GetListOptions = {},
 ): Promise<FrappeDoc[]> {
   return call('frappe.client.get_list', {
     doctype,
     fields: fields || ['name'],
     limit_page_length: limit,
+    limit_start: start,
     order_by,
     ...(filters ? { filters } : {}),
   })
@@ -127,7 +128,7 @@ export async function getDoctypeMeta(doctype: string): Promise<any> {
 // Live dashboard card value: a count, or a sum of `fieldname` when given.
 export async function cardValue(
   doctype: string,
-  filters?: Record<string, FilterValue>,
+  filters?: ListFilters,
   fieldname?: string,
 ): Promise<number> {
   return call('frappe.www.os.card_value', {

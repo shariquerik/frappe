@@ -16,7 +16,7 @@ vi.mock('@/data/api', () => ({
 
 import * as api from '@/data/api'
 import {
-  listFor, loadList, docFor, loadDoc, countFor, loadCount,
+  listFor, loadList, loadMore, docFor, loadDoc, countFor, loadCount,
   fieldMetaFor, loadFieldMeta, saveDoc, createDoc, recordsFor, recordObj,
 } from '../src/data/records'
 
@@ -50,6 +50,60 @@ describe('list cache', () => {
     const handle = listFor('Date')
     await loadList('Date')
     expect(handle.data).toEqual([{ name: 'x' }])
+  })
+})
+
+describe('paging (loadMore appends, start offsets)', () => {
+  it('loadList replaces on the first page (start 0 or omitted)', async () => {
+    api.getList.mockResolvedValue([{ name: 'p1' }, { name: 'p2' }])
+    await loadList('Papaya')
+    api.getList.mockResolvedValue([{ name: 'p3' }])
+    const state = await loadList('Papaya')
+    expect(state.data).toEqual([{ name: 'p3' }])
+  })
+
+  it('loadList appends when start > 0', async () => {
+    api.getList.mockResolvedValue([{ name: 'q1' }])
+    await loadList('Quince')
+    api.getList.mockResolvedValue([{ name: 'q2' }])
+    const state = await loadList('Quince', { start: 1 })
+    expect(state.data).toEqual([{ name: 'q1' }, { name: 'q2' }])
+  })
+
+  it('loadMore fetches from the current row count and appends the next page', async () => {
+    api.getList.mockResolvedValue([{ name: 'r1' }, { name: 'r2' }])
+    await loadList('Raspberry', { limit: 2 })
+    api.getList.mockResolvedValue([{ name: 'r3' }, { name: 'r4' }])
+    const state = await loadMore('Raspberry', { limit: 2 })
+    expect(api.getList).toHaveBeenLastCalledWith('Raspberry', {
+      fields: ['*'],
+      limit: 2,
+      start: 2,
+    })
+    expect(state.data).toEqual([{ name: 'r1' }, { name: 'r2' }, { name: 'r3' }, { name: 'r4' }])
+  })
+})
+
+describe("wire-list filters (the list-view controls' shape)", () => {
+  it('loadList forwards a wire-list filter array to getList unchanged', async () => {
+    api.getList.mockResolvedValue([])
+    const filters = [['status', '=', 'Open']]
+    await loadList('Soursop', { filters })
+    expect(api.getList).toHaveBeenCalledWith('Soursop', {
+      fields: ['*'],
+      limit: 100,
+      filters,
+    })
+  })
+
+  it('loadCount keys by a wire-list filter array and passes it to cardValue', async () => {
+    api.cardValue.mockResolvedValue(7)
+    const filters = [['status', '=', 'Open']]
+    await loadCount('Tamarind', filters)
+    expect(api.cardValue).toHaveBeenCalledWith('Tamarind', filters, undefined)
+    expect(countFor('Tamarind', filters).data).toBe(7)
+    // A different wire filter set is a distinct cache entry.
+    expect(countFor('Tamarind', [['status', '=', 'Closed']]).data).toBe(null)
   })
 })
 

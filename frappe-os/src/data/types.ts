@@ -27,12 +27,24 @@ export interface CacheEntry<T> {
   error: string | null
 }
 
+// A single Frappe wire filter — the shape the list-view controls emit
+// (`[fieldname, operator, value]`), optionally doctype-qualified
+// (`[doctype, fieldname, operator, value]`). `frappe.client.get_list` and the OS
+// `card_value` method both accept this list form alongside the field→value dict.
+export type WireFilter = [string, string, unknown] | [string, string, string, unknown]
+
+// A list read's filters: the legacy field→value dict OR the controls' wire list
+// (`view.filters.wire`). Both reach the same server methods unchanged (ADR-0025).
+export type ListFilters = Record<string, FilterValue> | WireFilter[]
+
 // Options for a list read (api.getList). All optional; the server applies defaults.
+// `start` is the paging offset (`limit_start`); a value > 0 appends the next page.
 export interface GetListOptions {
   fields?: string[]
   limit?: number
+  start?: number
   order_by?: string
-  filters?: Record<string, FilterValue>
+  filters?: ListFilters
 }
 
 // ── Store surface ─────────────────────────────────────────────────────────────────

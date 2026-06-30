@@ -29,7 +29,7 @@ import { openPalette, closePalette, paletteResults } from './palette'
 import { hydrate, startAutosave } from './persistence'
 import {
   recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
-  loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
+  loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
 } from '@/data/records'
 
 // Compatibility shape for the registry data components still read by namespace
@@ -50,7 +50,7 @@ export function useOS() {
     initials, pill, getMeta, appForDoctype, knownApplet, wallpaperDefs, presenceFor,
     // live records store
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
-    loadList, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
+    loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
     // window lifecycle + navigation
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,

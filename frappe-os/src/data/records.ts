@@ -7,7 +7,7 @@
 
 import { reactive } from 'vue'
 import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, cardValue } from '@/data/api'
-import type { CacheEntry, FilterValue, FrappeDoc, GetListOptions } from '@/types'
+import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions } from '@/types'
 
 const lists = reactive<Record<string, CacheEntry<FrappeDoc[]>>>({}) // doctype -> entry, data is rows[]
 const docs = reactive<Record<string, CacheEntry<FrappeDoc | null>>>({}) // "doctype/name" -> entry, data is the doc
@@ -16,7 +16,7 @@ const fieldMetas = reactive<Record<string, CacheEntry<any>>>({}) // doctype -> e
 
 const entry = <T>(data: T): CacheEntry<T> => ({ loading: false, data, error: null })
 const docKey = (doctype: string, name: string) => `${doctype}/${name}`
-const countKey = (doctype: string, filters?: Record<string, FilterValue>, fieldname?: string) =>
+const countKey = (doctype: string, filters?: ListFilters, fieldname?: string) =>
   JSON.stringify([doctype, filters || null, fieldname || null])
 
 // ---- list cache --------------------------------------------------------------
@@ -34,13 +34,22 @@ export async function loadList(doctype: string, options: GetListOptions = {}): P
   state.loading = true
   state.error = null
   try {
-    state.data = await getList(doctype, { fields: ['*'], limit: 100, ...options })
+    const rows = await getList(doctype, { fields: ['*'], limit: 100, ...options })
+    // A paged read (`start > 0`) appends the next page; the first page replaces.
+    state.data = (options.start ?? 0) > 0 ? [...state.data, ...rows] : rows
   } catch (e) {
     state.error = (e as Error).message
   } finally {
     state.loading = false
   }
   return state
+}
+
+// Append the next page: fetch from the current row count as the offset, keeping the
+// active filters/sort/limit. Paging lives in the OS store (the single fetch seam,
+// ADR-0025), not the library's useListData.
+export async function loadMore(doctype: string, options: GetListOptions = {}): Promise<CacheEntry<FrappeDoc[]>> {
+  return loadList(doctype, { ...options, start: listFor(doctype).data.length })
 }
 
 // ---- single-doc cache --------------------------------------------------------
@@ -65,13 +74,13 @@ export async function loadDoc(doctype: string, name: string): Promise<CacheEntry
 }
 
 // ---- dashboard card values ---------------------------------------------------
-export function countFor(doctype: string, filters?: Record<string, FilterValue>, fieldname?: string): CacheEntry<number | null> {
+export function countFor(doctype: string, filters?: ListFilters, fieldname?: string): CacheEntry<number | null> {
   const key = countKey(doctype, filters, fieldname)
   if (!counts[key]) counts[key] = entry<number | null>(null)
   return counts[key]
 }
 
-export async function loadCount(doctype: string, filters?: Record<string, FilterValue>, fieldname?: string): Promise<CacheEntry<number | null>> {
+export async function loadCount(doctype: string, filters?: ListFilters, fieldname?: string): Promise<CacheEntry<number | null>> {
   const state = countFor(doctype, filters, fieldname)
   state.loading = true
   state.error = null
