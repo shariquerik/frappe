@@ -600,7 +600,14 @@ async function run_build_command_for_apps(apps) {
 	BUILD_CHILDREN.clear();
 	const build_apps = [];
 	for (let app of apps) {
-		if (app === "frappe") continue;
+		if (app === "frappe") {
+			// frappe's own root build IS this esbuild script — recursing would loop.
+			// But the frappe-os SPA is a nested Vite project inside the frappe app
+			// (it emits www/os.html + public/os assets that /os serves) which the
+			// per-app loop never reaches, so register it as its own build target.
+			add_frappe_os_build(build_apps);
+			continue;
+		}
 
 		let root_app_path = path.resolve(apps_path, app);
 		let package_json = path.resolve(root_app_path, "package.json");
@@ -662,6 +669,13 @@ async function run_build_command_for_apps(apps) {
 	}
 
 	log("Build commands finished.");
+}
+
+function add_frappe_os_build(build_apps) {
+	const root_app_path = path.resolve(apps_path, "frappe", "frappe-os");
+	if (fs.existsSync(path.resolve(root_app_path, "package.json"))) {
+		build_apps.push({ app: "frappe-os", root_app_path });
+	}
 }
 
 async function run_app_build(app, root_app_path) {
