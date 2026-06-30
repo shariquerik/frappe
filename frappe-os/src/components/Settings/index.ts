@@ -3,4 +3,5 @@
 // `@/components/Settings`, never a path into the folder, so the internals stay free to move.
 export { default as AppSettings } from './AppSettings.vue'
 export { default as Settings } from './Settings.vue'
+export { default as AccountSection } from './AccountSection.vue'
 export { default as WallpaperPicker } from './WallpaperPicker.vue'

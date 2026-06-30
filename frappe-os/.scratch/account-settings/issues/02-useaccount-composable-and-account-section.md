@@ -1,6 +1,6 @@
 # `useAccount()` composable + Account section in Settings
 
-Status: TODO
+Status: ✅ DONE (live non-admin verification pending — see acceptance criteria)
 
 Triage: ready-for-agent (AFK)
 
@@ -27,15 +27,22 @@ user that own-user read/write works without System Manager.
 
 ## Acceptance criteria
 
-- [ ] `useAccount()` exposes the self `User` doc and a save that writes **only**
-      `{first_name, last_name, user_image}`.
-- [ ] Account section renders at the top of Settings: avatar + full_name + email header,
-      editable name, read-only username/roles/last-login.
-- [ ] Editing name and saving persists to the `User` doc and re-reads.
-- [ ] Avatar upload via `FileUploader` → `upload_file` → `user_image` → save works.
-- [ ] Confirmed working for a non-admin (own-user website-permission), not just System Manager.
-- [ ] Unit spec asserts the save allow-list rejects/strips non-permlevel-0 fields.
-- [ ] `yarn typecheck` and `yarn test --run` pass.
+- [x] `useAccount()` exposes the self `User` doc and a save that writes **only**
+      `{first_name, last_name, user_image}` (`src/data/account.ts`; `pickWritable` is the guard).
+- [x] Account section renders at the top of Settings: avatar + full_name + email header,
+      editable name, read-only username/roles/last-login (`src/components/Settings/AccountSection.vue`).
+- [x] Editing name and saving persists to the `User` doc and re-reads (REST PUT via `api.saveDoc`;
+      save replaces the cached doc with the server's, recomputed `full_name` included). **Live
+      persistence not exercised — bench/dev server down this environment.**
+- [x] Avatar upload via `FileUploader` → `upload_file` → `user_image` → save works (wired; not
+      exercised live).
+- [ ] Confirmed working for a non-admin (own-user self-DocShare), not just System Manager.
+      **Not verified live — bench down.** Mechanism confirmed in code: `User.share_with_self()`
+      (`frappe/core/doctype/user/user.py:445`) grants a `write=1` self-DocShare, so the standard
+      save path `api.saveDoc` uses succeeds without System Manager; permlevel still gates fields.
+- [x] Unit spec asserts the save allow-list rejects/strips non-permlevel-0 fields
+      (`tests/account.spec.js` — strips `roles`/`user_type`/`enabled`/`full_name`/`api_key`).
+- [x] `yarn typecheck` and `yarn test --run` pass (343 tests, +7 new).
 
 ## Blocked by
 

@@ -9,7 +9,7 @@
 import { computed } from 'vue'
 import { Switch } from 'frappe-ui'
 import { useOS } from '@/desktop'
-import { WallpaperPicker } from '@/components/Settings'
+import { AccountSection, WallpaperPicker } from '@/components/Settings'
 // OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { OsWindow } from '@/surface/types'
@@ -19,8 +19,8 @@ const props = defineProps<{ win: OsWindow }>()
 const os = useOS()
 const ICON = os.DATA.ICON
 
-const sections = ['General', 'Appearance', 'Wallpaper', 'Dock']
-const sectionIcon: Record<string, string> = { General: ICON.cog, Appearance: ICON.palette, Wallpaper: ICON.image, Dock: ICON.sliders }
+const sections = ['Account', 'General', 'Appearance', 'Wallpaper', 'Dock']
+const sectionIcon: Record<string, string> = { Account: ICON.user, General: ICON.cog, Appearance: ICON.palette, Wallpaper: ICON.image, Dock: ICON.sliders }
 const section = computed(() => ((props.win.surface as { params?: { section?: string } }).params?.section) || 'General')
 
 const dockPositions: { label: string; value: DockPosition }[] = [
@@ -46,7 +46,12 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
     </div>
     <!-- body -->
     <div class="flex min-w-0 flex-1 flex-col overflow-auto">
-      <template v-if="section==='Appearance'">
+      <template v-if="section==='Account'">
+        <!-- The logged-in user's own identity (ADR-0027), at the top above the preference panes. -->
+        <AccountSection />
+      </template>
+
+      <template v-else-if="section==='Appearance'">
         <!-- Global light/dark theme (moved out of per-app Settings — it's a desktop pref). -->
         <div class="px-[22px] py-5">
           <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">APPEARANCE</div>

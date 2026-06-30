@@ -19,6 +19,8 @@ export const Dropdown: any
 export const Badge: any
 export const Switch: any
 export const FormControl: any
+export const FileUploader: any
+export const LoadingIndicator: any
 export const toast: any
 export const ToastProvider: any
 export default whatever

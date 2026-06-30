@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountSection: typeof import('./src/components/Settings/AccountSection.vue')['default']
     AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
     AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
     AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
@@ -42,6 +43,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AccountSection: typeof import('./src/components/Settings/AccountSection.vue')['default']
   const AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
   const AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
   const AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
