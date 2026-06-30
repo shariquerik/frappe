@@ -54,6 +54,15 @@ yarn cypress       # Cypress interactive runner
 - Inherits the bench-wide code guidelines (small functions, prefer reuse, frappe-ui tokens
   for styling) from the parent `CLAUDE.md` files.
 
+## Issue tracker
+
+GitHub Issues are disabled on this repo — issues live as **local markdown** under
+`.scratch/<feature>/issues/NN-slug.md` (zero-padded order, one vertical slice per file).
+When asked to "create issues" / "break this into issues" / run `/to-issues`, write them
+there (a new `<feature>` folder per theme), never to GitHub. Each file follows the existing
+template: `# Title`, `Status:`, `Triage: <role> (AFK|HITL)`, `## What to build`,
+`## Acceptance criteria` (checkboxes), `## Blocked by` (other slice numbers or "None").
+
 ## Subagents
 
 Offload exploration and side work to subagents to keep the main context lean.
