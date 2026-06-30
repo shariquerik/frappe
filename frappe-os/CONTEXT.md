@@ -358,6 +358,30 @@ button is the deferred write-path half of ADR-0014's reversibility guarantee).
 _Avoid_: calling it a "shadow log" or "audit log" — there is no stored ledger; it is a
 projection over the contribution set, not a record of past resolutions.
 
+**Settings**:
+The per-user settings **Window** — a singleton `system`-role window (respawned-from-URL, never
+persisted, like the **Finder**). Holds the logged-in user's **Account** section (identity +
+credentials) alongside the personal-preference sections (Appearance, Wallpaper, Dock, window
+behaviour). Everything in it is **per-user** scope. Previously called "System Settings" — a
+misnomer, since nothing in it is site-wide; the rename frees the "System" label for the future
+site-wide surface.
+_Avoid_: "System Settings" for this window (reserved — see System Defaults); "Preferences" alone
+(it also holds Account, which is identity, not a preference).
+
+**Account**:
+The logged-in user's **identity + credentials** — full name, avatar, password — surfaced as a
+section of the **Settings** window and backed by their `User` record. Per-user and server-backed
+from day one (unlike the preference sections, which are local today and per-user-server-backed
+later). Distinct from **User preference**, which is the customization *layer*, not this surface.
+_Avoid_: "Profile"; "User Settings"/"User Preferences" (those overload the User-preference layer).
+
+**System Defaults** (future, reserved):
+The genuinely site-wide, admin-scoped configuration surface — the *real* "System" settings (the OS
+lens over Frappe's site-level config). Does not exist yet; the name is **reserved** so today's
+per-user window is called **Settings**, never "System Settings". A separate surface from Settings
+when it arrives — site-wide scope, not per-user.
+_Avoid_: naming the per-user **Settings** window "System" anything — that label belongs here.
+
 ## Example dialogue
 
 > **Dev:** Does CRM get to register its Kanban view in some special core path?
