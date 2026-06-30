@@ -31,6 +31,7 @@ import {
   recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
   loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
 } from '@/data/records'
+import { ensureDoctype } from '@/data/doctype-resolver'
 
 // Compatibility shape for the registry data components still read by namespace
 // (os.DATA.APP / .ICON). The app map + APP_ORDER are projected from useRegistry(); they
@@ -47,7 +48,7 @@ export function useOS() {
     get DATA() { return { APP: appMap(), ICON } },
     get APP_ORDER() { return useRegistry().apps().map((a) => a.id) },
     geoMap, clockText, currentWp, paletteResults,
-    initials, pill, getMeta, appForDoctype, knownApplet, wallpaperDefs, presenceFor,
+    initials, pill, getMeta, appForDoctype, knownApplet, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,

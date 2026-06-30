@@ -28,6 +28,17 @@ function routeParams(loc: { params: RouteParamsGeneric; query: LocationQuery }):
     instance: Number.isInteger(instance) ? instance : null }
 }
 
+// Resolve an uncurated-but-real doctype segment into the registry BEFORE routing, so a cold deep
+// link to ANY DocType (not just the curated boot set) opens its list. Skips the settings/applet
+// tails (not doctypes) and a doctype already known. A missing doctype leaves the index untouched —
+// applyRoute then falls through to the app's default window, and a doctype owned by another app
+// opens under that app (openListGlobal derives the app from the resolved owner, not the URL).
+async function ensureRouteDoctype(params: RouteParams): Promise<void> {
+  const dt = params.doctype
+  if (!dt || dt === 'settings' || os.knownApplet(params.app || '', dt)) return
+  await os.ensureDoctype(dt)
+}
+
 // ---- Frappe interop: /app/... -> /os/... -------------------------------------
 // frappe.set_route / notifications / share links all emit `/app/:doctype/:name`.
 // Translate such an entry URL into the OS scheme (doctype -> appForDoctype) before
@@ -145,8 +156,11 @@ async function boot() {
   // 2. Apply the entry route (cold deep-link) on top of the hydrated desktop, then
   //    3. seed the FIRST timeline entry with replace (not push) so back doesn't
   //    leave a stale pre-OS URL. Reset the guard explicitly: a same-path replace
-  //    may not fire afterEach.
-  applyRoute(os, routeParams(router.currentRoute.value))
+  //    may not fire afterEach. First resolve an uncurated doctype segment so a deep
+  //    link to any DocType opens its list rather than the app's default window.
+  const entry = routeParams(router.currentRoute.value)
+  await ensureRouteDoctype(entry)
+  applyRoute(os, entry)
   programmatic = true
   const seed = pathForFocus(os)
   await router.replace({ path: seed.path, query: seed.query, state: navState() }).catch(() => {})

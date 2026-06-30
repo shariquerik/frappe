@@ -235,9 +235,23 @@ function ensureIndex(): RegistryIndex {
   return index
 }
 
-// Which app owns a doctype — a projection over the indexed app collection.
+// Which app owns a doctype — a projection over the indexed app collection. Falls back to
+// frappe when the doctype is unowned OR its owner isn't a known OS-app window (e.g. a doctype
+// resolved on demand whose module ships in a non-OS app): the list still opens, under frappe.
 export function appForDoctype(doctype: string): string {
-  return ensureIndex().owner[doctype] || 'frappe'
+  const ix = ensureIndex()
+  const owner = ix.owner[doctype]
+  return owner && ix.appById[owner] ? owner : 'frappe'
+}
+
+// Fold a server-resolved doctype (uncurated — absent from the boot registry) into the live
+// index so getMeta/appForDoctype/views light up for it on demand (resolve_doctype). Mirrors
+// overlayServer's per-contribution decoration, so a runtime doctype renders identically to a
+// booted one — the OS-native overlay still applies when config/* curates the doctype.
+export function registerDoctype(contribs: Contribution[]): void {
+  const ix = ensureIndex()
+  const docs = new Set(contribs.filter((c) => c.type === DISPLAY).map((c) => c.target))
+  for (const c of contribs) addToIndex(ix, decorate(c, docs))
 }
 
 // Synchronous display-config lookup — the merged singleton for a doctype (null if none).

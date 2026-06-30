@@ -5,7 +5,7 @@
 // collection. Backed by the real curated config (frappe/crm/erpnext) — no mocks.
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  useRegistry, appForDoctype, getMeta, initRegistry, knownApplet, listApplets, loadApplet,
+  useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
 } from '../src/registry'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
@@ -304,5 +304,37 @@ describe('server-projected registry', () => {
     initRegistry({ user: 'a', csrf_token: 't', roles: [], registry: { nonsense: true }, permissions: {} })
     expect(useRegistry().apps().length).toBe(3)
     expect(getMeta('User')).not.toBeNull()
+  })
+})
+
+// registerDoctype folds a server-resolved (uncurated) doctype into the LIVE index on demand —
+// the deep-link path so /os/<app>/<Any DocType> opens its list. It mirrors the boot fold, so a
+// runtime doctype lights up getMeta/views and derives its owning app exactly like a booted one.
+describe('registerDoctype (on-demand resolution)', () => {
+  afterEach(() => initRegistry(null))
+
+  const display = (dt, payload, sourceApp) =>
+    ({ type: 'display-config', target: dt, name: 'display', sourceApp, payload })
+  const view = (dt, name, sourceApp, order) =>
+    ({ type: 'doctype-view', target: dt, name, sourceApp, payload: { view: name, label: name, builtin: true }, order })
+
+  it('folds an uncurated doctype so getMeta, views and its owning app light up', () => {
+    initRegistry(null) // offline seed carries the frappe/crm/erpnext apps
+    expect(getMeta('CRM Territory')).toBeNull() // absent from the curated registry
+    registerDoctype([
+      display('CRM Territory', { label: 'CRM Territory', titleField: 'territory_name' }, 'crm'),
+      view('CRM Territory', 'list', 'crm', 0),
+      view('CRM Territory', 'form', 'crm', 1),
+    ])
+    expect(getMeta('CRM Territory')?.label).toBe('CRM Territory')
+    expect(appForDoctype('CRM Territory')).toBe('crm') // owning app from the contribution sourceApp
+    expect(useRegistry().views('CRM Territory').map((v) => v.view)).toEqual(['list', 'form'])
+  })
+
+  it('falls back to frappe when the resolved owner is not a known OS app', () => {
+    initRegistry(null)
+    registerDoctype([display('HD Ticket', { label: 'HD Ticket', titleField: 'subject' }, 'helpdesk')])
+    expect(getMeta('HD Ticket')?.label).toBe('HD Ticket') // the list still resolves
+    expect(appForDoctype('HD Ticket')).toBe('frappe') // unknown owner → opens under frappe
   })
 })

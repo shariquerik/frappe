@@ -1,7 +1,7 @@
 // Minimal Frappe data layer for Frappe OS (ported from the /x shell's api.js).
 // Reads go through whitelisted GET calls (no CSRF needed); writes use the REST
 // resource API with the CSRF token from boot.
-import type { ListFilters, FrappeDoc, GetListOptions } from '@/types'
+import type { ListFilters, FrappeDoc, GetListOptions, Contribution } from '@/types'
 
 // The server seeds the CSRF token onto the global as a fallback for direct page loads.
 declare global {
@@ -123,6 +123,13 @@ export async function createDoc(
 // Lean field descriptors (grouped by Section Break) for building the form layout.
 export async function getDoctypeMeta(doctype: string): Promise<any> {
   return call('frappe.www.os.get_doctype_meta', { doctype })
+}
+
+// Registry contributions for ONE uncurated doctype, resolved on demand so a deep link to any
+// DocType opens its list (the boot registry only ships the curated set). Null when the doctype
+// is missing or the user may not read it — the caller then falls back to the app's default window.
+export async function resolveDoctype(doctype: string): Promise<Contribution[] | null> {
+  return call('frappe.www.os.resolve_doctype', { doctype })
 }
 
 // Live dashboard card value: a count, or a sum of `fieldname` when given.

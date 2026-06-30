@@ -388,6 +388,16 @@ def _doctype_property_setters():
 	return grouped
 
 
+def _property_setters_of(doctype):
+	"""One doctype's doctype-level Property Setters — the on-demand analog of
+	_doctype_property_setters (which batches the whole curated registry at boot)."""
+	return frappe.get_all(
+		"Property Setter",
+		filters={"doc_type": doctype, "doctype_or_field": "DocType"},
+		fields=["doc_type", "property", "value"],
+	)
+
+
 def _display_patch(doctype, setters):
 	"""A partial display-config patch from a doctype's Property Setters (ADR-0007). A property
 	with no OS payload field is logged and skipped — never silently dropped (ADR-0011)."""
@@ -399,6 +409,38 @@ def _display_patch(doctype, setters):
 		else:
 			frappe.logger("frappe_os").info(f"Skipped Property Setter {doctype}.{setter.property}: no display field")
 	return patch
+
+
+def _doctype_contributions(doctype, meta, setters):
+	"""The display-config + view contributions for ONE doctype (ADR-0011), shared by the boot
+	registry and on-demand resolution (resolve_doctype). The base display-config carries the
+	app-default projection; this site's doctype Property Setters ride along as a __site__ patch
+	(ADR-0007 App-default ⊕ Site-layer)."""
+	app = _app_of(doctype)
+	out = [
+		{
+			"type": "display-config",
+			"target": doctype,
+			"name": "display",
+			"sourceApp": app,
+			"payload": _display_payload(doctype, meta),
+		}
+	]
+	patch = _display_patch(doctype, setters)
+	if patch:
+		out.append(
+			{
+				"type": "display-config",
+				"target": doctype,
+				"name": "patch",
+				"sourceApp": "__site__",
+				"payload": patch,
+				"order": 1,
+			}
+		)
+	out.append(_view_contribution(doctype, "list", "List", app, 0))
+	out.append(_view_contribution(doctype, "form", "Form", app, 1))
+	return out
 
 
 def get_registry():
@@ -422,30 +464,7 @@ def get_registry():
 		meta = _readable_meta(doctype)
 		if not meta:
 			continue
-		app = _app_of(doctype)
-		contributions.append(
-			{
-				"type": "display-config",
-				"target": doctype,
-				"name": "display",
-				"sourceApp": app,
-				"payload": _display_payload(doctype, meta),
-			}
-		)
-		patch = _display_patch(doctype, property_setters.get(doctype, []))
-		if patch:
-			contributions.append(
-				{
-					"type": "display-config",
-					"target": doctype,
-					"name": "patch",
-					"sourceApp": "__site__",
-					"payload": patch,
-					"order": 1,
-				}
-			)
-		contributions.append(_view_contribution(doctype, "list", "List", app, 0))
-		contributions.append(_view_contribution(doctype, "form", "Form", app, 1))
+		contributions.extend(_doctype_contributions(doctype, meta, property_setters.get(doctype, [])))
 	contributions.extend(_applet_contributions())
 	contributions.extend(_command_contributions())
 	contributions.extend(_action_contributions())
@@ -683,6 +702,20 @@ def get_permissions():
 			for ptype in ("read", "write", "create", "delete")
 		}
 	return perms
+
+
+@frappe.whitelist()
+def resolve_doctype(doctype: str):
+	"""Registry contributions for ONE doctype, resolved on demand — the deep-link path for a
+	real doctype the curated boot registry omits, so /os/<app>/<Any DocType> opens its list.
+	Returns the same display-config + view shapes get_registry emits (the client folds them into
+	its live index), or None when the doctype is missing or the user may not read it — letting
+	the client fall back to the app's default window. Permission-gated like the boot registry
+	(ADR-0010); the owning app rides on each contribution's sourceApp (_app_of)."""
+	meta = _readable_meta(doctype)
+	if not meta:
+		return None
+	return _doctype_contributions(doctype, meta, _property_setters_of(doctype))
 
 
 @frappe.whitelist()
