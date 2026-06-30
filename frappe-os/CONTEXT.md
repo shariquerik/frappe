@@ -121,6 +121,26 @@ Some views are generic (list/form, rendered from data); others are applet-backed
 The declarative presentation settings for a doctype — label, color, icon, list columns,
 status→color mapping, default filters and sort. What today's hand-curated
 `config/doctypes.ts` holds; in the target architecture it is a contribution in the Registry.
+For the **list** Surface it is now an **enrichment layer**: the user-editable column / filter /
+sort *state* is owned by the shared **List View Controls** (Meta-driven — see below), while
+Display config supplies the curated *presentation* over those Meta-derived columns — the cell
+kind (status pill / avatar / primary), the status→color mapping, and the default shown set.
+That enrichment layer is **deferred**: the first slice renders Meta-derived plain cells and
+reapplies Display-config presentation later.
+_Avoid_: conflating Display config's cell-kind `type` (status / avatar — a *presentation*
+choice) with the library **Column**'s `type` (the Meta-derived *data* type used for alignment).
+
+**List View Controls** (consumed from `@framework/ui`):
+The shared SortBy / Filter / ColumnSettings / QuickFilter controls (plus the `useListView`
+state composable) that frappe-os mounts into a **list** Surface's toolbar. They are
+**controlled** (own only their view state, never fetch or persist) and **Meta-driven**: they
+derive their field options from the library's `useDoctypeMeta` (Frappe's `getdoctype`), **not**
+from the OS **Registry**. A deliberate carve-out — field *schema* (fieldtypes → operators) is
+raw Frappe metadata, distinct from the curated **Display config** the Registry owns. frappe-os
+keeps **fetching** through its own OS data layer, fed by the controls' wire projections; the
+library's optional fetching companion is not used. **Persistence** is the host's to wire
+(library tops out at a View Snapshot) and is deferred for now — view state is in-memory only.
+For the controls' own vocabulary see the library's [`ui/CONTEXT.md`](../ui/CONTEXT.md).
 
 **Declarative contribution**:
 A contribution expressed purely as data, collected on the server and delivered to the
