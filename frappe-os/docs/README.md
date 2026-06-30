@@ -7,6 +7,9 @@ routing, file map, gotchas). Everything else is reference or history.
 - **[`architecture-review.md`](architecture-review.md)** — review vs the bench code
   guidelines (2026-06-17); some findings fixed, OSWindow split + frappe-ui resource
   adoption still open.
+- **[`deferred-hardcoded.md`](deferred-hardcoded.md)** — living inventory of hardcoded /
+  stubbed / placeholder bits done "to work on later" (demo data, Coming-soon Aspects, the
+  curated `config/` layer pending Phase 4 live metadata, magic numbers).
 - **`adr/`** — architecture decision records (0001–0013): the extensibility design.
 - **`design/`** — design sketches:
   - [`surface-and-registry.md`](design/surface-and-registry.md) — Surface model & Registry schema.
