@@ -17,7 +17,7 @@ const props = defineProps<{ location: Location }>()
 const os = useOS()
 
 // The framework "Settings" entry pinned to the Applications Location: it isn't an app, so it opens
-// System Settings rather than a Surface (ADR-0024's open question, resolved to System Settings).
+// the per-user Settings window rather than a Surface (ADR-0024's open question, resolved to Settings).
 const SETTINGS_TILE: FinderItem & { settings: true } =
   { key: 'finder:settings', ref: { app: 'frappe' }, label: 'Settings', icon: 'lucide-settings', settings: true }
 
@@ -27,10 +27,10 @@ const tiles = computed<FinderItem[]>(() => {
 })
 const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
 
-// Launch a tile: the Settings entry opens System Settings; a bare-app reference opens the app's
-// default surface (like the dock icon); any other reference resolves to its Surface and opens.
+// Launch a tile: the Settings entry opens the per-user Settings window; a bare-app reference opens
+// the app's default surface (like the dock icon); any other reference resolves to its Surface and opens.
 function launch(item: FinderItem): void {
-  if ((item as { settings?: boolean }).settings) return os.openSystemSettings()
+  if ((item as { settings?: boolean }).settings) return os.openSettings()
   openRef(item.ref)
 }
 function openRef(ref: SurfaceRef): void {

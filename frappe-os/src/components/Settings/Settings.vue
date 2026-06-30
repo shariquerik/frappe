@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// System Settings — the desktop-wide preferences window (a singleton system pane, OSWindow's
+// Settings — the per-user, desktop-wide preferences window (a singleton system pane, OSWindow's
 // 'system' role supplies the chrome/title bar). A macOS-style two-pane sheet: a left nav rail
 // picks the section, the right body renders it. Sections are global, not app-scoped: General
 // (window behavior — list-row open target ADR-0018, remember window size ADR-0019), Appearance
@@ -38,7 +38,7 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
   <div class="flex min-h-0 flex-1">
     <!-- section nav -->
     <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
-      <div v-for="s in sections" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSystemSettingsSection(s)"
+      <div v-for="s in sections" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsSection(s)"
         :style="{ color: section===s ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: section===s ? 600 : 400,
           background: section===s ? 'var(--surface-gray-3)' : 'transparent' }">
         <span :class="sectionIcon[s]" class="size-[15px] flex-shrink-0"></span>{{ s }}

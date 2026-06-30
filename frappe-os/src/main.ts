@@ -93,12 +93,12 @@ function restoreFromHistory(to: RouteLocationNormalized) {
   const winId: string | null = st.osWin || null
   const { app, doctype, name, instance, aspect } = routeParams(to)
 
-  // Settings windows: path is /<app>/settings, state id is settings:<app>. Refocus
+  // App-settings windows: path is /<app>/settings, state id is app-settings:<app>. Refocus
   // if still open, else respawn from the app segment (settings panes aren't persisted).
-  if ((winId && winId.indexOf('settings:') === 0) || doctype === 'settings') {
+  if ((winId && winId.indexOf('app-settings:') === 0) || doctype === 'settings') {
     if (winId && os.restoreWin(winId)) return
-    const aid = app || (winId ? winId.slice('settings:'.length) : null)
-    if (aid && os.DATA.APP[aid]) os.openSettings(aid)
+    const aid = app || (winId ? winId.slice('app-settings:'.length) : null)
+    if (aid && os.DATA.APP[aid]) os.openAppSettings(aid)
     return
   }
 

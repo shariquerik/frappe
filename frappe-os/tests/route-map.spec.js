@@ -33,9 +33,14 @@ describe('pathForFocus', () => {
     expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/CRM-LEAD-2024-0042', query: {} })
   })
 
-  it('a settings window projects to /<app>/settings', () => {
-    os.openSettings('frappe')
+  it('an app-settings window projects to /<app>/settings', () => {
+    os.openAppSettings('frappe')
     expect(pathForFocus(os)).toEqual({ path: '/frappe/settings', query: {} })
+  })
+
+  it('the per-user Settings window projects to a bare /settings', () => {
+    os.openSettings()
+    expect(pathForFocus(os)).toEqual({ path: '/settings', query: {} })
   })
 
   it('an applet window projects to /<app>/<appletId>', () => {
@@ -128,9 +133,14 @@ describe('applyRoute', () => {
     expect(os.state.activeId).toBe(null)
   })
 
-  it('opens settings for a known app', () => {
+  it('opens app-settings for a known app from /<app>/settings', () => {
     applyRoute(os, { app: 'frappe', doctype: 'settings' })
-    expect(os.state.activeId).toBe('settings:frappe')
+    expect(os.state.activeId).toBe('app-settings:frappe')
+  })
+
+  it('opens the per-user Settings window from a bare /settings', () => {
+    applyRoute(os, { app: 'settings' })
+    expect(os.state.activeId).toBe('settings')
   })
 
   it('opens an applet when the second segment is a known applet id', () => {

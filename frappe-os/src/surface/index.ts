@@ -22,20 +22,21 @@ export const listSurface = (doctype: string): BuiltinSurface =>
 export const formSurface = (doctype: string, recordName: string, aspect?: string): BuiltinSurface =>
   ({ kind: 'builtin', view: 'form', doctype, recordName, appId: appForDoctype(doctype),
      ...(aspect && aspect !== DEFAULT_ASPECT ? { aspect } : {}) })
-export const settingsSurface = (appId: string, tab = 'General'): BuiltinSurface =>
-  ({ kind: 'builtin', view: 'settings', appId, params: { tab } })
+export const appSettingsSurface = (appId: string, tab = 'General'): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'app-settings', appId, params: { tab } })
 // The OS-owned placeholder a Window opens on when its app declares no default surface and has
 // no dashboard (rung 4 of the resolver, ADR-0021) — keeps every declared OS app openable
 // rather than blank. The terminal fallback the dormant rung-3 doctype-list will replace.
 export const emptyAppSurface = (appId: string): BuiltinSurface => ({ kind: 'builtin', view: 'empty', appId })
-// System Settings — a desktop-wide (not app-scoped) pane holding the global preferences
-// (General/window behavior, Appearance/theme, Wallpaper, Dock). Owned by the framework app so
-// chrome/asset scoping has a real app to resolve, but opened as its own singleton window.
-// `section` selects the pane.
-export const systemSettingsSurface = (section = 'General'): BuiltinSurface =>
-  ({ kind: 'builtin', view: 'system-settings', appId: 'frappe', params: { section } })
+// Settings — the per-user, desktop-wide (not app-scoped) singleton pane holding the user's
+// Account plus the global preferences (General/window behavior, Appearance/theme, Wallpaper,
+// Dock). Owned by the framework app so chrome/asset scoping has a real app to resolve, but
+// opened as its own singleton window. `section` selects the pane. (Renamed from "System
+// Settings" — that name is reserved for a future site-wide surface, ADR-0027.)
+export const settingsSurface = (section = 'General'): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'settings', appId: 'frappe', params: { section } })
 // The Finder (ADR-0024) — the OS's cross-app navigator and the principal drag-source for
-// Placements. Like System Settings it is a desktop-wide singleton `system`-role window owned
+// Placements. Like Settings it is a desktop-wide singleton `system`-role window owned
 // by the framework app (so chrome/asset scoping resolves), respawned-from-URL and never
 // persisted. `location` selects the sidebar Location (Applications / Doctypes / Favorites).
 export const finderSurface = (location = 'Applications'): BuiltinSurface =>
@@ -154,13 +155,14 @@ export const surfaceTab = (s: Surface): string => (isBuiltin(s) && (s.params?.ta
 
 // Window role is encoded by the id prefix (the id is built from the role at open time),
 // so it is derived, never stored — the Surface describes the *content*, the id describes
-// the window *instance*. 'settings' = a per-app settings pane, 'system' = a singleton
-// system-wide window (System Settings or the Finder, ADR-0024 — both share the system role's
-// chrome and the hydrate/routing/persistence exclusions), everything else is a navigable
-// 'app' window (a record opened in a new window is an ordinary app Instance, ADR-0017).
+// the window *instance*. 'settings' = a per-app settings pane (id `app-settings:<app>`),
+// 'system' = a singleton system-wide window (the per-user Settings window or the Finder,
+// ADR-0024 — both share the system role's chrome and the hydrate/routing/persistence
+// exclusions), everything else is a navigable 'app' window (a record opened in a new window
+// is an ordinary app Instance, ADR-0017).
 export function windowRole(id: string): 'app' | 'settings' | 'system' {
-  if (id.startsWith('settings:')) return 'settings'
-  if (id === 'system-settings' || id === 'finder') return 'system'
+  if (id.startsWith('app-settings:')) return 'settings'
+  if (id === 'settings' || id === 'finder') return 'system'
   return 'app'
 }
 

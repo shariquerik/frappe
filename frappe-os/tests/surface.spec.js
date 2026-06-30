@@ -2,7 +2,7 @@
 // other Surface keeps the app nav rail. Pure decision, unit-tested in isolation.
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  sidebarKind, dashboardSurface, listSurface, formSurface, settingsSurface, appletSurface,
+  sidebarKind, dashboardSurface, listSurface, formSurface, appSettingsSurface, appletSurface,
   initialSurface, surfaceAppId, isAspectId, DEFAULT_ASPECT, FORM_ASPECTS,
 } from '../src/surface/index'
 import { initRegistry } from '../src/registry'
@@ -16,7 +16,7 @@ describe('sidebarKind', () => {
   it('list / dashboard / settings built-in Surfaces keep the nav rail', () => {
     expect(sidebarKind(listSurface('CRM Lead'))).toBe('nav')
     expect(sidebarKind(dashboardSurface('crm'))).toBe('nav')
-    expect(sidebarKind(settingsSurface('crm'))).toBe('nav')
+    expect(sidebarKind(appSettingsSurface('crm'))).toBe('nav')
   })
 
   it('a first-party applet that does not opt into nav is full-window', () => {

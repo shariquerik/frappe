@@ -1,6 +1,6 @@
 // E2E for the Finder (ADR-0024) — a singleton `system`-role window that the unit suite
 // can't reach: the real /finder route respawning the window from the URL, the dock
-// launcher button opening it, the sidebar Location switch, and the System Settings
+// launcher button opening it, the sidebar Location switch, and the Settings
 // precedent that a `system` window is NEVER written to the saved desktop blob.
 //
 // Like routing.cy.js, these need `yarn dev` proxying a logged-in bench (live boot).
@@ -20,7 +20,7 @@ describe('Finder singleton window (ADR-0024)', () => {
   })
 
   it('is transient — a `system` window is never written to the saved desktop blob', () => {
-    // System Settings precedent: serialize() excludes settings/system roles, so opening
+    // Settings precedent: serialize() excludes settings/system roles, so opening
     // the Finder must not leak it into localStorage (it is respawned from URL, not persisted).
     cy.visit('/os/finder')
     cy.get('[data-win-id="finder"]').should('be.visible')

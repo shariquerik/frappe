@@ -27,7 +27,7 @@ function minActive() {
 	if (activeWin.value) os.minimizeWin(activeWin.value.id);
 }
 function settingsActive() {
-	if (aid.value) os.openSettings(aid.value);
+	if (aid.value) os.openAppSettings(aid.value);
 }
 function homeActive() {
 	if (
@@ -55,8 +55,8 @@ const appleMenu = [
 		group: "b",
 		hideLabel: true,
 		items: [
-			{ label: "System settings…", onClick: () => os.openSystemSettings() },
-			{ label: "Change wallpaper…", onClick: () => os.openSystemSettings("Wallpaper") },
+			{ label: "Settings…", onClick: () => os.openSettings() },
+			{ label: "Change wallpaper…", onClick: () => os.openSettings("Wallpaper") },
 		],
 	},
 	{

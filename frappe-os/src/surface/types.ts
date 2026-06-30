@@ -3,7 +3,7 @@
 // are agnostic to which kind of Surface a window hosts (ADR-0012). Re-exported via @/types.
 
 // A built-in view name. OPEN string, not a closed union (ADR-0004): the OS has a generic
-// renderer for some ('dashboard'|'list'|'form'|'settings'); unknown ones fall through to
+// renderer for some ('dashboard'|'list'|'form'|'settings'|'app-settings'); unknown ones fall through to
 // a component or a fallback. New view kinds are additive, never a union edit.
 export type BuiltinView = string
 

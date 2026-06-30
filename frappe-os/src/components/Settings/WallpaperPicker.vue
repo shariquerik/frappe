@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Wallpaper picker body — the gallery embedded in System Settings ▸ Wallpaper
-// (SystemSettings.vue). A gallery of wallpapers; the current one is ringed.
+// Wallpaper picker body — the gallery embedded in Settings ▸ Wallpaper
+// (Settings.vue). A gallery of wallpapers; the current one is ringed.
 import { useOS } from '@/desktop'
 const os = useOS()
 </script>

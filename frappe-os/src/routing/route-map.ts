@@ -42,8 +42,8 @@ export function instanceQuery(id: string): Record<string, string> {
 function pathForSurface(os: OsStore, s: Surface): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
-  if (s.view === 'settings') return `/${s.appId}/settings` // self-describing; not aliased to /
-  if (s.view === 'system-settings') return '/system-settings' // singleton system pane, no app segment
+  if (s.view === 'app-settings') return `/${s.appId}/settings` // per-app settings; URL segment stays `settings`
+  if (s.view === 'settings') return '/settings' // singleton per-user Settings window, no app segment
   if (s.view === 'finder') return '/finder' // singleton Finder window, no app segment (ADR-0024)
   if (s.view === 'form') {
     // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
@@ -81,8 +81,8 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
   // over the path, or a cold /os redirects to /os/<app> of the last focused window.)
   if (!app) { os.clearFocus(); return }
-  // System Settings is a singleton system pane at a bare `/system-settings` (no app segment).
-  if (app === 'system-settings' && !doctype) { os.openSystemSettings(); return }
+  // Settings is the singleton per-user system pane at a bare `/settings` (no app segment).
+  if (app === 'settings' && !doctype) { os.openSettings(); return }
   // The Finder is a singleton system window at a bare `/finder` (no app segment, ADR-0024).
   if (app === 'finder' && !doctype) { os.openFinder(); return }
   // A doctype derives its own app (appForDoctype), so a valid doctype can open even
@@ -92,7 +92,7 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   const knownApp = !!os.DATA.APP[app]
   const knownDoctype = doctype && doctype !== 'settings' && !!os.getMeta(doctype)
   if (!knownApp && !knownDoctype) { os.clearFocus(); return }
-  if (doctype === 'settings') { if (knownApp) os.openSettings(app); return }
+  if (doctype === 'settings') { if (knownApp) os.openAppSettings(app); return }
   if (doctype && !knownDoctype) {
     // A second segment that isn't a doctype may be an applet id (/<app>/<appletId>).
     // knownDoctype was checked first, so a real doctype never reaches here — doctype-wins

@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 		<div
 			class="absolute inset-0 z-0"
 			:style="{ background: wp.bg }"
-			@contextmenu.prevent="os.openSystemSettings('Wallpaper')"
+			@contextmenu.prevent="os.openSettings('Wallpaper')"
 		></div>
 
 		<!-- desktop icons: edge-anchored grid cells (ADR-0023), each absolutely positioned at its

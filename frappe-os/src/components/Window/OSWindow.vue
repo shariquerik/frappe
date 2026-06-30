@@ -3,14 +3,14 @@
 // resize/split/maximize → `styleWin`) and the window-type branch; the title bar
 // (WindowChrome), the app nav (AppToolbar/AppSidebar) and the dashboard body (AppDashboard)
 // are extracted siblings. App bodies (list/form) render through DoctypeView, settings through
-// SettingsDialog, and applet-backed surfaces (ADR-0012) through a resolved component.
+// AppSettings, and applet-backed surfaces (ADR-0012) through a resolved component.
 import { computed, provide, shallowRef, watch } from "vue";
 import type { Component } from "vue";
 import { useOS } from "@/desktop";
 import { OS_KEY, tryGetOsApi } from "@/data/os-api";
 import { resolveApplet as resolveOsApplet } from "@/registry";
 import { DoctypeView } from "@/components/Views";
-import { SettingsDialog, SystemSettings } from "@/components/Settings";
+import { AppSettings, Settings } from "@/components/Settings";
 import { Finder } from "@/components/Finder";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
@@ -213,7 +213,7 @@ const viewProps = computed<ViewProps>(() => {
 			<template v-else-if="role === 'settings'">
 				<WindowChrome :win="win" :title="`${app.name} settings`" :logo="app.logo" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-					<SettingsDialog :win="win" />
+					<AppSettings :win="win" />
 				</div>
 			</template>
 
@@ -225,11 +225,11 @@ const viewProps = computed<ViewProps>(() => {
 				</div>
 			</template>
 
-			<!-- ===== SYSTEM SETTINGS WINDOW (singleton system pane) ===== -->
+			<!-- ===== SETTINGS WINDOW (singleton per-user system pane) ===== -->
 			<template v-else-if="role === 'system'">
-				<WindowChrome :win="win" title="System Settings" :logo="app.logo" />
+				<WindowChrome :win="win" title="Settings" :logo="app.logo" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
-					<SystemSettings :win="win" />
+					<Settings :win="win" />
 				</div>
 			</template>
 		</div>

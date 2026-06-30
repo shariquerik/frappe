@@ -106,7 +106,7 @@ const sf = (w: OsWindow) => w.surface as BuiltinSurface
 function winTitle(w: OsWindow): string | undefined {
   const role = windowRole(w.id), s = sf(w)
   if (role === 'settings') return os.DATA.APP[s.appId!].name + ' settings'
-  if (role === 'system') return s.view === 'finder' ? 'Finder' : 'System Settings'
+  if (role === 'system') return s.view === 'finder' ? 'Finder' : 'Settings'
   if (s.view === 'form') {
     const m = os.getMeta(s.doctype!), r = os.recordObj(s.doctype!, s.recordName!)
     return (r && (r[m?.titleField || ''] || r.name)) || s.recordName!
@@ -232,8 +232,8 @@ function onDockContext(e: MouseEvent) {
   os.state.dockContextOpen = true
 }
 
-// "Dock Settings…" opens the System Settings window straight to its Dock pane.
-function openDockSettings() { os.openSystemSettings('Dock') }
+// "Dock Settings…" opens the Settings window straight to its Dock pane.
+function openDockSettings() { os.openSettings('Dock') }
 
 const ctxOptions = computed(() => [
   {

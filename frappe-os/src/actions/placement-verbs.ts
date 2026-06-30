@@ -28,7 +28,7 @@ export function surfaceToRef(surface: Surface): SurfaceRef {
 }
 
 // The active window's surface reference, or null when there is nothing to pin: a bare desktop (no
-// window), or a non-`app` window — the Finder / System Settings / a settings pane (windowRole !==
+// window), or a non-`app` window — the Finder / Settings / an app-settings pane (windowRole !==
 // 'app') are OS chrome, not a destination, so the verbs never offer to pin the bare framework app.
 function activeRef(os: OsStore): SurfaceRef | null {
   const win = os.state.windows.find((w) => w.id === os.state.activeId)

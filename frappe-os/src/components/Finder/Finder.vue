@@ -12,7 +12,7 @@ import { useOS } from '@/desktop'
 import { LOCATIONS, type Location } from './locations'
 import FinderBody from './FinderBody.vue'
 // OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
-// `export *` breaks @vue/compiler-sfc's macro resolver — see SystemSettings.vue).
+// `export *` breaks @vue/compiler-sfc's macro resolver — see Settings.vue).
 import type { OsWindow } from '@/surface/types'
 
 const props = defineProps<{ win: OsWindow }>()

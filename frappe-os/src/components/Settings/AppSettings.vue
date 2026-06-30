@@ -3,7 +3,7 @@
 // reproduce the exact macOS-style two-pane settings sheet), composed from
 // frappe-ui Switch / FormControl / Button. Tabs: General / Members /
 // Notifications / Integrations / Customize. Desktop-global prefs (theme, window
-// behavior, wallpaper) live in System Settings, not here.
+// behavior, wallpaper) live in the per-user Settings window, not here.
 import { computed, watch } from 'vue'
 import { Switch, Button } from 'frappe-ui'
 import { useOS } from '@/desktop'
@@ -60,7 +60,7 @@ function flip(key: string, def: boolean) { os.tog(k(key), def) }
   <div class="flex min-h-0 flex-1">
     <!-- tabs -->
         <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
-          <div v-for="t in tabs" :key="t" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsTab(win.id, t)"
+          <div v-for="t in tabs" :key="t" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setAppSettingsTab(win.id, t)"
             :style="{ color: tab===t ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: tab===t ? 600 : 400,
               background: tab===t ? 'var(--surface-gray-3)' : 'transparent' }">
             <span :class="tabIcon[t]" class="size-[15px] flex-shrink-0"></span>{{ t }}

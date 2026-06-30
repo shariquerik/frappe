@@ -30,7 +30,7 @@ function itemFor(ref: SurfaceRef): FinderItem {
 
 // Applications — every app the viewer may see (the Registry is permission-filtered server-side, so
 // presence IS the permission signal, ADR-0010) as a bare-app reference, plus a Settings entry that
-// opens System Settings. The launcher and the primary drag-source.
+// opens the per-user Settings window. The launcher and the primary drag-source.
 export function applicationItems(): FinderItem[] {
   return useRegistry().apps().map((app) => itemFor({ app: app.id }))
 }

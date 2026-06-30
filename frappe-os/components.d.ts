@@ -13,6 +13,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+    AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
     AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
     AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']
     AspectPane: typeof import('./src/components/Window/AspectPane.vue')['default']
@@ -32,9 +33,8 @@ declare module 'vue' {
     OSWindow: typeof import('./src/components/Window/OSWindow.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
+    Settings: typeof import('./src/components/Settings/Settings.vue')['default']
     StatusPill: typeof import('./src/components/StatusPill.vue')['default']
-    SystemSettings: typeof import('./src/components/Settings/SystemSettings.vue')['default']
     WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
     WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
   }
@@ -43,6 +43,7 @@ declare module 'vue' {
 // For TSX support
 declare global {
   const AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+  const AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
   const AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
   const AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']
   const AspectPane: typeof import('./src/components/Window/AspectPane.vue')['default']
@@ -62,9 +63,8 @@ declare global {
   const OSWindow: typeof import('./src/components/Window/OSWindow.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
-  const SettingsDialog: typeof import('./src/components/Settings/SettingsDialog.vue')['default']
+  const Settings: typeof import('./src/components/Settings/Settings.vue')['default']
   const StatusPill: typeof import('./src/components/StatusPill.vue')['default']
-  const SystemSettings: typeof import('./src/components/Settings/SystemSettings.vue')['default']
   const WallpaperPicker: typeof import('./src/components/Settings/WallpaperPicker.vue')['default']
   const WindowChrome: typeof import('./src/components/Window/WindowChrome.vue')['default']
 }

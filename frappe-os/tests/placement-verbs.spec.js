@@ -17,7 +17,7 @@ import {
 import { invoke } from '../src/actions/contributions'
 import { fileMenuOptions } from '../src/actions/menubar'
 import { initPlacements, usePlacements } from '../src/placements'
-import { listSurface, dashboardSurface, appletSurface, formSurface, settingsSurface } from '../src/surface'
+import { listSurface, dashboardSurface, appletSurface, formSurface, appSettingsSurface } from '../src/surface'
 import { initRegistry } from '../src/registry'
 import { useOS } from '../src/desktop/index'
 
@@ -51,7 +51,7 @@ describe('surfaceToRef (the active surface → its pinnable reference)', () => {
     expect(surfaceToRef(formSurface('CRM Lead', 'L-1'))).toEqual({ app: 'crm' })
   })
   it('falls back to the bare app for a settings surface', () => {
-    expect(surfaceToRef(settingsSurface('crm'))).toEqual({ app: 'crm' })
+    expect(surfaceToRef(appSettingsSurface('crm'))).toEqual({ app: 'crm' })
   })
 })
 
@@ -127,7 +127,7 @@ describe('Remove tombstones an INHERITED pin (a personal hide, never a delete)',
   })
 })
 
-// The verbs pin a destination, so OS chrome windows (the Finder / System Settings — windowRole !==
+// The verbs pin a destination, so OS chrome windows (the Finder / Settings — windowRole !==
 // 'app') offer nothing: all four are suppressed rather than pinning the bare framework app.
 describe('a non-app (system/chrome) window suppresses every placement verb', () => {
   it('focusing the Finder drops all four verbs (no bare-app pin)', () => {

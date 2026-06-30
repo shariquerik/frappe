@@ -47,10 +47,10 @@ export const syncTopZ = (windows: OsWindow[], geo: Record<string, Partial<Geo>>)
 // windowOpenMode preference can override this per-open (see applyOpenMode in windows.ts).
 const defAppGeo = (i: number): Geo => ({ x: 70 + (i % 5) * 36, y: 56 + (i % 5) * 30, w: 1080, h: 700, z: i + 1, min: false, max: false })
 const defSettingsGeo = (i: number): Geo => ({ x: 200 + (i % 6) * 30, y: 92 + (i % 6) * 26, w: 720, h: 560, z: i + 1, min: false, max: false })
-// A roughly-centered two-pane System Settings window (singleton, so the by-index offset never applies).
+// A roughly-centered two-pane Settings window (singleton, so the by-index offset never applies).
 const defSystemGeo = (i: number): Geo => ({ x: 290, y: 110, w: 780, h: 540, z: i + 1, min: false, max: false })
 // The Finder (ADR-0024) is a wider two-pane navigator (Locations sidebar + a tile grid), so it
-// opens larger than System Settings; also a singleton, so the by-index offset never applies.
+// opens larger than Settings; also a singleton, so the by-index offset never applies.
 const defFinderGeo = (i: number): Geo => ({ x: 230, y: 96, w: 880, h: 580, z: i + 1, min: false, max: false })
 
 // Effective geometry per window: default-by-index merged with any saved patch.

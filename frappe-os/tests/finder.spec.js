@@ -1,6 +1,6 @@
 // The Finder (ADR-0024): the OS's cross-app navigator + the principal drag-source for Placements.
 // These specs pin (1) the singleton system-role window lifecycle (open focuses-or-spawns, retargets
-// its Location, closes, and is excluded from persistence like System Settings), (2) the Doctypes
+// its Location, closes, and is excluded from persistence like Settings), (2) the Doctypes
 // Location REPROJECTS the registry module→doctype catalog (no second store, de-duped), (3) Favorites
 // MIRRORS the viewer's resolved desktop+dock Placements, and (4) a Location drag-out resolves to a
 // User-layer desktop Placement override through the one write path. The layered placement merge and
@@ -32,7 +32,7 @@ afterEach(() => {
   initRecents(null)
 })
 
-describe('the Finder singleton system-role window (System Settings precedent)', () => {
+describe('the Finder singleton system-role window (Settings precedent)', () => {
   it('opens a single system-role window and focuses it', () => {
     os.openFinder()
     expect(os.state.windows.map((w) => w.id)).toEqual(['finder'])
