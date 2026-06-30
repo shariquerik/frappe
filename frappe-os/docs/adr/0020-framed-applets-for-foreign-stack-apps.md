@@ -2,8 +2,10 @@
 
 > **Status:** Implemented 2026-06-24 (issues `.scratch/default-surface/01,02,06`). The `kind`
 > flag lives on the applet declaration (`os_applets` hook → registry `AppletPayload`/`appletKind`);
-> a framed surface dispatches `sidebarKind → 'none'` (full-window, no nav rail); the dev proxy in
-> `vite.config.js` is a generic catch-all. Raven's `chat` applet is the worked example.
+> the dev proxy in `vite.config.js` is a generic catch-all. Raven's `chat` applet is the worked
+> example. **Superseded in part by ADR-0026:** the nav rail is no longer derived from `kind` — it is
+> an applet's explicit `nav` capability. `kind` keeps its render-mechanism meaning below; ignore the
+> "framed ⇒ no rail" inference, which ADR-0026 replaces.
 
 An **Applet** (ADR-0009) comes in two kinds, distinguished by *how the window content is
 produced*:
@@ -21,8 +23,10 @@ deliberate, bounded exception to "no second SPA," confined to foreign-stack apps
 kept **minimal**: just the iframe inside the OS-owned window chrome, with no per-app bridging
 logic. Same-origin, so the framed SPA rides the shared session cookie with nothing to wire.
 
-A framed applet is **full-window**: it shows no nav rail, because the framed SPA owns its own
-chrome (Raven has its own sidebar — a second OS sidebar beside it would clash).
+A framed applet is typically **full-window**: the framed SPA owns its own chrome (Raven has its own
+sidebar — a second OS sidebar beside it would clash), so it declares no nav rail. Note this is now
+the applet's own `nav` choice (ADR-0026), not an automatic consequence of being framed — a framed
+applet *may* opt into the OS rail if it wants one.
 
 ## Why
 

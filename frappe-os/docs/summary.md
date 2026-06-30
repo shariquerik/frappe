@@ -69,14 +69,15 @@ stable import path). Folders: `desktop/` `data/` `registry/` `surface/` `actions
   the Action-model `command`/`action` contributions (`commands()`/`actions()`) the server
   projects from each app's `os_commands`/`os_actions` hook (Slice 2), alongside `applet`. Also
   exposes `defaultSurface(appId)` (the merged `default-surface` Singleton, App<Site<User — the
-  resolver's rung-1 input, ADR-0021) and `appletKind(appletId)` (`'native'|'framed'`, ADR-0020).
+  resolver's rung-1 input, ADR-0021), `appletKind(appletId)` (`'native'|'framed'`, ADR-0020) and
+  `appletWantsNav(appletId)` (the applet's opt-in nav-rail capability, ADR-0026).
 - `surface/` — `index.ts` Surface constructors + pure helpers (windowRole/sameSurface/…), plus
   the **default-surface resolver** `initialSurface(appId)` (ADR-0021): rung 1 `resolveRef`
   (declared own- **and** cross-app refs `{applet}`/`{dashboard}`/`{doctype,view}`, the latter two
   permission-gated via `appVisible` and falling through on denial) → rung 2 the app's dashboard →
   rung 3 first doctype list (**DORMANT** no-op, awaits the nav-source decision) → rung 4
   `emptyAppSurface` (the OS-owned "no default screen" placeholder). `sidebarKind` returns `'none'`
-  for a framed applet (full-window) and `'aspect'`/`'nav'` otherwise. A cross-app ref keeps the
+  for an applet that doesn't opt into nav (full-window, ADR-0026) and `'aspect'`/`'nav'` otherwise. A cross-app ref keeps the
   window's opened-app identity while the surface's `appId` scopes chrome/nav (ADR-0012/0016).
 - `actions/` — the Action/extension model engine (CONTEXT.md → Command/Action/Region/Handler/
   Context/Eligibility). Pure-data resolver (no `eval`, no handler loading): `eligibility.ts`

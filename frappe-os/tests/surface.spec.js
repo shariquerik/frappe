@@ -13,12 +13,15 @@ describe('sidebarKind', () => {
     expect(sidebarKind(formSurface('CRM Lead', 'L-1'))).toBe('aspect')
   })
 
-  it('list / dashboard / settings / native-applet Surfaces keep the nav rail', () => {
+  it('list / dashboard / settings built-in Surfaces keep the nav rail', () => {
     expect(sidebarKind(listSurface('CRM Lead'))).toBe('nav')
     expect(sidebarKind(dashboardSurface('crm'))).toBe('nav')
     expect(sidebarKind(settingsSurface('crm'))).toBe('nav')
-    // my-todos is a first-party native applet (no `framed` flag) → keeps the nav rail.
-    expect(sidebarKind(appletSurface('frappe', 'my-todos'))).toBe('nav')
+  })
+
+  it('a first-party applet that does not opt into nav is full-window', () => {
+    // my-todos ships `nav: false` (ADR-0026) → no rail, like every applet that does not opt in.
+    expect(sidebarKind(appletSurface('frappe', 'my-todos'))).toBe('none')
   })
 
   it('a null/absent Surface falls back to the nav rail', () => {
@@ -27,34 +30,34 @@ describe('sidebarKind', () => {
   })
 })
 
-// ADR-0020: a framed applet is full-window (no nav rail — the framed SPA owns its chrome),
-// driven purely by the applet declaration's `kind` flag, so the core names no specific app.
-describe('sidebarKind for a framed applet (ADR-0020)', () => {
+// ADR-0026: an applet's nav rail is its OWN explicit `nav` capability, orthogonal to `kind`.
+// The OS never defaults nav on, and `kind` (native|framed) no longer decides the rail.
+describe('sidebarKind for an applet (ADR-0026 nav capability)', () => {
   afterEach(() => initRegistry(null))
 
-  const bootWithApplet = (kind) => ({
+  const bootWithApplet = (payload) => ({
     user: 'a', csrf_token: 't', roles: [], permissions: {},
     registry: {
       schemaVersion: 1,
       contributions: [{
         type: 'applet', target: '', name: 'demo.chat', sourceApp: 'demo',
-        payload: { appletId: 'chat', appId: 'demo', assetUrl: '/chat.js', label: 'Chat', kind },
+        payload: { appletId: 'chat', appId: 'demo', assetUrl: '/chat.js', label: 'Chat', ...payload },
       }],
     },
   })
 
-  it('a framed applet Surface renders NO rail (full-window)', () => {
-    initRegistry(bootWithApplet('framed'))
+  it('an applet with no nav flag is full-window (no rail), whatever its kind', () => {
+    initRegistry(bootWithApplet({ kind: 'native' }))
+    expect(sidebarKind(appletSurface('demo', 'chat'))).toBe('none')
+    initRegistry(bootWithApplet({ kind: 'framed' }))
     expect(sidebarKind(appletSurface('demo', 'chat'))).toBe('none')
   })
 
-  it('an applet declared native keeps the nav rail', () => {
-    initRegistry(bootWithApplet('native'))
+  it('an applet that opts into nav keeps the rail, whatever its kind', () => {
+    initRegistry(bootWithApplet({ kind: 'native', nav: true }))
     expect(sidebarKind(appletSurface('demo', 'chat'))).toBe('nav')
-  })
-
-  it('an applet with no kind flag defaults to native (nav rail)', () => {
-    initRegistry(bootWithApplet(undefined))
+    // A framed applet may still ask for the rail — nav is decoupled from how it renders.
+    initRegistry(bootWithApplet({ kind: 'framed', nav: true }))
     expect(sidebarKind(appletSurface('demo', 'chat'))).toBe('nav')
   })
 })

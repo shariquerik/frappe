@@ -3,7 +3,7 @@
 // (ADR-0012). Window chrome, geometry, focus, history and URL projection are agnostic to
 // which kind a Surface is. This module is the constructors plus the small pure helpers
 // over them; see docs/design/surface-and-registry.md.
-import { useRegistry, appForDoctype, appletKind } from '@/registry'
+import { useRegistry, appForDoctype, appletWantsNav } from '@/registry'
 import type { Surface, BuiltinSurface, AppletSurface, SurfaceRef } from '@/types'
 
 // The Aspect set + helpers live in a pure leaf module (no store/registry deps); re-export
@@ -136,14 +136,16 @@ export function surfaceAppId(s: Surface): string {
 // ---- pure helpers ------------------------------------------------------------
 export const isBuiltin = (s?: Surface | null): s is BuiltinSurface => !!s && s.kind === 'builtin'
 
-// Which sidebar a window's Surface drives (ADR-0018, ADR-0020): a form shows the Aspect rail;
-// a framed applet shows NO rail (full-window — the framed SPA owns its own chrome, so a second
-// OS nav rail beside it would clash); every other surface (list/dashboard/settings/native
-// applet) keeps the app nav rail. The sidebar is the one chrome element that follows the
-// Surface — geometry, focus and URL-projection mechanics stay surface-agnostic (ADR-0012).
+// Which sidebar a window's Surface drives (ADR-0018, ADR-0026): a built-in form shows the Aspect
+// rail and every other built-in (list/dashboard/settings) keeps the app nav rail. An applet's rail
+// is its OWN explicit choice (ADR-0026 `nav` capability) — orthogonal to how it renders (`kind`):
+// it gets the nav rail only when it opts in, otherwise none (full-window). So a native applet like
+// ERPNext's erp-hello shows no rail by default, and a framed applet may still ask for one. The
+// sidebar is the one chrome element that follows the Surface — geometry, focus and URL-projection
+// mechanics stay surface-agnostic (ADR-0012).
 export function sidebarKind(s?: Surface | null): 'aspect' | 'nav' | 'none' {
   if (isBuiltin(s)) return s.view === 'form' ? 'aspect' : 'nav'
-  if (s?.kind === 'applet') return appletKind(s.appletId) === 'framed' ? 'none' : 'nav'
+  if (s?.kind === 'applet') return appletWantsNav(s.appletId) ? 'nav' : 'none'
   return 'nav'
 }
 

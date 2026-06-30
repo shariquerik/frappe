@@ -111,7 +111,11 @@ function addToIndex(ix: RegistryIndex, c: Contribution): void {
     const p = c.payload as AppletPayload
     // `kind` is the ADR-0020 content-production flag (native | framed); a declaration that
     // omits it is a native applet (the default kind) — the core holds no per-app knowledge.
-    ix.applets[p.appletId] = { appId: p.appId, label: p.label, assetUrl: p.assetUrl, kind: p.kind ?? 'native' }
+    // `nav` is the ADR-0026 nav-rail capability, orthogonal to `kind`: the applet opts in, and
+    // an omitted flag means NO rail (the OS never defaults nav on for an applet).
+    ix.applets[p.appletId] = {
+      appId: p.appId, label: p.label, assetUrl: p.assetUrl, kind: p.kind ?? 'native', nav: p.nav ?? false,
+    }
   }
   // Command/Action are Collections (ADR-0007): each app's hook-declared contributions
   // accumulate here, then compete against the first-party OS defaults in the resolver
@@ -264,6 +268,8 @@ interface AppletEntry {
   load?: () => Promise<{ default: Component }>
   assetUrl?: string
   kind: AppletKind
+  // Whether this applet wants the OS app nav rail beside it (ADR-0026) — orthogonal to `kind`.
+  nav: boolean
 }
 
 // The server `applet` contribution payload (ADR-0009, projected from the `os_applets` hook).
@@ -274,11 +280,13 @@ interface AppletPayload {
   assetUrl: string
   label: string
   kind?: AppletKind
+  // Whether the applet wants the nav rail (ADR-0026); absent on the wire → no rail.
+  nav?: boolean
 }
 
 const FIRST_PARTY: Record<string, AppletEntry> = {
-  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos'), kind: 'native' },
-  'customizations': { appId: 'frappe', label: 'Customizations', load: () => import('@/applets/Customizations'), kind: 'native' },
+  'my-todos': { appId: 'frappe', label: 'My open ToDos', load: () => import('@/applets/MyTodos'), kind: 'native', nav: false },
+  'customizations': { appId: 'frappe', label: 'Customizations', load: () => import('@/applets/Customizations'), kind: 'native', nav: false },
 }
 
 // One enumerable applet info row (palette entry points read this).
@@ -293,6 +301,13 @@ export function listApplets(): AppletInfo[] {
 // declared `framed` applet as full-window, and the core never names a specific app.
 export function appletKind(appletId: string): AppletKind {
   return ensureIndex().applets[appletId]?.kind ?? 'native'
+}
+
+// Whether an applet opts into the OS app nav rail (ADR-0026), looked up by id. Orthogonal to
+// `appletKind`: a native applet may want no rail (ERPNext's erp-hello) and a framed applet may
+// want one. An unknown or flag-less applet wants NO rail — the OS never defaults nav on.
+export function appletWantsNav(appletId: string): boolean {
+  return ensureIndex().applets[appletId]?.nav ?? false
 }
 
 // Sync existence check: an applet id known AND owned by the given app (the URL scheme
@@ -334,6 +349,7 @@ export function useRegistry() {
     cards: (appId: string): Card[] => ix.cards[appId] || [],
     knownApplet,
     appletKind,
+    appletWantsNav,
     resolveApplet,
     listApplets,
     commands: (): Command[] => ix.commands,

@@ -175,10 +175,10 @@ const viewProps = computed<ViewProps>(() => {
 			:class="contentClass"
 		>
 			<!-- ===== APPLET WINDOW (ADR-0012 polymorphic surface) ===== -->
-			<!-- A native applet keeps the app nav rail (its landing stays navigable); a framed
-			     applet is full-window with no rail (sidebar === 'none') because the framed SPA
-			     owns its own chrome (ADR-0020). The rail choice follows sidebarKind, like every
-			     other surface — geometry/focus/URL stay surface-agnostic. -->
+			<!-- An applet shows the nav rail only when it opts in (ADR-0026 `nav` capability);
+			     otherwise it is full-window (sidebar === 'none'). The choice is the applet's own,
+			     orthogonal to native-vs-framed, and follows sidebarKind like every other surface —
+			     geometry/focus/URL stay surface-agnostic. -->
 			<template v-if="isApplet">
 				<WindowChrome :win="win" :title="app.name" :logo="app.logo" />
 				<div class="flex min-h-0 flex-1 bg-surface-base">

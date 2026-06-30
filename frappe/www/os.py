@@ -259,6 +259,10 @@ def _applet_contributions():
 			# How the window content is produced (ADR-0020): "native" Vue component vs "framed"
 			# iframe. The client defaults absent → native, so only emit when the app declares it.
 			"kind": spec.get("kind", "native"),
+			# Whether the applet wants the OS app nav rail beside it (ADR-0026) — an explicit
+			# capability, orthogonal to `kind`: the applet decides, the OS never defaults it on.
+			# Absent → no rail (the client defaults absent → False).
+			"nav": spec.get("nav", False),
 		}
 
 	return _hook_contributions("os_applets", ("appletId", "fileName"), project)

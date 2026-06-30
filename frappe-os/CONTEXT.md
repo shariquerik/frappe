@@ -61,9 +61,9 @@ custom default if it sets one (today only ever an **Applet** — e.g. Raven → 
 otherwise the app's **dashboard**; otherwise its **first doctype list**. So an ordinary app
 (CRM, ERPNext) declares nothing and rides the fallback, while an app with a bespoke front door
 (Raven) declares it — no app is special-cased in the OS, there is one rule with one optional
-override. A **Framed applet** default is **full-window** (no nav rail — the framed SPA owns its
-own chrome); a dashboard/list default carries the doctype **nav rail**. Replaces the POC's fixed
-dashboard→modules→applet inference.
+override. An **Applet** default is **full-window** unless the applet opts into the **nav rail**
+(ADR-0026 — its own explicit choice, not a function of native-vs-framed); a dashboard/list default
+carries the doctype **nav rail**. Replaces the POC's fixed dashboard→modules→applet inference.
 The declared default is **layered** like any contribution (App-default < Site < User), so a
 *per-user* default surface is just a User-layer override of the same Singleton — no separate
 subsystem (see Customization). The app authors its App-default layer once (alongside its OS

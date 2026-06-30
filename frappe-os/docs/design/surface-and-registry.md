@@ -138,7 +138,8 @@ interface ActionPayload {
 
 // type:'applet'  target:''  — COLLECTION (loadable applet registry, ADR-0009)
 // `kind` ('native'|'framed', ADR-0020) is how the content is produced; absent → 'native'.
-interface AppletPayload { appletId: string; appId: string; assetUrl: string; minOsApi: number; kind?: 'native' | 'framed' }
+// `nav` (ADR-0026) is whether the applet wants the OS nav rail; absent → false (no rail).
+interface AppletPayload { appletId: string; appId: string; assetUrl: string; minOsApi: number; kind?: 'native' | 'framed'; nav?: boolean }
 
 // type:'default-surface'  target:<appId>  — SINGLETON, patch-merged App<Site<User (ADR-0021)
 // The app's declared landing, as a stable app-qualified surface REFERENCE (never a Surface
@@ -546,11 +547,12 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 >   window `id` is minted from the *opened* app (`app:<openedApp>`, dock/icon/`?instance`, ADR-0016),
 >   while chrome/nav already read the *surface's* `appId` (`OSWindow.vue` title/logo, `sidebarKind`).
 >   A cross-app default just returns a surface owned by another app and the scoping falls out.
-> - **Framed applets are full-window** (ADR-0020). The `kind` flag rides the `os_applets` hook →
->   `AppletPayload.kind` → `appletKind(appletId)`; `sidebarKind(surface)` returns `'none'` for a
->   framed applet surface (no nav rail — the framed SPA owns its chrome) and the per-window
->   hide-sidebar toggle is a graceful no-op there. **One gap fixed mid-implementation:** the server
->   wasn't forwarding `kind` (slice 02 added it client-side only), so `os.py`'s applet projection now
+> - **An applet's nav rail is its explicit `nav` capability** (ADR-0026, refining ADR-0020). The
+>   `nav` flag rides the `os_applets` hook → `AppletPayload.nav` → `appletWantsNav(appletId)`;
+>   `sidebarKind(surface)` returns `'nav'` only when the applet opts in, else `'none'` (full-window),
+>   and the per-window hide-sidebar toggle is a graceful no-op when there is no rail. `kind` no longer
+>   decides the rail (a native applet may want none, a framed one may want one). **One gap fixed
+>   mid-implementation:** the server wasn't forwarding `kind` (slice 02 added it client-side only), so `os.py`'s applet projection now
 >   passes `spec.get("kind","native")`.
 > - **Raven is the worked example.** `raven/hooks.py` declares `default_surface:{"applet":"chat"}`
 >   + the `chat` applet `kind:"framed"`; opening Raven lands directly on `chat` (rung 1), full-window.
