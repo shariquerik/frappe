@@ -1,4 +1,4 @@
-import type { InjectionKey, ShallowRef } from "vue";
+import type { InjectionKey, Ref, ShallowRef } from "vue";
 
 // Per-window teleport target for a view's primary actions (list "New", form "Save"/menu).
 // OSWindow provides it — it's the common ancestor of the chrome bar and the view body — and
@@ -8,3 +8,9 @@ import type { InjectionKey, ShallowRef } from "vue";
 // AppToolbar); views then fall back to rendering their actions inline via Teleport `disabled`.
 export const TOOLBAR_SLOT: InjectionKey<ShallowRef<HTMLElement | null>> =
 	Symbol("os-toolbar-slot");
+
+// Whether the host window is the focused one. OSWindow provides its `focused` computed so a
+// view body can quiet its primary action when the window is in the background — the list
+// "New" button rides solid while focused, subtle otherwise. Absent for chromeless mounts;
+// views default to the focused (solid) look when unprovided.
+export const WINDOW_FOCUSED: InjectionKey<Ref<boolean>> = Symbol("os-window-focused");

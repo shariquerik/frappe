@@ -10,7 +10,7 @@ import { Button, Avatar, Dropdown } from "frappe-ui";
 import { FormLayout, useDoctypeLayout } from "@framework/ui/FormLayout";
 import StatusPill from "@/components/StatusPill.vue";
 import { useOS } from "@/desktop";
-import { TOOLBAR_SLOT } from "@/components/Window/toolbar";
+import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
 // @vue/compiler-sfc's macro type resolver — see DoctypeView.vue).
 import type { ViewProps } from "@/config/types";
@@ -147,6 +147,11 @@ const saveLabel = computed(() => (saving.value ? "Saving…" : isNew.value ? "Cr
 // Null for a popped-out record window — the form then keeps its full inline header.
 const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null));
 
+// Save/Create rides solid while its window is focused, subtle when the window sits in the
+// background (WINDOW_FOCUSED, provided by OSWindow). Unprovided → defaults to solid.
+const windowFocused = inject(WINDOW_FOCUSED, null);
+const saveVariant = computed(() => ((windowFocused?.value ?? true) ? "solid" : "subtle"));
+
 const formMenu = computed(() => [
 	{ label: "Duplicate", onClick: () => {} },
 	{ label: "Print", onClick: () => {} },
@@ -166,7 +171,7 @@ const formMenu = computed(() => [
 			</Dropdown>
 			<Button
 				v-if="editable"
-				variant="solid"
+				:variant="saveVariant"
 				size="sm"
 				:label="saveLabel"
 				:loading="saving"
@@ -215,7 +220,7 @@ const formMenu = computed(() => [
 			</Dropdown>
 			<Button
 				v-if="editable"
-				variant="solid"
+				:variant="saveVariant"
 				size="sm"
 				:label="saveLabel"
 				:loading="saving"

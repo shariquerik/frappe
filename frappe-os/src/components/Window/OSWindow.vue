@@ -14,7 +14,7 @@ import { SettingsDialog, SystemSettings } from "@/components/Settings";
 import { Finder } from "@/components/Finder";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
-import { TOOLBAR_SLOT } from "./toolbar";
+import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "./toolbar";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
 import EmptyAppPane from "./EmptyAppPane.vue";
@@ -64,6 +64,8 @@ watch(
 
 const g = computed<Partial<Geo>>(() => os.geoMap.value[props.win.id] || {});
 const focused = computed(() => os.state.activeId === props.win.id);
+// Hand the focus state to the view body (the list "New" button quiets to subtle off-focus).
+provide(WINDOW_FOCUSED, focused);
 const inSplit = computed(
 	() =>
 		os.state.split &&
