@@ -4,8 +4,13 @@
 // the table over OSListView. Display config (label/icon/columns/saved views) comes from the
 // curated `meta` prop; the rows, count and create-permission are live. Symmetric with
 // Form/OSForm — both are full view components DoctypeView resolves and renders.
-import { computed, inject, shallowRef, watch } from 'vue'
-import { Button } from 'frappe-ui'
+import { computed, inject, ref, shallowRef, watch, watchEffect } from 'vue'
+import { Button, ListFooter } from 'frappe-ui'
+import { useListView } from '@framework/ui/ListView'
+import { Filter } from '@framework/ui/Filter'
+import { SortBy } from '@framework/ui/SortBy'
+import { QuickFilter } from '@framework/ui/QuickFilter'
+import { ColumnSettings } from '@framework/ui/ColumnSettings'
 import OSListView from './OSListView.vue'
 import { useOS } from '@/desktop'
 import { TOOLBAR_SLOT } from '@/components/Window/toolbar'
@@ -20,20 +25,65 @@ const props = withDefaults(defineProps<ViewProps>(), {
 const os = useOS()
 const doctype = computed(() => props.doctype)
 
+// The shared list-view state (filter / sort / columns / quick-filter), bound to the
+// controls in later slices (ADR-0025). `useListView` takes doctype BY VALUE, so this
+// component is remounted on doctype change via `:key` in DoctypeView — no reset watcher.
+// Columns are Meta-derived here (`view.columns.wire`); the host keeps fetching.
+const view = useListView(props.doctype)
+
 // The "New" button needs create permission, which rides on the live field schema.
 const fieldMeta = computed(() => os.fieldMetaFor(doctype.value))
 watch(doctype, (dt) => { if (dt) os.loadFieldMeta(dt) }, { immediate: true })
 const canCreate = computed(() => !!fieldMeta.value.data?.can_create)
 
-// Live rows + count.
+// Fetch projections drive the OS-store reads (ADR-0025): the controls own filter/sort
+// state, the host owns fetching. Empty filters normalize to `undefined` so the unfiltered
+// read shares the nav-rail's count cache key; no sort falls back to the prior default order.
+const wireFilters = computed(() => {
+  const wire = view.filters.wire.value
+  return wire && wire.length ? wire : undefined
+})
+const orderBy = computed(() => view.sort.orderBy.value || 'modified desc')
+const pageLength = ref(20)
+
+// Live rows + filter-aware count (keyed by the SAME wire filters it is loaded with, so the
+// footer's "X of Y" reflects the active filters rather than the unfiltered total).
 const listState = computed(() => os.listFor(doctype.value))
 const records = computed(() => listState.value.data || [])
-const countState = computed(() => os.countFor(doctype.value))
+const countState = computed(() => os.countFor(doctype.value, wireFilters.value))
 const total = computed(() => (countState.value.data == null ? records.value.length : countState.value.data))
+// More rows exist than are loaded → the footer offers Load More (ADR-0025 paging).
+const hasMore = computed(() => records.value.length < total.value)
 
-watch(doctype, (dt) => { if (dt) { os.loadList(dt); os.loadCount(dt) } }, { immediate: true })
+// Refetch from page 1 whenever the doctype, filters, sort, or page length change; the wire
+// projections are the tracked deps. loadMore appends the next page without retriggering.
+watchEffect(() => {
+  const dt = doctype.value
+  if (!dt) return
+  os.loadList(dt, {
+    filters: wireFilters.value,
+    order_by: orderBy.value,
+    limit: pageLength.value,
+  })
+  os.loadCount(dt, wireFilters.value)
+})
+function loadMore() {
+  os.loadMore(doctype.value, {
+    filters: wireFilters.value,
+    order_by: orderBy.value,
+    limit: pageLength.value,
+  })
+}
 
-const savedViews = computed(() => props.meta?.savedViews || [{ label: 'All' }])
+// A column-header drag emits `{ key, width }`; write it back into the shared column state
+// so ColumnSettings and the table stay in sync (ADR-0006 / ADR-0025, two-way resize).
+function onColumnWidthUpdated(e: { key: string; width: string }) {
+  view.columns.setWidth(e.key, e.width)
+}
+
+function onColumnWidthReset(e: { key: string }) {
+  view.columns.resetWidth(e.key)
+}
 
 // The window chrome's action zone: "New" teleports up next to the breadcrumb, so the list's
 // title/count/presence no longer need a toolbar bar of their own (count rides the breadcrumb,
@@ -50,27 +100,35 @@ const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
         <template #prefix><span class="lucide-plus size-[14px]"></span></template>
       </Button>
     </Teleport>
-    <!-- saved view chips + filter/sort -->
-    <div class="flex flex-shrink-0 items-center gap-1.5 border-b border-outline-gray-1 bg-surface-gray-1 px-[14px] py-[7px]">
-      <span class="lucide-bookmark size-[13px] text-ink-gray-4 mr-0.5"></span>
-      <button v-for="(v, i) in savedViews" :key="i"
-        class="inline-flex h-[26px] cursor-pointer items-center rounded-[7px] px-[11px] text-[12px]" :style="{
-          border: i===0 ? '1px solid var(--outline-gray-2)' : '1px solid transparent',
-          background: i===0 ? 'var(--surface-base)' : 'transparent',
-          color: i===0 ? 'var(--ink-gray-8)' : 'var(--ink-gray-5)',
-          fontWeight: i===0 ? 500 : 400, boxShadow: i===0 ? 'var(--shadow-sm)' : 'none' }">
-        {{ v.label }}<span v-if="v.count != null" class="ml-[5px] opacity-60">{{ v.count }}</span>
-      </button>
-      <div class="flex-1"></div>
-      <Button variant="subtle" size="sm" label="Filter">
-        <template #prefix><span class="lucide-filter size-[13px]"></span></template>
-      </Button>
-      <Button variant="subtle" size="sm" label="Sort" />
+    <!-- List-view controls toolbar (ADR-0025), all bound to one `useListView`. The bookmark
+         + "All" saved-view chip are gone — there is no saved-views feature yet. -->
+    <div class="flex flex-shrink-0 items-start gap-1.5 px-[14px] py-[7px]">
+      <!-- QuickFilter strip (left) — a projection over the SAME filter list the advanced
+           Filter edits (shared array), so the two stay in sync. Its Customize toggle picks
+           which fields are surfaced (defaults to the doctype's in_standard_filter fields). -->
+      <QuickFilter
+        v-model:filters="view.filters.conditions.value"
+        v-model:fields="view.quickFilter.fields.value"
+        v-model:customizing="view.quickFilter.customizing.value"
+        :doctype="doctype"
+        class="min-w-0 flex-1"
+      />
+      <!-- The advanced controls hide while choosing which quick filters to surface. -->
+      <template v-if="!view.quickFilter.customizing.value">
+        <Filter v-model="view.filters.conditions.value" :doctype="doctype" />
+        <SortBy v-model="view.sort.by.value" :doctype="doctype" />
+        <ColumnSettings
+          v-model="view.columns.shown.value"
+          :doctype="doctype"
+          :can-reset="view.columns.isCustomized.value"
+          @reset="view.columns.reset()"
+        />
+      </template>
     </div>
     <!-- table -->
     <OSListView
       :doctype="doctype"
-      :columns="meta?.listColumns || []"
+      :columns="view.columns.wire.value"
       :rows="records"
       :meta="meta"
       :loading="listState.loading"
@@ -78,12 +136,30 @@ const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null))
       :on-open="onOpen"
       :on-open-inline="onOpenInline"
       :on-open-new-window="onOpenNewWindow"
+      @column-width-updated="onColumnWidthUpdated"
+      @column-width-reset="onColumnWidthReset"
     />
-    <!-- footer -->
-    <div class="flex flex-shrink-0 items-center gap-3 border-t border-outline-gray-1 bg-surface-gray-1 px-[14px] py-[7px] text-[12px] text-ink-gray-5">
-      <span>{{ records.length }} of {{ total }}</span>
-      <div class="flex-1"></div>
-      <span class="text-ink-gray-4">Rows per page: 100</span>
-    </div>
+    <!-- footer: frappe-ui's presentation-only ListFooter, backed by OS-store paging.
+         v-model is the page length (a change refetches page 1). We own the right side via
+         the slot: ListFooter's built-in load-more is gated by an internal computed that does
+         not re-evaluate against our reactive count in this composition, so we render the
+         "Load More + X of Y" from OSList's own state, which IS reactive (the left page-length
+         tabs still come from ListFooter). -->
+    <ListFooter
+      v-model="pageLength"
+      class="flex-shrink-0 border-t border-outline-gray-1 px-[14px] py-[7px]"
+    >
+      <template #right>
+        <div class="flex items-center">
+          <Button v-if="hasMore" label="Load More" @click="loadMore" />
+          <div v-if="hasMore" class="mx-3 h-[80%] border-l" />
+          <div class="flex items-center gap-1 text-base text-ink-gray-5">
+            <div>{{ records.length }}</div>
+            <div>of</div>
+            <div>{{ total }}</div>
+          </div>
+        </div>
+      </template>
+    </ListFooter>
   </div>
 </template>

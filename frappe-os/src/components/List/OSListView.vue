@@ -1,24 +1,27 @@
 <script setup lang="ts">
-// frappe-ui ListView wrapper for Frappe OS. Maps the curated ListColumn config to
-// ListView's column/cell shape (./list-columns) and reproduces the four curated
-// cell kinds (status pill / avatar / primary / plain). Rows come from the records store
-// (the host stays the single coherent cache) — ListView is presentation only. Selection
-// is live (selectable) and emitted; bulk actions are deferred. Loading/error are owned
-// here; ListView owns only the empty state. Row click opens a form window via `onOpen` —
-// the OS opens windows, not router routes, so we use options.onRowClick (not getRowRoute).
+// frappe-ui ListView wrapper for Frappe OS. Renders the render-ready columns it is given
+// (the library's Meta-derived `view.columns.wire`, ADR-0025) and classifies each cell via
+// `cellKind`. The four curated kinds (status pill / avatar / primary / plain) stay in the
+// tree but are dormant: Meta-derived columns carry raw Frappe fieldtypes, so cells render
+// plain/typed until the deferred Display-config enrichment layer returns. Rows come from
+// the records store (the host stays the single coherent cache) — ListView is presentation
+// only. Selection is live (selectable) and emitted; bulk actions are deferred. Loading/
+// error are owned here; ListView owns only the empty state. Row click opens a form window
+// via `onOpen` — the OS opens windows, not router routes, so we use options.onRowClick.
 import { computed, ref } from 'vue'
-import { ListView, Avatar } from 'frappe-ui'
+import { ListView, ListHeader, ListRows, ListSelectBanner, Avatar } from 'frappe-ui'
 import StatusPill from '../StatusPill.vue'
 import OSContextMenu from '../OSContextMenu.vue'
-import { toListViewColumns, cellKind } from './list-columns'
+import { cellKind } from './list-columns'
 // These feed defineProps, so import from concrete modules, not the @/types barrel (its
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
-import type { DoctypeMeta, ListColumn } from '@/config/types'
+import type { DoctypeMeta } from '@/config/types'
+import type { ListViewColumn } from './types'
 import type { FrappeDoc } from '@/data/types'
 
 const props = withDefaults(defineProps<{
   doctype: string
-  columns?: ListColumn[] // curated meta.listColumns
+  columns?: ListViewColumn[] // render-ready columns (view.columns.wire)
   rows?: FrappeDoc[]
   meta?: DoctypeMeta | null
   loading?: boolean
@@ -31,9 +34,28 @@ const props = withDefaults(defineProps<{
   rows: () => [],
 })
 
-const emit = defineEmits<{ 'update:selections': [Set<unknown>] }>()
+const emit = defineEmits<{
+  'update:selections': [Set<unknown>]
+  // A column-header drag-resize, re-emitted up to the host's shared column state (ADR-0006).
+  'column-width-updated': [{ key: string; width: string }]
+  // Double-click a resizer → clear that column's fixed width so it flexes to fill again.
+  'column-width-reset': [{ key: string }]
+}>()
 
-const listColumns = computed(() => toListViewColumns(props.columns))
+// frappe-ui's `ListHeaderItem` binds drag-resize to the resizer's `mousedown` but exposes
+// neither a dblclick nor its `startResizing`, so we delegate the double-click-to-reset
+// gesture on the header grid: map the double-clicked resizer to its column by index (the
+// selectable checkbox has no resizer, so resizers run 1:1 with `columns`) and ask the host
+// to drop that column's width.
+function onResizerDoubleClick(event: MouseEvent) {
+  const resizer = (event.target as HTMLElement).closest('.cursor-col-resize')
+  const header = resizer?.closest('.grid')
+  if (!resizer || !header) return
+  const index = Array.from(header.querySelectorAll('.cursor-col-resize')).indexOf(resizer)
+  const column = props.columns[index]
+  if (column) emit('column-width-reset', { key: column.key })
+}
+
 const statusThemes = computed(() => props.meta?.statusThemes || {})
 
 // Right-click a row → a small menu offering the two built-in opens (ADR-0017): Open (same
@@ -78,6 +100,7 @@ const rowMenuItems = computed(() => {
 const options = computed(() => ({
   selectable: true,
   showTooltip: true,
+  resizeColumn: true,
   onRowClick: (row: FrappeDoc) => props.onOpen?.(props.doctype, row.name),
   emptyState: {
     title: 'No records',
@@ -87,17 +110,33 @@ const options = computed(() => ({
 </script>
 
 <template>
-  <div class="min-h-0 flex-1 overflow-auto px-3 py-1" @contextmenu.prevent="onRowContextMenu">
+  <!-- Bounded flex column so only the rows scroll (CRM-parity, matches ListViewShell): the
+       table region takes the remaining height and clips, and the list's own `ListRows`
+       (`overflow-y-auto`) is the sole scroller — the `ListHeader` above it stays fixed. -->
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-1" @contextmenu.prevent="onRowContextMenu">
     <div v-if="error" class="px-[14px] py-[34px] text-center text-[13px] text-ink-red-6">{{ error }}</div>
     <div v-else-if="!rows.length && loading" class="px-[14px] py-[34px] text-center text-[13px] text-ink-gray-4">Loading…</div>
     <ListView
       v-else
-      :columns="listColumns"
+      :columns="columns"
       :rows="rows"
       row-key="name"
       :options="options"
+      class="min-h-0"
       @update:selections="emit('update:selections', $event)"
     >
+      <!-- Explicit composition: frappe-ui's `ListView` does NOT re-emit `columnWidthUpdated`,
+           so we place `ListHeader` to catch the header drag-resize ourselves and re-emit it
+           up to the host's shared column state (ADR-0006). `ListRows` keeps the default row
+           rendering, which still consumes the `#cell` slot below via `ListView`'s provide. -->
+      <ListHeader
+        @column-width-updated="emit('column-width-updated', $event)"
+        @dblclick="onResizerDoubleClick"
+      />
+      <ListRows />
+      <!-- Overriding the default slot drops frappe-ui's built-in selection banner, so we
+             re-add it here; it reads the shared `list` provide and shows on selection. -->
+      <ListSelectBanner />
       <!-- `data-row-name` on every cell lets the container-level contextmenu resolve the
            clicked record from anywhere in the row (see rowNameFromEvent). -->
       <template #cell="{ column, item, row }">

@@ -24,5 +24,8 @@ watch(
 </script>
 
 <template>
-  <component :is="view" v-if="view" v-bind="$props" />
+  <!-- Key on doctype so a doctype switch REMOUNTS the view: the list's `useListView`
+       takes doctype by value and has no reset watcher, so it reconstructs cleanly here
+       (ADR-0025). Same-doctype record navigation keeps the instance (key unchanged). -->
+  <component :is="view" v-if="view" :key="props.doctype" v-bind="$props" />
 </template>
