@@ -4,12 +4,12 @@
 // curated config; the values are live from the store, loaded when the dashboard renders /
 // the app changes. Styled on frappe-ui tokens; Button/Avatar come from frappe-ui.
 //
-// NOTE (architecture-review §3 item 4): `greeting` and `team` still hold hardcoded "Faris"
-// demo data — moved here verbatim from OSWindow. They should come from boot/session; left
-// untouched here to keep this change a pure structural split.
+// NOTE: the `team` panel still holds hardcoded demo members (deferred to issue 02 —
+// real team-member source); the greeting below is now driven by the live boot user.
 import { computed, watch } from "vue";
 import { Button, Avatar } from "frappe-ui";
 import { useOS } from "@/desktop";
+import { greeting as greetingFor } from "@/config/apps";
 import StatusPill from "@/components/StatusPill.vue";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see summary.md gotcha).
@@ -21,7 +21,7 @@ const ICON = os.DATA.ICON;
 const s = computed(() => props.win.surface as BuiltinSurface);
 const app = computed(() => os.DATA.APP[s.value.appId!]);
 
-const greeting = computed(() => "Good afternoon, " + (os.state.userName || "Faris").split(" ")[0]);
+const greeting = computed(() => greetingFor(os.state.userName));
 const dateLine = computed(
 	() => os.clockText.value.replace(/\s\d.*$/, "") + " · " + app.value.name,
 );

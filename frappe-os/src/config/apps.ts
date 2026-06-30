@@ -89,6 +89,19 @@ export function initials(value?: string | null): string {
   return (parts[0][0] + parts[1][0]).toUpperCase()
 }
 
+// Session-identity presentation, driven by the live boot user (state.userName) — never
+// demo data. `firstName` is the leading token the greeting addresses; `greeting` drops the
+// name entirely when none is known (loading / nameless user) rather than showing a
+// placeholder, so the empty case reads as a neutral salutation.
+export function firstName(userName?: string | null): string {
+  return (userName || '').trim().split(/\s+/)[0] || ''
+}
+
+export function greeting(userName?: string | null): string {
+  const first = firstName(userName)
+  return first ? `Good afternoon, ${first}` : 'Good afternoon'
+}
+
 export function pill(theme?: string): Pill {
   const tone = theme || 'gray'
   return { bg: `var(--surface-${tone}-2)`, fg: `var(--ink-${tone}-7)` }

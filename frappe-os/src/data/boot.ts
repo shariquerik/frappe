@@ -15,6 +15,7 @@ function fromWindow(): BootData {
   const token: unknown = w.csrf_token
   return {
     user: w.user || null,
+    user_fullname: typeof w.user_fullname === 'string' ? w.user_fullname : '',
     csrf_token: typeof token === 'string' && !token.includes('{{') ? token : '',
     roles: Array.isArray(w.roles) ? w.roles : [],
     registry: w.registry || [],

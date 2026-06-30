@@ -135,6 +135,9 @@ async function boot() {
   //    Vite) — the seam stays uninitialised then, but no consumer reads it yet.
   try {
     const bootData = await getBoot()
+    // The live session identity drives the menu-bar label + dashboard greeting; left unset
+    // on a failed/offline boot so those render a neutral state, never demo data.
+    os.state.userName = bootData.user_fullname || undefined
     initRegistry(bootData)
     initPlacements(bootData)
     initRecents(bootData)

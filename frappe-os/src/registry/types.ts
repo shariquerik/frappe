@@ -54,6 +54,10 @@ export interface OsRegistryData {
 // `registry` may be a legacy bare array, so registry/index.ts guards the shape before use.
 export interface BootData {
   user: string | null
+  // The logged-in user's display name (full name, falling back to the user id when the
+  // user has none) — drives the menu-bar label and dashboard greeting. Optional so an
+  // older server / offline boot degrades to a neutral state rather than demo data.
+  user_fullname?: string
   csrf_token: string
   roles: string[]
   registry: OsRegistryData | unknown[]

@@ -76,6 +76,7 @@ def get_context(context):
 def get_boot():
 	return {
 		"user": frappe.session.user,
+		"user_fullname": frappe.utils.get_fullname(frappe.session.user),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 		"roles": frappe.get_roles(),
 		"registry": get_registry(),

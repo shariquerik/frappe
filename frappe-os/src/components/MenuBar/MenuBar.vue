@@ -18,7 +18,9 @@ const aid = computed(() => appIdOf(activeWin.value));
 const aname = computed(() => (aid.value ? os.DATA.APP[aid.value].name : "Finder"));
 const appLogo = computed(() => (aid.value ? os.DATA.APP[aid.value].logo : null));
 const frappeLogo = os.DATA.APP.frappe.logo;
-const userName = "Faris Ansari";
+// The logged-in user's name from the live boot session (initials() degrades a
+// missing/loading name to "?", so no demo placeholder leaks through).
+const userName = computed(() => os.state.userName);
 
 function zoomActive() {
 	if (activeWin.value) os.toggleZoom(activeWin.value.id);
