@@ -85,5 +85,62 @@ class TestManifestFolderContributions(unittest.TestCase):
 		self.assertEqual(contributions._manifest_folder_contributions("applets", ("command",), _echo_project), [])
 
 
+class TestScopeStamping(unittest.TestCase):
+	"""Delivery-by-scope (ADR-0032): the projector stamps the Scope a manifest tier implies. An
+	app's `os/actions.json` is App scope (boot); a doctype's `os/` manifest is Doctype/View scope
+	(live meta). Both the installed-app list and the manifest reads are injected — no site/DB."""
+
+	def setUp(self):
+		self._apps = contributions._installed_os_apps
+		self._read = contributions.manifest.read
+		self._doctype_manifest = contributions.manifest.doctype_manifest
+		self._module_app = getattr(frappe.local, "module_app", None)
+		self._logger = frappe.logger
+		contributions._installed_os_apps = lambda: ["erpnext"]
+		frappe.local.module_app = {"selling": "erpnext"}
+		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
+
+	def tearDown(self):
+		contributions._installed_os_apps = self._apps
+		contributions.manifest.read = self._read
+		contributions.manifest.doctype_manifest = self._doctype_manifest
+		frappe.local.module_app = self._module_app
+		frappe.logger = self._logger
+
+	def test_app_scope_stamped_on_actions_json(self):
+		contributions.manifest.read = lambda app, *segments: [{"command": "c1", "region": "menubar:file"}]
+		out = contributions.action_contributions()
+		self.assertEqual(out[0]["payload"]["scope"], {"tier": "app", "app": "erpnext"})
+
+	def test_doctype_scope_carries_to_all_views(self):
+		contributions.manifest.doctype_manifest = lambda doctype, module: {
+			"doctype": {"actions": [{"command": "c1", "region": "menubar:file"}]},
+		}
+		out = contributions.doctype_scoped_contributions("Sales Order", "Selling")
+		self.assertEqual(out[0]["payload"]["scope"], {"tier": "doctype", "doctype": "Sales Order"})
+		self.assertEqual(out[0]["sourceApp"], "erpnext")
+
+	def test_view_scope_keys_on_the_view_file(self):
+		contributions.manifest.doctype_manifest = lambda doctype, module: {
+			"list": {"actions": [{"command": "set-open", "region": "list:selection"}]},
+		}
+		out = contributions.doctype_scoped_contributions("Sales Order", "Selling")
+		self.assertEqual(out[0]["payload"]["scope"], {"tier": "view", "doctype": "Sales Order", "view": "list"})
+
+	def test_manifest_command_is_delivered_unscoped_with_its_handler(self):
+		handler = {"kind": "run", "ref": "so-set-open"}
+		contributions.manifest.doctype_manifest = lambda doctype, module: {
+			"list": {"commands": [{"id": "erpnext.so.set-open", "title": "Set as Open", "handler": handler}]},
+		}
+		out = contributions.doctype_scoped_contributions("Sales Order", "Selling")
+		self.assertEqual(out[0]["type"], "command")
+		self.assertNotIn("scope", out[0]["payload"])
+		self.assertEqual(out[0]["payload"]["handler"], handler)
+
+	def test_empty_doctype_manifest_yields_nothing(self):
+		contributions.manifest.doctype_manifest = lambda doctype, module: {}
+		self.assertEqual(contributions.doctype_scoped_contributions("Sales Order", "Selling"), [])
+
+
 if __name__ == "__main__":
 	unittest.main()

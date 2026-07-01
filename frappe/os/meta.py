@@ -7,7 +7,7 @@
 
 import frappe
 from frappe import _
-from frappe.os import indicators, manifest
+from frappe.os import contributions, indicators, manifest
 
 # Fieldtypes that are layout-only or unsupported by the rendering engine. Section Break is handled
 # specially (its label groups the following fields) before this skip.
@@ -33,7 +33,8 @@ def _live_meta_manifest(doctype, meta):
 @frappe.whitelist()
 def get_doctype_meta(doctype: str):
 	"""Lean field descriptors the form needs, each tagged with its Section Break label. Carries the
-	doctype's `os/` manifest (ADR-0030) alongside, projected onto live meta for the view to read."""
+	doctype's `os/` manifest (ADR-0030) alongside, and its Doctype/View-scoped Action + Command
+	contributions (ADR-0032) — the live-meta half of delivery-by-scope — for the client to fold in."""
 	if not frappe.has_permission(doctype, "read"):
 		frappe.throw(_("Not permitted to read {0}").format(doctype), frappe.PermissionError)
 
@@ -67,6 +68,7 @@ def get_doctype_meta(doctype: str):
 		"can_write": frappe.has_permission(doctype, "write"),
 		"fields": fields,
 		"manifest": _live_meta_manifest(doctype, meta),
+		"contributions": contributions.doctype_scoped_contributions(doctype, meta.module),
 	}
 
 

@@ -7,6 +7,7 @@
 
 import { reactive } from 'vue'
 import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, cardValue } from '@/data/api'
+import { registerScopedContributions } from '@/registry'
 import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions } from '@/types'
 
 const lists = reactive<Record<string, CacheEntry<FrappeDoc[]>>>({}) // doctype -> entry, data is rows[]
@@ -108,6 +109,10 @@ export async function loadFieldMeta(doctype: string): Promise<CacheEntry<any>> {
   state.error = null
   try {
     state.data = await getDoctypeMeta(doctype)
+    // Deliver the doctype's Doctype/View-scoped Actions/Commands into the registry (ADR-0032) — the
+    // live-meta half of delivery-by-scope, folded in the moment its meta arrives (the App/OS half
+    // rides boot). The projector then composes them with the front stack, gated by Eligibility.
+    registerScopedContributions(doctype, state.data.contributions || [])
   } catch (e) {
     state.error = (e as Error).message
   } finally {

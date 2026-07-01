@@ -83,10 +83,22 @@ interface RegistryIndex {
   cards: Record<string, Card[]>                 // ordered collection per app
   owner: Record<string, string>                 // doctype → owning app
   applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
-  commands: Command[]                           // Action-model verbs folded from app hooks
-  actions: Action[]                             // Action-model placements folded from app hooks
+  commands: Command[]                           // Action-model verbs folded from boot (App/OS scope)
+  actions: Action[]                             // Action-model placements folded from boot (App/OS scope)
+  liveActions: Record<string, Action[]>         // doctype → its live-meta scoped Action slice (ADR-0032)
+  liveCommands: Record<string, Command[]>       // doctype → its live-meta scoped Command slice (ADR-0032)
+  actionsView: Action[]                         // boot ⊕ all live slices; stable identity between overlay changes
+  commandsView: Command[]                       // boot ⊕ all live slices; stable identity between overlay changes
   defaultSurface: Record<string, SurfaceRef>    // app → merged landing reference (singleton, ADR-0021)
   appKinds: Record<string, Set<string>>         // sourceApp → contributed kinds (ADR-0014 item 4)
+}
+
+// Rebuild the combined boot ⊕ live-slice views with a FRESH array identity, so project.ts's
+// merged() — memoized on the identity of actions()/commands() — refolds. Called only when a
+// doctype's live slice is registered/replaced, never per render, so the projector cache stays warm.
+function rebuildScopedViews(ix: RegistryIndex): void {
+  ix.actionsView = [...ix.actions, ...Object.values(ix.liveActions).flat()]
+  ix.commandsView = [...ix.commands, ...Object.values(ix.liveCommands).flat()]
 }
 
 function ownerMap(apps: AppDef[]): Record<string, string> {
@@ -138,10 +150,14 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
     display: {}, views: {}, cards: {}, owner: ownerMap(apps),
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
+    liveActions: {}, liveCommands: {}, // per-doctype live-meta slices (ADR-0032), filled by registerScopedContributions
+    actionsView: [], commandsView: [], // boot ⊕ live views, set to the boot arrays after the fold
     defaultSurface: {}, // app → merged landing reference, filled per contribution by addToIndex
     appKinds: {}, // sourceApp → contributed kinds, filled per contribution by addToIndex
   }
   for (const c of sorted) addToIndex(ix, c)
+  ix.actionsView = ix.actions
+  ix.commandsView = ix.commands
   return ix
 }
 
@@ -250,6 +266,22 @@ export function registerDoctype(contribs: Contribution[]): void {
   const ix = ensureIndex()
   const docs = new Set(contribs.filter((c) => c.type === DISPLAY).map((c) => c.target))
   for (const c of contribs) addToIndex(ix, decorate(c, docs))
+}
+
+// Fold a doctype's live-meta scoped Actions/Commands (ADR-0032) into the registry, keyed by
+// doctype for idempotent replace — re-opening a doctype refreshes its slice, never duplicates it.
+// This is the Doctype/View half of delivery-by-scope (ADR-0028): the App/OS half rides boot, this
+// arrives with get_doctype_meta when the doctype opens. Eligibility (the Scope auto-`when`) gates a
+// slice out when its doctype isn't front, so the overlay accumulates opened doctypes with no removal
+// step. A doctype that ships no scoped contributions never touches the overlay — no needless refold.
+export function registerScopedContributions(doctype: string, contribs: Contribution[]): void {
+  const ix = ensureIndex()
+  const actions = contribs.filter((c) => c.type === ACTION).map((c) => c.payload as Action)
+  const commands = contribs.filter((c) => c.type === COMMAND).map((c) => c.payload as Command)
+  if (!actions.length && !commands.length && !(doctype in ix.liveActions)) return
+  ix.liveActions[doctype] = actions
+  ix.liveCommands[doctype] = commands
+  rebuildScopedViews(ix)
 }
 
 // Synchronous display-config lookup — the merged singleton for a doctype (null if none).
@@ -364,8 +396,8 @@ export function useRegistry() {
     appletWantsNav,
     resolveApplet,
     listApplets,
-    commands: (): Command[] => ix.commands,
-    actions: (): Action[] => ix.actions,
+    commands: (): Command[] => ix.commandsView,
+    actions: (): Action[] => ix.actionsView,
     // The app's declared landing reference after the layered App<Site<User merge (ADR-0021),
     // or null if it declares none — the resolver (slice 05) then falls through to dashboard →
     // empty-app pane. A stable reference, never a Surface descriptor: the resolver parses it.

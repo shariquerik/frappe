@@ -14,7 +14,7 @@ import { fileMenuOptions } from '../src/actions/menubar'
 import { toolbarItems } from '../src/actions/toolbar'
 import { REGIONS, regionById, regionRenders, LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR } from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
-import { initRegistry } from '../src/registry'
+import { initRegistry, useRegistry, registerScopedContributions } from '../src/registry'
 
 describe('eligibility (when, evaluated as data)', () => {
   it('an empty when (global) matches any context', () => {
@@ -647,6 +647,63 @@ describe('resolve (Scope → auto-Eligibility + carry-forward)', () => {
     // A different doctype is front → the removal is ineligible, the OS default carries forward.
     expect(resolve([osDefault, dtRemoval], 'menubar:file', { doctype: 'Contact' }).items.map((i) => i.command))
       .toEqual(['title'])
+  })
+})
+
+// Delivery-by-scope (ADR-0032): the Doctype/View half. A doctype's scoped Action/Command
+// contributions arrive on live meta (get_doctype_meta) and are folded into the registry by
+// registerScopedContributions, keyed by doctype for idempotent replace. useRegistry().actions()/
+// commands() then expose boot ⊕ live so the projector composes them with the front stack; the
+// Scope auto-`when` gates a slice out when its doctype isn't front (no removal step needed).
+describe('registerScopedContributions (live-meta Doctype/View overlay)', () => {
+  let warn
+  beforeEach(() => { warn = vi.spyOn(console, 'warn').mockImplementation(() => {}); initRegistry(null) })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  const liveAction = (command, scope, region = 'list:selection') =>
+    ({ type: 'action', target: region, name: command, sourceApp: 'erpnext', order: 0,
+       payload: { command, region, sourceApp: 'erpnext', scope } })
+  const liveCommand = (id) =>
+    ({ type: 'command', target: '', name: id, sourceApp: 'erpnext', order: 0,
+       payload: { id, sourceApp: 'erpnext', title: id, handler: { kind: 'run', ref: id } } })
+
+  it('folds live actions + commands into useRegistry() with a fresh array identity', () => {
+    const before = useRegistry().actions()
+    registerScopedContributions('Sales Order', [
+      liveAction('so.set-open', { tier: 'view', doctype: 'Sales Order', view: 'list' }),
+      liveCommand('so.set-open'),
+    ])
+    const after = useRegistry().actions()
+    expect(after).not.toBe(before) // identity changed → project.ts merged() refolds
+    expect(after.some((a) => a.command === 'so.set-open')).toBe(true)
+    expect(useRegistry().commands().some((c) => c.id === 'so.set-open')).toBe(true)
+  })
+
+  it('replaces a doctype slice idempotently — re-opening never duplicates', () => {
+    const contribs = [liveAction('so.set-open', { tier: 'doctype', doctype: 'Sales Order' })]
+    registerScopedContributions('Sales Order', contribs)
+    registerScopedContributions('Sales Order', contribs)
+    expect(useRegistry().actions().filter((a) => a.command === 'so.set-open')).toHaveLength(1)
+  })
+
+  it('a doctype shipping no scoped contributions leaves identity untouched (no churn)', () => {
+    const before = useRegistry().actions()
+    registerScopedContributions('ToDo', [])
+    expect(useRegistry().actions()).toBe(before)
+  })
+
+  it('a View-scoped live Action is eligible only when its doctype AND view are front', () => {
+    registerScopedContributions('Sales Order', [
+      liveAction('so.set-open', { tier: 'view', doctype: 'Sales Order', view: 'list' }),
+      liveCommand('so.set-open'),
+    ])
+    const actions = useRegistry().actions()
+    const front = resolve(actions, 'list:selection', { doctype: 'Sales Order', view: 'list' })
+    const otherDoctype = resolve(actions, 'list:selection', { doctype: 'ToDo', view: 'list' })
+    const otherView = resolve(actions, 'list:selection', { doctype: 'Sales Order', view: 'form' })
+    expect(front.items.some((a) => a.command === 'so.set-open')).toBe(true)
+    expect(otherDoctype.items.some((a) => a.command === 'so.set-open')).toBe(false)
+    expect(otherView.items.some((a) => a.command === 'so.set-open')).toBe(false)
   })
 })
 
