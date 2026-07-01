@@ -1,6 +1,6 @@
 # Password change in the Account section
 
-Status: TODO
+Status: DONE (live "works on next login" pending a bench)
 
 Triage: ready-for-agent (AFK)
 
@@ -21,12 +21,17 @@ rate-limited) surface clearly.
 
 ## Acceptance criteria
 
-- [ ] Whitelisted, rate-limited `change_password(old_password, new_password)` method that
-      verifies the old password server-side.
-- [ ] frappe-ui Dialog with current / new / confirm fields and confirm-match validation.
-- [ ] Wrong current password and rate-limit responses surface as clear errors.
-- [ ] Success closes the dialog; the new password works on next login.
-- [ ] `yarn typecheck` and `yarn test --run` pass.
+- [x] Whitelisted, rate-limited `change_password(old_password, new_password)` method that
+      verifies the old password server-side. — `frappe/www/os.py`: `@frappe.whitelist(methods=["POST"])`
+      + `@rate_limit(limit=5, seconds=60*60)`, `login_manager.check_password` (raises on wrong pw)
+      then `frappe.utils.password.update_password`.
+- [x] frappe-ui Dialog with current / new / confirm fields and confirm-match validation. —
+      `src/components/Settings/ChangePasswordDialog.vue` (inline "New passwords don't match").
+- [x] Wrong current password and rate-limit responses surface as clear errors. — server message
+      caught in `submit()` → shown inline; covered by `account.spec.js` rejection test.
+- [~] Success closes the dialog; the new password works on next login. — dialog closes on success
+      (code); "works on next login" needs a live bench (bench was down this session).
+- [x] `yarn typecheck` and `yarn test --run` pass. — typecheck clean; 347 tests pass (+2).
 
 ## Blocked by
 

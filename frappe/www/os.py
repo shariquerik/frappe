@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 import frappe
 import frappe.sessions
 from frappe import _
+from frappe.rate_limiter import rate_limit
 
 no_cache = 1
 
@@ -791,3 +792,25 @@ def setup_desk_switch():
 	settings.save()
 	frappe.db.commit()
 	return "added"
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=5, seconds=60 * 60, methods="POST")
+def change_password(old_password: str, new_password: str) -> None:
+	"""Change the logged-in user's own password after verifying the current one.
+
+	Self-service (no System Manager): the old password is checked server-side, so
+	possessing the session alone isn't enough. Rate-limited to blunt brute-forcing the
+	current password. Delegates to Frappe's own primitives — this only wires them for the
+	OS shell's Account pane.
+	"""
+	user = frappe.session.user
+	if user == "Guest":
+		frappe.throw(_("You must be logged in to change your password."), frappe.PermissionError)
+
+	# Raises frappe.AuthenticationError ("Incorrect User or Password") on a wrong current password.
+	frappe.local.login_manager.check_password(user, old_password)
+
+	from frappe.utils.password import update_password
+
+	update_password(user, new_password)

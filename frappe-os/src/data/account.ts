@@ -8,7 +8,7 @@
 // persist only the permlevel-0 identity fields; `roles` / `user_type` / `enabled` / API keys
 // are permlevel 1 or read-only and are stripped before the write (pickWritable).
 import { reactive } from 'vue'
-import { getDoc, saveDoc } from '@/data/api'
+import { callPost, getDoc, saveDoc } from '@/data/api'
 import { getBoot } from '@/data/boot'
 import type { FrappeDoc } from '@/types'
 
@@ -74,6 +74,13 @@ async function save(changes: Record<string, unknown>): Promise<void> {
   } finally {
     state.saving = false
   }
+}
+
+// Change the session user's own password. Not a doc save: it rides the rate-limited
+// `change_password` whitelisted method, which verifies the old password server-side (a wrong
+// current password or a rate-limit hit rejects with a message the dialog surfaces).
+export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  await callPost('frappe.www.os.change_password', { old_password: oldPassword, new_password: newPassword })
 }
 
 export function useAccount() {

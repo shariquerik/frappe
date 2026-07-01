@@ -9,6 +9,7 @@ import { Avatar, Button, LoadingIndicator } from 'frappe-ui'
 import { useAccount } from '@/data/account'
 import EditNameDialog from './EditNameDialog.vue'
 import EditAvatarDialog from './EditAvatarDialog.vue'
+import ChangePasswordDialog from './ChangePasswordDialog.vue'
 
 const { state, load } = useAccount()
 onMounted(() => load())
@@ -18,10 +19,11 @@ const email = computed(() => (state.doc?.email as string) || (state.doc?.name as
 
 const nameOpen = ref(false)
 const avatarOpen = ref(false)
+const passwordOpen = ref(false)
 </script>
 
 <template>
-  <div class="px-[22px] py-6">
+  <div class="px-[22px] py-5">
     <div v-if="state.loading && !state.doc" class="flex items-center justify-center gap-2 py-6 text-[13px] text-ink-gray-5">
       <LoadingIndicator class="size-4" />
       Loading your account…
@@ -41,17 +43,28 @@ const avatarOpen = ref(false)
         <span class="text-[12.5px] text-ink-gray-6">{{ email }}</span>
       </div>
 
-      <!-- Setting row: title + description on the left, action button on the right -->
-      <div class="mt-10 flex items-center gap-4">
-        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="text-[13px] text-ink-gray-8">Name</span>
-          <span class="text-[11.5px] text-ink-gray-5">The name shown across your workspace</span>
+      <!-- Setting rows — same structure as General/Dock: a divider between each row, the
+           title/description on the left and the action button on the right. -->
+      <div class="mt-6">
+        <div class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
+          <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="text-[13px] text-ink-gray-8">Name</span>
+            <span class="text-[11.5px] text-ink-gray-5">The name shown across your workspace</span>
+          </div>
+          <Button label="Edit" @click="nameOpen = true" />
         </div>
-        <Button label="Edit" @click="nameOpen = true" />
+        <div class="flex items-center gap-3 py-[11px]">
+          <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="text-[13px] text-ink-gray-8">Password</span>
+            <span class="text-[11.5px] text-ink-gray-5">Change the password you use to sign in</span>
+          </div>
+          <Button label="Change" @click="passwordOpen = true" />
+        </div>
       </div>
     </template>
 
     <EditNameDialog v-model="nameOpen" />
     <EditAvatarDialog v-model="avatarOpen" />
+    <ChangePasswordDialog v-model="passwordOpen" />
   </div>
 </template>

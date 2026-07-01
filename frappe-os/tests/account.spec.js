@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/data/api', () => ({
   getDoc: vi.fn(),
   saveDoc: vi.fn(),
+  callPost: vi.fn(),
 }))
 vi.mock('@/data/boot', () => ({
   getBoot: vi.fn(),
@@ -15,7 +16,7 @@ vi.mock('@/data/boot', () => ({
 
 import * as api from '@/data/api'
 import { getBoot } from '@/data/boot'
-import { pickWritable, WRITABLE_FIELDS, useAccount } from '../src/data/account'
+import { pickWritable, WRITABLE_FIELDS, useAccount, changePassword } from '../src/data/account'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -101,5 +102,22 @@ describe('save — only the allow-list reaches the wire', () => {
     await account.load()
     await account.save({ roles: [{ role: 'System Manager' }], enabled: 1 })
     expect(api.saveDoc).not.toHaveBeenCalled()
+  })
+})
+
+describe('changePassword — rides the rate-limited whitelisted method', () => {
+  it('POSTs both passwords as snake_case params, not a doc save', async () => {
+    api.callPost.mockResolvedValue(null)
+    await changePassword('old-secret', 'new-secret')
+    expect(api.callPost).toHaveBeenCalledWith('frappe.www.os.change_password', {
+      old_password: 'old-secret',
+      new_password: 'new-secret',
+    })
+    expect(api.saveDoc).not.toHaveBeenCalled()
+  })
+
+  it('propagates a server rejection (wrong current password / rate-limited)', async () => {
+    api.callPost.mockRejectedValue(new Error('Incorrect User or Password'))
+    await expect(changePassword('wrong', 'new-secret')).rejects.toThrow('Incorrect User or Password')
   })
 })
