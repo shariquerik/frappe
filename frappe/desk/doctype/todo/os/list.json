@@ -1,3 +1,13 @@
 {
-	"columns": ["status", "priority", "date", "reference_type"]
+	"columns": ["status", "priority", "date", "reference_type"],
+	"commands": [
+		{
+			"id": "frappe.todo.set-open",
+			"title": "Set as Open",
+			"handler": { "kind": "run", "ref": "todo-set-open" }
+		}
+	],
+	"actions": [
+		{ "command": "frappe.todo.set-open", "region": "list:selection" }
+	]
 }

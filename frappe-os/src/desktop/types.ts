@@ -65,6 +65,9 @@ export type DockPosition = 'bottom' | 'left' | 'right'
 export interface OsState {
   windows: OsWindow[]
   geo: Record<string, Partial<Geo>>
+  // Selected record names per window's list (ADR-0032 slice 04), keyed winId like `geo`. Sparse:
+  // a window gets an entry only while its list has a selection. Read by a bulk run Handler.
+  selection: Record<string, string[]>
   activeId: string | null
   menu: string | null
   split: [string, string] | null

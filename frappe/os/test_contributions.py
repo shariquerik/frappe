@@ -7,6 +7,8 @@
 #   bench run-tests --module frappe.os.test_contributions
 # or standalone:  ./env/bin/python -m unittest frappe.os.test_contributions
 
+import json
+import os
 import unittest
 import unittest.mock
 
@@ -140,6 +142,46 @@ class TestScopeStamping(unittest.TestCase):
 	def test_empty_doctype_manifest_yields_nothing(self):
 		contributions.manifest.doctype_manifest = lambda doctype, module: {}
 		self.assertEqual(contributions.doctype_scoped_contributions("Sales Order", "Selling"), [])
+
+
+class TestTodoBulkTracer(unittest.TestCase):
+	"""The ADR-0032 slice-04 tracer: ToDo's REAL `os/list.json` (read DB-free off frappe.__file__)
+	declares the "Set as Open" bulk verb as data — one View-scoped Action into `list:selection` plus
+	one unscoped run Command. Projecting it must yield exactly that, locking the manifest against a
+	future edit that silently breaks the tracer."""
+
+	def setUp(self):
+		self._apps = contributions._installed_os_apps
+		self._doctype_manifest = contributions.manifest.doctype_manifest
+		self._module_app = getattr(frappe.local, "module_app", None)
+		self._logger = frappe.logger
+		contributions._installed_os_apps = lambda: ["frappe"]
+		frappe.local.module_app = {"desk": "frappe"}
+		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
+		# Read the real manifest file directly (no site/DB), and hand it to the projector as the
+		# doctype's scoped manifest — the exact bytes shipped in the repo drive the assertion.
+		manifest_path = os.path.join(os.path.dirname(frappe.__file__), "desk", "doctype", "todo", "os", "list.json")
+		with open(manifest_path) as manifest_file:
+			list_manifest = json.load(manifest_file)
+		contributions.manifest.doctype_manifest = lambda doctype, module: {"list": list_manifest}
+
+	def tearDown(self):
+		contributions._installed_os_apps = self._apps
+		contributions.manifest.doctype_manifest = self._doctype_manifest
+		frappe.local.module_app = self._module_app
+		frappe.logger = self._logger
+
+	def test_todo_manifest_projects_the_bulk_verb_as_data(self):
+		out = contributions.doctype_scoped_contributions("ToDo", "Desk")
+		action = next(c for c in out if c["type"] == "action")
+		command = next(c for c in out if c["type"] == "command")
+		# The placement — View-scoped into the selection Region, no hand-written `when` (auto-derived).
+		self.assertEqual(action["payload"]["region"], "list:selection")
+		self.assertEqual(action["payload"]["scope"], {"tier": "view", "doctype": "ToDo", "view": "list"})
+		self.assertNotIn("when", action["payload"])
+		# The verb — delivered unscoped, carrying its lazily-resolved run Handler ref (ADR-0007).
+		self.assertEqual(command["payload"]["handler"], {"kind": "run", "ref": "todo-set-open"})
+		self.assertNotIn("scope", command["payload"])
 
 
 if __name__ == "__main__":

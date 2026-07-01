@@ -104,6 +104,22 @@ export async function saveDoc(
   return (await parse(res)).data
 }
 
+// Bulk-update a field across many docnames over the standard whitelisted bulk method (reuse over
+// a bespoke endpoint) — a write, so POST + CSRF like saveDoc. `changes` is the field→value patch
+// applied to every row (action="update"). Returns the docnames that failed, [] on full success.
+export async function bulkUpdate(
+  doctype: string,
+  docnames: string[],
+  changes: Record<string, unknown>,
+): Promise<string[]> {
+  return callPost('frappe.desk.doctype.bulk_update.bulk_update.submit_cancel_or_update_docs', {
+    doctype,
+    docnames,
+    action: 'update',
+    data: changes,
+  })
+}
+
 export async function createDoc(
   doctype: string,
   values: Record<string, unknown>,

@@ -866,3 +866,67 @@ describe('toolbarItems (surface-embedded Region render contract)', () => {
     expect(toolbarItems(LIST_SELECTION, os)).toEqual([])
   })
 })
+
+// ADR-0032 slice 04 — the bulk-action-as-data tracer. "Set as Open" is a Command with a `run`
+// Handler placed by a View-scoped Action into `list:selection`, its `when` auto-derived from Scope.
+// The declarative half is DATA (ToDo's os/list.json manifest, delivered on live meta and folded via
+// registerScopedContributions — the slice-03 shape); only the imperative half (`todo-set-open`) is
+// bundled, self-registered when project.ts pulls in bulk-verbs. This drives the whole path:
+// manifest → resolve → selection Region → run Handler over a multi-row selection.
+describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () => {
+  const os = useOS()
+  const command = {
+    type: 'command', target: '', name: 'frappe.todo.set-open', sourceApp: 'frappe',
+    payload: { id: 'frappe.todo.set-open', sourceApp: 'frappe', title: 'Set as Open', handler: { kind: 'run', ref: 'todo-set-open' } },
+  }
+  const action = {
+    type: 'action', target: 'list:selection', name: 'frappe.todo.set-open', sourceApp: 'frappe',
+    payload: { command: 'frappe.todo.set-open', region: 'list:selection', sourceApp: 'frappe', scope: { tier: 'view', doctype: 'ToDo', view: 'list' } },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = { user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] } }
+  let warn, fetchMock
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.activeId = null
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: [] }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    initRegistry(boot)
+    registerScopedContributions('ToDo', [command, action]) // live-meta delivery, like opening the ToDo list
+  })
+  afterEach(() => { warn.mockRestore(); vi.unstubAllGlobals(); initRegistry(null) })
+
+  const bulkCall = () => fetchMock.mock.calls.find(([url]) => String(url).includes('submit_cancel_or_update_docs'))
+  const setOpenVerb = () => useRegistry().commands().find((c) => c.id === 'frappe.todo.set-open')
+
+  it('places the verb into list:selection via View scope, with no hand-written selection when', () => {
+    const { items } = resolve(useRegistry().actions(), 'list:selection', { doctype: 'ToDo', view: 'list', selection: 'rows' })
+    const set = items.find((a) => a.command === 'frappe.todo.set-open')
+    expect(set).toBeDefined()
+    expect(set.when).toBeUndefined() // eligibility is the Scope auto-when, not a hand-written selection when
+  })
+
+  it('the selection Region gates the verb on selection existence, not the Action', () => {
+    expect(regionRenders(regionById(LIST_SELECTION), { doctype: 'ToDo' })).toBe(false)
+    expect(regionRenders(regionById(LIST_SELECTION), { doctype: 'ToDo', selection: 'rows' })).toBe(true)
+  })
+
+  it('invoking over a multi-row selection calls the standard bulk-update method with the selected rows', async () => {
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    invoke(setOpenVerb(), os) // fires the run Handler; callPost calls fetch synchronously
+    const call = bulkCall()
+    expect(call).toBeDefined()
+    expect(call[1].method).toBe('POST')
+    const body = JSON.parse(call[1].body)
+    expect(body).toMatchObject({ doctype: 'ToDo', action: 'update', data: { status: 'Open' } })
+    expect(body.docnames).toEqual(['TODO-0001', 'TODO-0002'])
+    await new Promise((resolve) => setTimeout(resolve)) // drain the fire-and-forget write+reload before teardown
+  })
+
+  it('is a clean no-op (no server call) when nothing is selected — the verb never fires blind', () => {
+    os.openListGlobal('ToDo') // no selection seeded
+    invoke(setOpenVerb(), os)
+    expect(bulkCall()).toBeUndefined()
+  })
+})

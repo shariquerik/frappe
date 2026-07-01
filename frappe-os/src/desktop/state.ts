@@ -8,6 +8,7 @@ import type { OsState } from '@/types'
 export const state = reactive<OsState>({
   windows: [], // { id, surface, back?, fwd? } — id prefix encodes role; surface = content
   geo: {}, // id -> { x, y, w, h, z, min, max }
+  selection: {}, // id -> selected record names on that window's list (ADR-0032 slice 04)
   activeId: null,
   menu: null,
   split: null, // [rightId, leftId]

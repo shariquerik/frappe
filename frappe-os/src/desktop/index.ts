@@ -26,10 +26,11 @@ import {
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
+import { selectedRecords, setSelection } from './selection'
 import { hydrate, startAutosave } from './persistence'
 import {
   recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
-  loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
+  loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate,
 } from '@/data/records'
 import { ensureDoctype } from '@/data/doctype-resolver'
 
@@ -51,7 +52,7 @@ export function useOS() {
     initials, pill, getMeta, appForDoctype, knownApplet, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
     recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
-    loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc,
+    loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate,
     // window lifecycle + navigation
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
@@ -60,5 +61,7 @@ export function useOS() {
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
     setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
     setDeskEl, setDockEl, deskRef, syncDeskSize,
+    // list multi-row selection (ADR-0032 slice 04) — read by bulk run Handlers
+    selectedRecords, setSelection,
   }
 }

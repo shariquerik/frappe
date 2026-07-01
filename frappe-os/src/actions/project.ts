@@ -7,6 +7,7 @@ import { useRegistry } from '@/registry'
 import { contextForOS } from './context'
 import { FILE_ACTIONS, FILE_COMMANDS } from './contributions'
 import { PLACEMENT_ACTIONS, PLACEMENT_COMMANDS } from './placement-verbs'
+import './bulk-verbs' // side-effect: register first-party bulk run Handlers (server delivers the data)
 import { regionById, regionRenders } from './regions'
 import { warnFeatureAppRemovals } from './removals'
 import { resolve } from './resolve'

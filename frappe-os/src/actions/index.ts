@@ -19,3 +19,4 @@ export {
 export type { Region } from './regions'
 export { FILE_COMMANDS, FILE_ACTIONS, invoke } from './contributions'
 export { PLACEMENT_COMMANDS, PLACEMENT_ACTIONS, surfaceToRef, liveVerb, suppressedPlacementCommands } from './placement-verbs'
+export { BULK_RUN_HANDLERS } from './bulk-verbs'

@@ -6,7 +6,7 @@
 // the curated getMeta — the records here carry no display knowledge.
 
 import { reactive } from 'vue'
-import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, cardValue } from '@/data/api'
+import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue } from '@/data/api'
 import { registerScopedContributions } from '@/registry'
 import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions } from '@/types'
 
@@ -134,6 +134,14 @@ export async function createDoc(doctype: string, values: Record<string, unknown>
   if (created && created.name) docFor(doctype, created.name).data = created
   await loadList(doctype)
   return created
+}
+
+// Bulk-update a field across many docnames, then refresh the list so the new values show — the
+// write-then-refresh seam a bulk run Handler drives (ADR-0032), mirroring saveDoc/createDoc.
+export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<string[]> {
+  const failed = await apiBulkUpdate(doctype, docnames, changes)
+  await loadList(doctype)
+  return failed ?? []
 }
 
 // ---- synchronous getters (compat bridge for components, Phase 4 wires loads) -
