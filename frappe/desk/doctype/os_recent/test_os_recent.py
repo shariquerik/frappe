@@ -9,7 +9,7 @@
 
 import unittest
 
-from frappe.www.os import recents_view
+from frappe.os.recents import recents_view
 
 
 def form_ref(name):

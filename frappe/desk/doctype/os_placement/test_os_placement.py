@@ -9,7 +9,7 @@
 import json
 import unittest
 
-from frappe.www.os import merge_placements
+from frappe.os.placements import merge_placements
 
 
 def desktop(ref, position=None, **extra):

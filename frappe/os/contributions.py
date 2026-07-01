@@ -1,0 +1,243 @@
+# Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
+# License: MIT. See LICENSE
+#
+# Projecting an installed OS app's declarations into uniform Registry contributions (ADR-0001/0005).
+# An app opts into Frappe OS by shipping an `os/` manifest (ADR-0030); this reads that manifest as
+# data and emits the `app` identity, `default-surface`, applet, and action contributions (plus the
+# one surviving hook, `os_commands`). The envelope — sourceApp + ADR-0007 identity + declaration
+# order — is uniform and lives here once; `registry.py` assembles these with the doctype views.
+
+import frappe
+from frappe.os import manifest
+
+
+def _os_app_decl(app):
+	"""An app's OS identity declaration — its `os/app.json` manifest (ADR-0030) — as a flat dict,
+	or {} if it ships none. Pure data read from the co-located `os/` folder, never executed."""
+	return manifest.app_declaration(app) or {}
+
+
+def _installed_os_apps():
+	"""Installed apps that opt into Frappe OS by shipping an `os/app.json` manifest (ADR-0030).
+	Opt-in *is* the folder — there is no hardcoded core list; an app without one is not an OS app.
+	Ordered by install order (frappe first), which drives the apps screen + contribution order."""
+	return manifest.installed_os_apps()
+
+
+# Optional OS-native presentation keys an app manifest may carry beyond title/logo, copied through
+# to the `app` (identity) contribution when present (ADR-0021). Curated apps still overlay
+# config/apps.ts client-side; an uncurated app rides on what its `app.json` declares.
+_APP_PRESENTATION_KEYS = ("color", "glyph")
+
+
+def _app_contribution(app, order):
+	"""The `app` (identity) contribution for an OS app, projected from its `os/app.json` manifest
+	(ADR-0030, amending ADR-0021): title, logo, and optional OS-native presentation. This is the
+	*opt-in + identity* half; its `default_surface` field layers as a separate contribution.
+	A logo/presentation key is carried only when declared, so a curated app keeps its config/apps.ts
+	value (the client merges curated ⊕ server)."""
+	decl = _os_app_decl(app)
+	payload = {"id": app, "name": decl.get("title") or app.title()}
+	if decl.get("logo"):
+		payload["logo"] = decl["logo"]
+	for key in _APP_PRESENTATION_KEYS:
+		if decl.get(key):
+			payload[key] = decl[key]
+	return {"type": "app", "target": "", "name": app, "sourceApp": app, "payload": payload, "order": order}
+
+
+def _valid_surface_ref(ref):
+	"""True if `ref` is one of the stable surface-reference shapes (ADR-0021) — an applet, a
+	doctype+view, or the dashboard — with an optional `app:` qualifier. Shape only: the value is
+	carried through as data and the *client* resolver parses/resolves it (slice 05), so the server
+	never leaks an internal Surface descriptor here. A ref failing every shape is malformed."""
+	if not isinstance(ref, dict):
+		return False
+	if ref.get("applet"):
+		return True
+	if ref.get("doctype") and ref.get("view"):
+		return True
+	if ref.get("dashboard"):
+		return True
+	# A bare-app reference ({"app": "frappe"}, no applet/doctype/dashboard) — "open the app's
+	# default surface". ADR-0023 lists "an app" as a surface-reference kind; here `app` carries
+	# it alone rather than only qualifying one of the others.
+	if ref.get("app"):
+		return True
+	return False
+
+
+def _default_surface_contribution(app):
+	"""The `default-surface` contribution for an OS app (ADR-0021), projected from the optional
+	`default_surface` field of its `os/app.json` manifest. This is the *landing* half, kept
+	SEPARATE from the `app` identity contribution so the two layer independently (App-default <
+	Site < User) — a per-user default surface is just a User-layer override of this Singleton,
+	touching only the landing and never the logo. The payload is the stable, app-qualified surface
+	REFERENCE vocabulary; shape is validated, a malformed ref is logged and dropped (never crashes
+	boot). None when the app declares no default_surface — it then rides the resolver fallback."""
+	ref = _os_app_decl(app).get("default_surface")
+	if ref is None:
+		return None
+	if not _valid_surface_ref(ref):
+		frappe.logger("frappe_os").warning(f"Skipped malformed app.json default_surface from {app}: {ref!r}")
+		return None
+	return {"type": "default-surface", "target": app, "name": "default", "sourceApp": app, "payload": ref, "order": 0}
+
+
+def _valid_contribution(spec, required, app, source):
+	"""True if `spec` is a dict carrying every required key; otherwise log and skip it. A single
+	malformed manifest entry must never crash the desktop boot (get_registry runs inside get_boot) —
+	it degrades to one dropped contribution, logged so it is never silently lost (ADR-0014)."""
+	if not isinstance(spec, dict):
+		frappe.logger("frappe_os").warning(f"Skipped malformed {source} entry from {app}: not a dict")
+		return False
+	missing = [key for key in required if spec.get(key) is None]
+	if missing:
+		frappe.logger("frappe_os").warning(f"Skipped {source} contribution from {app}: missing {', '.join(missing)}")
+		return False
+	return True
+
+
+def _hook_contributions(hook, required, project):
+	"""Project an installed-OS-app `os_*` hook into uniform Registry contributions (ADR-0001):
+	iterate installed OS apps only (ADR-0010), validate each entry (skip-with-warn, so one
+	malformed entry never crashes boot), and delegate the per-extension-point shape to `project`.
+	Still used for `os_commands`, the one OS hook ADR-0030 does not retire into the manifest."""
+	contributions = []
+	for app in _installed_os_apps():
+		for order, spec in enumerate(frappe.get_hooks(hook, app_name=app) or []):
+			if not _valid_contribution(spec, required, app, hook):
+				continue
+			contribution_type, target, name, payload = project(spec, app)
+			contributions.append(
+				{
+					"type": contribution_type,
+					"target": target,
+					"name": name,
+					"sourceApp": app,
+					"payload": payload,
+					"order": order,
+				}
+			)
+	return contributions
+
+
+def _project_specs(specs, required, project, app, source):
+	"""Validate a list of one app's manifest specs and project each into a uniform contribution
+	envelope (sourceApp + ADR-0007 identity + per-app declaration order). A malformed entry is
+	skipped-with-warn (`source` names the file/folder in the log), so one bad entry never crashes
+	boot. Shared by the single-file (`os/actions.json`) and folder (`os/applets/`) readers."""
+	contributions = []
+	for order, spec in enumerate(specs):
+		if not _valid_contribution(spec, required, app, source):
+			continue
+		contribution_type, target, name, payload = project(spec, app)
+		contributions.append(
+			{
+				"type": contribution_type,
+				"target": target,
+				"name": name,
+				"sourceApp": app,
+				"payload": payload,
+				"order": order,
+			}
+		)
+	return contributions
+
+
+def _manifest_contributions(filename, required, project):
+	"""Project an installed-OS-app manifest file (`os/<filename>`, a JSON list) into uniform
+	Registry contributions (ADR-0030) — the folder-reader twin of `_hook_contributions`. Iterate
+	installed OS apps only (ADR-0010) and read the file as data (absent → skip, non-list →
+	skip-with-warn)."""
+	contributions = []
+	for app in _installed_os_apps():
+		specs = manifest.read(app, filename)
+		if specs is None:
+			continue
+		if not isinstance(specs, list):
+			frappe.logger("frappe_os").warning(f"Skipped OS manifest {filename} from {app}: not a list")
+			continue
+		contributions.extend(_project_specs(specs, required, project, app, filename))
+	return contributions
+
+
+def _manifest_folder_contributions(subfolder, required, project):
+	"""Project an installed-OS-app manifest folder (`os/<subfolder>/`, one JSON file per
+	declaration) into uniform Registry contributions (ADR-0030). Each file is one spec, read as
+	data and ordered by filename; adding a declaration is adding one file. Used for `os/applets/`."""
+	contributions = []
+	for app in _installed_os_apps():
+		specs = manifest.dir_entries(app, subfolder)
+		contributions.extend(_project_specs(specs, required, project, app, subfolder))
+	return contributions
+
+
+def applet_contributions():
+	"""Applet contributions (ADR-0009): each installed OS app declares the applets it ships as one
+	file per applet in its `os/applets/` manifest folder (ADR-0030), so the OS never hardcodes
+	another app's artifact. assetUrl is the app's public assets path for the declared filename,
+	loaded at runtime as native ESM."""
+
+	def project(spec, app):
+		applet_id = spec["appletId"]
+		return "applet", "", applet_id, {
+			"appletId": applet_id,
+			"appId": app,
+			"assetUrl": f"/assets/{app}/os-applets/{spec['fileName']}",
+			"label": spec.get("label", applet_id),
+			"minOsApi": spec.get("minOsApi", 1),
+			# How the window content is produced (ADR-0020): "native" Vue component vs "framed"
+			# iframe. The client defaults absent → native, so only emit when the app declares it.
+			"kind": spec.get("kind", "native"),
+			# Whether the applet wants the OS app nav rail beside it (ADR-0026) — an explicit
+			# capability, orthogonal to `kind`: the applet decides, the OS never defaults it on.
+			# Absent → no rail (the client defaults absent → False).
+			"nav": spec.get("nav", False),
+		}
+
+	return _manifest_folder_contributions("applets", ("appletId", "fileName"), project)
+
+
+def command_contributions():
+	"""Command contributions (Action model, CONTEXT.md → Command): each installed OS app declares
+	the verbs it adds/overrides via the `os_commands` hook. Identity (ADR-0007) is
+	(command, '', id, app); the payload is the client Command shape (id/sourceApp/title/handler).
+	The OS's own first-party File Commands stay bundled in the frontend (their run Handlers are
+	compiled in) — only app contributions flow through here."""
+
+	def project(spec, app):
+		return "command", "", spec["id"], {
+			"id": spec["id"],
+			"sourceApp": app,
+			"title": spec["title"],
+			"handler": spec["handler"],
+		}
+
+	return _hook_contributions("os_commands", ("id", "title", "handler"), project)
+
+
+# Optional Action fields copied through to the client payload when present (ADR-0007): `when`
+# gates the placement, `order` is its ascending RENDER position within the Region, `priority` the
+# competition tiebreak (higher wins — a separate axis from render `order`), `layer` its override
+# layer (App<Site<User), `commandPatch` re-titles the placed Command only when this Action wins,
+# `removed` makes a winning Action a suppression instead of a render (ADR-0014 — an app may remove
+# shared chrome; the strip is attributed + logged client-side, never silent).
+_ACTION_PAYLOAD_KEYS = ("when", "order", "priority", "group", "layer", "commandPatch", "removed")
+
+
+def action_contributions():
+	"""Action contributions (Action model, CONTEXT.md → Action): each installed OS app declares
+	the placements (incl. overrides) it makes in its `os/actions.json` manifest (ADR-0030).
+	Identity (ADR-0007) is (action, region, command, app); the payload is the client Action shape.
+	`when` gates the placement contextually and `commandPatch` re-titles the placed Command only
+	when this Action wins its (region, command) competition."""
+
+	def project(spec, app):
+		payload = {"command": spec["command"], "region": spec["region"], "sourceApp": app}
+		for key in _ACTION_PAYLOAD_KEYS:
+			if spec.get(key) is not None:
+				payload[key] = spec[key]
+		return "action", spec["region"], spec["command"], payload
+
+	return _manifest_contributions("actions.json", ("command", "region"), project)
