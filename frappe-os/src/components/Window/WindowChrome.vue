@@ -48,7 +48,7 @@ const glyph =
 				:class="dot"
 				class="group-hover:bg-surface-red-6"
 				title="Close"
-				@click="os.closeWin(win.id)"
+				@click="os.requestCloseWin(win.id)"
 			>
 				<LucideX :class="glyph" :stroke-width="3" />
 			</button>

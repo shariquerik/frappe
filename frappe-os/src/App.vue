@@ -10,9 +10,10 @@ import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, writePlacementOverride } from "@/placements";
 import { placementSurface, isAppRef } from "@/surface";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
+import { dirtyWindows } from "@/desktop/working-state";
 import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
-import { OSWindow } from "./components/Window";
+import { OSWindow, CloseConfirmDialog } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
 
 const os = useOS();
@@ -104,18 +105,27 @@ function onKey(e: KeyboardEvent) {
 }
 const move = (e: PointerEvent) => os.onPointerMove(e);
 const up = () => os.onPointerUp();
+// Reload / tab-close guard (ADR-0029): stay silent unless a window holds an unsaved ephemeral
+// draft, then trip the browser's native confirm. Durable state is already on disk, so it's safe.
+function onBeforeUnload(e: BeforeUnloadEvent) {
+	if (!dirtyWindows().length) return;
+	e.preventDefault();
+	e.returnValue = "";
+}
 onMounted(() => {
 	os.syncDeskSize();
 	window.addEventListener("keydown", onKey);
 	window.addEventListener("pointermove", move);
 	window.addEventListener("pointerup", up);
 	window.addEventListener("resize", os.syncDeskSize);
+	window.addEventListener("beforeunload", onBeforeUnload);
 });
 onBeforeUnmount(() => {
 	window.removeEventListener("keydown", onKey);
 	window.removeEventListener("pointermove", move);
 	window.removeEventListener("pointerup", up);
 	window.removeEventListener("resize", os.syncDeskSize);
+	window.removeEventListener("beforeunload", onBeforeUnload);
 });
 </script>
 
@@ -177,6 +187,7 @@ onBeforeUnmount(() => {
 		<MenuBar />
 		<Dock />
 		<CommandPalette />
+		<CloseConfirmDialog />
 		<ToastProvider />
 		<div id="os-popover-layer" class="absolute z-[94000]"></div>
 	</div>

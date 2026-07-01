@@ -21,7 +21,7 @@ import {
 import {
   presenceFor, winBack, winFwd,
   openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
-  focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
+  focusWin, activateWin, restoreWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
@@ -55,7 +55,7 @@ export function useOS() {
     // window lifecycle + navigation
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
-    focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
+    focusWin, activateWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
     setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,

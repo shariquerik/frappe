@@ -9,8 +9,9 @@ import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
-  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
+  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
 } from '@/surface'
+import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import type { DockPosition, OsWindow, RowOpenTarget, Surface, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
@@ -40,6 +41,7 @@ export function winBack(id: string) {
   w.fwd = w.fwd || []
   w.fwd.push({ ...w.surface })
   w.surface = w.back.pop()!
+  pruneWindow(id, reachableSubjects(w))
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
 }
 export function winFwd(id: string) {
@@ -48,7 +50,24 @@ export function winFwd(id: string) {
   w.back = w.back || []
   w.back.push({ ...w.surface })
   w.surface = w.fwd.pop()!
+  pruneWindow(id, reachableSubjects(w))
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
+}
+
+// The Working-state subjects still reachable within a window: the current surface plus every one
+// held in its bounded back/fwd history. `pruneWindow` drops ephemeral entries outside this set —
+// a draft whose record the user can no longer navigate back to is gone for good (ADR-0029).
+function reachableSubjects(w: OsWindow): string[] {
+  return [w.surface, ...(w.back || []), ...(w.fwd || [])].map(subjectKey)
+}
+
+// Commit an in-window navigation: record history, swap the surface, then prune Working state to the
+// surfaces still reachable. The single seam `ensureApp` and `navFocus` both go through, so every
+// forward navigation (which clears `fwd`) reclaims the drafts it just made unreachable.
+function navigateWindow(w: OsWindow, surface: Surface) {
+  pushHist(w, surface)
+  w.surface = surface
+  pruneWindow(w.id, reachableSubjects(w))
 }
 
 // ---- opening apps / lists / records ------------------------------------------
@@ -107,7 +126,7 @@ function ensureApp(appId: string, surface: Surface | null, instance?: number | n
     ? open.find((w) => w.id === instanceId(appId, instance))
     : open.find((w) => w.id === canonicalId(appId)) || topInstance(open)
   if (!target) return void spawnWindow(instance != null ? instanceId(appId, instance) : canonicalId(appId), appId, surface)
-  if (surface) { pushHist(target, surface); target.surface = surface }
+  if (surface) navigateWindow(target, surface)
   const z = bumpZ(); setGeo(target.id, { z, min: false }); state.activeId = target.id
   state.menu = null
   state.paletteOpen = false
@@ -148,7 +167,7 @@ export const openSurface = (surface: Surface) => ensureApp(surfaceAppId(surface)
 function navFocus(winId: string, surface: Surface) {
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === winId)
-  if (w) { pushHist(w, surface); w.surface = surface }
+  if (w) navigateWindow(w, surface)
   setGeo(winId, { z, min: false })
   state.activeId = winId
 }
@@ -214,7 +233,27 @@ export function restoreWin(id: string, surface?: Surface): boolean {
   return true
 }
 
+// Ask to close a window, guarding unsaved work: a window holding a dirty ephemeral draft (ADR-0029)
+// raises the in-app confirm (via `state.closeConfirm`, rendered by CloseConfirmDialog) instead of
+// closing; a clean window closes straight away. The user-facing close gestures (traffic light,
+// ⌘W) funnel through here; `closeWin` remains the unconditional close the confirm resolves to.
+export function requestCloseWin(id: string) {
+  if (windowIsDirty(id)) state.closeConfirm = id
+  else closeWin(id)
+}
+// Resolve a pending confirm: discard the draft and close, or cancel and keep the window.
+export function confirmCloseWin() {
+  const id = state.closeConfirm
+  state.closeConfirm = null
+  if (id) closeWin(id)
+}
+export const cancelCloseWin = () => { state.closeConfirm = null }
+
 export function closeWin(id: string) {
+  // Ephemeral Working state dies with the window; durable survives (a reopened window reuses its id
+  // and its durable slab), mirroring how the geometry below is deliberately kept.
+  dropWindow(id)
+  if (state.closeConfirm === id) state.closeConfirm = null
   state.windows = state.windows.filter((w) => w.id !== id)
   if (state.activeId === id) {
     // Fall back to the top-most still-visible window only; never un-minimize a

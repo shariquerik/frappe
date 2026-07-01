@@ -20,7 +20,7 @@ function newWindow(os: OsStore): void {
 }
 
 function closeActiveWindow(os: OsStore): void {
-  if (os.state.activeId) os.closeWin(os.state.activeId)
+  if (os.state.activeId) os.requestCloseWin(os.state.activeId)
 }
 
 // The ref→behavior map for run Handlers — OPEN, not a closed first-party constant. The OS seeds
