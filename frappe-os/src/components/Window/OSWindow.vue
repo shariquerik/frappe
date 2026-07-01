@@ -15,6 +15,7 @@ import { Finder } from "@/components/Finder";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "./toolbar";
+import { WORKING_STATE_CONTEXT } from "@/desktop/use-working-state";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";
 import EmptyAppPane from "./EmptyAppPane.vue";
@@ -66,6 +67,12 @@ const g = computed<Partial<Geo>>(() => os.geoMap.value[props.win.id] || {});
 const focused = computed(() => os.state.activeId === props.win.id);
 // Hand the focus state to the view body (the list "New" button quiets to subtle off-focus).
 provide(WINDOW_FOCUSED, focused);
+
+// The Working-state context (ADR-0029): this window's id + its live surface, so a mounted surface
+// body (OSList/OSForm, later applets) reaches its per-window×subject working state via
+// `useWorkingState` without threading props. `surf` is reactive, so the bound entry follows
+// in-window navigation that keeps the body mounted (record→record on one doctype).
+provide(WORKING_STATE_CONTEXT, { winId: props.win.id, surface: surf });
 const inSplit = computed(
 	() =>
 		os.state.split &&

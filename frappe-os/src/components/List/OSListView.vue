@@ -43,7 +43,20 @@ const emit = defineEmits<{
   'column-width-updated': [{ key: string; width: string }]
   // Double-click a resizer → clear that column's fixed width so it flexes to fill again.
   'column-width-reset': [{ key: string }]
+  // The row scroller's live scrollTop, so the host can persist it as ephemeral Working state
+  // (ADR-0029) and reopen the list where the user left it after visiting a record.
+  scroll: [number]
 }>()
+
+// frappe-ui's ListRows is the sole scroller (its root `.overflow-y-auto`) but exposes no ref or
+// scroll event, so the host reaches it through this wrapper: query the scroller under our container,
+// re-emit its scrollTop (scroll doesn't bubble — the template uses a CAPTURE listener), and expose
+// an imperative restore the host calls once the persisted window has loaded.
+const container = ref<HTMLElement | null>(null)
+const scroller = (): HTMLElement | null => container.value?.querySelector('.overflow-y-auto') ?? null
+function onScroll() { emit('scroll', scroller()?.scrollTop ?? 0) }
+function restoreScroll(top: number): void { const el = scroller(); if (el) el.scrollTop = top }
+defineExpose({ restoreScroll })
 
 // frappe-ui's `ListHeaderItem` binds drag-resize to the resizer's `mousedown` but exposes
 // neither a dblclick nor its `startResizing`, so we delegate the double-click-to-reset
@@ -122,7 +135,8 @@ const options = computed(() => ({
   <!-- Bounded flex column so only the rows scroll (CRM-parity, matches ListViewShell): the
        table region takes the remaining height and clips, and the list's own `ListRows`
        (`overflow-y-auto`) is the sole scroller — the `ListHeader` above it stays fixed. -->
-  <div class="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-1" @contextmenu.prevent="onRowContextMenu">
+  <div ref="container" class="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-1"
+       @contextmenu.prevent="onRowContextMenu" @scroll.capture.passive="onScroll">
     <div v-if="error" class="px-[14px] py-[34px] text-center text-[13px] text-ink-red-6">{{ error }}</div>
     <div v-else-if="!rows.length && loading" class="px-[14px] py-[34px] text-center text-[13px] text-ink-gray-4">Loading…</div>
     <ListView

@@ -11,6 +11,8 @@ import { FormLayout, useDoctypeLayout } from "@framework/ui/FormLayout";
 import StatusPill from "@/components/StatusPill.vue";
 import { indicatorFor } from "@/indicators/indicator";
 import { useOS } from "@/desktop";
+import { useWorkingState } from "@/desktop/use-working-state";
+import { seedDraft, draftToStore, changedFields } from "./draft";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
 // @vue/compiler-sfc's macro type resolver — see DoctypeView.vue).
@@ -56,15 +58,9 @@ const record = computed<Record<string, any> | null>(() =>
 	isNew.value ? {} : docState.value.data,
 );
 
-// Editable working copy, reset whenever the loaded record (or new/edit mode) changes.
+// Editable working copy. Seeded from the live record, but held as EPHEMERAL Working state so an
+// unsaved draft survives in-window nav / Aspect switch / remount (wired below, after isDirty).
 const formDoc = ref<Record<string, any>>({});
-watch(
-	[record, isNew],
-	() => {
-		formDoc.value = isNew.value ? {} : { ...(record.value || {}) };
-	},
-	{ immediate: true },
-);
 
 const editable = computed(() => (isNew.value ? canCreate.value : canWrite.value));
 
@@ -106,20 +102,37 @@ const indicator = computed(() =>
 );
 
 // ---------- dirty tracking + save / create ----------
-function changed(a: unknown, b: unknown) {
-	if (a === b) return false;
-	return JSON.stringify(a) !== JSON.stringify(b);
-}
-const dirtyFields = computed(() => {
-	if (isNew.value)
-		return Object.keys(formDoc.value).filter(
-			(k) => formDoc.value[k] != null && formDoc.value[k] !== "",
-		);
-	const orig: Record<string, any> = record.value || {};
-	return Object.keys(formDoc.value).filter((k) => changed(formDoc.value[k], orig[k]));
-});
+const dirtyFields = computed(() => changedFields(formDoc.value, record.value, isNew.value));
 const isDirty = computed(() => dirtyFields.value.length > 0);
 const canSave = computed(() => editable.value && (isNew.value || isDirty.value));
+
+// ---------- ephemeral draft (ADR-0029) ----------
+// The form's draft IS a per-window×record ephemeral Working-state entry. Declared AFTER isDirty:
+// the composable's dirty watcher runs synchronously at creation and reads this getter.
+const draft = useWorkingState<Record<string, any>>({
+	persist: "ephemeral",
+	dirty: () => isDirty.value,
+});
+// `draft.value` reads/writes the ephemeral entry (undefined until the first dirty write mints it).
+// Seed formDoc on load / record change: adopt a held draft, else copy the live record. Re-runs as
+// the record loads or the subject re-points (record→record nav, Aspect remount).
+watch(
+	[record, isNew],
+	() => {
+		formDoc.value = seedDraft(draft.value, isNew.value, record.value);
+	},
+	{ immediate: true },
+);
+// Persist edits: hold only a DIRTY draft, and clear the slot on revert. Guard the clear so we never
+// mint an entry just to store `undefined` for a clean, merely-viewed form.
+watch(
+	formDoc,
+	() => {
+		const next = draftToStore(isDirty.value, formDoc.value);
+		if (next !== undefined || draft.value !== undefined) draft.value = next;
+	},
+	{ deep: true },
+);
 
 const saving = ref(false);
 const saveError = ref("");
@@ -130,13 +143,21 @@ async function save() {
 	try {
 		if (isNew.value) {
 			const created = await os.createDoc(doctype.value!, formDoc.value);
+			// Clear the 'new' draft while the subject is still form:<dt>:new — after onCreated
+			// re-points the surface to the saved record, draft addresses a different slot.
+			draft.value = undefined;
 			if (created?.name) props.onCreated?.(doctype.value!, created.name);
 		} else {
 			const changes: Record<string, unknown> = {};
 			dirtyFields.value.forEach((k) => {
 				changes[k] = formDoc.value[k];
 			});
-			await os.saveDoc(doctype.value!, props.recordName!, changes);
+			const saved = await os.saveDoc(doctype.value!, props.recordName!, changes);
+			// Adopt the saved doc as the new clean baseline: drop the draft, then reseed formDoc
+			// from `saved` so the refreshed `modified` realigns. Without this the stale `modified`
+			// lingers as a phantom dirty field and a second save resends it → TimestampMismatchError.
+			draft.value = undefined;
+			formDoc.value = { ...saved };
 		}
 	} catch (e) {
 		saveError.value = (e as Error).message;

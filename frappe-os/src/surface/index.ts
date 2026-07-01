@@ -178,6 +178,27 @@ export function systemWindowTitle(role: ReturnType<typeof windowRole>, view: str
   return null
 }
 
+// The Working-state SUBJECT of a surface (ADR-0029): a coarsened surface identity — not the full
+// addressable coordinate `sameSurface` keys on — that scopes a window's work-in-progress within
+// that window (`state.workingState[winId][subjectKey]`). Total: every surface has a subject.
+// Crucially the form subject EXCLUDES the Aspect (unlike sameSurface): a draft belongs to the
+// record, not the record-at-a-tab, so edits survive Details↔Activities. System/settings windows
+// each host one content, so their subject mirrors their own window id (surface/index.ts
+// `windowRole`): the per-user Settings and Finder by their bare id, an app's settings pane by
+// `app-settings:<app>`. Any other built-in stays total via a per-app constant.
+export function subjectKey(s: Surface): string {
+  if (s.kind === 'applet') return `applet:${s.appId}:${s.appletId}`
+  switch (s.view) {
+    case 'list': return `list:${s.doctype}`
+    case 'form': return `form:${s.doctype}:${s.recordName}`
+    case 'dashboard': return `dashboard:${s.appId}`
+    case 'settings': return 'settings'
+    case 'finder': return 'finder'
+    case 'app-settings': return `app-settings:${s.appId}`
+    default: return `${s.view}:${s.appId ?? ''}`
+  }
+}
+
 // Two surfaces are "the same place" — used by per-window history to skip a no-op nav.
 export function sameSurface(a?: Surface | null, b?: Surface | null): boolean {
   if (!a || !b || a.kind !== b.kind) return false

@@ -4,7 +4,7 @@
 // the table over OSListView. Display config (label/icon/columns/saved views) comes from the
 // curated `meta` prop; the rows, count and create-permission are live. Symmetric with
 // Form/OSForm — both are full view components DoctypeView resolves and renders.
-import { computed, inject, ref, shallowRef, watch, watchEffect } from "vue";
+import { computed, inject, nextTick, ref, shallowRef, watch, watchEffect } from "vue";
 import { Button, ListFooter } from "frappe-ui";
 import { useListView } from "@framework/ui/ListView";
 import { Filter } from "@framework/ui/Filter";
@@ -14,6 +14,7 @@ import { ColumnSettings } from "@framework/ui/ColumnSettings";
 import OSListView from "./OSListView.vue";
 import { listFetchFields } from "./list-columns";
 import { useOS } from "@/desktop";
+import { useWorkingState } from "@/desktop/use-working-state";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
 // resolver — see DoctypeView.vue).
@@ -31,6 +32,17 @@ const doctype = computed(() => props.doctype);
 // component is remounted on doctype change via `:key` in DoctypeView — no reset watcher.
 // Columns are Meta-derived here (`view.columns.wire`); the host keeps fetching.
 const view = useListView(props.doctype);
+
+// Working state (ADR-0029): the list View Snapshot (ADR-0007's filters/sort/columns/quick-filter)
+// is DURABLE working state, held in the OS store so it survives in-window navigation and window
+// unmount — and, via slice 05, a reload. Seed the controls from any held snapshot BEFORE wiring
+// the write-back, so the restore isn't echoed straight back as a change. `pageLength` is
+// deliberately NOT part of the snapshot — see below.
+const listWorkingState = useWorkingState({ persist: "durable" });
+view.restore(listWorkingState.value ?? {});
+watch(view.snapshot, (snap) => {
+	listWorkingState.value = snap;
+});
 
 // The "New" button needs create permission, which rides on the live field schema.
 const fieldMeta = computed(() => os.fieldMetaFor(doctype.value));
@@ -55,7 +67,21 @@ const wireFilters = computed(() => {
 	return wire && wire.length ? wire : undefined;
 });
 const orderBy = computed(() => view.sort.orderBy.value || "modified desc");
+
+// Scroll + paging position (ADR-0029): an EPHEMERAL facet beside the durable snapshot, so opening a
+// record and coming back reopens the list at the same scroll and same number of rows (survives
+// unmount, not reload — paging/scroll are host concerns the ADR classes ephemeral, deliberately out
+// of the library-owned ListViewSnapshot). One entry: `{ scrollTop, count }`.
+type ListPosition = { scrollTop: number; count: number };
+const position = useWorkingState<ListPosition>({ persist: "ephemeral", facet: "position" });
+
+// `pageLength` is the footer's page-size increment (resets on remount). `visibleCount` is the row
+// window actually shown: seeded from a held position, grown by Load More, reset to one page on a
+// filter/sort/page-size change. It IS the paging state — the fetch always requests this many rows
+// (the store replaces without blanking, so growing it preserves scroll), so no append bookkeeping.
 const pageLength = ref(20);
+const visibleCount = ref(position.value?.count ?? pageLength.value);
+const scrollTop = ref(position.value?.scrollTop ?? 0);
 
 // The lean fetch (ADR-0028, #04b): name + the visible wire columns + the fields the indicator
 // resolver reads, derived from the spec the client already holds — no `['*']`, no dark tiers.
@@ -73,8 +99,10 @@ const total = computed(() =>
 // More rows exist than are loaded → the footer offers Load More (ADR-0025 paging).
 const hasMore = computed(() => records.value.length < total.value);
 
-// Refetch from page 1 whenever the doctype, filters, sort, or page length change; the wire
-// projections are the tracked deps. loadMore appends the next page without retriggering.
+// Refetch whenever the doctype, filters, sort, fields, or the visible-row window change; the wire
+// projections are the tracked deps. Fetching the whole window (not appending) keeps one seam and
+// lets Load More reuse it — the store swaps rows in place, so growing the window doesn't blank the
+// list or lose scroll.
 watchEffect(() => {
 	const dt = doctype.value;
 	if (!dt) return;
@@ -82,18 +110,52 @@ watchEffect(() => {
 		fields: fetchFields.value,
 		filters: wireFilters.value,
 		order_by: orderBy.value,
-		limit: pageLength.value,
+		limit: visibleCount.value,
 	});
 	os.loadCount(dt, wireFilters.value);
 });
+// Load More grows the window by one page; the watchEffect above refetches the larger window.
 function loadMore() {
-	os.loadMore(doctype.value, {
-		fields: fetchFields.value,
-		filters: wireFilters.value,
-		order_by: orderBy.value,
-		limit: pageLength.value,
-	});
+	visibleCount.value += pageLength.value;
 }
+
+// The child list view, reached imperatively only to restore the row scroller's scrollTop.
+const listViewRef = ref<InstanceType<typeof OSListView> | null>(null);
+
+// A filter / sort / page-size change starts a fresh page 1 at the top. Non-immediate so the
+// mount-time restore (filters from the durable snapshot, window from the held position) is not
+// reset — this watcher only reacts to changes the user makes after the list is up.
+watch([wireFilters, orderBy, pageLength], () => {
+	visibleCount.value = pageLength.value;
+	scrollTop.value = 0;
+	nextTick(() => listViewRef.value?.restoreScroll(0));
+});
+
+// Persist the position (ephemeral) so it survives unmount. Non-immediate + change-only, so a
+// merely-viewed list (no scroll, no Load More) mints no entry.
+watch([scrollTop, visibleCount], () => {
+	position.value = { scrollTop: scrollTop.value, count: visibleCount.value };
+});
+
+// The row scroller reports its scrollTop through OSListView; debounce so we commit once the user
+// stops scrolling rather than on every frame (which would write the reactive slab per pixel).
+let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+function onListScroll(top: number) {
+	clearTimeout(scrollTimer);
+	scrollTimer = setTimeout(() => { scrollTop.value = top; }, 120);
+}
+
+// Restore the held scroll once — after the first load settles, so the restored window has rendered
+// enough height to scroll to. Later loads (Load More, refilter) keep the browser's own scroll.
+let scrollRestored = false;
+watch(
+	() => listState.value.loading,
+	(loading) => {
+		if (loading || scrollRestored) return;
+		scrollRestored = true;
+		if (scrollTop.value > 0) nextTick(() => listViewRef.value?.restoreScroll(scrollTop.value));
+	},
+);
 
 // A column-header drag emits `{ key, width }`; write it back into the shared column state
 // so ColumnSettings and the table stay in sync (ADR-0006 / ADR-0025, two-way resize).
@@ -157,6 +219,7 @@ const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid
 		</div>
 		<!-- table -->
 		<OSListView
+			ref="listViewRef"
 			:doctype="doctype"
 			:columns="view.columns.wire.value"
 			:rows="records"
@@ -170,6 +233,7 @@ const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid
 			:on-open-new-window="onOpenNewWindow"
 			@column-width-updated="onColumnWidthUpdated"
 			@column-width-reset="onColumnWidthReset"
+			@scroll="onListScroll"
 		/>
 		<!-- footer: frappe-ui's presentation-only ListFooter, backed by OS-store paging.
          v-model is the page length (a change refetches page 1). We own the right side via
