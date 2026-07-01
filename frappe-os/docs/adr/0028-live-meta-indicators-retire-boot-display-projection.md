@@ -41,10 +41,17 @@ status projected to `(label, color)` **per record** (see CONTEXT.md):
 2. **`DocType.states`** `[{title, color}]` — per-doctype status colors, **editable in the DocType
    itself**. The data-driven replacement for `statusThemes`.
 3. **docstatus** (Draft `0` / Submitted `1` / Cancelled `2`) for submittable doctypes.
-4. **enabled / disabled** for doctypes with an enabled-state field. Two Frappe conventions with
+4. **publication / visibility** for doctypes with a conventional Check field: `published` /
+   `is_published` (Published vs Not Published), `public` / `is_public` (Public vs Private), or
+   `is_private` (Private, **inverse polarity**). Desk hand-writes these per doctype in each
+   `listview_settings.get_indicator` (Note.`public`, Web Page.`published`, File.`is_private`) —
+   client-JS-only, unreachable by API, unmaintainable for third-party doctypes. This tier
+   **generalizes that pattern into one data-driven tier**: the spec names the field, and the
+   resolver reads the label + color + polarity from the field name (same shape as tier 5).
+5. **enabled / disabled** for doctypes with an enabled-state field. Two Frappe conventions with
    **opposite polarity**: an `enabled` field (truthy = active) or a `disabled` field (truthy =
    inactive). The spec names the field; the resolver knows the polarity from the field name.
-5. **`guess_colour(value)` keyword heuristic** — the last resort (Frappe's own
+6. **`guess_colour(value)` keyword heuristic** — the last resort (Frappe's own
    `GENERIC_STATUS_THEMES` equivalent), so an uncurated Select still gets a sensible color.
 
 The shape shift is the point: the indicator is a **record → `(label, color)`** projection, not a
@@ -120,7 +127,11 @@ mapping is unit-tested. Emitting plain token strings keeps the module frappe-ui-
   model; it ignores the authoritative `DocType.states`/workflow data and diverges from Desk colors.
   Kept strictly as the fallback.
 - **Reimplement each app's `listview_settings.get_indicator()`.** Client-JS-only, unreachable by
-  API, unmaintainable for third-party doctypes. Rejected outright.
+  API, unmaintainable for third-party doctypes. Rejected outright. The publication/visibility tier
+  is **not** this: it does not port per-doctype JS, it generalizes the one **regular** shape that
+  recurs across those functions (a conventional Check field → a two-state pill) into a single
+  data-driven tier, keyed by field name. The irregular, doctype-specific `get_indicator` logic
+  stays unported.
 - **Retire the boot Registry entirely and drive everything from live meta.** The synchronous
   seams (routing/persistence/ownership) genuinely need an existence + identity answer without
   awaiting a fetch. The Registry stays for identity; only presentation moves.

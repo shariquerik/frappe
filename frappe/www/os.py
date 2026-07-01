@@ -333,6 +333,19 @@ def _enabled_field(meta):
 	return None
 
 
+def _publication_field(meta):
+	"""The publication/visibility Check field — 'published'/'is_published' (Published vs Not
+	Published), 'public'/'is_public' (Public vs Private), or 'is_private' (Private, inverse
+	polarity), else None. Desk expresses these per-doctype in listview_settings.get_indicator
+	(Note.public, Web Page.published, File.is_private); the OS generalizes them into one tier,
+	the client owning the label/color per field name (ADR-0028)."""
+	for name in ("published", "is_published", "public", "is_public", "is_private"):
+		df = meta.get_field(name)
+		if df and df.fieldtype == "Check":
+			return name
+	return None
+
+
 def _state_colors(meta):
 	"""DocType.states: status value -> a Frappe color token, scrubbed to a lowercase token
 	(ADR-0028). The client normalizes it onto a Badge token; empty when the doctype has none."""
@@ -371,6 +384,7 @@ def _indicator_spec(doctype, meta):
 		"states": _state_colors(meta),
 		"isSubmittable": bool(meta.is_submittable),
 		"enabledField": _enabled_field(meta),
+		"publicationField": _publication_field(meta),
 	}
 
 
@@ -779,9 +793,13 @@ def card_value(doctype: str, filters: str | list | dict | None = None, fieldname
 
 	filters = frappe.parse_json(filters) if filters else None
 	if fieldname:
-		rows = frappe.get_all(doctype, filters=filters or {}, fields=[f"sum(`{fieldname}`) as total"])
+		# get_list (not get_all) so the doctype's permission query conditions are applied.
+		rows = frappe.get_list(doctype, filters=filters or {}, fields=[f"sum(`{fieldname}`) as total"])
 		return (rows[0].total if rows else 0) or 0
-	return frappe.db.count(doctype, filters)
+	# get_count applies permission query conditions, so the card matches the visible list.
+	from frappe.client import get_count
+
+	return get_count(doctype, filters)
 
 
 def setup_desk_switch():

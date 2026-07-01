@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { indicatorFor, normalizeColor } from '../indicator'
 
 // A spec with every tier off; each test switches on only the tier it exercises.
-const emptySpec = { statusField: null, workflow: {}, states: {}, isSubmittable: false, enabledField: null }
+const emptySpec = { statusField: null, workflow: {}, states: {}, isSubmittable: false, enabledField: null, publicationField: null }
 const spec = (over) => ({ ...emptySpec, ...over })
 
 describe('normalizeColor', () => {
@@ -69,6 +69,30 @@ describe('indicatorFor resolution order', () => {
     expect(indicatorFor({ docstatus: 0 }, s)).toEqual({ label: 'Draft', color: 'red' })
     expect(indicatorFor({ docstatus: 1 }, s)).toEqual({ label: 'Submitted', color: 'blue' })
     expect(indicatorFor({ docstatus: 2 }, s)).toEqual({ label: 'Cancelled', color: 'red' })
+  })
+
+  it('publication — published/public map truthy to a green pill', () => {
+    expect(indicatorFor({ published: 1 }, spec({ publicationField: 'published' }))).toEqual({ label: 'Published', color: 'green' })
+    expect(indicatorFor({ published: 0 }, spec({ publicationField: 'published' }))).toEqual({ label: 'Not Published', color: 'gray' })
+    expect(indicatorFor({ is_published: 1 }, spec({ publicationField: 'is_published' }))).toEqual({ label: 'Published', color: 'green' })
+    expect(indicatorFor({ public: 1 }, spec({ publicationField: 'public' }))).toEqual({ label: 'Public', color: 'green' })
+    expect(indicatorFor({ public: 0 }, spec({ publicationField: 'public' }))).toEqual({ label: 'Private', color: 'gray' })
+    expect(indicatorFor({ is_public: 1 }, spec({ publicationField: 'is_public' }))).toEqual({ label: 'Public', color: 'green' })
+  })
+
+  it('publication — is_private is the inverse polarity (truthy = Private)', () => {
+    const s = spec({ publicationField: 'is_private' })
+    expect(indicatorFor({ is_private: 1 }, s)).toEqual({ label: 'Private', color: 'gray' })
+    expect(indicatorFor({ is_private: 0 }, s)).toEqual({ label: 'Public', color: 'green' })
+  })
+
+  it('publication — docstatus outranks it, it outranks enabled', () => {
+    // A submittable draft still reads Draft, not its publication state.
+    const submittable = spec({ isSubmittable: true, publicationField: 'published' })
+    expect(indicatorFor({ docstatus: 0, published: 1 }, submittable)).toEqual({ label: 'Draft', color: 'red' })
+    // With both fields present the publication tier wins over enabled/disabled.
+    const both = spec({ publicationField: 'published', enabledField: 'enabled' })
+    expect(indicatorFor({ published: 1, enabled: 0 }, both)).toEqual({ label: 'Published', color: 'green' })
   })
 
   it('tier 4 — enabled polarity (truthy = active)', () => {

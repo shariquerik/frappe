@@ -44,7 +44,7 @@ export function cellKind(row: FrappeDoc, column: ListViewColumn, ctx: CellContex
 
 // The lean field set a list fetches (ADR-0028, #04b): `name` + the visible wire column keys +
 // the fields the Record-indicator resolver reads off each row — `statusField`, `docstatus`
-// when submittable, and the `enabledField` when the spec names one. Derived from the spec the
+// when submittable, and the `enabledField` / `publicationField` when the spec names one. Derived from the spec the
 // client already holds, so a Draft / disabled / workflow pill never goes dark for want of a
 // fetched field. Mirrors the library's `useListData` base set (`['name', ...wire keys]`), then
 // unions the resolver fields. Deduped, since the status field is often also a visible column.
@@ -53,5 +53,6 @@ export function listFetchFields(columns: ListViewColumn[] = [], spec?: Indicator
   if (spec?.statusField) fields.push(spec.statusField)
   if (spec?.isSubmittable) fields.push('docstatus')
   if (spec?.enabledField) fields.push(spec.enabledField)
+  if (spec?.publicationField) fields.push(spec.publicationField)
   return [...new Set(fields)]
 }

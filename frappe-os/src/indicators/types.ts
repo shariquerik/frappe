@@ -32,4 +32,9 @@ export interface IndicatorSpec {
   // The enabled-state field — 'enabled' (truthy = active) or 'disabled' (truthy = inactive),
   // or null. Opposite polarities; the resolver reads which from the name (ADR-0028).
   enabledField: string | null
+  // The publication/visibility Check field — 'published'/'is_published', 'public'/'is_public',
+  // or 'is_private' (inverse polarity), or null. Desk projects these per-doctype via
+  // listview_settings.get_indicator; the resolver generalizes them, reading label + color and
+  // polarity from the name (ADR-0028). Sits below docstatus, above enabled/disabled.
+  publicationField: string | null
 }

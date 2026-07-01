@@ -36,6 +36,19 @@ const COLOR_TO_TOKEN: Record<string, BadgeToken> = {
   pink: 'violet',
 }
 
+// Conventional publication/visibility Check fields -> their two-state pill. Desk hand-writes
+// these per doctype in listview_settings.get_indicator (Note.public, Web Page.published,
+// File.is_private); we generalize them into one tier (ADR-0028) — the server names the field,
+// this table owns the label + color per field name. Keyed by the field's truthiness, so a
+// field's own polarity is baked in (is_private truthy = Private, public truthy = Public).
+const PUBLICATION_LABELS: Record<string, { on: Indicator; off: Indicator }> = {
+  published: { on: { label: 'Published', color: 'green' }, off: { label: 'Not Published', color: 'gray' } },
+  is_published: { on: { label: 'Published', color: 'green' }, off: { label: 'Not Published', color: 'gray' } },
+  public: { on: { label: 'Public', color: 'green' }, off: { label: 'Private', color: 'gray' } },
+  is_public: { on: { label: 'Public', color: 'green' }, off: { label: 'Private', color: 'gray' } },
+  is_private: { on: { label: 'Private', color: 'gray' }, off: { label: 'Public', color: 'green' } },
+}
+
 // guess_colour keyword heuristic (utils.js `guess_style`) — the last resort for an uncurated
 // status value. Case-sensitive substring match (Frappe's `has_words`); first bucket wins.
 const KEYWORD_BUCKETS: Array<{ color: BadgeToken; words: string[] }> = [
@@ -60,8 +73,9 @@ function guessColor(value: string): BadgeToken {
 }
 
 // Resolve a record to its indicator, first match wins (ADR-0028 order): active workflow
-// state -> DocType.states -> docstatus -> enabled/disabled -> keyword heuristic. Returns null
-// when the doctype carries no status model, so the consumer renders no pill.
+// state -> DocType.states -> docstatus -> publication/visibility -> enabled/disabled ->
+// keyword heuristic. Returns null when the doctype carries no status model, so the consumer
+// renders no pill.
 export function indicatorFor(doc: Record<string, unknown>, spec: IndicatorSpec | null | undefined): Indicator | null {
   if (!doc || !spec) return null
   const value = spec.statusField ? doc[spec.statusField] : undefined
@@ -75,6 +89,9 @@ export function indicatorFor(doc: Record<string, unknown>, spec: IndicatorSpec |
     if (doc.docstatus === 2) return { label: 'Cancelled', color: 'red' }
     if (doc.docstatus === 1) return { label: 'Submitted', color: 'blue' }
   }
+
+  const publication = spec.publicationField ? PUBLICATION_LABELS[spec.publicationField] : undefined
+  if (publication) return doc[spec.publicationField as string] ? publication.on : publication.off
 
   if (spec.enabledField === 'enabled') return doc.enabled ? { label: 'Enabled', color: 'blue' } : { label: 'Disabled', color: 'gray' }
   if (spec.enabledField === 'disabled') return doc.disabled ? { label: 'Disabled', color: 'gray' } : { label: 'Enabled', color: 'blue' }
