@@ -1,6 +1,6 @@
 // Session persistence: the URL only holds *focus*; the rest of the desktop (which
 // windows exist, their geometry, z-order, split, per-window nav history,
-// wallpaper, toggles) lives in one localStorage blob, debounced 250ms. Theme is
+// wallpaper, toggles, durable working state) lives in one localStorage blob, debounced 250ms. Theme is
 // not here — frappe-ui's useTheme persists it under its own `theme` key. Ephemeral
 // overlay flags (palette / menu) and the transient settings / wallpaper windows are
 // excluded — a refresh never restores an open overlay or a system pane.
@@ -10,7 +10,7 @@ import { state } from './state'
 import { syncTopZ } from './geometry'
 import { HIST_CAP } from './windows'
 import { initialSurface, isBuiltin, windowRole } from '@/surface'
-import type { OsWindow, Surface } from '@/types'
+import type { OsWindow, Surface, WorkingEntry } from '@/types'
 
 const BLOB_KEY = 'frappe-os:desktop'
 // Bumped to 2 when windows moved from `type`/`view`/`doctype`/`recordName` to `surface`
@@ -31,6 +31,30 @@ export function validSurface(s?: Surface | null): boolean {
   return false
 }
 
+// Reduce the working-state slab (ADR-0029) to what persists: durable entries carrying a defined
+// value, in ordinary app windows only. Ephemeral entries are memory-only; an empty slot (value
+// cleared on save, slice 03) has nothing to restore; system/settings windows are respawned from
+// the URL and never carry a slab (mirrors serialize()'s window filter). Pure and defensive over
+// the slab so it serves both serialize (trusted state) and hydrate (untrusted JSON) unchanged.
+export function durableWorkingState(
+  slab: Record<string, Record<string, WorkingEntry>>,
+): Record<string, Record<string, WorkingEntry>> {
+  const out: Record<string, Record<string, WorkingEntry>> = {}
+  for (const winId of Object.keys(slab || {})) {
+    if (windowRole(winId) !== 'app') continue
+    const win = slab[winId]
+    if (!win || typeof win !== 'object') continue
+    const kept: Record<string, WorkingEntry> = {}
+    for (const subject of Object.keys(win)) {
+      const entry = win[subject]
+      if (entry && typeof entry === 'object' && entry.persist === 'durable' && entry.value !== undefined)
+        kept[subject] = entry
+    }
+    if (Object.keys(kept).length) out[winId] = kept
+  }
+  return out
+}
+
 export function serialize() {
   return {
     version: BLOB_VERSION,
@@ -41,6 +65,10 @@ export function serialize() {
     geo: state.geo, split: state.split, activeId: state.activeId,
     wallpaper: state.wallpaper,
     toggles: state.toggles, sidebarHidden: state.sidebarHidden,
+    // Durable-only working state (ADR-0029). An OPTIONAL key: old blobs simply lack it and
+    // hydrate reads `workingState || {}`, so adding it needs no BLOB_VERSION bump (a bump would
+    // discard every user's existing desktop).
+    workingState: durableWorkingState(state.workingState),
     rowOpenTarget: state.rowOpenTarget, rememberWindowSize: state.rememberWindowSize,
     dockPosition: state.dockPosition, dockAutoHide: state.dockAutoHide,
   }
@@ -83,6 +111,14 @@ export function hydrate(): boolean {
   state.rememberWindowSize = blob.rememberWindowSize !== false // default on
   state.dockPosition = ['bottom', 'left', 'right'].includes(blob.dockPosition) ? blob.dockPosition : 'left'
   state.dockAutoHide = blob.dockAutoHide !== false // default on
+  // Restore durable working-state slabs (ADR-0029). durableWorkingState re-applies the durable/
+  // defined/app-window filter to the untrusted blob; keep only slabs whose window survived the
+  // filter above, so a dropped window never leaves an orphan slab behind.
+  state.workingState = {}
+  const durable = durableWorkingState(blob.workingState || {})
+  for (const winId of Object.keys(durable)) {
+    if (ids.has(winId)) state.workingState[winId] = durable[winId]
+  }
   syncTopZ(windows, state.geo)
   return true
 }
@@ -94,7 +130,7 @@ export function hydrate(): boolean {
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 export function startAutosave(): void {
   watch(
-    () => [state.windows, state.geo, state.split, state.activeId, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
+    () => [state.windows, state.geo, state.split, state.activeId, state.wallpaper, state.toggles, state.sidebarHidden, state.workingState, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
     () => {
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { try { localStorage.setItem(BLOB_KEY, JSON.stringify(serialize())) } catch { /* quota / private mode: skip */ } }, 250)
