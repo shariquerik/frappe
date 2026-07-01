@@ -13,7 +13,6 @@ export const state = reactive<OsState>({
   split: null, // [rightId, leftId]
   paletteOpen: false,
   paletteQuery: '',
-  theme: 'light',
   wallpaper: null,
   toggles: {},
   sidebarHidden: {},

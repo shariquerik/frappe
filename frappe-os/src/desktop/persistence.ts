@@ -1,6 +1,7 @@
 // Session persistence: the URL only holds *focus*; the rest of the desktop (which
-// windows exist, their geometry, z-order, split, per-window nav history, theme,
-// wallpaper, toggles) lives in one localStorage blob, debounced 250ms. Ephemeral
+// windows exist, their geometry, z-order, split, per-window nav history,
+// wallpaper, toggles) lives in one localStorage blob, debounced 250ms. Theme is
+// not here — frappe-ui's useTheme persists it under its own `theme` key. Ephemeral
 // overlay flags (palette / menu) and the transient settings / wallpaper windows are
 // excluded — a refresh never restores an open overlay or a system pane.
 import { watch } from 'vue'
@@ -38,7 +39,7 @@ export function serialize() {
       back: (w.back || []).slice(-HIST_CAP), fwd: (w.fwd || []).slice(-HIST_CAP),
     })),
     geo: state.geo, split: state.split, activeId: state.activeId,
-    theme: state.theme, wallpaper: state.wallpaper,
+    wallpaper: state.wallpaper,
     toggles: state.toggles, sidebarHidden: state.sidebarHidden,
     rowOpenTarget: state.rowOpenTarget, rememberWindowSize: state.rememberWindowSize,
     dockPosition: state.dockPosition, dockAutoHide: state.dockAutoHide,
@@ -75,7 +76,6 @@ export function hydrate(): boolean {
   // was bare (clearFocus / minimize-to-empty); don't resurrect focus onto the last
   // window, or a cold /os would auto-open it and redirect to /os/<app>.
   state.activeId = ids.has(blob.activeId) ? blob.activeId : null
-  state.theme = blob.theme || 'light'
   state.wallpaper = blob.wallpaper || null
   state.toggles = blob.toggles || {}
   state.sidebarHidden = blob.sidebarHidden || {}
@@ -94,7 +94,7 @@ export function hydrate(): boolean {
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 export function startAutosave(): void {
   watch(
-    () => [state.windows, state.geo, state.split, state.activeId, state.theme, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
+    () => [state.windows, state.geo, state.split, state.activeId, state.wallpaper, state.toggles, state.sidebarHidden, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
     () => {
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { try { localStorage.setItem(BLOB_KEY, JSON.stringify(serialize())) } catch { /* quota / private mode: skip */ } }, 250)

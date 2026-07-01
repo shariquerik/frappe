@@ -7,14 +7,14 @@
 // active pane rides the singleton window's surface params so a deep-link / dock "Dock Settings…"
 // can open straight to it.
 import { computed } from 'vue'
-import { Switch } from 'frappe-ui'
+import { Switch, ThemeSwitcher } from 'frappe-ui'
 import { useOS } from '@/desktop'
 import { AccountSection, WallpaperPicker } from '@/components/Settings'
 import { SETTINGS_PANES } from '@/surface'
 // OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { OsWindow } from '@/surface/types'
-import type { DockPosition, Theme } from '@/desktop/types'
+import type { DockPosition } from '@/desktop/types'
 
 const props = defineProps<{ win: OsWindow }>()
 const os = useOS()
@@ -28,10 +28,6 @@ const dockPositions: { label: string; value: DockPosition }[] = [
   { label: 'Bottom', value: 'bottom' },
   { label: 'Left', value: 'left' },
   { label: 'Right', value: 'right' },
-]
-const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; card: string }[] = [
-  { label: 'Light', value: 'light', previewBg: '#ffffff', bar: '#eef0f2', card: '#dfe3e7' },
-  { label: 'Dark', value: 'dark', previewBg: '#1c1c1c', bar: '#2e2e2e', card: '#3a3a3a' },
 ]
 </script>
 
@@ -53,26 +49,15 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
       </template>
 
       <template v-else-if="pane==='Appearance'">
-        <!-- Global light/dark theme (moved out of per-app Settings — it's a desktop pref). -->
+        <!-- Global light/dark/system theme. frappe-ui's ThemeSwitcher owns the
+             <html data-theme> attribute and persists the choice itself — a bare
+             switcher drives setTheme on click, so no binding is needed here. -->
         <div class="px-[22px] py-5">
-          <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">APPEARANCE</div>
-          <div class="flex gap-3">
-            <button v-for="op in themeOpts" :key="op.value" @click="os.setTheme(op.value)" class="flex-1 cursor-pointer rounded-[10px] bg-surface-base p-2.5 text-left"
-              :style="{ border: os.state.theme===op.value ? '1px solid var(--outline-gray-4)' : '1px solid var(--outline-gray-2)', boxShadow: os.state.theme===op.value ? 'var(--shadow-sm)' : 'none' }">
-              <span class="relative mb-2 block h-[54px] w-full overflow-hidden rounded-[7px] border border-outline-gray-2" :style="{ background: op.previewBg }">
-                <span class="absolute left-[7px] right-[7px] top-[7px] h-[9px] rounded-[3px]" :style="{ background: op.bar }"></span>
-                <span class="absolute left-[7px] top-[22px] h-5 w-[55%] rounded" :style="{ background: op.card }"></span>
-              </span>
-              <span class="flex items-center gap-1.5 text-[12.5px] text-ink-gray-8">
-                <span class="inline-block h-[15px] w-[15px] flex-shrink-0 rounded-full bg-white" :style="{ border: os.state.theme===op.value ? '4px solid var(--surface-gray-9)' : '1.5px solid var(--outline-gray-3)' }"></span>{{ op.label }}
-              </span>
-            </button>
-          </div>
+          <ThemeSwitcher label="" description="" />
         </div>
       </template>
 
       <template v-else-if="pane==='Wallpaper'">
-        <div class="px-[22px] pb-1 pt-5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">WALLPAPER</div>
         <WallpaperPicker />
       </template>
 
@@ -80,7 +65,6 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
         <div class="px-[22px] py-5">
           <!-- Dock placement & reveal (ADR-0022), like macOS "Desktop & Dock". Position is a
                segmented control; auto-hide off pins the dock so it never slides away. -->
-          <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">DOCK</div>
           <div class="flex items-center gap-3 border-b border-outline-gray-1 py-[11px]">
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
               <span class="text-[13px] text-ink-gray-8">Position on screen</span>

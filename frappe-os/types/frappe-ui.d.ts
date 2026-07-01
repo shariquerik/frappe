@@ -25,4 +25,6 @@ export const FileUploader: any
 export const LoadingIndicator: any
 export const toast: any
 export const ToastProvider: any
+export const ThemeSwitcher: any
+export const useTheme: any
 export default whatever

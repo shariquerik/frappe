@@ -1,9 +1,7 @@
-// The desktop window-manager's own state shapes: the theme and the one shared reactive
-// `OsState` singleton every desktop slice (state/windows/geometry/palette/persistence)
-// mutates. Re-exported via @/types.
+// The desktop window-manager's own state shapes: the one shared reactive `OsState`
+// singleton every desktop slice (state/windows/geometry/palette/persistence) mutates.
+// Re-exported via @/types. Theme is owned by frappe-ui's useTheme, not OsState.
 import type { OsWindow, Geo } from '@/surface/types'
-
-export type Theme = 'light' | 'dark'
 
 // Where a plain left-click on a list row opens the record (ADR-0018 update to ADR-0017): in
 // the SAME window (default — swaps that window's sidebar to the Aspect rail) or a NEW app
@@ -26,7 +24,6 @@ export interface OsState {
   split: [string, string] | null
   paletteOpen: boolean
   paletteQuery: string
-  theme: Theme
   wallpaper: string | null
   toggles: Record<string, boolean>
   sidebarHidden: Record<string, boolean>

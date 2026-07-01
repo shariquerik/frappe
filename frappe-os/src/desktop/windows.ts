@@ -11,7 +11,7 @@ import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId,
 } from '@/surface'
-import type { DockPosition, OsWindow, RowOpenTarget, Surface, Theme, WallpaperDef } from '@/types'
+import type { DockPosition, OsWindow, RowOpenTarget, Surface, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
 // Presence dots shown on a window. The real backend has no viewer source yet, so a form
@@ -292,9 +292,8 @@ export function enterSplit() {
 }
 export const exitSplit = () => { state.split = null }
 
-// ---- appearance (theme / wallpaper / toggles) --------------------------------
-export const setTheme = (t: Theme) => { state.theme = t }
-
+// ---- appearance (wallpaper / toggles) ----------------------------------------
+// Theme lives in frappe-ui's useTheme (light/dark/system), not here.
 export function wallpaperDefs(): WallpaperDef[] {
   return [
     // The OS default ground: "Product Duotone" — ERPNext indigo → CRM teal. A

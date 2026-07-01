@@ -1,10 +1,10 @@
 <script setup lang="ts">
 // Frappe OS desktop root: wallpaper, desktop icons, windows, split-exit pill,
 // menu bar, dock, command palette. Owns the global keyboard
-// (⌘K / Esc), pointer (drag/resize + dock auto-hide) listeners, and the
-// data-theme attribute that drives frappe-ui's light/dark tokens.
+// (⌘K / Esc) and pointer (drag/resize + dock auto-hide) listeners. Theme is
+// owned by frappe-ui's useTheme (it writes <html data-theme>); we just boot it.
 import { computed, onMounted, onBeforeUnmount } from "vue";
-import { ToastProvider } from "frappe-ui";
+import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, writePlacementOverride } from "@/placements";
@@ -16,6 +16,13 @@ import { OSWindow } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
 
 const os = useOS();
+
+// Theme is owned by frappe-ui (light/dark/system): the first useTheme() call
+// restores the saved choice, writes <html data-theme>, and installs the
+// prefers-color-scheme listener. Call it at boot so the theme applies on load,
+// not only once the Appearance pane mounts. The ThemeSwitcher in Settings drives
+// the same singleton.
+useTheme();
 
 const wp = computed(() => os.currentWp.value);
 
@@ -120,7 +127,6 @@ onBeforeUnmount(() => {
        below, which sits at the top of the desktop's own z-index scale. -->
 	<div
 		:ref="(el) => os.setDeskEl(el as HTMLElement | null)"
-		:data-theme="os.state.theme"
 		:data-active-window="os.state.activeId || ''"
 		class="relative h-screen w-full overflow-hidden bg-surface-gray-3 text-ink-gray-8 [font-family:var(--font-sans)] isolate"
 	>
