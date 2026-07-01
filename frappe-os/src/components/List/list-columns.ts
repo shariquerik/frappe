@@ -42,17 +42,13 @@ export function cellKind(row: FrappeDoc, column: ListViewColumn, ctx: CellContex
   return { kind: 'plain', display }
 }
 
-// The lean field set a list fetches (ADR-0028, #04b): `name` + the visible wire column keys +
-// the fields the Record-indicator resolver reads off each row — `statusField`, `docstatus`
-// when submittable, and the `enabledField` / `publicationField` when the spec names one. Derived from the spec the
-// client already holds, so a Draft / disabled / workflow pill never goes dark for want of a
-// fetched field. Mirrors the library's `useListData` base set (`['name', ...wire keys]`), then
-// unions the resolver fields. Deduped, since the status field is often also a visible column.
+// The lean field set a list fetches (ADR-0028 / ADR-0031): `name` + the visible wire column keys +
+// the fields the Record-indicator resolver reads off each row. The server names those in
+// `spec.fields` (the status field, `docstatus` when submittable, and every field a rule condition
+// references), so a Draft / disabled / workflow pill never goes dark for want of a fetched field
+// and no manual `add_fields` is needed. Mirrors the library's `useListData` base set
+// (`['name', ...wire keys]`), then unions the indicator fields. Deduped — a status field is often
+// also a visible column.
 export function listFetchFields(columns: ListViewColumn[] = [], spec?: IndicatorSpec | null): string[] {
-  const fields = ['name', ...columns.map((c) => c.key)]
-  if (spec?.statusField) fields.push(spec.statusField)
-  if (spec?.isSubmittable) fields.push('docstatus')
-  if (spec?.enabledField) fields.push(spec.enabledField)
-  if (spec?.publicationField) fields.push(spec.publicationField)
-  return [...new Set(fields)]
+  return [...new Set(['name', ...columns.map((c) => c.key), ...(spec?.fields ?? [])])]
 }

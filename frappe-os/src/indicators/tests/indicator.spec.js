@@ -3,8 +3,10 @@
 import { describe, expect, it } from 'vitest'
 import { indicatorFor, normalizeColor } from '../indicator'
 
-// A spec with every tier off; each test switches on only the tier it exercises.
-const emptySpec = { statusField: null, workflow: {}, states: {}, isSubmittable: false, enabledField: null, publicationField: null }
+// A spec with every tier off; each test switches on only the tier it exercises. The former
+// field-name tiers (states/publication/enabled) are now OS default rules built server-side
+// (frappe.os.indicators) — their parity lives in test_indicators.py, not here.
+const emptySpec = { statusField: null, workflow: {}, isSubmittable: false, rules: [], fields: [] }
 const spec = (over) => ({ ...emptySpec, ...over })
 
 describe('normalizeColor', () => {
@@ -42,11 +44,11 @@ describe('indicatorFor resolution order', () => {
     expect(indicatorFor(null, emptySpec)).toBeNull()
   })
 
-  it('tier 1 — workflow style wins over every lower tier', () => {
+  it('tier 1 — workflow style wins over the rule list', () => {
     const s = spec({
       statusField: 'workflow_state',
       workflow: { Approved: 'Success', Rejected: 'Danger' },
-      states: { Approved: 'red' }, // lower tier that must not win
+      rules: [{ condition: '', label: 'SHOULD NOT WIN', color: 'red' }], // a catch-all rule below it
       isSubmittable: true,
     })
     expect(indicatorFor({ workflow_state: 'Approved', docstatus: 0 }, s)).toEqual({ label: 'Approved', color: 'green' })
@@ -58,56 +60,15 @@ describe('indicatorFor resolution order', () => {
     expect(indicatorFor({ workflow_state: 'Parked' }, s)).toEqual({ label: 'Parked', color: 'gray' })
   })
 
-  it('tier 2 — DocType.states color, normalized, wins over docstatus', () => {
-    const s = spec({ statusField: 'status', states: { Paid: 'green', Overdue: 'orange' }, isSubmittable: true })
-    expect(indicatorFor({ status: 'Paid', docstatus: 1 }, s)).toEqual({ label: 'Paid', color: 'green' })
-    expect(indicatorFor({ status: 'Overdue', docstatus: 1 }, s)).toEqual({ label: 'Overdue', color: 'amber' })
-  })
-
-  it('tier 3 — docstatus for submittable records', () => {
+  it('tier 2 — Draft / Cancelled are built-in for submittable records (Submitted is a rule, not built-in)', () => {
     const s = spec({ isSubmittable: true })
     expect(indicatorFor({ docstatus: 0 }, s)).toEqual({ label: 'Draft', color: 'red' })
-    expect(indicatorFor({ docstatus: 1 }, s)).toEqual({ label: 'Submitted', color: 'blue' })
     expect(indicatorFor({ docstatus: 2 }, s)).toEqual({ label: 'Cancelled', color: 'red' })
+    // docstatus 1 with no Submitted rule projected -> no built-in pill.
+    expect(indicatorFor({ docstatus: 1 }, s)).toBeNull()
   })
 
-  it('publication — published/public map truthy to a green pill', () => {
-    expect(indicatorFor({ published: 1 }, spec({ publicationField: 'published' }))).toEqual({ label: 'Published', color: 'green' })
-    expect(indicatorFor({ published: 0 }, spec({ publicationField: 'published' }))).toEqual({ label: 'Not Published', color: 'gray' })
-    expect(indicatorFor({ is_published: 1 }, spec({ publicationField: 'is_published' }))).toEqual({ label: 'Published', color: 'green' })
-    expect(indicatorFor({ public: 1 }, spec({ publicationField: 'public' }))).toEqual({ label: 'Public', color: 'green' })
-    expect(indicatorFor({ public: 0 }, spec({ publicationField: 'public' }))).toEqual({ label: 'Private', color: 'gray' })
-    expect(indicatorFor({ is_public: 1 }, spec({ publicationField: 'is_public' }))).toEqual({ label: 'Public', color: 'green' })
-  })
-
-  it('publication — is_private is the inverse polarity (truthy = Private)', () => {
-    const s = spec({ publicationField: 'is_private' })
-    expect(indicatorFor({ is_private: 1 }, s)).toEqual({ label: 'Private', color: 'gray' })
-    expect(indicatorFor({ is_private: 0 }, s)).toEqual({ label: 'Public', color: 'green' })
-  })
-
-  it('publication — docstatus outranks it, it outranks enabled', () => {
-    // A submittable draft still reads Draft, not its publication state.
-    const submittable = spec({ isSubmittable: true, publicationField: 'published' })
-    expect(indicatorFor({ docstatus: 0, published: 1 }, submittable)).toEqual({ label: 'Draft', color: 'red' })
-    // With both fields present the publication tier wins over enabled/disabled.
-    const both = spec({ publicationField: 'published', enabledField: 'enabled' })
-    expect(indicatorFor({ published: 1, enabled: 0 }, both)).toEqual({ label: 'Published', color: 'green' })
-  })
-
-  it('tier 4 — enabled polarity (truthy = active)', () => {
-    const s = spec({ enabledField: 'enabled' })
-    expect(indicatorFor({ enabled: 1 }, s)).toEqual({ label: 'Enabled', color: 'blue' })
-    expect(indicatorFor({ enabled: 0 }, s)).toEqual({ label: 'Disabled', color: 'gray' })
-  })
-
-  it('tier 4 — disabled polarity is the opposite (truthy = inactive)', () => {
-    const s = spec({ enabledField: 'disabled' })
-    expect(indicatorFor({ disabled: 1 }, s)).toEqual({ label: 'Disabled', color: 'gray' })
-    expect(indicatorFor({ disabled: 0 }, s)).toEqual({ label: 'Enabled', color: 'blue' })
-  })
-
-  it('tier 5 — keyword heuristic for an uncurated status value', () => {
+  it('keyword floor — keyword heuristic for an uncurated status value', () => {
     const s = spec({ statusField: 'status' })
     expect(indicatorFor({ status: 'Pending Review' }, s)).toEqual({ label: 'Pending Review', color: 'amber' })
     expect(indicatorFor({ status: 'Open' }, s)).toEqual({ label: 'Open', color: 'red' })
@@ -115,7 +76,7 @@ describe('indicatorFor resolution order', () => {
     expect(indicatorFor({ status: 'Submitted' }, s)).toEqual({ label: 'Submitted', color: 'blue' })
   })
 
-  it('tier 5 — an unrecognized status word falls through to gray', () => {
+  it('keyword floor — an unrecognized status word falls through to gray', () => {
     const s = spec({ statusField: 'status' })
     expect(indicatorFor({ status: 'Frobnicated' }, s)).toEqual({ label: 'Frobnicated', color: 'gray' })
   })
@@ -129,5 +90,118 @@ describe('indicatorFor resolution order', () => {
   it('keyword match is case-sensitive, mirroring Frappe has_words', () => {
     const s = spec({ statusField: 'status' })
     expect(indicatorFor({ status: 'open' }, s)).toEqual({ label: 'open', color: 'gray' })
+  })
+})
+
+// ADR-0031: the Record indicator resolves from an ordered rule list. Each rule is
+// { condition, label, color } where condition is a Frappe filter (`field,op,value` triplets,
+// '|'-joined AND). Hand-fed lists here; the server projection (slice 03) supplies the real one.
+describe('indicatorFor rule list (ADR-0031)', () => {
+  const rule = (over) => ({ condition: '', label: 'X', color: 'gray', ...over })
+
+  it('evaluates the list first-match, top to bottom', () => {
+    const s = spec({
+      rules: [
+        { condition: 'status,=,Paid', label: 'Paid', color: 'green' },
+        { condition: 'status,=,Paid', label: 'SHOULD NOT WIN', color: 'red' },
+      ],
+    })
+    expect(indicatorFor({ status: 'Paid' }, s)).toEqual({ label: 'Paid', color: 'green' })
+  })
+
+  it('no rule matches → no pill', () => {
+    const s = spec({ rules: [{ condition: 'status,=,Paid', label: 'Paid', color: 'green' }] })
+    expect(indicatorFor({ status: 'Unpaid' }, s)).toBeNull()
+    expect(indicatorFor({ status: 'Unpaid' }, spec({ rules: [] }))).toBeNull()
+  })
+
+  it('AND-joins clauses with |, all must hold', () => {
+    const s = spec({ rules: [{ condition: 'per_billed,<,100|docstatus,=,1', label: 'To Bill', color: 'orange' }] })
+    expect(indicatorFor({ per_billed: 40, docstatus: 1 }, s)).toEqual({ label: 'To Bill', color: 'amber' })
+    expect(indicatorFor({ per_billed: 100, docstatus: 1 }, s)).toBeNull()
+    expect(indicatorFor({ per_billed: 40, docstatus: 0 }, spec({ rules: s.rules }))).toBeNull()
+  })
+
+  it('an empty condition is a catch-all that always matches', () => {
+    const s = spec({ rules: [{ condition: '', label: 'Anything', color: 'blue' }] })
+    expect(indicatorFor({ anything: true }, s)).toEqual({ label: 'Anything', color: 'blue' })
+  })
+
+  it('normalizes the rule color to a Badge token', () => {
+    const s = spec({ rules: [{ condition: '', label: 'X', color: 'purple' }] })
+    expect(indicatorFor({}, s).color).toBe('violet')
+    expect(indicatorFor({}, spec({ rules: [rule({ color: 'chartreuse' })] })).color).toBe('gray')
+  })
+
+  describe('filter operators', () => {
+    const match = (condition, doc) =>
+      indicatorFor(doc, spec({ rules: [{ condition, label: 'hit', color: 'blue' }] })) !== null
+
+    it('equality — number, Check, and string values compare loosely', () => {
+      expect(match('enabled,=,1', { enabled: 1 })).toBe(true)
+      expect(match('enabled,=,1', { enabled: true })).toBe(true)
+      expect(match('enabled,=,0', { enabled: 0 })).toBe(true)
+      expect(match('status,=,Paid', { status: 'Paid' })).toBe(true)
+      expect(match('status,=,Paid', { status: 'Unpaid' })).toBe(false)
+    })
+
+    it('!= inequality', () => {
+      expect(match('status,!=,Closed', { status: 'Open' })).toBe(true)
+      expect(match('status,!=,Closed', { status: 'Closed' })).toBe(false)
+    })
+
+    it('numeric <, <=, >, >=', () => {
+      expect(match('per_billed,<,100', { per_billed: 99 })).toBe(true)
+      expect(match('per_billed,<,100', { per_billed: 100 })).toBe(false)
+      expect(match('per_billed,<=,100', { per_billed: 100 })).toBe(true)
+      expect(match('qty,>,0', { qty: 1 })).toBe(true)
+      expect(match('qty,>,0', { qty: 0 })).toBe(false)
+      expect(match('qty,>=,0', { qty: 0 })).toBe(true)
+    })
+
+    it('numeric comparison of a non-numeric value never matches', () => {
+      expect(match('per_billed,<,100', { per_billed: 'n/a' })).toBe(false)
+      expect(match('per_billed,<,100', {})).toBe(false)
+    })
+
+    it('in / not in over a comma list', () => {
+      expect(match('status,in,Open,Overdue', { status: 'Overdue' })).toBe(true)
+      expect(match('status,in,Open,Overdue', { status: 'Paid' })).toBe(false)
+      expect(match('status,not in,Open,Overdue', { status: 'Paid' })).toBe(true)
+      expect(match('status,not in,Open,Overdue', { status: 'Open' })).toBe(false)
+    })
+
+    it('is set / is not set — truthy presence, 0 counts as set', () => {
+      expect(match('lead,is,set', { lead: 'CRM-1' })).toBe(true)
+      expect(match('lead,is,set', { lead: '' })).toBe(false)
+      expect(match('lead,is,set', { lead: 0 })).toBe(true)
+      expect(match('lead,is,not set', {})).toBe(true)
+      expect(match('lead,is,not set', { lead: 'CRM-1' })).toBe(false)
+    })
+  })
+
+  it('interpolates a stored field into a label template', () => {
+    const s = spec({ rules: [{ condition: 'per_complete,<,100', label: '{per_complete}% Done', color: 'orange' }] })
+    expect(indicatorFor({ per_complete: 40 }, s)).toEqual({ label: '40% Done', color: 'amber' })
+  })
+
+  describe('built-in tiers still outrank the rule list', () => {
+    const paidRule = [{ condition: '', label: 'Paid', color: 'green' }]
+
+    it('workflow state wins over a matching rule', () => {
+      const s = spec({ statusField: 'workflow_state', workflow: { Approved: 'Success' }, rules: paidRule })
+      expect(indicatorFor({ workflow_state: 'Approved' }, s)).toEqual({ label: 'Approved', color: 'green' })
+    })
+
+    it('Draft and Cancelled win over a matching rule', () => {
+      const s = spec({ isSubmittable: true, rules: paidRule })
+      expect(indicatorFor({ docstatus: 0 }, s)).toEqual({ label: 'Draft', color: 'red' })
+      expect(indicatorFor({ docstatus: 2 }, s)).toEqual({ label: 'Cancelled', color: 'red' })
+    })
+
+    it('a Submitted record (docstatus 1) is open to the rule list', () => {
+      const s = spec({ isSubmittable: true, rules: [{ condition: 'docstatus,=,1', label: 'To Bill', color: 'orange' }] })
+      expect(indicatorFor({ docstatus: 1 }, s)).toEqual({ label: 'To Bill', color: 'amber' })
+    })
   })
 })

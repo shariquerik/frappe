@@ -6,21 +6,27 @@ import { cellKind, listFetchFields } from '../list-columns'
 describe('cellKind', () => {
   // Live per-doctype context (ADR-0028): the status field resolves the whole row through the
   // indicator spec, the title field renders primary.
-  const spec = { statusField: 'status', workflow: {}, states: { Paid: 'green' }, isSubmittable: true, enabledField: null }
+  const spec = {
+    statusField: 'status',
+    workflow: {},
+    isSubmittable: true,
+    rules: [{ condition: 'status,=,Paid', label: 'Paid', color: 'green' }],
+    fields: ['status', 'docstatus'],
+  }
   const ctx = { statusField: 'status', titleField: 'title', spec }
   const statusCol = { key: 'status', type: 'Select' }
 
-  it('resolves the status column through the whole row (states tier)', () => {
+  it('resolves the status column through the whole row (a matching rule)', () => {
     expect(cellKind({ status: 'Paid', docstatus: 1 }, statusCol, ctx)).toEqual({ kind: 'status', display: 'Paid', theme: 'green' })
   })
 
-  it('resolves the status column from a lower tier the status word cannot express', () => {
-    // No state match, but a submittable Draft — indicatorFor reads docstatus off the row.
+  it('resolves the status column from a built-in tier the status word cannot express', () => {
+    // No rule match, but a submittable Draft — indicatorFor reads docstatus off the row.
     expect(cellKind({ status: 'Whatever', docstatus: 0 }, statusCol, ctx)).toEqual({ kind: 'status', display: 'Draft', theme: 'red' })
   })
 
   it('renders the status column plain when nothing resolves', () => {
-    const s = { statusField: 'status', workflow: {}, states: {}, isSubmittable: false, enabledField: null }
+    const s = { statusField: 'status', workflow: {}, isSubmittable: false, rules: [], fields: [] }
     expect(cellKind({ status: '' }, statusCol, { statusField: 'status', spec: s })).toEqual({ kind: 'plain', display: '—' })
   })
 
@@ -64,23 +70,23 @@ describe('cellKind', () => {
 describe('listFetchFields', () => {
   const cols = [{ key: 'title' }, { key: 'status' }, { key: 'modified' }]
 
-  it('is name + wire column keys when the spec adds nothing', () => {
-    const spec = { statusField: null, workflow: {}, states: {}, isSubmittable: false, enabledField: null }
+  it('is name + wire column keys when the spec references no fields', () => {
+    const spec = { statusField: null, workflow: {}, isSubmittable: false, rules: [], fields: [] }
     expect(listFetchFields(cols, spec)).toEqual(['name', 'title', 'status', 'modified'])
   })
 
-  it('unions docstatus for a submittable doctype so the Draft/Cancelled tier is not dark', () => {
-    const spec = { statusField: 'status', workflow: {}, states: {}, isSubmittable: true, enabledField: null }
+  it('unions the server-named indicator fields so a Draft/Cancelled pill is not dark', () => {
+    const spec = { statusField: 'status', workflow: {}, isSubmittable: true, rules: [], fields: ['status', 'docstatus'] }
     expect(listFetchFields([{ key: 'title' }], spec)).toEqual(['name', 'title', 'status', 'docstatus'])
   })
 
-  it('unions the enabled-state field so a disabled record still greys', () => {
-    const spec = { statusField: null, workflow: {}, states: {}, isSubmittable: false, enabledField: 'disabled' }
+  it('unions a field a rule condition references so a disabled record still greys', () => {
+    const spec = { statusField: null, workflow: {}, isSubmittable: false, rules: [], fields: ['disabled'] }
     expect(listFetchFields([{ key: 'full_name' }], spec)).toEqual(['name', 'full_name', 'disabled'])
   })
 
-  it('dedupes a status field that is also a visible column', () => {
-    const spec = { statusField: 'status', workflow: {}, states: {}, isSubmittable: false, enabledField: null }
+  it('dedupes an indicator field that is also a visible column', () => {
+    const spec = { statusField: 'status', workflow: {}, isSubmittable: false, rules: [], fields: ['status'] }
     expect(listFetchFields(cols, spec)).toEqual(['name', 'title', 'status', 'modified'])
   })
 

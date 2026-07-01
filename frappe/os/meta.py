@@ -7,7 +7,7 @@
 
 import frappe
 from frappe import _
-from frappe.os import manifest
+from frappe.os import indicators, manifest
 
 # Fieldtypes that are layout-only or unsupported by the rendering engine. Section Break is handled
 # specially (its label groups the following fields) before this skip.
@@ -20,80 +20,6 @@ SKIP_FIELDTYPES = {
 	"Fold",
 	"Heading",
 }
-
-
-def _status_field(meta):
-	"""A Select field named status/stage — Desk's status convention (None if absent). The
-	indicator-spec fallback status field when the doctype has no active workflow (ADR-0028)."""
-	for name in ("status", "stage"):
-		df = meta.get_field(name)
-		if df and df.fieldtype == "Select":
-			return name
-	return None
-
-
-def _enabled_field(meta):
-	"""The enabled-state field name — 'enabled' (truthy = active) or 'disabled' (truthy =
-	inactive), else None. Opposite polarities; the client resolver reads which from the name."""
-	for name in ("enabled", "disabled"):
-		if meta.get_field(name):
-			return name
-	return None
-
-
-def _publication_field(meta):
-	"""The publication/visibility Check field — 'published'/'is_published' (Published vs Not
-	Published), 'public'/'is_public' (Public vs Private), or 'is_private' (Private, inverse
-	polarity), else None. Desk expresses these per-doctype in listview_settings.get_indicator
-	(Note.public, Web Page.published, File.is_private); the OS generalizes them into one tier,
-	the client owning the label/color per field name (ADR-0028)."""
-	for name in ("published", "is_published", "public", "is_public", "is_private"):
-		df = meta.get_field(name)
-		if df and df.fieldtype == "Check":
-			return name
-	return None
-
-
-def _state_colors(meta):
-	"""DocType.states: status value -> a Frappe color token, scrubbed to a lowercase token
-	(ADR-0028). The client normalizes it onto a Badge token; empty when the doctype has none."""
-	colors = {}
-	for state in meta.get("states") or []:
-		if state.color:
-			colors[state.title] = state.color.lower().replace(" ", "-")
-	return colors
-
-
-def _workflow_styles(doctype):
-	"""The active workflow's (state field, {state -> Workflow State.style}). (None, {}) when
-	the doctype has no workflow — the client then falls back to the status field."""
-	from frappe.model.workflow import get_workflow_name
-
-	workflow_name = get_workflow_name(doctype)
-	if not workflow_name:
-		return None, {}
-	workflow = frappe.get_cached_doc("Workflow", workflow_name)
-	styles = {}
-	for row in workflow.states:
-		style = frappe.get_cached_value("Workflow State", row.state, "style")
-		if style:
-			styles[row.state] = style
-	return workflow.workflow_state_field, styles
-
-
-def _indicator_spec(doctype, meta):
-	"""Normalized Record-indicator spec (ADR-0028): how to resolve this doctype's records to a
-	status pill, from the site's own workflow/states/docstatus/enabled data. The active workflow's
-	state field wins as the status field, else a Select named status/stage."""
-	workflow_field, workflow_styles = _workflow_styles(doctype)
-	return {
-		"statusField": workflow_field or _status_field(meta),
-		"workflow": workflow_styles,
-		"states": _state_colors(meta),
-		"isSubmittable": bool(meta.is_submittable),
-		"enabledField": _enabled_field(meta),
-		"publicationField": _publication_field(meta),
-	}
 
 
 def _live_meta_manifest(doctype, meta):
@@ -136,7 +62,7 @@ def get_doctype_meta(doctype: str):
 	return {
 		"doctype": meta.name,
 		"title_field": meta.title_field or "name",
-		"indicator": _indicator_spec(doctype, meta),
+		"indicator": indicators.indicator_spec(doctype, meta),
 		"can_create": frappe.has_permission(doctype, "create"),
 		"can_write": frappe.has_permission(doctype, "write"),
 		"fields": fields,

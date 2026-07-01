@@ -3,7 +3,7 @@
 // (frappe/public/js/frappe/model/indicator.js). Frappe-ui-free so it unit-tests in isolation
 // (frappe-ui is unresolvable in the runner) — mirrors route-map.ts / list-columns.ts. Output
 // is always a Badge token, so StatusPill stays dumb and the lossy color mapping is tested here.
-import type { BadgeToken, Indicator, IndicatorSpec } from './types'
+import type { BadgeToken, Indicator, IndicatorRule, IndicatorSpec } from './types'
 
 // `Workflow State.style` -> Badge token. Ported from indicator.js, retargeted from Frappe's
 // wider palette to Badge's six: Info was light-blue (-> blue), Inverse was black (-> gray).
@@ -36,19 +36,6 @@ const COLOR_TO_TOKEN: Record<string, BadgeToken> = {
   pink: 'violet',
 }
 
-// Conventional publication/visibility Check fields -> their two-state pill. Desk hand-writes
-// these per doctype in listview_settings.get_indicator (Note.public, Web Page.published,
-// File.is_private); we generalize them into one tier (ADR-0028) — the server names the field,
-// this table owns the label + color per field name. Keyed by the field's truthiness, so a
-// field's own polarity is baked in (is_private truthy = Private, public truthy = Public).
-const PUBLICATION_LABELS: Record<string, { on: Indicator; off: Indicator }> = {
-  published: { on: { label: 'Published', color: 'green' }, off: { label: 'Not Published', color: 'gray' } },
-  is_published: { on: { label: 'Published', color: 'green' }, off: { label: 'Not Published', color: 'gray' } },
-  public: { on: { label: 'Public', color: 'green' }, off: { label: 'Private', color: 'gray' } },
-  is_public: { on: { label: 'Public', color: 'green' }, off: { label: 'Private', color: 'gray' } },
-  is_private: { on: { label: 'Private', color: 'gray' }, off: { label: 'Public', color: 'green' } },
-}
-
 // guess_colour keyword heuristic (utils.js `guess_style`) — the last resort for an uncurated
 // status value. Case-sensitive substring match (Frappe's `has_words`); first bucket wins.
 const KEYWORD_BUCKETS: Array<{ color: BadgeToken; words: string[] }> = [
@@ -72,29 +59,131 @@ function guessColor(value: string): BadgeToken {
   return bucket ? bucket.color : 'gray'
 }
 
-// Resolve a record to its indicator, first match wins (ADR-0028 order): active workflow
-// state -> DocType.states -> docstatus -> publication/visibility -> enabled/disabled ->
-// keyword heuristic. Returns null when the doctype carries no status model, so the consumer
-// renders no pill.
+// --- Indicator rules (ADR-0031) ----------------------------------------------------------------
+// Evaluate an ordered rule list against a record; first matching rule wins. Reuses Frappe's own
+// filter grammar (frappe/model/indicator.js emits it): a condition is `field,op,value` triplets
+// joined by '|', all of which must hold (AND). Value is everything after the second comma, so
+// `status,in,Open,Overdue` reads as one `in` list — mirroring Frappe's `f.slice(2).join(",")`.
+
+interface Clause {
+  field: string
+  operator: string
+  value: string
+}
+
+// Split a condition string into its AND-joined clauses; empty/blank -> no clauses (always matches).
+function parseCondition(condition: string): Clause[] {
+  return String(condition ?? '')
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const bits = part.split(',')
+      return { field: bits[0].trim(), operator: (bits[1] ?? '').trim(), value: bits.slice(2).join(',') }
+    })
+}
+
+// A record value as a comparable scalar string: booleans as Check ints (1/0), null/undefined as ''.
+function asScalar(value: unknown): string {
+  if (value === true) return '1'
+  if (value === false) return '0'
+  return value == null ? '' : String(value)
+}
+
+// A stored value counts as "set" when it is present and non-empty; 0 is set (matches Frappe).
+function isSet(value: unknown): boolean {
+  return value != null && value !== ''
+}
+
+// Compare a record value against a rule value numerically; a non-numeric side never matches.
+function numericMatch(operator: string, recordValue: unknown, ruleValue: string): boolean {
+  const left = Number(recordValue)
+  const right = Number(ruleValue)
+  if (Number.isNaN(left) || Number.isNaN(right)) return false
+  if (operator === '<') return left < right
+  if (operator === '<=') return left <= right
+  if (operator === '>') return left > right
+  return left >= right
+}
+
+// Does one clause hold for the record? Covers the operators the real population uses (ADR-0031):
+// equality, !=, numeric <,<=,>,>=, in/not in over a comma list, and is set / is not set.
+function clauseMatches(doc: Record<string, unknown>, { field, operator, value }: Clause): boolean {
+  const recordValue = doc[field]
+  switch (operator) {
+    case '=':
+    case '==':
+      return asScalar(recordValue) === value
+    case '!=':
+      return asScalar(recordValue) !== value
+    case '<':
+    case '<=':
+    case '>':
+    case '>=':
+      return numericMatch(operator, recordValue, value)
+    case 'in':
+      return valueList(value).includes(asScalar(recordValue))
+    case 'not in':
+      return !valueList(value).includes(asScalar(recordValue))
+    case 'is':
+      return value.trim() === 'set' ? isSet(recordValue) : !isSet(recordValue)
+    default:
+      return false
+  }
+}
+
+// The comma list an `in` / `not in` value carries, trimmed and de-blanked.
+function valueList(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+// Interpolate stored fields into a label template ("{percent_complete}%"); a plain label is
+// returned unchanged. Reading a field, not computing — so templated labels stay data (ADR-0031).
+function fillLabel(label: string, doc: Record<string, unknown>): string {
+  return String(label ?? '').replace(/\{(\w+)\}/g, (_match, field) => asScalar(doc[field]))
+}
+
+// Resolve a record against the ordered rule list; first fully-matching rule wins, else null.
+function resolveRules(doc: Record<string, unknown>, rules: IndicatorRule[] | undefined): Indicator | null {
+  if (!rules) return null
+  for (const rule of rules) {
+    if (parseCondition(rule.condition).every((clause) => clauseMatches(doc, clause))) {
+      return { label: fillLabel(rule.label, doc), color: normalizeColor(rule.color) }
+    }
+  }
+  return null
+}
+
+// Resolve a record to its indicator, first match wins (ADR-0031 order):
+//   1. active workflow state          — built-in, always wins
+//   2. Draft / Cancelled (docstatus)  — built-in, always wins
+//   3. the indicator rule list        — the server's effective list (app over OS defaults), first match
+//   4. keyword-guess of a raw status  — built-in heuristic floor (guess_colour)
+//   5. no match -> no pill
+//
+// The built-in tiers sit above the rule list deliberately: a cancelled document is cancelled
+// regardless of any flag a rule reads. The rule list is projected whole by the server (app rules
+// over OS default rules merged in `frappe.os.indicators`); this resolver only evaluates it. Keyword
+// guess stays built-in, not a rule: it *computes* a color from an open status string rather than
+// reading a stored field, so by ADR-0031's line ("reading is data; computing is behavior") it is
+// framework behavior, generic to every doctype — not per-doctype data anyone overrides.
 export function indicatorFor(doc: Record<string, unknown>, spec: IndicatorSpec | null | undefined): Indicator | null {
   if (!doc || !spec) return null
   const value = spec.statusField ? doc[spec.statusField] : undefined
   const status = value == null ? '' : String(value)
 
   if (status && spec.workflow[status]) return { label: status, color: STYLE_TO_TOKEN[spec.workflow[status]] || 'gray' }
-  if (status && spec.states[status]) return { label: status, color: normalizeColor(spec.states[status]) }
 
   if (spec.isSubmittable) {
     if (doc.docstatus === 0) return { label: 'Draft', color: 'red' }
     if (doc.docstatus === 2) return { label: 'Cancelled', color: 'red' }
-    if (doc.docstatus === 1) return { label: 'Submitted', color: 'blue' }
   }
 
-  const publication = spec.publicationField ? PUBLICATION_LABELS[spec.publicationField] : undefined
-  if (publication) return doc[spec.publicationField as string] ? publication.on : publication.off
-
-  if (spec.enabledField === 'enabled') return doc.enabled ? { label: 'Enabled', color: 'blue' } : { label: 'Disabled', color: 'gray' }
-  if (spec.enabledField === 'disabled') return doc.disabled ? { label: 'Disabled', color: 'gray' } : { label: 'Enabled', color: 'blue' }
+  const ruled = resolveRules(doc, spec.rules)
+  if (ruled) return ruled
 
   if (status) return { label: status, color: guessColor(status) }
   return null
