@@ -11,6 +11,8 @@ import { resolve } from '../src/actions/resolve'
 import { FILE_COMMANDS, invoke, registerRunHandlers } from '../src/actions/contributions'
 import { contextForOS } from '../src/actions/context'
 import { fileMenuOptions } from '../src/actions/menubar'
+import { toolbarItems } from '../src/actions/toolbar'
+import { REGIONS, regionById, regionRenders, LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR } from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
 import { initRegistry } from '../src/registry'
 
@@ -34,8 +36,16 @@ describe('eligibility (when, evaluated as data)', () => {
 
   it('an unknown when key yields no-match and warns loudly', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(isEligible({ selection: 'rows' }, { activeApp: 'crm' })).toBe(false)
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('selection'))
+    expect(isEligible({ workspace: 'sales' }, { activeApp: 'crm' })).toBe(false)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('workspace'))
+    warn.mockRestore()
+  })
+
+  it('selection is a known surface key — it matches on presence, no longer an unknown-key warn', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(isEligible({ selection: 'rows' }, { selection: 'rows', doctype: 'CRM Lead' })).toBe(true)
+    expect(isEligible({ selection: 'rows' }, { doctype: 'CRM Lead' })).toBe(false) // no selection
+    expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
 })
@@ -46,6 +56,11 @@ describe('specificity (lexicographic surface,window vector)', () => {
     expect(specificity({ activeApp: 'crm' })).toEqual([0, 1])
     expect(specificity({ doctype: 'CRM Lead' })).toEqual([1, 0])
     expect(specificity({ doctype: 'CRM Lead', activeApp: 'crm', windowRole: 'settings' })).toEqual([1, 2])
+  })
+
+  it('selection counts in the surface tier (a selection predicate ranks above the window tier)', () => {
+    expect(specificity({ selection: 'rows' })).toEqual([1, 0])
+    expect(compareSpecificity(specificity({ selection: 'rows' }), specificity({ activeApp: 'crm' }))).toBeGreaterThan(0)
   })
 
   it('a one-key surface predicate outranks a two-key window predicate (tier dominates count)', () => {
@@ -675,5 +690,122 @@ describe('command-axis collision (an app cannot silently hijack a first-party ve
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('command-collision'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.new'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext')) // the shadowed loser, attributed
+  })
+})
+
+// ADR-0032 slice 02 — surface-embedded Regions. The closed Region set (ADR-0004) grows to include
+// the list toolbar, the selection/bulk bar, and the form toolbar alongside the menu-bar chrome.
+// Region ⟂ Scope: a Doctype-scoped Action can render in the global menu bar as readily as its own
+// toolbar. Only the selection/bulk bar is gated — it renders solely when a selection exists.
+describe('regions (closed set + selection gate)', () => {
+  it('the surface-embedded Regions join the closed set alongside the menu-bar chrome', () => {
+    const ids = REGIONS.map((r) => r.id)
+    expect(ids).toEqual(['menubar:file', 'list:toolbar', 'list:selection', 'form:toolbar'])
+  })
+
+  it('regionById returns the descriptor; an id outside the set is undefined', () => {
+    expect(regionById(LIST_TOOLBAR)).toEqual({ id: 'list:toolbar' })
+    expect(regionById(LIST_SELECTION)).toEqual({ id: 'list:selection', requires: 'selection' })
+    expect(regionById('nope:nope')).toBeUndefined()
+  })
+
+  it('an ungated Region always renders; the selection/bulk bar renders only when a selection exists', () => {
+    expect(regionRenders(regionById(LIST_TOOLBAR), {})).toBe(true)
+    expect(regionRenders(regionById(FORM_TOOLBAR), {})).toBe(true)
+    expect(regionRenders(regionById(LIST_SELECTION), {})).toBe(false) // no selection → hidden
+    expect(regionRenders(regionById(LIST_SELECTION), { selection: 'rows' })).toBe(true)
+    expect(regionRenders(undefined, {})).toBe(true) // an unknown id is ungated
+  })
+})
+
+// Region and Scope are independent axes (ADR-0032): the same scope-aware resolver drives every
+// Region, so a Doctype/View-scoped Action lands wherever its `region` points. These are pure
+// resolver tests — no store — proving Actions render into the new Regions through slice 01's engine.
+describe('Region ⟂ Scope (surface-embedded Regions render via the resolver)', () => {
+  let warn
+  beforeEach(() => { warn = vi.spyOn(console, 'warn').mockImplementation(() => {}) })
+  afterEach(() => warn.mockRestore())
+
+  const at = (region, scope) => ({ command: 'c', region, sourceApp: 'crm', scope })
+
+  it('a Doctype-scoped Action can target the GLOBAL menu bar (Region independent of Scope)', () => {
+    const a = at('menubar:file', { tier: 'doctype', doctype: 'CRM Lead' })
+    expect(resolve([a], 'menubar:file', { doctype: 'CRM Lead' }).items).toHaveLength(1)
+    expect(resolve([a], 'menubar:file', { doctype: 'Contact' }).items).toEqual([]) // scope still gates
+  })
+
+  it('a View-scoped Action renders into the list toolbar only when that doctype+view is front', () => {
+    const a = at(LIST_TOOLBAR, { tier: 'view', doctype: 'CRM Lead', view: 'list' })
+    expect(resolve([a], LIST_TOOLBAR, { doctype: 'CRM Lead', view: 'list' }).items).toHaveLength(1)
+    expect(resolve([a], LIST_TOOLBAR, { doctype: 'CRM Lead', view: 'form' }).items).toEqual([]) // wrong view
+    expect(resolve([a], 'menubar:file', { doctype: 'CRM Lead', view: 'list' }).items).toEqual([]) // wrong region
+  })
+
+  it('a selection/bulk Action carries no selection when — its scope keys on doctype, the Region gates selection', () => {
+    // The bulk Action's own `when` is the auto-derived scope predicate (doctype only); the resolver
+    // returns it whenever the doctype is front. Selection existence is the Region's gate, not the
+    // Action's — so the Action is free of any hand-written selection `when` (ADR-0032, slice 04).
+    const bulk = at(LIST_SELECTION, { tier: 'doctype', doctype: 'CRM Lead' })
+    const { items } = resolve([bulk], LIST_SELECTION, { doctype: 'CRM Lead' })
+    expect(items).toHaveLength(1)
+    expect(items[0].when).toBeUndefined() // no selection when hand-written on the Action
+  })
+})
+
+// The toolbar render contract (toolbarItems) — the pure projector the toolbar components draw,
+// mirroring fileMenuOptions. Contribution data → resolver → flat buttons → run Handler. Seeded from
+// the server registry so an app-declared toolbar Action folds through the same merge the File menu
+// uses. The selection/bulk bar stays empty until a selection exists (the Region gate).
+describe('toolbarItems (surface-embedded Region render contract)', () => {
+  const os = useOS()
+  const command = {
+    type: 'command', target: '', name: 'frappe.todo.close', sourceApp: 'frappe',
+    payload: { id: 'frappe.todo.close', sourceApp: 'frappe', title: 'Close ToDo', handler: { kind: 'run', ref: 'todo-close' } },
+  }
+  const toolbarAction = {
+    type: 'action', target: 'list:toolbar', name: 'frappe.todo.close', sourceApp: 'frappe',
+    payload: { command: 'frappe.todo.close', region: 'list:toolbar', sourceApp: 'frappe', scope: { tier: 'doctype', doctype: 'ToDo' } },
+  }
+  const bulkAction = {
+    type: 'action', target: 'list:selection', name: 'frappe.todo.close', sourceApp: 'frappe',
+    payload: { command: 'frappe.todo.close', region: 'list:selection', sourceApp: 'frappe', scope: { tier: 'doctype', doctype: 'ToDo' } },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), command, toolbarAction, bulkAction] },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.activeId = null
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    registerRunHandlers({ 'todo-close': () => { closed = true } })
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+  let closed = false
+
+  it('renders an app-declared toolbar Action into the list toolbar when its doctype is front', () => {
+    os.openListGlobal('ToDo')
+    expect(toolbarItems(LIST_TOOLBAR, os).map((i) => i.label)).toEqual(['Close ToDo'])
+  })
+
+  it('wires each button to its Command handler — clicking fires the run Handler by ref', () => {
+    os.openListGlobal('ToDo')
+    closed = false
+    toolbarItems(LIST_TOOLBAR, os)[0].onClick()
+    expect(closed).toBe(true)
+  })
+
+  it('is empty when the front doctype does not match the Action scope', () => {
+    os.openListGlobal('Note')
+    expect(toolbarItems(LIST_TOOLBAR, os)).toEqual([])
+  })
+
+  it('the selection/bulk bar stays empty while no selection exists, even with a scope-eligible Action', () => {
+    os.openListGlobal('ToDo') // doctype matches, but contextForOS carries no selection yet
+    expect(toolbarItems(LIST_SELECTION, os)).toEqual([])
   })
 })

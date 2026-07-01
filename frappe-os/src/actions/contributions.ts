@@ -8,8 +8,7 @@
 import { surfaceAppId } from '@/surface'
 import type { OsStore } from '@/types'
 import type { Action, Command } from './types'
-
-export const FILE_REGION = 'menubar:file'
+import { FILE_REGION } from './regions'
 
 // Open a new window of the active app (or the frappe home when the desktop is bare). Always
 // mints a FRESH window instance — even when that app already has one open — so repeated "New

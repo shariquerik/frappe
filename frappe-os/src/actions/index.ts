@@ -6,7 +6,16 @@
 export { resolve } from './resolve'
 export { isEligible } from './eligibility'
 export { specificity, compareSpecificity } from './specificity'
+export { scopeWhen, effectiveWhen, SCOPE_TIERS } from './scope'
 export { contextForOS } from './context'
 export { fileMenuOptions } from './menubar'
-export { FILE_COMMANDS, FILE_ACTIONS, FILE_REGION, invoke } from './contributions'
+export { toolbarItems } from './toolbar'
+export type { ToolbarItem } from './toolbar'
+export { projectRegion } from './project'
+export {
+  REGIONS, regionById, regionRenders,
+  FILE_REGION, LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR,
+} from './regions'
+export type { Region } from './regions'
+export { FILE_COMMANDS, FILE_ACTIONS, invoke } from './contributions'
 export { PLACEMENT_COMMANDS, PLACEMENT_ACTIONS, surfaceToRef, liveVerb, suppressedPlacementCommands } from './placement-verbs'

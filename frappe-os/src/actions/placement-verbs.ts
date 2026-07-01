@@ -14,7 +14,8 @@ import { nextDockOrder } from '@/desktop/dock-model'
 import { nextFreeCell, layoutDesktop } from '@/desktop/grid'
 import type { OsStore, Surface, SurfaceRef, PlacementRegion } from '@/types'
 import type { Action, Command } from './types'
-import { FILE_REGION, registerRunHandlers } from './contributions'
+import { registerRunHandlers } from './contributions'
+import { FILE_REGION } from './regions'
 
 // The surface reference (ADR-0021) a pin stores for what a window currently shows. Mirrors the
 // pinnable shapes placementSurface resolves back (applet / dashboard / doctype-list), so a pin

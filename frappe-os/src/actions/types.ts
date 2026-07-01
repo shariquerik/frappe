@@ -28,9 +28,12 @@ export interface ScopeBinding {
 
 // The OS's current focus situation — a flat, fixed-shape snapshot derived from the single
 // focused window (CONTEXT.md → Context). `activeApp`/`windowRole` are the *window* tier;
-// `doctype`/`recordName`/`view`/`appletId` are the *surface* tier. `selection` is excluded
-// (no backing in the window model yet — additive later). A field is `undefined` when the
-// focus offers no such coordinate (e.g. a list has no `recordName`).
+// `doctype`/`recordName`/`view`/`appletId`/`selection` are the *surface* tier. `selection` marks
+// that a multi-row selection EXISTS on the front list — the selection/bulk-bar Region gates on its
+// presence (regions.ts), never on its value. A field is `undefined` when the focus offers no such
+// coordinate (e.g. a list has no `recordName`, an empty list no `selection`). NOTE: contextForOS
+// does not populate `selection` yet — the window model carries no selection backing
+// (deferred-hardcoded: .scratch/deferred-hardcoded/issues/11-selection-backing-and-toolbar-wiring).
 export interface Context {
   activeApp?: string
   windowRole?: string
@@ -38,6 +41,7 @@ export interface Context {
   recordName?: string
   view?: string
   appletId?: string
+  selection?: string
 }
 
 // Eligibility predicate — equality-only, evaluated as data, never `eval` (CONTEXT.md →

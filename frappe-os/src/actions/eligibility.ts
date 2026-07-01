@@ -2,10 +2,12 @@
 // evaluated as data (no `eval`, ADR-0006). The tier split also drives specificity (./specificity).
 import type { Context, When } from './types'
 
-// The *surface* tier (the focused Surface's coordinates) and the *window* tier (the active
-// window's frame). Together they are the complete, closed set of Context keys an Action may
-// scope on; anything else is unknown (forward-compat warn below).
-export const SURFACE_KEYS = ['doctype', 'recordName', 'view', 'appletId'] as const
+// The *surface* tier (the focused Surface's coordinates, including whether a `selection` exists on
+// the front list) and the *window* tier (the active window's frame). Together they are the
+// complete, closed set of Context keys an Action may scope on; anything else is unknown (forward-
+// compat warn below). `selection` counts in the surface tier — a selection predicate ranks with the
+// other surface coordinates, above the window tier, in the specificity vector (./specificity).
+export const SURFACE_KEYS = ['doctype', 'recordName', 'view', 'appletId', 'selection'] as const
 export const WINDOW_KEYS = ['activeApp', 'windowRole'] as const
 const CONTEXT_KEYS: ReadonlySet<string> = new Set([...SURFACE_KEYS, ...WINDOW_KEYS])
 
