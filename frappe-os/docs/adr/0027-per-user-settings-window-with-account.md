@@ -1,14 +1,14 @@
 # Per-user Settings window, with Account folded in
 
 > **Status:** Proposed (2026-06-30). Grilled, not yet implemented. Renames the existing
-> `system-settings` window to **Settings** (CONTEXT.md), introduces the **Account** section,
+> `system-settings` window to **Settings** (CONTEXT.md), introduces the **Account** pane,
 > and reserves the **System Defaults** name for a future site-wide surface.
 
 The window we ship today as **"System Settings"** is a misnomer: everything in it
 (Appearance, Wallpaper, Dock, window behaviour) is **per-user** preference, not site-wide
 configuration. Nothing in it is "system". We rename it to **Settings** (per-user) and fold the
 logged-in user's **Account** — identity (full name, avatar) + credentials (password) — into it
-as a section, alongside the existing preference sections. The genuinely site-wide, admin-scoped
+as a pane, alongside the existing preference panes. The genuinely site-wide, admin-scoped
 surface ("System Defaults") does not exist yet; we **reserve that name** so it can claim the
 "System" label cleanly when it arrives, rather than colliding with a per-user window (and with
 Frappe's own `System Settings` single-DocType).
@@ -27,9 +27,9 @@ justification collapsed under two facts surfaced while grilling:
    Override` already uses). So the seam is not local-vs-server; it is **preferences vs.
    identity/credentials** — and both are per-user.
 2. With both sides per-user and server-backed, the only thing separating them is *kind*, which
-   a **section** expresses as well as a window — and macOS itself keeps them in one surface.
+   a **pane** expresses as well as a window — and macOS itself keeps them in one surface.
 
-So Account is a **section** of the per-user **Settings** window, not its own `system`-role
+So Account is a **pane** of the per-user **Settings** window, not its own `system`-role
 window. Settings stays a singleton `system`-role window (respawned-from-URL, never persisted),
 exactly as before.
 
