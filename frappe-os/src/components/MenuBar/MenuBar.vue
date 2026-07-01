@@ -3,23 +3,30 @@
 // dividers); the Frappe system logo replaces the apple glyph, and the active
 // app's logo+name show in the app menu. Keyboard-shortcut chips from the original
 // are omitted — frappe-ui Dropdown items render label + onClick only.
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
+import { Avatar } from "frappe-ui";
 import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
 import { fileMenuOptions } from "@/actions";
-import { initials } from "@/config/apps";
+import { useAccount } from "@/data/account";
 import { windowRole } from "@/surface";
 import type { OsWindow } from "@/types";
 
 const os = useOS();
+
+// The menu-bar avatar shares the own-user doc with Settings ▸ Account (useAccount is a
+// singleton, load() no-ops once loaded), so the photo shows here without a second fetch.
+const account = useAccount();
+onMounted(() => account.load());
+const userImage = computed(() => (account.state.doc?.user_image as string) || "");
 const activeWin = computed(() => os.state.windows.find((w) => w.id === os.state.activeId));
 const appIdOf = (w?: OsWindow) => (w && (w.surface as { appId?: string }).appId) || null;
 const aid = computed(() => appIdOf(activeWin.value));
 const aname = computed(() => (aid.value ? os.DATA.APP[aid.value].name : "Finder"));
 const appLogo = computed(() => (aid.value ? os.DATA.APP[aid.value].logo : null));
 const frappeLogo = os.DATA.APP.frappe.logo;
-// The logged-in user's name from the live boot session (initials() degrades a
-// missing/loading name to "?", so no demo placeholder leaks through).
+// The logged-in user's name from the live boot session (used as the avatar label, which
+// degrades a missing/loading name to a neutral placeholder — no demo data leaks through).
 const userName = computed(() => os.state.userName);
 
 function zoomActive() {
@@ -219,9 +226,12 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 			<span class="lucide-search size-[15px]"></span>
 		</button>
 		<span class="px-2 text-[12.5px] tabular-nums">{{ os.clockText.value }}</span>
-		<span
-			class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ink-gray-8)] text-[10px] font-semibold text-white"
-			>{{ initials(userName) }}</span
+		<button
+			class="ml-1 inline-flex cursor-pointer items-center rounded-full border-none bg-transparent p-0 transition hover:opacity-80"
+			title="Account settings"
+			@click="os.openSettings('Account')"
 		>
+			<Avatar class="!size-6 !text-[10px]" :image="userImage" :label="userName" />
+		</button>
 	</div>
 </template>
