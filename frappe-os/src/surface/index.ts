@@ -167,6 +167,17 @@ export function windowRole(id: string): 'app' | 'settings' | 'system' {
   return 'app'
 }
 
+// The chrome/dock/menu-bar title for a non-app window, so all three name it identically: an app's
+// settings pane reads "<App> settings", the per-user Settings window "Settings", the Finder
+// "Finder". Returns null for an ordinary app window, whose title each surface derives itself (a
+// record's title, a doctype's list, or the app name). `appName` is the resolved app display name,
+// `view` the built-in surface view (only 'finder' is distinguished among system windows).
+export function systemWindowTitle(role: ReturnType<typeof windowRole>, view: string | undefined, appName: string): string | null {
+  if (role === 'settings') return appName + ' settings'
+  if (role === 'system') return view === 'finder' ? 'Finder' : 'Settings'
+  return null
+}
+
 // Two surfaces are "the same place" — used by per-window history to skip a no-op nav.
 export function sameSurface(a?: Surface | null, b?: Surface | null): boolean {
   if (!a || !b || a.kind !== b.kind) return false

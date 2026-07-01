@@ -9,7 +9,7 @@ import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
 import { fileMenuOptions } from "@/actions";
 import { useAccount } from "@/data/account";
-import { windowRole } from "@/surface";
+import { windowRole, systemWindowTitle } from "@/surface";
 import type { OsWindow } from "@/types";
 
 const os = useOS();
@@ -24,6 +24,17 @@ const appIdOf = (w?: OsWindow) => (w && (w.surface as { appId?: string }).appId)
 const aid = computed(() => appIdOf(activeWin.value));
 const aname = computed(() => (aid.value ? os.DATA.APP[aid.value].name : "Finder"));
 const appLogo = computed(() => (aid.value ? os.DATA.APP[aid.value].logo : null));
+// The bold app-menu label names what's front-most. An app's settings pane keeps the app's own
+// identity here (name + logo) — the "CRM settings" title lives only in its window chrome — so
+// only the desktop-wide singletons (per-user Settings / Finder) rename the menu bar.
+const title = computed(() => {
+	const win = activeWin.value;
+	if (win && windowRole(win.id) === "system") {
+		const view = (win.surface as { view?: string }).view;
+		return systemWindowTitle("system", view, aname.value) ?? aname.value;
+	}
+	return aname.value;
+});
 const frappeLogo = os.DATA.APP.frappe.logo;
 // The logged-in user's name from the live boot session (used as the avatar label, which
 // degrades a missing/loading name to a neutral placeholder — no demo data leaks through).
@@ -198,7 +209,7 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 					:src="appLogo"
 					alt=""
 					class="mr-1.5 h-[15px] w-[15px] flex-shrink-0 rounded-[3px] object-contain"
-				/>{{ aname }}
+				/>{{ title }}
 			</button>
 		</OSDropdown>
 		<OSDropdown :options="fileMenu" placement="bottom-start"

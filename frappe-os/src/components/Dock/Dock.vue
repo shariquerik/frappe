@@ -6,7 +6,7 @@
 import { computed, ref } from 'vue'
 import { useOS } from '@/desktop'
 import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-model'
-import { windowRole, isBuiltin, isAppRef, placementSurface } from '@/surface'
+import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } from '@/surface'
 import { usePlacements, placementView, writePlacementOverride } from '@/placements'
 import OSDropdown from '../OSDropdown.vue'
 import type { OsWindow, BuiltinSurface, SurfaceRef } from '@/types'
@@ -105,8 +105,8 @@ const sf = (w: OsWindow) => w.surface as BuiltinSurface
 
 function winTitle(w: OsWindow): string | undefined {
   const role = windowRole(w.id), s = sf(w)
-  if (role === 'settings') return os.DATA.APP[s.appId!].name + ' settings'
-  if (role === 'system') return s.view === 'finder' ? 'Finder' : 'Settings'
+  const sysTitle = systemWindowTitle(role, s.view, os.DATA.APP[s.appId!].name)
+  if (sysTitle) return sysTitle
   if (s.view === 'form') {
     const m = os.getMeta(s.doctype!), r = os.recordObj(s.doctype!, s.recordName!)
     return (r && (r[m?.titleField || ''] || r.name)) || s.recordName!

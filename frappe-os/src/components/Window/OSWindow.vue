@@ -211,7 +211,7 @@ const viewProps = computed<ViewProps>(() => {
 
 			<!-- ===== SETTINGS WINDOW ===== -->
 			<template v-else-if="role === 'settings'">
-				<WindowChrome :win="win" :title="`${app.name} settings`" :logo="app.logo" />
+				<WindowChrome :win="win" :title="`${app.name} settings`" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 					<AppSettings :win="win" />
 				</div>
@@ -227,7 +227,7 @@ const viewProps = computed<ViewProps>(() => {
 
 			<!-- ===== SETTINGS WINDOW (singleton per-user system pane) ===== -->
 			<template v-else-if="role === 'system'">
-				<WindowChrome :win="win" title="Settings" :logo="app.logo" />
+				<WindowChrome :win="win" title="Settings" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 					<Settings :win="win" />
 				</div>

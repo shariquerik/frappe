@@ -3,10 +3,28 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   sidebarKind, dashboardSurface, listSurface, formSurface, appSettingsSurface, appletSurface,
-  initialSurface, surfaceAppId, isAspectId, DEFAULT_ASPECT, FORM_ASPECTS,
+  initialSurface, surfaceAppId, isAspectId, DEFAULT_ASPECT, FORM_ASPECTS, systemWindowTitle,
 } from '../src/surface/index'
 import { initRegistry } from '../src/registry'
 import { useOS } from '../src/desktop/index'
+
+// The chrome/dock/menu-bar title shared by the window chrome, the dock and the top menu bar so a
+// settings window names itself identically everywhere (not the bare app behind it).
+describe('systemWindowTitle', () => {
+  it('an app settings pane reads "<App> settings"', () => {
+    expect(systemWindowTitle('settings', 'app-settings', 'CRM')).toBe('CRM settings')
+  })
+
+  it('the per-user Settings window reads "Settings", the Finder "Finder"', () => {
+    expect(systemWindowTitle('system', 'settings', 'Frappe')).toBe('Settings')
+    expect(systemWindowTitle('system', 'finder', 'Frappe')).toBe('Finder')
+  })
+
+  it('an ordinary app window has no system title (caller derives its own)', () => {
+    expect(systemWindowTitle('app', 'list', 'CRM')).toBeNull()
+    expect(systemWindowTitle('app', 'form', 'CRM')).toBeNull()
+  })
+})
 
 describe('sidebarKind', () => {
   it('a form Surface drives the Aspect rail', () => {
