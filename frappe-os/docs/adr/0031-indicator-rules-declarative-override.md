@@ -51,6 +51,35 @@ decision: the shipped rule and the customization are one grammar, so a customize
 second one. JS (the Script seam) is reserved for the compute cases — a different format because it
 is a genuinely different operation (behavior, not data), not the same thing done twice.
 
+## Rule override identity: a rule is addressed by its condition
+
+ADR-0007 gives a contribution identity `(type, target, name, source)`, but that `name` slot was
+designed for Actions, not `{condition, label, color}` rules. This ADR pins what plays the `name`
+role for a rule: **its condition.** A Site/User patch names the rule it targets by repeating that
+rule's condition — the same way a Placement names its target by the surface reference it points at
+(ADR-0023's `ref_key`), not by a separate id. There is no extra `id`/`name` field on a rule; the
+meaningful payload *is* the identity, keeping ADR-0031's promise of one small grammar with no
+ceremony. The condition is canonicalized (whitespace trimmed per `field,op,value` clause) so
+spacing variants collapse to one key; the empty condition `""` is the catch-all key. First-match
+resolution already makes a condition unique within an effective list — a second rule with the same
+condition never fires — so the condition is a sound key.
+
+**Merge semantics (a rule is a Collection member, not a Singleton — ADR-0007).** Defaults are the
+base ladder; **App, Site, User are three equal patch layers** folded lowest-to-highest by
+`merge_rule_layer`. For each incoming rule, keyed by canonical condition:
+- **Replace in place** — a rule whose condition matches a ladder rule swaps its label/color at the
+  *same slot*, so a recolor never changes which rule wins first-match (the divergence from
+  Placements, whose list order is not evaluation precedence).
+- **Remove** — a `hidden` patch drops the matching ladder rule (a tombstone; the source layer is
+  untouched, so an app upgrade still flows through).
+- **Add** — a rule with a new condition is *prepended* ahead of the ladder, so a higher layer's
+  new rule wins (User → Site → App → defaults, earlier-wins).
+
+An override is a **full re-supply** of the rule (`{condition, label, color}`), not a field-level
+partial patch — the rule is three fields, so "same format in both places" beats patch-merge
+ceremony. This is the deliberate reading of ADR-0007 for a small collection member: the whole
+member is replaced, addressed by its condition.
+
 ## Keyword-guess stays built-in behavior, not a rule
 
 The one ADR-0028 tier that does **not** become a rule is the keyword-guess fallback

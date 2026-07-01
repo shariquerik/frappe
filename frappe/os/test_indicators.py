@@ -78,6 +78,43 @@ class TestAppIndicatorRules(unittest.TestCase):
 		self.assertEqual(indicators.app_indicator_rules("X", "Y"), [])
 
 
+class TestMergeRuleLayer(unittest.TestCase):
+	def _ladder(self):
+		return [
+			{"condition": "status,=,Paid", "label": "Paid", "color": "green"},
+			{"condition": "docstatus,=,1", "label": "Submitted", "color": "blue"},
+		]
+
+	def test_matching_condition_replaces_in_place(self):
+		# A recolor keeps the rule at its slot — first-match order is unchanged.
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "status,=,Paid", "label": "Paid", "color": "teal"}])
+		self.assertEqual(
+			patched,
+			[
+				{"condition": "status,=,Paid", "label": "Paid", "color": "teal"},
+				{"condition": "docstatus,=,1", "label": "Submitted", "color": "blue"},
+			],
+		)
+
+	def test_hidden_drops_the_matching_rule(self):
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "docstatus,=,1", "hidden": True}])
+		self.assertEqual(patched, [{"condition": "status,=,Paid", "label": "Paid", "color": "green"}])
+
+	def test_new_condition_is_prepended_so_it_wins(self):
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "priority,=,High", "label": "High", "color": "red"}])
+		self.assertEqual(patched[0], {"condition": "priority,=,High", "label": "High", "color": "red"})
+		self.assertEqual(len(patched), 3)
+
+	def test_spacing_variants_match_the_same_rule(self):
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": " status , = , Paid ", "label": "Paid", "color": "gold"}])
+		self.assertEqual(patched[0]["color"], "gold")
+		self.assertEqual(len(patched), 2)
+
+	def test_labelless_add_is_skipped_hidden_miss_is_noop(self):
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "x,=,1"}, {"condition": "y,=,1", "hidden": True}])
+		self.assertEqual(patched, self._ladder())
+
+
 class TestReferencedFields(unittest.TestCase):
 	def test_unions_status_docstatus_and_condition_fields_deduped(self):
 		rules = [
@@ -91,26 +128,51 @@ class TestReferencedFields(unittest.TestCase):
 
 
 class TestIndicatorSpecTracer(unittest.TestCase):
-	def test_app_rule_wins_over_defaults_and_its_field_is_auto_fetched(self):
-		# A submittable doctype with no status/enabled/publication fields and one manifest rule.
+	def _trace(self, app=None, site=None, user=None):
+		"""A submittable doctype with no status/enabled/publication fields, with the App manifest
+		rules and the Site/User override layers stubbed (no DB) — the spec's rule list is what we assert."""
 		meta = unittest.mock.Mock(is_submittable=True, module="Selling")
 		meta.get_field.return_value = None
 		meta.get.return_value = []  # no DocType.states
-		original_workflow = indicators._workflow_styles
-		self.addCleanup(lambda: setattr(indicators, "_workflow_styles", original_workflow))
-		indicators._workflow_styles = lambda doctype: (None, {})
+		self._patch("_workflow_styles", lambda doctype: (None, {}))
+		self._patch("site_indicator_rules", lambda doctype: site or [])
+		self._patch("user_indicator_rules", lambda doctype: user or [])
 		reader = indicators.manifest.doctype_manifest
-		indicators.manifest.doctype_manifest = lambda doctype, module: {
-			"doctype": {"indicator": [{"condition": "per_billed,<,100", "label": "To Bill", "color": "orange"}]}
-		}
+		indicators.manifest.doctype_manifest = lambda doctype, module: {"doctype": {"indicator": app or []}}
 		self.addCleanup(lambda: setattr(indicators.manifest, "doctype_manifest", reader))
+		return indicators.indicator_spec("Sales Invoice", meta)
 
-		spec = indicators.indicator_spec("Sales Invoice", meta)
+	def _patch(self, name, value):
+		original = getattr(indicators, name)
+		self.addCleanup(lambda: setattr(indicators, name, original))
+		setattr(indicators, name, value)
 
+	def test_app_rule_wins_over_defaults_and_its_field_is_auto_fetched(self):
+		spec = self._trace(app=[{"condition": "per_billed,<,100", "label": "To Bill", "color": "orange"}])
 		self.assertEqual(spec["rules"][0], {"condition": "per_billed,<,100", "label": "To Bill", "color": "orange"})
 		self.assertEqual(spec["rules"][1], {"condition": "docstatus,=,1", "label": "Submitted", "color": "blue"})
 		self.assertEqual(spec["fields"], ["docstatus", "per_billed"])
 		self.assertTrue(spec["isSubmittable"])
+
+	def test_app_site_user_chain_layers_over_each_other(self):
+		# App ships "To Bill" (orange). Site recolors it red (same condition → in place). User hides
+		# the Submitted default and adds its own top rule. Precedence: User new > Site > App > default.
+		spec = self._trace(
+			app=[{"condition": "per_billed,<,100", "label": "To Bill", "color": "orange"}],
+			site=[{"condition": "per_billed,<,100", "label": "To Bill", "color": "red"}],
+			user=[
+				{"condition": "docstatus,=,1", "hidden": True},
+				{"condition": "on_hold,=,1", "label": "On Hold", "color": "gray"},
+			],
+		)
+		self.assertEqual(
+			spec["rules"],
+			[
+				{"condition": "on_hold,=,1", "label": "On Hold", "color": "gray"},
+				{"condition": "per_billed,<,100", "label": "To Bill", "color": "red"},
+			],
+		)
+		self.assertEqual(spec["fields"], ["docstatus", "on_hold", "per_billed"])
 
 
 if __name__ == "__main__":

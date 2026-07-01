@@ -15,6 +15,7 @@
 import frappe
 
 from frappe.os import manifest
+from frappe.os.common import layer_rows
 
 # Publication/visibility field -> its (on, off) pill, on = truthy. Each field's own polarity is
 # baked in (is_private truthy = Private). The generic desk `listview_settings.get_indicator` tier,
@@ -160,6 +161,104 @@ def app_indicator_rules(doctype, module):
 	return [rule for rule in (_clean_rule(entry) for entry in declared) if rule]
 
 
+def _condition_key(condition):
+	"""A rule's identity — its condition, canonicalized so spacing variants collapse to one key
+	(ADR-0031: a rule is addressed by what it matches, like a Placement by its ref). Each
+	`field,op,value` clause is trimmed; `""` is the catch-all key."""
+	clauses = []
+	for clause in str(condition or "").split("|"):
+		clauses.append(",".join(part.strip() for part in clause.split(",", 2)))
+	return "|".join(clauses)
+
+
+def merge_rule_layer(ladder, patches):
+	"""Fold one override layer over an ordered rule ladder, keyed by condition (ADR-0031). A patch
+	whose condition matches a ladder rule replaces it in place (same slot — a recolor never changes
+	which rule wins first-match); a `hidden` patch drops the matching rule (tombstone); a patch with
+	a new condition is a fresh rule prepended ahead of the ladder, so a higher layer wins. Malformed
+	patches are skipped (ADR-0014). Layers are applied lowest-to-highest."""
+	slots = {_condition_key(rule["condition"]): index for index, rule in enumerate(ladder)}
+	resolved = list(ladder)
+	additions = []
+	for patch in patches:
+		key = _condition_key(patch.get("condition"))
+		if patch.get("hidden"):
+			if key in slots:
+				resolved[slots[key]] = None
+			continue
+		rule = _clean_rule(patch)
+		if not rule:
+			continue
+		if key in slots:
+			resolved[slots[key]] = rule
+		else:
+			additions.append(rule)
+	return additions + [rule for rule in resolved if rule is not None]
+
+
+def _layer_row_rule(row):
+	"""One stored Site/User override row → a patch dict the merge understands ({condition, label,
+	color, hidden}); `hidden` marks a tombstone that drops the matching rule."""
+	return {"condition": row.condition or "", "label": row.label, "color": row.color, "hidden": bool(row.hidden)}
+
+
+def site_indicator_rules(doctype):
+	"""The Site layer: OS Indicator Rule rows for this doctype — site-supplied rules that add to,
+	replace, or hide the app/default rules (ADR-0031). [] before the DocType is migrated."""
+	rows = layer_rows("OS Indicator Rule", ["condition", "label", "color", "hidden"], filters={"document_type": doctype})
+	return [_layer_row_rule(row) for row in rows]
+
+
+def user_indicator_rules(doctype):
+	"""The User layer: this user's own OS Indicator Rule Override rows for the doctype, layered
+	above the Site (ADR-0031)."""
+	rows = layer_rows(
+		"OS Indicator Rule Override",
+		["condition", "label", "color", "hidden"],
+		filters={"document_type": doctype, "owner": frappe.session.user},
+	)
+	return [_layer_row_rule(row) for row in rows]
+
+
+def _own_indicator_override(doctype, condition):
+	"""The caller's existing OS Indicator Rule Override row for one (doctype, condition) identity, or
+	None — the upsert/delete target. Owner-scoped: a user only ever touches their own."""
+	return frappe.db.get_value(
+		"OS Indicator Rule Override",
+		{"owner": frappe.session.user, "document_type": doctype, "condition": condition},
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_indicator_override(
+	document_type: str, condition: str, label: str | None = None, color: str | None = None, hidden: int = 0
+) -> dict:
+	"""Upsert the caller's own User-layer indicator override for one (doctype, condition) identity
+	(ADR-0031) — the frontend's only indicator write path. A recolor/relabel supplies label + color;
+	a personal hide sets `hidden` to drop the matching app/default rule from this user's view. The
+	condition is stored canonically so the identity match holds; only the caller's own row is touched."""
+	key = _condition_key(condition)
+	existing = _own_indicator_override(document_type, key)
+	doc = (
+		frappe.get_doc("OS Indicator Rule Override", existing)
+		if existing
+		else frappe.new_doc("OS Indicator Rule Override")
+	)
+	doc.update({"document_type": document_type, "condition": key, "label": label, "color": color, "hidden": int(hidden)})
+	doc.save() if existing else doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_indicator_override(document_type: str, condition: str) -> dict:
+	"""Clear the caller's own indicator override for a (doctype, condition) — resetting that rule
+	back to the resolved Site/app/default. No-op if none exists."""
+	name = _own_indicator_override(document_type, _condition_key(condition))
+	if name:
+		frappe.delete_doc("OS Indicator Rule Override", name)
+	return {"deleted": bool(name)}
+
+
 def _condition_fields(condition):
 	"""The record fields a condition reads — the first token of each `field,op,value` clause."""
 	fields = []
@@ -186,15 +285,22 @@ def referenced_fields(rules, status_field, is_submittable):
 
 def indicator_spec(doctype, meta):
 	"""The normalized Record-indicator spec (ADR-0028 / ADR-0031): the built-in workflow state field
-	and styles, whether the doctype is submittable, the effective Indicator rule list (app rules
-	over OS default rules), and the fields those rules reference for auto-fetch. The active
-	workflow's state field wins as the status field, else a Select named status/stage."""
+	and styles, whether the doctype is submittable, the effective Indicator rule list (App, Site and
+	User layers folded over the OS default rules), and the fields those rules reference for
+	auto-fetch. The active workflow's state field wins as the status field, else a Select named
+	status/stage."""
 	workflow_field, workflow_styles = _workflow_styles(doctype)
 	status_field = workflow_field or _status_field(meta)
 	is_submittable = bool(meta.is_submittable)
-	rules = app_indicator_rules(doctype, meta.module) + default_indicator_rules(
+	rules = default_indicator_rules(
 		status_field, _state_colors(meta), is_submittable, _publication_field(meta), _enabled_field(meta)
 	)
+	for layer in (
+		app_indicator_rules(doctype, meta.module),
+		site_indicator_rules(doctype),
+		user_indicator_rules(doctype),
+	):
+		rules = merge_rule_layer(rules, layer)
 	return {
 		"statusField": status_field,
 		"workflow": workflow_styles,
