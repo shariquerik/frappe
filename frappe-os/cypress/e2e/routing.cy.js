@@ -139,6 +139,71 @@ describe('form Aspects are addressable in the URL (ADR-0018)', () => {
   })
 })
 
+describe('Settings panes are addressable in the URL (ADR-0027)', () => {
+  // The per-user Settings window carries a pane coordinate projected as a trailing path
+  // segment; General is the default (bare /settings path). Needs a live bench behind `yarn dev`.
+  beforeEach(() => cy.clearLocalStorage())
+
+  it('a pane deep-link opens Settings and the URL survives a reload', () => {
+    cy.visit('/os/settings/account')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'settings')
+    cy.reload()
+    cy.location('pathname').should('eq', '/os/settings/account')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'settings')
+  })
+
+  it('the default (General) pane stays on the bare /settings path', () => {
+    cy.visit('/os/settings')
+    cy.location('pathname').should('eq', '/os/settings')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'settings')
+  })
+
+  it('browser back/forward steps between Settings panes', () => {
+    cy.visit('/os/settings') // General (bare)
+    cy.visit('/os/settings/appearance')
+    cy.location('pathname').should('eq', '/os/settings/appearance')
+    cy.go('back')
+    cy.location('pathname').should('eq', '/os/settings')
+    cy.go('forward')
+    cy.location('pathname').should('eq', '/os/settings/appearance')
+  })
+
+  it('an unknown pane slug settles on the default Settings pane', () => {
+    cy.visit('/os/settings/not-a-pane')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'settings')
+  })
+})
+
+describe('app-settings panes are addressable in the URL', () => {
+  // The per-app settings window carries a pane coordinate projected as a trailing path segment;
+  // General is the default (bare /<app>/settings path). Needs a live bench behind `yarn dev`.
+  beforeEach(() => cy.clearLocalStorage())
+
+  it('a pane deep-link opens app-settings and the URL survives a reload', () => {
+    cy.visit('/os/frappe/settings/members')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app-settings:frappe')
+    cy.reload()
+    cy.location('pathname').should('eq', '/os/frappe/settings/members')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app-settings:frappe')
+  })
+
+  it('the default (General) pane stays on the bare /<app>/settings path', () => {
+    cy.visit('/os/frappe/settings')
+    cy.location('pathname').should('eq', '/os/frappe/settings')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app-settings:frappe')
+  })
+
+  it('browser back/forward steps between app-settings panes', () => {
+    cy.visit('/os/frappe/settings') // General (bare)
+    cy.visit('/os/frappe/settings/integrations')
+    cy.location('pathname').should('eq', '/os/frappe/settings/integrations')
+    cy.go('back')
+    cy.location('pathname').should('eq', '/os/frappe/settings')
+    cy.go('forward')
+    cy.location('pathname').should('eq', '/os/frappe/settings/integrations')
+  })
+})
+
 describe('multiple instances of one app are individually addressable', () => {
   // A second window of the same app is a distinct INSTANCE: the first owns the bare
   // `/os/<app>`, extras carry `?instance=n`. The query keeps twins addressable without

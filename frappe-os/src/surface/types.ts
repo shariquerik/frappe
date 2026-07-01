@@ -9,7 +9,7 @@ export type BuiltinView = string
 
 // A built-in view, rendered by generic OS machinery. `appId` is the owning app (always
 // populated — chrome/asset scoping need it); `params` carries view-specific extras
-// (e.g. the settings tab, later: filters/group-by).
+// (e.g. the settings pane, later: filters/group-by).
 export interface BuiltinSurface {
   kind: 'builtin'
   view: BuiltinView

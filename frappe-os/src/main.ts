@@ -11,7 +11,7 @@ import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
 import { initRecents } from '@/recents'
 import { router, pathForFocus, focusSig, applyRoute, INSTANCE_KEY } from '@/routing'
-import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId } from '@/surface'
+import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId, paneForSlug, SETTINGS_PANES, APP_SETTINGS_PANES } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
 
 const os = useOS()
@@ -93,14 +93,19 @@ function restoreFromHistory(to: RouteLocationNormalized) {
   const winId: string | null = st.osWin || null
   const { app, doctype, name, instance, aspect } = routeParams(to)
 
-  // App-settings windows: path is /<app>/settings, state id is app-settings:<app>. Refocus
-  // if still open, else respawn from the app segment (settings panes aren't persisted).
+  // App-settings windows: path is /<app>/settings/<pane>, state id is app-settings:<app>.
+  // openAppSettings refocuses if still open (re-targeting the pane), else respawns it — the pane
+  // rides the trailing segment (settings panes aren't persisted). An unknown slug → General.
   if ((winId && winId.indexOf('app-settings:') === 0) || doctype === 'settings') {
-    if (winId && os.restoreWin(winId)) return
     const aid = app || (winId ? winId.slice('app-settings:'.length) : null)
-    if (aid && os.DATA.APP[aid]) os.openAppSettings(aid)
+    if (aid && os.DATA.APP[aid]) os.openAppSettings(aid, paneForSlug(APP_SETTINGS_PANES, name))
     return
   }
+
+  // The singleton per-user Settings window (/settings or /settings/<pane>): openSettings
+  // refocuses it — re-targeting the pane — if open, else respawns it. The pane rides the
+  // second path segment (ADR-0027); an unknown/absent slug degrades to the default pane.
+  if (app === 'settings') { os.openSettings(paneForSlug(SETTINGS_PANES, doctype)); return }
 
   // Bare-desktop entry (/os/, no app segment): the PATH is authoritative — show the
   // focus-less desktop and clear focus, regardless of any (possibly stale) window id

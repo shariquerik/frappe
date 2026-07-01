@@ -1,7 +1,7 @@
 // route-map projection: focus -> URL path, and route params -> store action.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
-import { pathForFocus, applyRoute } from '../src/routing/route-map'
+import { pathForFocus, applyRoute, focusSig } from '../src/routing/route-map'
 
 const os = useOS()
 
@@ -38,9 +38,31 @@ describe('pathForFocus', () => {
     expect(pathForFocus(os)).toEqual({ path: '/frappe/settings', query: {} })
   })
 
+  it('the default (General) app-settings pane stays on the bare /<app>/settings path', () => {
+    os.openAppSettings('frappe', 'General')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/settings', query: {} })
+  })
+
+  it('a non-default app-settings pane projects to /<app>/settings/<slug>', () => {
+    os.openAppSettings('frappe', 'Members')
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/settings/members', query: {} })
+  })
+
   it('the per-user Settings window projects to a bare /settings', () => {
     os.openSettings()
     expect(pathForFocus(os)).toEqual({ path: '/settings', query: {} })
+  })
+
+  it('the default (General) Settings pane stays on the bare /settings path', () => {
+    os.openSettings('General')
+    expect(pathForFocus(os)).toEqual({ path: '/settings', query: {} })
+  })
+
+  it('a non-default Settings pane projects to /settings/<slug>', () => {
+    os.openSettings('Account')
+    expect(pathForFocus(os)).toEqual({ path: '/settings/account', query: {} })
+    os.openSettings('Appearance')
+    expect(pathForFocus(os)).toEqual({ path: '/settings/appearance', query: {} })
   })
 
   it('an applet window projects to /<app>/<appletId>', () => {
@@ -136,11 +158,40 @@ describe('applyRoute', () => {
   it('opens app-settings for a known app from /<app>/settings', () => {
     applyRoute(os, { app: 'frappe', doctype: 'settings' })
     expect(os.state.activeId).toBe('app-settings:frappe')
+    const w = os.state.windows.find((x) => x.id === 'app-settings:frappe')
+    expect(w.surface.params?.pane).toBe('General')
+  })
+
+  it('opens the named app-settings pane from /<app>/settings/<slug>', () => {
+    applyRoute(os, { app: 'frappe', doctype: 'settings', name: 'members' })
+    const w = os.state.windows.find((x) => x.id === 'app-settings:frappe')
+    expect(w.surface.params?.pane).toBe('Members')
+  })
+
+  it('degrades an unknown app-settings pane slug to the default (General)', () => {
+    applyRoute(os, { app: 'frappe', doctype: 'settings', name: 'not-a-pane' })
+    const w = os.state.windows.find((x) => x.id === 'app-settings:frappe')
+    expect(w.surface.params?.pane).toBe('General')
   })
 
   it('opens the per-user Settings window from a bare /settings', () => {
     applyRoute(os, { app: 'settings' })
     expect(os.state.activeId).toBe('settings')
+    const w = os.state.windows.find((x) => x.id === 'settings')
+    expect(w.surface.params?.pane).toBe('General')
+  })
+
+  it('opens the named pane from /settings/<slug>', () => {
+    applyRoute(os, { app: 'settings', doctype: 'account' })
+    const w = os.state.windows.find((x) => x.id === 'settings')
+    expect(os.state.activeId).toBe('settings')
+    expect(w.surface.params?.pane).toBe('Account')
+  })
+
+  it('degrades an unknown Settings pane slug to the default (General)', () => {
+    applyRoute(os, { app: 'settings', doctype: 'not-a-pane' })
+    const w = os.state.windows.find((x) => x.id === 'settings')
+    expect(w.surface.params?.pane).toBe('General')
   })
 
   it('opens an applet when the second segment is a known applet id', () => {
@@ -200,5 +251,21 @@ describe('applyRoute', () => {
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
     expect(w.surface.aspect).toBeUndefined()
+  })
+})
+
+describe('focusSig', () => {
+  it('changes when the Settings pane switches, so the watcher pushes a new URL', () => {
+    os.openSettings('General')
+    const general = focusSig(os)
+    os.setSettingsPane('Account')
+    expect(focusSig(os)).not.toBe(general)
+  })
+
+  it('changes when the app-settings pane switches, so the watcher pushes a new URL', () => {
+    os.openAppSettings('frappe', 'General')
+    const general = focusSig(os)
+    os.setAppSettingsPane('app-settings:frappe', 'Members')
+    expect(focusSig(os)).not.toBe(general)
   })
 })

@@ -22,8 +22,8 @@ import {
   presenceFor, winBack, winFwd,
   openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, minimizeWin, clearFocus, toggleZoom,
-  toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsTab, enterSplit, exitSplit,
-  setTheme, wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsSection, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
+  toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
+  setTheme, wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
 import { hydrate, startAutosave } from './persistence'
@@ -57,8 +57,8 @@ export function useOS() {
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,
-    toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsTab, enterSplit, exitSplit, setTheme,
-    setWallpaper, openSettings, closeSettings, setSettingsSection, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
+    toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit, setTheme,
+    setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
     setDeskEl, setDockEl, deskRef, syncDeskSize,
   }
 }

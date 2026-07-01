@@ -3,6 +3,7 @@
 // isolation: every function takes the `os` store explicitly and touches no router,
 // history, or window globals. main.js owns the wiring (guards, boot, watchers).
 import { DEFAULT_ASPECT, isAspectId } from '@/surface/aspects'
+import { DEFAULT_SETTINGS_PANE, DEFAULT_APP_SETTINGS_PANE, SETTINGS_PANES, APP_SETTINGS_PANES, paneForSlug, slugForPane } from '@/surface/panes'
 import type { FocusLocation, OsStore, RouteParams, Surface } from '@/types'
 
 // Reserved query key naming a non-canonical app window instance (`app:<id>#n`). OS-owned:
@@ -42,8 +43,19 @@ export function instanceQuery(id: string): Record<string, string> {
 function pathForSurface(os: OsStore, s: Surface): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
-  if (s.view === 'app-settings') return `/${s.appId}/settings` // per-app settings; URL segment stays `settings`
-  if (s.view === 'settings') return '/settings' // singleton per-user Settings window, no app segment
+  if (s.view === 'app-settings') {
+    // Per-app settings; the URL segment stays `settings`. The selected pane projects to a
+    // trailing segment; General is the default and stays on the bare /<app>/settings path.
+    const pane = (s.params?.pane as string) || DEFAULT_APP_SETTINGS_PANE
+    const base = `/${s.appId}/settings`
+    return pane === DEFAULT_APP_SETTINGS_PANE ? base : `${base}/${seg(slugForPane(pane))}`
+  }
+  if (s.view === 'settings') {
+    // The selected pane projects to a trailing path segment (ADR-0027); General is the
+    // default and stays on the bare /settings path, so the existing Settings URL is unchanged.
+    const pane = (s.params?.pane as string) || DEFAULT_SETTINGS_PANE
+    return pane === DEFAULT_SETTINGS_PANE ? '/settings' : `/settings/${seg(slugForPane(pane))}`
+  }
   if (s.view === 'finder') return '/finder' // singleton Finder window, no app segment (ADR-0024)
   if (s.view === 'form') {
     // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
@@ -64,6 +76,10 @@ export function focusSig(os: OsStore): string {
   if (!w) return ''
   const s = w.surface
   if (s.kind === 'applet') return `${w.id}|applet|${s.appletId}`
+  // Include the pane so switching a Settings pane changes the signature and pushes a history
+  // entry — browser back/forward then steps between panes (ADR-0027), mirroring Aspects.
+  if (s.view === 'settings') return `${w.id}|settings|${(s.params?.pane as string) || DEFAULT_SETTINGS_PANE}`
+  if (s.view === 'app-settings') return `${w.id}|app-settings|${s.appId}|${(s.params?.pane as string) || DEFAULT_APP_SETTINGS_PANE}`
   // Include the Aspect so switching facets of one record changes the signature and pushes a
   // timeline entry — browser back/forward then steps between Aspects (ADR-0018).
   return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}`
@@ -81,8 +97,9 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // (Matches restoreFromHistory's bare-path handling — boot must not trust the store
   // over the path, or a cold /os redirects to /os/<app> of the last focused window.)
   if (!app) { os.clearFocus(); return }
-  // Settings is the singleton per-user system pane at a bare `/settings` (no app segment).
-  if (app === 'settings' && !doctype) { os.openSettings(); return }
+  // Settings is the singleton per-user system pane at `/settings`; a trailing segment selects
+  // the pane (ADR-0027). An unknown/absent slug degrades to the default (General) pane.
+  if (app === 'settings') { os.openSettings(paneForSlug(SETTINGS_PANES, doctype)); return }
   // The Finder is a singleton system window at a bare `/finder` (no app segment, ADR-0024).
   if (app === 'finder' && !doctype) { os.openFinder(); return }
   // A doctype derives its own app (appForDoctype), so a valid doctype can open even
@@ -92,7 +109,9 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   const knownApp = !!os.DATA.APP[app]
   const knownDoctype = doctype && doctype !== 'settings' && !!os.getMeta(doctype)
   if (!knownApp && !knownDoctype) { os.clearFocus(); return }
-  if (doctype === 'settings') { if (knownApp) os.openAppSettings(app); return }
+  // Per-app settings (/<app>/settings); a trailing segment (the route's `name`) selects the
+  // pane (an unknown/absent slug degrades to General).
+  if (doctype === 'settings') { if (knownApp) os.openAppSettings(app, paneForSlug(APP_SETTINGS_PANES, name)); return }
   if (doctype && !knownDoctype) {
     // A second segment that isn't a doctype may be an applet id (/<app>/<appletId>).
     // knownDoctype was checked first, so a real doctype never reaches here — doctype-wins

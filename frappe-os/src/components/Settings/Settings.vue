@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Settings — the per-user, desktop-wide preferences window (a singleton system pane, OSWindow's
 // 'system' role supplies the chrome/title bar). A macOS-style two-pane sheet: a left nav rail
-// picks the section, the right body renders it. Sections are global, not app-scoped: General
+// picks the pane, the right body renders it. Panes are global, not app-scoped: General
 // (window behavior — list-row open target ADR-0018, remember window size ADR-0019), Appearance
 // (light/dark theme), Wallpaper (the gallery) and Dock (placement + reveal, ADR-0022). The
 // active pane rides the singleton window's surface params so a deep-link / dock "Dock Settings…"
@@ -10,6 +10,7 @@ import { computed } from 'vue'
 import { Switch } from 'frappe-ui'
 import { useOS } from '@/desktop'
 import { AccountSection, WallpaperPicker } from '@/components/Settings'
+import { SETTINGS_PANES } from '@/surface'
 // OsWindow feeds defineProps, so import it from the concrete module (the @/types barrel's
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { OsWindow } from '@/surface/types'
@@ -19,9 +20,9 @@ const props = defineProps<{ win: OsWindow }>()
 const os = useOS()
 const ICON = os.DATA.ICON
 
-const sections = ['Account', 'General', 'Appearance', 'Wallpaper', 'Dock']
-const sectionIcon: Record<string, string> = { Account: ICON.user, General: ICON.cog, Appearance: ICON.palette, Wallpaper: ICON.image, Dock: ICON.sliders }
-const section = computed(() => ((props.win.surface as { params?: { section?: string } }).params?.section) || 'General')
+const panes = SETTINGS_PANES
+const paneIcon: Record<string, string> = { Account: ICON.user, General: ICON.cog, Appearance: ICON.palette, Wallpaper: ICON.image, Dock: ICON.sliders }
+const pane = computed(() => ((props.win.surface as { params?: { pane?: string } }).params?.pane) || 'General')
 
 const dockPositions: { label: string; value: DockPosition }[] = [
   { label: 'Bottom', value: 'bottom' },
@@ -36,22 +37,22 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
 
 <template>
   <div class="flex min-h-0 flex-1">
-    <!-- section nav -->
+    <!-- pane nav -->
     <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
-      <div v-for="s in sections" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsSection(s)"
-        :style="{ color: section===s ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: section===s ? 600 : 400,
-          background: section===s ? 'var(--surface-gray-3)' : 'transparent' }">
-        <span :class="sectionIcon[s]" class="size-[15px] flex-shrink-0"></span>{{ s }}
+      <div v-for="s in panes" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsPane(s)"
+        :style="{ color: pane===s ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: pane===s ? 600 : 400,
+          background: pane===s ? 'var(--surface-gray-3)' : 'transparent' }">
+        <span :class="paneIcon[s]" class="size-[15px] flex-shrink-0"></span>{{ s }}
       </div>
     </div>
     <!-- body -->
     <div class="flex min-w-0 flex-1 flex-col overflow-auto">
-      <template v-if="section==='Account'">
+      <template v-if="pane==='Account'">
         <!-- The logged-in user's own identity (ADR-0027), at the top above the preference panes. -->
         <AccountSection />
       </template>
 
-      <template v-else-if="section==='Appearance'">
+      <template v-else-if="pane==='Appearance'">
         <!-- Global light/dark theme (moved out of per-app Settings — it's a desktop pref). -->
         <div class="px-[22px] py-5">
           <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">APPEARANCE</div>
@@ -70,12 +71,12 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
         </div>
       </template>
 
-      <template v-else-if="section==='Wallpaper'">
+      <template v-else-if="pane==='Wallpaper'">
         <div class="px-[22px] pb-1 pt-5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">WALLPAPER</div>
         <WallpaperPicker />
       </template>
 
-      <template v-else-if="section==='Dock'">
+      <template v-else-if="pane==='Dock'">
         <div class="px-[22px] py-5">
           <!-- Dock placement & reveal (ADR-0022), like macOS "Desktop & Dock". Position is a
                segmented control; auto-hide off pins the dock so it never slides away. -->
@@ -104,7 +105,7 @@ const themeOpts: { label: string; value: Theme; previewBg: string; bar: string; 
         </div>
       </template>
 
-      <template v-else-if="section==='General'">
+      <template v-else-if="pane==='General'">
         <div class="px-[22px] py-5">
           <!-- Window behavior, desktop-global (moved out of per-app Settings). -->
           <div class="mb-3 mt-1.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">BEHAVIOR</div>

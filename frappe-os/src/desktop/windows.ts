@@ -266,20 +266,20 @@ export const toggleSidebar = (id: string) => { state.sidebarHidden[id] = !state.
 // An app's settings is a standalone window (one per app), not an in-window overlay: a real
 // macOS-style pane that can be moved, resized, minimized and stacked independently of the app
 // it configures. Distinct from the singleton per-user Settings window below.
-export function openAppSettings(appId: string, tab?: string) {
+export function openAppSettings(appId: string, pane?: string) {
   const id = 'app-settings:' + appId
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === id)
-  if (!w) state.windows.push({ id, surface: appSettingsSurface(appId, tab) })
-  else if (tab && isBuiltin(w.surface)) w.surface.params = { tab }
+  if (!w) state.windows.push({ id, surface: appSettingsSurface(appId, pane) })
+  else if (pane && isBuiltin(w.surface)) w.surface.params = { pane }
   setGeo(id, { z, min: false })
   state.activeId = id
   state.menu = null
 }
 export const closeAppSettings = (id: string) => closeWin(id)
-export const setAppSettingsTab = (id: string, tab: string) => {
+export const setAppSettingsPane = (id: string, pane: string) => {
   const w = state.windows.find((x) => x.id === id)
-  if (w && isBuiltin(w.surface)) w.surface.params = { tab }
+  if (w && isBuiltin(w.surface)) w.surface.params = { pane }
 }
 
 // ---- split view --------------------------------------------------------------
@@ -318,23 +318,23 @@ export const currentWp = computed(() => {
 export const setWallpaper = (id: string) => { state.wallpaper = id }
 // Settings is the per-user singleton window holding the user's Account plus the desktop-wide
 // preferences (General/window behavior, Appearance/theme, Wallpaper, Dock): open focuses the
-// existing one or spawns it, re-targeting its `section` pane; close just removes it. Transient —
+// existing one or spawns it, re-targeting its `pane`; close just removes it. Transient —
 // never persisted. (Renamed from "System Settings", ADR-0027.)
-export function openSettings(section = 'General') {
+export function openSettings(pane = 'General') {
   const id = 'settings'
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === id)
-  if (!w) state.windows.push({ id, surface: settingsSurface(section) })
-  else if (isBuiltin(w.surface)) w.surface.params = { section }
+  if (!w) state.windows.push({ id, surface: settingsSurface(pane) })
+  else if (isBuiltin(w.surface)) w.surface.params = { pane }
   setGeo(id, { z, min: false })
   state.activeId = id
   state.menu = null
 }
 export const closeSettings = (id = 'settings') => closeWin(id)
 // Switch the open Settings window to a different pane (left-nav click).
-export function setSettingsSection(section: string) {
+export function setSettingsPane(pane: string) {
   const w = state.windows.find((x) => x.id === 'settings')
-  if (w && isBuiltin(w.surface)) w.surface.params = { section }
+  if (w && isBuiltin(w.surface)) w.surface.params = { pane }
 }
 
 // ---- Finder (ADR-0024) -------------------------------------------------------
