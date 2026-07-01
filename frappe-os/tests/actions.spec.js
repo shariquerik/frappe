@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isEligible } from '../src/actions/eligibility'
 import { specificity, compareSpecificity } from '../src/actions/specificity'
+import { scopeWhen, effectiveWhen } from '../src/actions/scope'
 import { resolve } from '../src/actions/resolve'
 import { FILE_COMMANDS, invoke, registerRunHandlers } from '../src/actions/contributions'
 import { contextForOS } from '../src/actions/context'
@@ -524,6 +525,113 @@ describe('Action referencing a missing Command (warned, not silently dropped)', 
     expect(labels).toEqual(['Open…', 'New window', 'Close window']) // the orphan does not appear
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext.ghost'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('no such Command'))
+  })
+})
+
+// ADR-0032 slice 01 — the Scope axis. A Scope (OS/App/Doctype/View) auto-supplies the `when` the
+// author would otherwise hand-write (scopeWhen/effectiveWhen), reusing the existing Context keys
+// (activeApp/doctype/view) — no parallel activeDoctype/activeView keys. Because View's auto-`when`
+// is a two-key surface predicate and Doctype's a one-key one, the EXISTING specificity vector ranks
+// View > Doctype > App > OS, so carry-forward override falls out of the same contest — no new axis.
+describe('scopeWhen / effectiveWhen (Scope auto-supplies Eligibility)', () => {
+  const scoped = (scope, when) => ({ command: 'x', region: 'r', sourceApp: 'a', scope, when })
+
+  it('OS scope (or no binding) is global — an empty when', () => {
+    expect(scopeWhen(scoped(undefined))).toEqual({})
+    expect(scopeWhen(scoped({ tier: 'os' }))).toEqual({})
+  })
+
+  it('App scope auto-derives { activeApp } from the app it is co-located in', () => {
+    expect(scopeWhen(scoped({ tier: 'app', app: 'crm' }))).toEqual({ activeApp: 'crm' })
+  })
+
+  it('Doctype scope auto-derives { doctype } — the front doctype, any view', () => {
+    expect(scopeWhen(scoped({ tier: 'doctype', app: 'crm', doctype: 'CRM Lead' }))).toEqual({ doctype: 'CRM Lead' })
+  })
+
+  it('View scope auto-derives { doctype, view } — the front doctype AND view', () => {
+    expect(scopeWhen(scoped({ tier: 'view', doctype: 'CRM Lead', view: 'list' })))
+      .toEqual({ doctype: 'CRM Lead', view: 'list' })
+  })
+
+  it('effectiveWhen composes the auto-when with a hand-written cross-surface when (both AND-ed)', () => {
+    const a = scoped({ tier: 'doctype', doctype: 'CRM Lead' }, { windowRole: 'settings' })
+    expect(effectiveWhen(a)).toEqual({ doctype: 'CRM Lead', windowRole: 'settings' })
+  })
+
+  it('a hand-written key wins a conflict with the auto-derived coordinate (explicit author override)', () => {
+    const a = scoped({ tier: 'doctype', doctype: 'CRM Lead' }, { doctype: 'Contact' })
+    expect(effectiveWhen(a)).toEqual({ doctype: 'Contact' })
+  })
+
+  it('the auto-derived when carries the right specificity (View > Doctype > App > OS)', () => {
+    const os = scopeWhen(scoped({ tier: 'os' }))
+    const app = scopeWhen(scoped({ tier: 'app', app: 'crm' }))
+    const dt = scopeWhen(scoped({ tier: 'doctype', doctype: 'CRM Lead' }))
+    const view = scopeWhen(scoped({ tier: 'view', doctype: 'CRM Lead', view: 'list' }))
+    expect(compareSpecificity(specificity(app), specificity(os))).toBeGreaterThan(0)
+    expect(compareSpecificity(specificity(dt), specificity(app))).toBeGreaterThan(0) // surface tier dominates
+    expect(compareSpecificity(specificity(view), specificity(dt))).toBeGreaterThan(0)
+  })
+})
+
+// Carry-forward through the resolver: OS ⊕ App ⊕ Doctype ⊕ View composed live from the front-most
+// stack, filtered by the auto-derived Eligibility. `sc` places a scoped Action with no hand-written
+// `when` — the common case the author never has to spell out.
+describe('resolve (Scope → auto-Eligibility + carry-forward)', () => {
+  let warn
+  beforeEach(() => { warn = vi.spyOn(console, 'warn').mockImplementation(() => {}) })
+  afterEach(() => warn.mockRestore())
+
+  const sc = (command, scope, over = {}) => ({ command, region: 'menubar:file', sourceApp: 'frappe', scope, ...over })
+
+  it('a Doctype-scoped Action is eligible only when that doctype is front — no hand-written when', () => {
+    const a = sc('a', { tier: 'doctype', doctype: 'CRM Lead' })
+    expect(resolve([a], 'menubar:file', { doctype: 'CRM Lead' }).items.map((i) => i.command)).toEqual(['a'])
+    expect(resolve([a], 'menubar:file', { doctype: 'Contact' }).items).toEqual([]) // wrong doctype
+    expect(resolve([a], 'menubar:file', {}).items).toEqual([]) // no front doctype
+  })
+
+  it('a View-scoped Action needs both the doctype and the view front', () => {
+    const a = sc('a', { tier: 'view', doctype: 'CRM Lead', view: 'list' })
+    expect(resolve([a], 'menubar:file', { doctype: 'CRM Lead', view: 'list' }).items).toHaveLength(1)
+    expect(resolve([a], 'menubar:file', { doctype: 'CRM Lead', view: 'form' }).items).toEqual([]) // wrong view
+  })
+
+  it('composes OS ⊕ App ⊕ Doctype ⊕ View additively — broader scopes carry forward into the front stack', () => {
+    const osAct = sc('os', { tier: 'os' })
+    const appAct = sc('app', { tier: 'app', app: 'crm' })
+    const dtAct = sc('dt', { tier: 'doctype', doctype: 'CRM Lead' })
+    const viewAct = sc('view', { tier: 'view', doctype: 'CRM Lead', view: 'list' })
+    const ctx = { activeApp: 'crm', doctype: 'CRM Lead', view: 'list' }
+    const { items } = resolve([osAct, appAct, dtAct, viewAct], 'menubar:file', ctx)
+    expect(items.map((i) => i.command).sort()).toEqual(['app', 'dt', 'os', 'view']) // all four carry forward
+  })
+
+  it('swapping focus to another app drops the surface-specific scopes but keeps OS (carry-forward)', () => {
+    const osAct = sc('os', { tier: 'os' })
+    const dtAct = sc('dt', { tier: 'doctype', doctype: 'CRM Lead' })
+    const { items } = resolve([osAct, dtAct], 'menubar:file', { activeApp: 'erpnext', doctype: 'Sales Invoice' })
+    expect(items.map((i) => i.command)).toEqual(['os']) // the CRM Lead doctype scope is not front
+  })
+
+  it('a narrower Scope OVERRIDES a broader one for the same command (specificity carry-forward)', () => {
+    const osDefault = sc('title', { tier: 'os' }, { sourceApp: 'frappe' })
+    const dtOverride = sc('title', { tier: 'doctype', doctype: 'CRM Lead' }, { sourceApp: 'crm' })
+    const { items, shadows } = resolve([osDefault, dtOverride], 'menubar:file', { doctype: 'CRM Lead' })
+    expect(items.map((i) => i.sourceApp)).toEqual(['crm']) // the doctype scope wins
+    expect(shadows[0]).toMatchObject({ command: 'title', reason: 'override' })
+    expect(shadows[0].loser.sourceApp).toBe('frappe')
+  })
+
+  it('a narrower Scope can REMOVE an inherited Action (carry-forward removal, ADR-0014)', () => {
+    const osDefault = sc('title', { tier: 'os' }, { sourceApp: 'frappe' })
+    const dtRemoval = sc('title', { tier: 'doctype', doctype: 'CRM Lead' }, { sourceApp: 'crm', removed: true })
+    // Front doctype matches → the doctype-scoped removal wins and suppresses the inherited OS item.
+    expect(resolve([osDefault, dtRemoval], 'menubar:file', { doctype: 'CRM Lead' }).items).toEqual([])
+    // A different doctype is front → the removal is ineligible, the OS default carries forward.
+    expect(resolve([osDefault, dtRemoval], 'menubar:file', { doctype: 'Contact' }).items.map((i) => i.command))
+      .toEqual(['title'])
   })
 })
 

@@ -7,6 +7,25 @@ import type { Surface } from '@/surface/types'
 // The override layers, in increasing precedence (ADR-0007). An Action defaults to 'app'.
 export type Layer = 'app' | 'site' | 'user'
 
+// The Scope tiers, broadest → narrowest (ADR-0032). Scope is *where an Action is declared* — the
+// OS manifest tier it is co-located in — independent of Region (*where it renders*) and Layer
+// (*who customizes it*). A broader tier carries forward into narrower ones (OS ⊕ App ⊕ Doctype ⊕
+// View), composed additively and overridable/removable per Layer.
+export type Scope = 'os' | 'app' | 'doctype' | 'view'
+
+// An Action's Scope binding: the tier plus the context coordinate it is co-located with — the app
+// (App/Doctype/View), doctype (Doctype/View), and view (View) whose manifest declares it. The tier
+// auto-supplies Eligibility (see ./scope.ts — it turns this into the equality `when` the author
+// would otherwise hand-write) and picks the delivery channel (OS/App → boot, Doctype/View → live
+// meta; slice 03). An absent binding on an Action means OS scope (global) — the backward-compatible
+// default for the chrome Actions authored before the Scope axis.
+export interface ScopeBinding {
+  tier: Scope
+  app?: string
+  doctype?: string
+  view?: string
+}
+
 // The OS's current focus situation — a flat, fixed-shape snapshot derived from the single
 // focused window (CONTEXT.md → Context). `activeApp`/`windowRole` are the *window* tier;
 // `doctype`/`recordName`/`view`/`appletId` are the *surface* tier. `selection` is excluded
@@ -67,6 +86,7 @@ export interface Action {
   command: string
   region: string
   sourceApp: string
+  scope?: ScopeBinding
   when?: When
   order?: number
   priority?: number

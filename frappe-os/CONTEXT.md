@@ -260,6 +260,18 @@ toolbar, a context menu, the command palette, the dock, the desktop. For an Acti
 owns the set of regions (closed-but-data-driven, like extension-point types — ADR-0004).
 _Avoid_: treating Region as Actions-only — the dock and desktop also host Placements.
 
+**Scope**:
+The **OS manifest** an **Action** (or **Indicator rule**) is declared in — **OS / App / Doctype /
+View**. A Scope does two automatic jobs: it **auto-supplies Eligibility** (a Doctype-scoped Action's
+`when` is "a surface of this doctype is front", so authors rarely hand-write it), and it **picks the
+delivery channel** (OS/App → boot; Doctype/View → live meta). A broader Scope **carries forward**
+into narrower ones — an App Action shows across all its doctypes/views; a Doctype Action shows in all
+its views — composed additively and overridable/removable per **Layer** (ADR-0032/0014). The third
+axis alongside **Region** (*where it renders*) and **Layer** (*who customizes*): Scope is *where it is
+declared / which context it belongs to*.
+_Avoid_: conflating Scope with **Layer** (App<Site<User customization) or with **Region** — three
+independent axes.
+
 **Placement**:
 A user-arrangeable pin of a **surface reference** into a **Region** (today the **desktop** or
 the **dock**), carrying a region-appropriate **position** (the desktop a 2-D spot, the dock a 1-D

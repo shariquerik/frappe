@@ -19,6 +19,7 @@
 // the slot's RENDER placement (group + order) from the default it shadows when it declares none, so
 // re-presenting a default (a commandPatch re-title) never silently relocates the item across groups.
 import { isEligible } from './eligibility'
+import { effectiveWhen } from './scope'
 import { specificity, compareSpecificity } from './specificity'
 import type { Action, Context, ShadowEvent } from './types'
 
@@ -28,8 +29,11 @@ const priorityOf = (a: Action): number => a.priority ?? 0
 const orderOf = (a: Action): number => a.order ?? 0
 
 // Compare two competitors down the tiebreak chain. >0 when `a` outranks `b`; 0 is a true tie.
+// Specificity reads the EFFECTIVE `when` (Scope-derived ⊕ hand-written), so a narrower Scope wins
+// carry-forward for free — View's two-key surface predicate outranks Doctype's one-key one, which
+// outranks App's window predicate, which outranks OS's global (ADR-0032). No new tiebreak axis.
 function compareActions(a: Action, b: Action): number {
-  return compareSpecificity(specificity(a.when), specificity(b.when))
+  return compareSpecificity(specificity(effectiveWhen(a)), specificity(effectiveWhen(b)))
     || layerRank(a) - layerRank(b)
     || priorityOf(a) - priorityOf(b)
 }
@@ -99,7 +103,7 @@ export interface ResolveResult {
 // Resolve a region against the Context: the winning Actions (in ascending within-region render
 // order), plus the attributed, logged shadows.
 export function resolve(actions: Action[], region: string, context: Context): ResolveResult {
-  const eligible = actions.filter((a) => a.region === region && isEligible(a.when, context))
+  const eligible = actions.filter((a) => a.region === region && isEligible(effectiveWhen(a), context))
   const shadows: ShadowEvent[] = []
   const items: Action[] = []
   for (const [command, competitors] of groupByCommand(eligible)) {
