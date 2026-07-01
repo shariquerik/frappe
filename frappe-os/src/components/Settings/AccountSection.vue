@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Account pane body — the logged-in user's identity at the top of Settings (ADR-0027). A
 // bespoke compact pane (consistent with the hand-built Appearance/Dock/General panes): a
-// header card with avatar + full name + email, an editable first/last name, and read-only
-// username / roles / last-login. Reads & writes ride useAccount(), which persists ONLY the
-// permlevel-0 identity fields via the own-user self-DocShare — no System Manager needed.
+// header card with avatar + full name + email and an editable first/last name. Reads &
+// writes ride useAccount(), which persists ONLY the permlevel-0 identity fields via the
+// own-user self-DocShare — no System Manager needed.
 import { computed, onMounted, ref, watch } from 'vue'
 import { Avatar, Button, FileUploader, FormControl, LoadingIndicator } from 'frappe-ui'
 import { useAccount } from '@/data/account'
@@ -27,12 +27,6 @@ onMounted(() => load())
 
 const fullName = computed(() => (state.doc?.full_name as string) || (state.doc?.name as string) || '')
 const email = computed(() => (state.doc?.email as string) || (state.doc?.name as string) || '')
-const username = computed(() => (state.doc?.username as string) || '—')
-const lastLogin = computed(() => (state.doc?.last_login as string) || 'Never')
-const roleNames = computed(() => {
-  const roles = (state.doc?.roles as { role: string }[]) || []
-  return roles.map((r) => r.role).join(', ') || '—'
-})
 
 // The name is dirty only when a field differs from the saved doc; an all-whitespace first
 // name would clear the identity, so it can't be saved.
@@ -99,20 +93,6 @@ function setAvatar(fileUrl = ''): void {
         <Button label="Save" variant="solid" :loading="state.saving" :disabled="!canSaveName" @click="saveName" />
       </div>
       <div v-if="state.error && state.doc" class="pb-2 text-[12px] text-ink-red-6">{{ state.error }}</div>
-
-      <!-- Read-only identity, gated above permlevel 0 -->
-      <div class="flex items-center gap-3 border-t border-outline-gray-1 py-[11px]">
-        <span class="flex-1 text-[13px] text-ink-gray-8">Username</span>
-        <span class="text-[12.5px] text-ink-gray-6">{{ username }}</span>
-      </div>
-      <div class="flex items-center gap-3 border-t border-outline-gray-1 py-[11px]">
-        <span class="flex-shrink-0 text-[13px] text-ink-gray-8">Roles</span>
-        <span class="truncate text-right text-[12.5px] text-ink-gray-6">{{ roleNames }}</span>
-      </div>
-      <div class="flex items-center gap-3 border-t border-outline-gray-1 py-[11px]">
-        <span class="flex-1 text-[13px] text-ink-gray-8">Last login</span>
-        <span class="text-[12.5px] text-ink-gray-6">{{ lastLogin }}</span>
-      </div>
     </template>
   </div>
 </template>
