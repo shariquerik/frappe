@@ -57,8 +57,6 @@ const keyOf = placementKey
 
 <template>
   <div class="flex min-w-0 flex-1 flex-col overflow-auto px-[22px] py-5">
-    <div class="mb-3 mt-1 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">{{ location.toUpperCase() }}</div>
-
     <!-- Recents starts empty until a record is opened; the other tile Locations are never empty. -->
     <div v-if="location === 'Recents' && !tiles.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
       No recent records yet. Open a record and it shows up here.
