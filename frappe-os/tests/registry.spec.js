@@ -226,45 +226,41 @@ describe('server-projected registry', () => {
 
   it('indexes the server payload directly for a doctype config does not curate', () => {
     // 'Widget' is absent from config/doctypes — it must still appear, from server meta.
-    initRegistry(boot([app('frappe', 'Frappe'),
-      display('Widget', { label: 'Widget', titleField: 'title', listColumns: [{ key: 'title', label: 'Name', primary: true }] })]))
+    initRegistry(boot([app('frappe', 'Frappe'), display('Widget', { label: 'Widget' })]))
     const reg = useRegistry()
     expect(reg.displayConfig('Widget')?.label).toBe('Widget')
-    expect(reg.displayConfig('Widget')?.listColumns?.length).toBe(1)
     expect(appForDoctype('Widget')).toBe('frappe') // ownership from the display-config sourceApp
   })
 
-  it('overlays OS-native presentation, bespoke columns winning over the server payload', () => {
-    // User is a hand-tuned (bespoke) meta: its curated columns override the server's.
-    initRegistry(boot([app('frappe', 'Frappe'),
-      display('User', { label: 'Server User', titleField: 'name', listColumns: [{ key: 'name', label: 'ServerName', primary: true }] })]))
+  it('overlays the OS-native look over the server payload (ADR-0028)', () => {
+    // User is curated with an OS-native color; the overlay wins over the server's look, while
+    // the server still owns the textual label. Presentation semantics are no longer on the meta.
+    initRegistry(boot([app('frappe', 'Frappe'), display('User', { label: 'Server User', color: 'gray' })]))
     const meta = useRegistry().displayConfig('User')
     expect(meta?.label).toBe('Server User') // server owns the textual fields
-    expect(meta?.listColumns?.[0].key).toBe('full_name') // bespoke curated columns win
-    expect(meta?.statusThemes).toBeDefined() // OS-native overlay from config
+    expect(meta?.color).toBe('blue') // OS-native curated color wins over the server payload
   })
 
-  it('lets a generic doctype defer listColumns/statusField to the server projection', () => {
-    // Warehouse is a generic placeholder meta — its real in_list_view columns come from the
-    // server; only the OS-native color/icon/status palette stays curated (ADR-0011, step 5.1).
-    initRegistry(boot([app('erpnext', 'ERPNext'),
-      display('Warehouse', { label: 'Warehouse', titleField: 'name', listColumns: [{ key: 'name', label: 'Name', primary: true }, { key: 'company', label: 'Company' }] }, 'erpnext')]))
+  it('overlays only the look for a generic doctype; carries no presentation semantics', () => {
+    // Warehouse is a generic placeholder meta — only its OS-native color/icon stays curated; the
+    // title/status/columns come live from get_doctype_meta now (ADR-0028), never on the Registry.
+    initRegistry(boot([app('erpnext', 'ERPNext'), display('Warehouse', { label: 'Warehouse' }, 'erpnext')]))
     const meta = useRegistry().displayConfig('Warehouse')
-    expect(meta?.listColumns?.map((c) => c.key)).toEqual(['name', 'company']) // server wins
-    expect(meta?.statusField).toBeUndefined() // generic 'status' not overlaid; server sent none
-    expect(meta?.color).toBe('orange') // OS-native color still overlaid
+    expect(meta?.color).toBe('orange') // OS-native color overlaid
+    expect(meta?.statusField).toBeUndefined() // presentation semantics are live, not on the meta
+    expect(meta?.listColumns).toBeUndefined()
   })
 
   it('patch-merges a later display-config over an app default (ADR-0007)', () => {
     // App default, then a Property-Setter-style site patch for the same doctype: shallow merge.
     initRegistry(boot([
       app('crm', 'CRM'),
-      display('Lead Thing', { label: 'Lead Thing', titleField: 'name' }, 'crm'),
-      { ...display('Lead Thing', { titleField: 'lead_name' }, '__site__'), name: 'patch', order: 1 },
+      display('Lead Thing', { label: 'Lead Thing', color: 'gray' }, 'crm'),
+      { ...display('Lead Thing', { color: 'blue' }, '__site__'), name: 'patch', order: 1 },
     ]))
     const meta = useRegistry().displayConfig('Lead Thing')
     expect(meta?.label).toBe('Lead Thing') // kept from the app default
-    expect(meta?.titleField).toBe('lead_name') // overridden by the site patch
+    expect(meta?.color).toBe('blue') // overridden by the site patch
   })
 
   it('enriches the app payload with curated branding + server identity', () => {

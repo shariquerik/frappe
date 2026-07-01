@@ -108,8 +108,11 @@ function winTitle(w: OsWindow): string | undefined {
   const sysTitle = systemWindowTitle(role, s.view, os.DATA.APP[s.appId!].name)
   if (sysTitle) return sysTitle
   if (s.view === 'form') {
-    const m = os.getMeta(s.doctype!), r = os.recordObj(s.doctype!, s.recordName!)
-    return (r && (r[m?.titleField || ''] || r.name)) || s.recordName!
+    // Title field comes live from the form's field-meta fetch (ADR-0028); the record name is
+    // the fallback until it loads (a form window always fetches it, so the title upgrades).
+    const titleField = os.fieldMetaFor(s.doctype!).data?.title_field
+    const r = os.recordObj(s.doctype!, s.recordName!)
+    return (r && (r[titleField || ''] || r.name)) || s.recordName!
   }
   if (s.view === 'list') return s.doctype
   return os.DATA.APP[s.appId!].name

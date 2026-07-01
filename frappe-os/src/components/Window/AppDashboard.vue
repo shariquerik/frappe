@@ -11,6 +11,7 @@ import { Button, Avatar } from "frappe-ui";
 import { useOS } from "@/desktop";
 import { greeting as greetingFor } from "@/config/apps";
 import StatusPill from "@/components/StatusPill.vue";
+import { indicatorFor } from "@/indicators/indicator";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see summary.md gotcha).
 import type { OsWindow, BuiltinSurface } from "@/surface/types";
@@ -45,23 +46,23 @@ const stats = computed(() =>
 		};
 	}),
 );
+// Recents: the icon stays curated (identity), but the title field and the status pill come
+// LIVE from the field-meta fetch (ADR-0028) — title_field and the Record-indicator spec.
 const recents = computed(() => {
 	const rd = app.value.recentDoctype,
 		rm = os.getMeta(rd);
 	if (!rm) return [];
-	return (os.listFor(rd).data || []).slice(0, 6).map((r) => {
-		const stv = r[rm.statusField || ""];
-		return {
-			title: r[rm.titleField] || r.name,
-			sub: rd + " · " + r.name,
-			icon: rm.icon,
-			status: stv,
-			theme: (rm.statusThemes || {})[stv] || "gray",
-			when: (r.modified || "").slice(0, 10),
-			name: r.name,
-			rd,
-		};
-	});
+	const live = os.fieldMetaFor(rd).data;
+	const titleField = live?.title_field || "name";
+	return (os.listFor(rd).data || []).slice(0, 6).map((r) => ({
+		title: r[titleField] || r.name,
+		sub: rd + " · " + r.name,
+		icon: rm.icon,
+		indicator: indicatorFor(r, live?.indicator),
+		when: (r.modified || "").slice(0, 10),
+		name: r.name,
+		rd,
+	}));
 });
 const actions = computed(() =>
 	(app.value.modules[0].doctypes || []).slice(0, 4).map((dt) => ({ label: "New " + dt, dt })),
@@ -86,7 +87,10 @@ watch(
 		(app.value.cards || []).forEach((card) =>
 			os.loadCount(card.doctype, card.filters, card.fieldname),
 		);
-		if (app.value.recentDoctype) os.loadList(app.value.recentDoctype);
+		if (app.value.recentDoctype) {
+			os.loadList(app.value.recentDoctype);
+			os.loadFieldMeta(app.value.recentDoctype);
+		}
 	},
 	{ immediate: true },
 );
@@ -147,7 +151,7 @@ watch(
 							>{{ r.sub }}</span
 						>
 					</div>
-					<StatusPill v-if="r.status != null" :value="r.status" :theme="r.theme" />
+					<StatusPill v-if="r.indicator" :value="r.indicator.label" :theme="r.indicator.color" />
 					<span class="w-14 flex-shrink-0 text-right text-[11px] text-ink-gray-4">{{
 						r.when
 					}}</span>

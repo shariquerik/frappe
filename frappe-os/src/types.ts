@@ -11,6 +11,7 @@
 //   desktop/types.ts   — the window-manager's OsState
 //   routing/types.ts   — the parsed RouteParams
 //   actions/types.ts   — the Action/extension model (Command/Action/Region/Handler/Context)
+//   indicators/types.ts — the Record-indicator spec + resolved pill (ADR-0028)
 export * from './surface/types'
 export * from './config/types'
 export * from './data/types'
@@ -20,3 +21,4 @@ export * from './recents/types'
 export * from './desktop/types'
 export * from './routing/types'
 export * from './actions/types'
+export * from './indicators/types'

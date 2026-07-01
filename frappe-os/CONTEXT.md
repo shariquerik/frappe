@@ -54,6 +54,26 @@ kind a Surface is. Replaces the POC's fixed `view: {mode, doctype, recordName}`.
 A movable, focusable container on the desktop that hosts exactly one **Surface** at a time
 (and carries its own back/forward nav history). The container; the Surface is its content.
 
+**Working state**:
+The per-window, per-subject state a user builds up on top of a **Surface** — a list's
+filters/sort/columns (its **View Snapshot**), a form's unsaved edits (its **draft**), scroll
+position, and an **Applet**'s own internal blob. The third leg alongside the two other
+per-window facts: distinct from the **Surface** it layers over (the addressable coordinate —
+doctype/record/view/aspect) and from the window's geometry (position/size/z). Keyed per
+**(Window × subject)**, where the *subject* is a coarsened surface identity — a form's is
+doctype+record with the **Aspect excluded** (so edits survive Aspect switches), a list's is
+just its doctype. Hoisted into the OS store so it survives a **Window** being unmounted (the
+basis for unmounting cold windows to reclaim memory). Each entry declares a **persistence
+policy**: *durable* (also written to `localStorage`, so it survives reload — the list **View
+Snapshot** is the one durable case today) or *ephemeral* (memory-only — form drafts, scroll,
+applet state). An **ephemeral** entry that is **dirty** (has unsaved edits) arms a reload
+confirmation ("unsaved changes will be lost") rather than being silently dropped *or* written
+to disk. **Applets**, being custom-coded, participate only through an **OS API** seam
+(`useWorkingState`) — which is also where an applet declares its own persistence policy and
+dirty signal — never by the OS reaching inside them.
+_Avoid_: "session state" (collides with the auth session), "view state" ("view" is the
+doctype view — overloaded), "draft" (that is only the form part, not the umbrella).
+
 **Default surface**:
 The **Surface** an app's **Window** opens on when the app is launched (dock/logo click, or a
 cold-boot deep-link to the bare app). Resolved by one uniform rule: the app's **declared**
@@ -118,17 +138,25 @@ Some views are generic (list/form, rendered from data); others are applet-backed
 (kanban/calendar). A doctype can offer several views.
 
 **Display config**:
-The declarative presentation settings for a doctype — label, color, icon, list columns,
-status→color mapping, default filters and sort. What today's hand-curated
-`config/doctypes.ts` holds; in the target architecture it is a contribution in the Registry.
-For the **list** Surface it is now an **enrichment layer**: the user-editable column / filter /
-sort *state* is owned by the shared **List View Controls** (Meta-driven — see below), while
-Display config supplies the curated *presentation* over those Meta-derived columns — the cell
-kind (status pill / avatar / primary), the status→color mapping, and the default shown set.
-That enrichment layer is **deferred**: the first slice renders Meta-derived plain cells and
-reapplies Display-config presentation later.
-_Avoid_: conflating Display config's cell-kind `type` (status / avatar — a *presentation*
-choice) with the library **Column**'s `type` (the Meta-derived *data* type used for alignment).
+The **curated identity** a doctype carries — its label, color, and icon (plus the `generic`
+authoring marker). Hand-authored today in `config/doctypes.ts`; in the target architecture a
+contribution in the Registry, server-projected in server mode (config is then only decoration).
+It owns **aesthetics only**. It does **not** own the status field, status colors, list columns, or
+the title — those are resolved **live** from doctype meta, not curated (see **Record indicator**
+and ADR-0028).
+_Avoid_: treating status→color or cell kind as Display config — they were before ADR-0028 and are
+now derived. Also _avoid_ conflating a rendered cell's kind (status pill / avatar / primary — a
+list-render choice over the live wire columns) with the library **Column**'s `type` (the
+Meta-derived *data* type used for alignment).
+
+**Record indicator**:
+A record's status resolved **at render time** to a `{label, color}` pill from the site's **own
+data** — active workflow state, `DocType.states`, docstatus, or an enabled/disabled field — not
+from a curated value→color map. A per-**record** projection (`record → (label, color)`), which is
+exactly what distinguishes it from the old per-value status palette it replaces (ADR-0028).
+"Indicator" is Frappe's own term for the status dot, so this stays in step with Desk.
+_Avoid_: "status theme" / "status→color map" — that is the curated predecessor; a Record
+indicator is derived, never authored.
 
 **List View Controls** (consumed from `@framework/ui`):
 The shared SortBy / Filter / ColumnSettings / QuickFilter controls (plus the `useListView`
@@ -139,7 +167,9 @@ from the OS **Registry**. A deliberate carve-out — field *schema* (fieldtypes 
 raw Frappe metadata, distinct from the curated **Display config** the Registry owns. frappe-os
 keeps **fetching** through its own OS data layer, fed by the controls' wire projections; the
 library's optional fetching companion is not used. **Persistence** is the host's to wire
-(library tops out at a View Snapshot) and is deferred for now — view state is in-memory only.
+(library tops out at a View Snapshot): frappe-os hoists that snapshot into per-window **Working
+state** and declares it *durable*, so a list's filters/sort/columns/quick-filters survive both a
+window unmount and a reload.
 For the controls' own vocabulary see the library's [`ui/CONTEXT.md`](../ui/CONTEXT.md).
 
 **Declarative contribution**:

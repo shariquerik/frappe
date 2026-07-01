@@ -4,9 +4,10 @@
 // the view's teleported New/Save/menu). Global search and app settings live only in the top
 // MenuBar. Derives everything from the window's surface via the
 // store. Styled on frappe-ui tokens; Button/Avatar come from frappe-ui.
-import { computed, inject, shallowRef } from "vue";
+import { computed, inject, shallowRef, watch } from "vue";
 import { Button, Avatar } from "frappe-ui";
 import StatusPill from "@/components/StatusPill.vue";
+import { indicatorFor } from "@/indicators/indicator";
 import { useOS } from "@/desktop";
 import { TOOLBAR_SLOT } from "./toolbar";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
@@ -39,17 +40,24 @@ const listCount = computed(() => {
 	return c.data == null ? null : c.data;
 });
 
+// The breadcrumb title + status pill read the live meta (ADR-0028): title_field and the
+// Record-indicator spec. Load it whenever a doctype window is in front (the form fetches the
+// same meta, but the toolbar can render before/without a mounted form).
+watch(
+	() => s.value.doctype,
+	(dt) => {
+		if (dt) os.loadFieldMeta(dt);
+	},
+	{ immediate: true },
+);
+
 // The record's status, shown as a pill next to the form breadcrumb (the form's own title row
-// merged up here, mirroring the list count). Read from the live record + curated meta themes.
+// merged up here, mirroring the list count). Resolved live per record (ADR-0028).
 const formStatus = computed(() => {
 	if (mode.value !== "form" || !s.value.doctype || s.value.recordName === "new") return null;
-	const meta = os.getMeta(s.value.doctype);
-	const field = meta?.statusField;
-	if (!field) return null;
 	const record = os.recordObj(s.value.doctype, s.value.recordName!);
-	const value = record?.[field];
-	if (value == null) return null;
-	return { value, theme: (meta?.statusThemes || {})[value] || "gray" };
+	if (!record) return null;
+	return indicatorFor(record, os.fieldMetaFor(s.value.doctype).data?.indicator);
 });
 
 const crumbs = computed(() => {
@@ -71,9 +79,9 @@ const crumbs = computed(() => {
 			out.push({ label: "New " + s.value.doctype, clickable: false });
 		} else {
 			const r = os.recordObj(s.value.doctype!, s.value.recordName!);
-			const m = os.getMeta(s.value.doctype!);
+			const titleField = os.fieldMetaFor(s.value.doctype!).data?.title_field;
 			out.push({
-				label: (r && (r[m?.titleField || ""] || r.name)) || s.value.recordName!,
+				label: (r && (r[titleField || ""] || r.name)) || s.value.recordName!,
 				clickable: false,
 			});
 		}
@@ -128,8 +136,8 @@ const barPresence = computed(() => os.presenceFor(s.value).map((p) => ({ label: 
 	</div>
 	<StatusPill
 		v-if="formStatus"
-		:value="formStatus.value"
-		:theme="formStatus.theme"
+		:value="formStatus.label"
+		:theme="formStatus.color"
 		class="flex-shrink-0"
 	/>
 	<div class="flex-1"></div>

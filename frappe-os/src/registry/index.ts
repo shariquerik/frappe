@@ -3,9 +3,9 @@
 // reads (apps / display config / views / cards) — the SINGLE config/* importer. Two modes
 // (ADR-0005/0010/0011):
 //   - SERVER PRESENT (boot.registry): index the server-projected payloads DIRECTLY
-//     (label/titleField/listColumns/statusField from Desk meta), then OVERLAY the
-//     OS-native presentation Desk can't express — app glyph/hex/logo/modules/cards/
-//     dashboard prefs, doctype icon/color/statusThemes/curated columns — keyed by id.
+//     (the doctype's label from Desk meta), then OVERLAY the OS-native LOOK Desk can't
+//     express — app glyph/hex/logo/modules/cards/dashboard prefs, doctype icon/color —
+//     keyed by id. Presentation semantics (title/status/columns) come live, not here (ADR-0028).
 //     A doctype the server exposes but config/* does not curate still lights up from its
 //     server payload: config is decoration now, no longer the source of "what exists".
 //   - OFFLINE (no/legacy/junk registry): index the full config/* SEED unchanged — the
@@ -157,19 +157,17 @@ function keysOf(reg: OsRegistryData, type: string, key: (c: Contribution) => str
   return new Set(reg.contributions.filter((c) => c.type === type).map(key))
 }
 
-// Presentation Desk can't express (ADR-0011): curated icons/colors/status palettes/columns
-// kept client-side, keyed by doctype, shallow-merged OVER the server payload (curated wins).
-const OS_NATIVE_META = ['color', 'icon', 'statusField', 'statusThemes', 'listColumns', 'savedViews'] as const
-// Generic placeholder metas defer these to the live server projection (which reflects the
-// doctype's real in_list_view / status fields); only hand-tuned bespoke columns override it.
-const BESPOKE_ONLY = ['statusField', 'listColumns']
+// OS-native LOOK Desk can't express (ADR-0011/0028): curated icons/colors kept client-side,
+// keyed by doctype, shallow-merged OVER the server payload (curated wins). Presentation
+// semantics (title/status/columns) are no longer here — they come live from get_doctype_meta.
+const OS_NATIVE_META = ['color', 'icon', 'savedViews'] as const
 
 function osNativeMeta(doctype: string): Partial<DoctypeMeta> {
   const meta = doctypes[doctype]
   if (!meta) return {}
   const out: Partial<DoctypeMeta> = {}
   for (const key of OS_NATIVE_META) {
-    if (meta[key] === undefined || (meta.generic && BESPOKE_ONLY.includes(key))) continue
+    if (meta[key] === undefined) continue
     (out as Record<string, unknown>)[key] = meta[key]
   }
   return out

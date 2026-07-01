@@ -12,6 +12,7 @@ import { SortBy } from "@framework/ui/SortBy";
 import { QuickFilter } from "@framework/ui/QuickFilter";
 import { ColumnSettings } from "@framework/ui/ColumnSettings";
 import OSListView from "./OSListView.vue";
+import { listFetchFields } from "./list-columns";
 import { useOS } from "@/desktop";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
@@ -41,6 +42,10 @@ watch(
 	{ immediate: true },
 );
 const canCreate = computed(() => !!fieldMeta.value.data?.can_create);
+// The live Record-indicator spec + title field (ADR-0028) that theme the list's status cell
+// and mark the primary column — from the same field-meta fetch `can_create` rides.
+const indicatorSpec = computed(() => fieldMeta.value.data?.indicator ?? null);
+const titleField = computed(() => fieldMeta.value.data?.title_field ?? "name");
 
 // Fetch projections drive the OS-store reads (ADR-0025): the controls own filter/sort
 // state, the host owns fetching. Empty filters normalize to `undefined` so the unfiltered
@@ -51,6 +56,11 @@ const wireFilters = computed(() => {
 });
 const orderBy = computed(() => view.sort.orderBy.value || "modified desc");
 const pageLength = ref(20);
+
+// The lean fetch (ADR-0028, #04b): name + the visible wire columns + the fields the indicator
+// resolver reads, derived from the spec the client already holds — no `['*']`, no dark tiers.
+// Toggling a column on re-fetches (its field is now needed); `modified` rides in as a column.
+const fetchFields = computed(() => listFetchFields(view.columns.wire.value, indicatorSpec.value));
 
 // Live rows + filter-aware count (keyed by the SAME wire filters it is loaded with, so the
 // footer's "X of Y" reflects the active filters rather than the unfiltered total).
@@ -69,6 +79,7 @@ watchEffect(() => {
 	const dt = doctype.value;
 	if (!dt) return;
 	os.loadList(dt, {
+		fields: fetchFields.value,
 		filters: wireFilters.value,
 		order_by: orderBy.value,
 		limit: pageLength.value,
@@ -77,6 +88,7 @@ watchEffect(() => {
 });
 function loadMore() {
 	os.loadMore(doctype.value, {
+		fields: fetchFields.value,
 		filters: wireFilters.value,
 		order_by: orderBy.value,
 		limit: pageLength.value,
@@ -149,6 +161,8 @@ const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid
 			:columns="view.columns.wire.value"
 			:rows="records"
 			:meta="meta"
+			:spec="indicatorSpec"
+			:title-field="titleField"
 			:loading="listState.loading"
 			:error="listState.error"
 			:on-open="onOpen"

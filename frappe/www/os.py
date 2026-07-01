@@ -314,12 +314,9 @@ def _action_contributions():
 	return _hook_contributions("os_actions", ("command", "region"), project)
 
 
-# Fieldtype → the list column "type" the renderer themes (DocView). Plain text otherwise.
-COLUMN_TYPES = {"Currency": "currency", "Int": "int"}
-
-
 def _status_field(meta):
-	"""A Select field named status/stage — Desk's status convention (None if absent)."""
+	"""A Select field named status/stage — Desk's status convention (None if absent). The
+	indicator-spec fallback status field when the doctype has no active workflow (ADR-0028)."""
 	for name in ("status", "stage"):
 		df = meta.get_field(name)
 		if df and df.fieldtype == "Select":
@@ -327,53 +324,69 @@ def _status_field(meta):
 	return None
 
 
-def _list_column(df, status_field):
-	"""One list column projected from a meta field; a status field renders as a pill."""
-	column = {"key": df.fieldname, "label": df.label or df.fieldname}
-	column_type = "status" if df.fieldname == status_field else COLUMN_TYPES.get(df.fieldtype)
-	if column_type:
-		column["type"] = column_type
-	return column
+def _enabled_field(meta):
+	"""The enabled-state field name — 'enabled' (truthy = active) or 'disabled' (truthy =
+	inactive), else None. Opposite polarities; the client resolver reads which from the name."""
+	for name in ("enabled", "disabled"):
+		if meta.get_field(name):
+			return name
+	return None
 
 
-def _list_columns(meta, status_field, title_field):
-	"""List columns from the doctype's in_list_view fields (ADR-0011), the title first."""
-	columns = [{"key": title_field, "label": _("Name"), "primary": True}]
-	seen = {columns[0]["key"]}
-	for df in meta.fields:
-		if not df.in_list_view or df.fieldtype in SKIP_FIELDTYPES or df.fieldname in seen:
-			continue
-		seen.add(df.fieldname)
-		columns.append(_list_column(df, status_field))
-		if len(columns) >= 5:
-			break
-	return columns
+def _state_colors(meta):
+	"""DocType.states: status value -> a Frappe color token, scrubbed to a lowercase token
+	(ADR-0028). The client normalizes it onto a Badge token; empty when the doctype has none."""
+	colors = {}
+	for state in meta.get("states") or []:
+		if state.color:
+			colors[state.title] = state.color.lower().replace(" ", "-")
+	return colors
 
 
-def _title_default(doctype):
-	"""The app-shipped title field (DocType row), ignoring this site's Property Setters —
-	so the base display-config is the honest App-default layer a Site patch merges over."""
-	return frappe.db.get_value("DocType", doctype, "title_field") or "name"
+def _workflow_styles(doctype):
+	"""The active workflow's (state field, {state -> Workflow State.style}). (None, {}) when
+	the doctype has no workflow — the client then falls back to the status field."""
+	from frappe.model.workflow import get_workflow_name
+
+	workflow_name = get_workflow_name(doctype)
+	if not workflow_name:
+		return None, {}
+	workflow = frappe.get_cached_doc("Workflow", workflow_name)
+	styles = {}
+	for row in workflow.states:
+		style = frappe.get_cached_value("Workflow State", row.state, "style")
+		if style:
+			styles[row.state] = style
+	return workflow.workflow_state_field, styles
+
+
+def _indicator_spec(doctype, meta):
+	"""Normalized Record-indicator spec (ADR-0028): how to resolve this doctype's records to a
+	status pill, from the site's own workflow/states/docstatus/enabled data. The active workflow's
+	state field wins as the status field, else a Select named status/stage."""
+	workflow_field, workflow_styles = _workflow_styles(doctype)
+	return {
+		"statusField": workflow_field or _status_field(meta),
+		"workflow": workflow_styles,
+		"states": _state_colors(meta),
+		"isSubmittable": bool(meta.is_submittable),
+		"enabledField": _enabled_field(meta),
+	}
 
 
 def _display_payload(doctype, meta):
-	"""Display-config payload projected from Desk meta (ADR-0011): label, title, columns,
-	status. OS-native presentation (icons, colors, status palettes) is overlaid client-side."""
-	status_field = _status_field(meta)
-	title_field = _title_default(doctype)
-	payload = {
-		"label": _(doctype),
-		"titleField": title_field,
-		"listColumns": _list_columns(meta, status_field, title_field),
-	}
-	if status_field:
-		payload["statusField"] = status_field
-	return payload
+	"""Identity the boot Registry carries for a doctype (ADR-0028): its label only. Presentation
+	semantics — title field, status field/colors, list columns — moved to live meta
+	(get_doctype_meta), so the Registry no longer projects them. OS-native look (icons, colors)
+	is overlaid client-side."""
+	return {"label": _(doctype)}
 
 
-# Property Setter property → DisplayConfigPayload field (ADR-0011 Site layer). Only
-# doctype-level scalar properties with a faithful OS equivalent map; the rest are skipped.
-DISPLAY_PATCH_PROPERTIES = {"title_field": "titleField"}
+# Property Setter property → DisplayConfigPayload field (ADR-0011 Site layer). Empty since
+# ADR-0028 moved presentation semantics (title/status/columns) to live meta — which already
+# reflects this site's Property Setters — so no doctype-level scalar property has an OS display
+# equivalent to patch. The Site-layer patch seam stays for any property that gains one.
+DISPLAY_PATCH_PROPERTIES = {}
 
 
 def _doctype_property_setters():
@@ -751,6 +764,7 @@ def get_doctype_meta(doctype: str):
 	return {
 		"doctype": meta.name,
 		"title_field": meta.title_field or "name",
+		"indicator": _indicator_spec(doctype, meta),
 		"can_create": frappe.has_permission(doctype, "create"),
 		"can_write": frappe.has_permission(doctype, "write"),
 		"fields": fields,

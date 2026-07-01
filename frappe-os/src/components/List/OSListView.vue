@@ -16,6 +16,7 @@ import { cellKind } from './list-columns'
 // These feed defineProps, so import from concrete modules, not the @/types barrel (its
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { DoctypeMeta } from '@/config/types'
+import type { IndicatorSpec } from '@/indicators/types'
 import type { ListViewColumn } from './types'
 import type { FrappeDoc } from '@/data/types'
 
@@ -24,6 +25,8 @@ const props = withDefaults(defineProps<{
   columns?: ListViewColumn[] // render-ready columns (view.columns.wire)
   rows?: FrappeDoc[]
   meta?: DoctypeMeta | null
+  spec?: IndicatorSpec | null // live Record-indicator spec (ADR-0028) — themes the status cell
+  titleField?: string // live meta title_field — its column renders primary
   loading?: boolean
   error?: string | null
   onOpen?: (doctype: string, name: string) => void // left-click: follows the row open-target preference
@@ -56,7 +59,13 @@ function onResizerDoubleClick(event: MouseEvent) {
   if (column) emit('column-width-reset', { key: column.key })
 }
 
-const statusThemes = computed(() => props.meta?.statusThemes || {})
+// The per-record cell context (ADR-0028): the status field the pill resolves against, the
+// title field that renders primary, and the spec `indicatorFor` reads. Derived live, not curated.
+const cellContext = computed(() => ({
+  statusField: props.spec?.statusField,
+  titleField: props.titleField,
+  spec: props.spec,
+}))
 
 // Right-click a row → a small menu offering the two built-in opens (ADR-0017): Open (same
 // window) and Open in New Window (a fresh app instance). Both are explicit and ALWAYS offered
@@ -141,7 +150,7 @@ const options = computed(() => ({
            clicked record from anywhere in the row (see rowNameFromEvent). -->
       <template #cell="{ column, item, row }">
         <span :data-row-name="row.name" class="contents">
-          <template v-for="cell in [cellKind(item, column, statusThemes)]" :key="column.key">
+          <template v-for="cell in [cellKind(row, column, cellContext)]" :key="column.key">
             <StatusPill v-if="cell.kind === 'status'" :value="cell.display" :theme="cell.theme" />
             <span v-else-if="cell.kind === 'primary'" class="text-base font-medium text-ink-gray-8">{{ cell.display }}</span>
             <span v-else-if="cell.kind === 'avatar'" class="inline-flex items-center gap-1.5 text-base text-ink-gray-7">

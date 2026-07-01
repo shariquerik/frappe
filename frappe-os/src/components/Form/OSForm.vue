@@ -9,6 +9,7 @@ import { ref, computed, inject, shallowRef, watch } from "vue";
 import { Button, Avatar, Dropdown } from "frappe-ui";
 import { FormLayout, useDoctypeLayout } from "@framework/ui/FormLayout";
 import StatusPill from "@/components/StatusPill.vue";
+import { indicatorFor } from "@/indicators/indicator";
 import { useOS } from "@/desktop";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
@@ -88,17 +89,21 @@ const displayLayout = computed(() => {
 	return tabs.map((tab: any) => ({ ...tab, label: tab.label || "Details" }));
 });
 
+// Title + status come LIVE from the field-meta fetch (ADR-0028): the title field and the
+// Record-indicator spec, not the curated Registry meta. Both are reactive computeds with a
+// fallback, so they tolerate live meta that fills in after the fetch.
 const formTitle = computed(() => {
 	if (isNew.value) return "New " + (props.meta?.label || doctype.value);
 	return (
-		record.value?.[props.meta?.titleField || ""] ||
+		record.value?.[fieldMeta.value.data?.title_field || ""] ||
 		record.value?.name ||
 		props.recordName ||
 		""
 	);
 });
-const statusValue = computed(() => record.value?.[props.meta?.statusField || ""]);
-const statusTheme = computed(() => (props.meta?.statusThemes || {})[statusValue.value] || "gray");
+const indicator = computed(() =>
+	isNew.value || !record.value ? null : indicatorFor(record.value, fieldMeta.value.data?.indicator),
+);
 
 // ---------- dirty tracking + save / create ----------
 function changed(a: unknown, b: unknown) {
@@ -193,9 +198,9 @@ const formMenu = computed(() => [
 				<div class="flex items-center gap-2.5">
 					<span class="text-md font-semibold text-ink-gray-9">{{ formTitle }}</span>
 					<StatusPill
-						v-if="!isNew && statusValue != null"
-						:value="statusValue"
-						:theme="statusTheme"
+						v-if="indicator"
+						:value="indicator.label"
+						:theme="indicator.color"
 					/>
 				</div>
 			</div>

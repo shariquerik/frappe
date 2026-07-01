@@ -60,34 +60,20 @@ export interface Pill {
   fg: string
 }
 
-export type ColumnType = 'status' | 'currency' | 'avatar' | 'int'
-
-export interface ListColumn {
-  key: string
-  label: string
-  primary?: boolean
-  width?: string
-  type?: ColumnType
-}
-
-// Curated per-doctype display config. Field schemas come live from get_doctype_meta;
-// this is just labels, colors, the status palette, and the list column choice.
+// Curated per-doctype IDENTITY the boot Registry carries (ADR-0028): label, look (color/
+// icon), and the authoring marker. Presentation semantics — title field, status field/colors,
+// list columns — are NOT here; they come live from get_doctype_meta (the Record indicator
+// spec + title_field), resolved per record. Field schemas are live too.
 export interface DoctypeMeta {
   label: string
   color: string
   icon: string
-  titleField: string
-  // Authoring marker (config/doctypes.ts): true for the placeholder `defineGeneric`
-  // metas, false/absent for hand-tuned bespoke ones. The Registry overlay reads it to
-  // let generic doctypes defer listColumns/statusField to the live server projection
-  // (ADR-0011), while bespoke columns still win. Offline it stays the column fallback.
+  // Authoring marker (config/doctypes.ts): true for the placeholder `defineGeneric` metas,
+  // false/absent for hand-tuned bespoke ones. Kept for the app-kind classification.
   generic?: boolean
-  statusField?: string
-  statusThemes?: Record<string, string>
-  listColumns?: ListColumn[]
-  // Optional curated list "saved views" chips. None of the current curated metas
-  // set this, so the list falls back to a single "All" chip; typed here so the
-  // OSList projection that reads it stays checked.
+  // Optional curated list "saved views" chips. None of the current curated metas set this,
+  // so the list falls back to a single "All" chip; typed here so the OSList projection that
+  // reads it stays checked.
   savedViews?: { label: string; count?: number }[]
 }
 

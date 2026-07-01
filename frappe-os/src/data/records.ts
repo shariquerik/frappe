@@ -25,10 +25,9 @@ export function listFor(doctype: string): CacheEntry<FrappeDoc[]> {
   return lists[doctype]
 }
 
-// We fetch all standard fields (`*`) rather than the curated column keys: several
-// curated columns (enabled_label, status_label, stock_qty) are display-only and have
-// no live backend field, so requesting them by name would error. Columns just read
-// whatever keys exist on the row; missing ones render as "—".
+// The caller projects the fields to fetch: the list view passes its lean set (name + visible
+// wire columns + Record-indicator resolver fields, ADR-0028 / #04b). `['*']` stays only as the
+// fallback for context-free refreshes (post-save, dashboard recents) that hold no column shape.
 export async function loadList(doctype: string, options: GetListOptions = {}): Promise<CacheEntry<FrappeDoc[]>> {
   const state = listFor(doctype)
   state.loading = true
