@@ -48,6 +48,11 @@ yarn cypress       # Cypress interactive runner
   transform does. Non-macro type imports may use the barrel freely.
 
 ## Rules
+- Write to me in plain, simple language. Short sentences, everyday words, one idea at a time.
+  Explain jargon when you must use it. When you ask me something, keep the question small and clear.
+- **Never commit `.scratch/`.** It is local-only working space (issue notes, deferred-hardcoded
+  log, scratch files) and is gitignored. When you commit, exclude it — even when I say "commit
+  these changes"; stage the real source/doc/test changes only.
 - Keep the URL projection pure and in `routing/route-map.ts`; `main.ts` is wiring only.
 - Changing the window-id scheme or URL projection touches several places at once — see the
   "Conventions & gotchas" list in `docs/summary.md`.
@@ -58,6 +63,7 @@ yarn cypress       # Cypress interactive runner
 
 GitHub Issues are disabled on this repo — issues live as **local markdown** under
 `.scratch/<feature>/issues/NN-slug.md` (zero-padded order, one vertical slice per file).
+`.scratch/` is gitignored and never committed (see Rules).
 When asked to "create issues" / "break this into issues" / run `/to-issues`, write them
 there (a new `<feature>` folder per theme), never to GitHub. Each file follows the existing
 template: `# Title`, `Status:`, `Triage: <role> (AFK|HITL)`, `## What to build`,
