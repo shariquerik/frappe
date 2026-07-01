@@ -14,8 +14,8 @@
 
 import frappe
 
-from frappe.os import manifest
-from frappe.os.common import layer_rows
+from frappe.oscore import manifest
+from frappe.oscore.common import layer_rows
 
 # Publication/visibility field -> its (on, off) pill, on = truthy. Each field's own polarity is
 # baked in (is_private truthy = Private). The generic desk `listview_settings.get_indicator` tier,

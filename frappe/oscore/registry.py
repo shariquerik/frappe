@@ -8,8 +8,8 @@
 
 import frappe
 from frappe import _
-from frappe.os import contributions
-from frappe.os.common import readable_meta
+from frappe.oscore import contributions
+from frappe.oscore.common import readable_meta
 
 # Doctypes Frappe OS should expose, mirroring the curated frontend config
 # (frappe-os/src/config/doctypes.js). Each is permission- and existence-checked at

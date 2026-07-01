@@ -7,7 +7,7 @@
 
 import frappe
 from frappe import _
-from frappe.os import contributions, indicators, manifest
+from frappe.oscore import contributions, indicators, manifest
 
 # Fieldtypes that are layout-only or unsupported by the rendering engine. Section Break is handled
 # specially (its label groups the following fields) before this skip.
@@ -80,8 +80,9 @@ def card_value(doctype: str, filters: str | list | dict | None = None, fieldname
 
 	filters = frappe.parse_json(filters) if filters else None
 	if fieldname:
-		# get_list (not get_all) so the doctype's permission query conditions are applied.
-		rows = frappe.get_list(doctype, filters=filters or {}, fields=[f"sum(`{fieldname}`) as total"])
+		# get_list (not get_all) so the doctype's permission query conditions are applied. The dict
+		# form is required — Frappe rejects raw "sum(...)" strings in `fields` (SQL-injection guard).
+		rows = frappe.get_list(doctype, filters=filters or {}, fields=[{"SUM": fieldname, "as": "total"}])
 		return (rows[0].total if rows else 0) or 0
 	# get_count applies permission query conditions, so the card matches the visible list.
 	from frappe.client import get_count
