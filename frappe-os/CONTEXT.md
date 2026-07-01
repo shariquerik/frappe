@@ -156,7 +156,21 @@ from a curated value→color map. A per-**record** projection (`record → (labe
 exactly what distinguishes it from the old per-value status palette it replaces (ADR-0028).
 "Indicator" is Frappe's own term for the status dot, so this stays in step with Desk.
 _Avoid_: "status theme" / "status→color map" — that is the curated predecessor; a Record
-indicator is derived, never authored.
+indicator is derived, never authored. A Record indicator is the *resolved output*; the authored
+input is an **Indicator rule**.
+
+**Indicator rule**:
+One `{ condition, label, color }` entry that resolves a record to its **Record indicator**. A
+doctype's ordered list of them is evaluated first-match; the **condition is a Frappe filter over the
+record's fields** (`per_billed,<,100|status,!=,Closed`) — Frappe's own grammar, reused, not a new
+one. Declared in the doctype's **OS manifest** and server-projected onto live meta (ADR-0031).
+Workflow state and Draft/Cancelled always win above the rules; the OS supplies the lowest-precedence
+**default rules** (publication/enabled/states/guess) that app rules override. A rule may carry a
+**label template** interpolating a stored field (`"{percent_complete}%"`) — still data. What must be
+*computed* (live/un-storable state) is not a rule; it is the **Script** seam.
+_Avoid_: "get_indicator"/"status rule" (desk's client-JS predecessor); calling the rule's
+**condition** an **Eligibility** — a condition filters *record fields*, an Eligibility filters *UI
+context*.
 
 **List View Controls** (consumed from `@framework/ui`):
 The shared SortBy / Filter / ColumnSettings / QuickFilter controls (plus the `useListView`
@@ -175,6 +189,16 @@ For the controls' own vocabulary see the library's [`ui/CONTEXT.md`](../ui/CONTE
 **Declarative contribution**:
 A contribution expressed purely as data, collected on the server and delivered to the
 frontend in the Registry, rendered by generic OS machinery. No custom code, no rebuild.
+
+**OS manifest**:
+The co-located `os/` folder an app — or a doctype — ships to declare everything it contributes to
+the OS, discovered by convention (an app is an OS app *because it ships one*). Pure data (JSON): an
+app's `os/app.json` (identity + default surface), `os/actions.json`, `os/applets/`; a doctype's
+`os/doctype.json` (indicator + actions, carried to all views) plus one file per view (`list.json`,
+`form.json`). Retires the scattered `os_app`/`os_actions`/`os_applets` hooks (ADR-0030, amending
+ADR-0021). Behavior that needs code is not in the manifest — it is the **Script** seam.
+_Avoid_: "config" (that is **Display config**), "hook" (retired), "package" (the Build-preset/ESM
+sense). One file per view/scope, never one file per config-type.
 
 **Target**:
 What a contribution attaches to — the second element of its identity tuple
