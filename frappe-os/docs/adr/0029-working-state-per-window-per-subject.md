@@ -50,6 +50,13 @@ window is lossless.
   close) and a symmetric in-app confirmation on OS window close. A form draft's dirty signal is
   its existing `isDirty`; it clears on successful save/create.
 
+- **A saved form adopts the saved doc as its new clean baseline.** On successful save the draft is
+  dropped AND `formDoc` is reseeded from the returned doc, so the server-refreshed `modified`
+  realigns. Without this the stale `modified` lingers as a phantom dirty field that a second save
+  resends, tripping Frappe's optimistic lock (`TimestampMismatchError`). The dirty diff
+  (`changedFields`) is thus purely record-vs-working-copy, with the record as the authoritative
+  baseline.
+
 - **One dogfooded seam — `useWorkingState`.** The applet OS-API composable and the internal
   `OSList`/`OSForm` wiring are the same composable. It derives the subject from the window's
   current surface (provided by `OSWindow`, like `TOOLBAR_SLOT`/`WINDOW_FOCUSED`) and takes the
