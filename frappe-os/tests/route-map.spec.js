@@ -174,6 +174,15 @@ describe('applyRoute', () => {
     expect(w.surface.params?.pane).toBe('General')
   })
 
+  it('resets an open app-settings window to General when re-routed to the bare /<app>/settings', () => {
+    // Browser back from /<app>/settings/members to /<app>/settings: the bare path has no
+    // pane slug, so the already-open window must fall back to General, not keep Members.
+    applyRoute(os, { app: 'frappe', doctype: 'settings', name: 'members' })
+    applyRoute(os, { app: 'frappe', doctype: 'settings' })
+    const w = os.state.windows.find((x) => x.id === 'app-settings:frappe')
+    expect(w.surface.params?.pane).toBe('General')
+  })
+
   it('opens the per-user Settings window from a bare /settings', () => {
     applyRoute(os, { app: 'settings' })
     expect(os.state.activeId).toBe('settings')

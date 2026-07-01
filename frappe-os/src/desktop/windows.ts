@@ -266,12 +266,12 @@ export const toggleSidebar = (id: string) => { state.sidebarHidden[id] = !state.
 // An app's settings is a standalone window (one per app), not an in-window overlay: a real
 // macOS-style pane that can be moved, resized, minimized and stacked independently of the app
 // it configures. Distinct from the singleton per-user Settings window below.
-export function openAppSettings(appId: string, pane?: string) {
+export function openAppSettings(appId: string, pane = 'General') {
   const id = 'app-settings:' + appId
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === id)
   if (!w) state.windows.push({ id, surface: appSettingsSurface(appId, pane) })
-  else if (pane && isBuiltin(w.surface)) w.surface.params = { pane }
+  else if (isBuiltin(w.surface)) w.surface.params = { pane }
   setGeo(id, { z, min: false })
   state.activeId = id
   state.menu = null
