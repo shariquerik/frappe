@@ -97,12 +97,15 @@ def app_of_module(module):
 	return (module and frappe.db.get_value("Module Def", module, "app_name")) or "frappe"
 
 
+@request_cache
 def doctype_manifest(doctype, module):
 	"""A doctype's co-located `os/` manifest (ADR-0030), keyed by scope — `doctype` (carries to all
 	views), `list`, `form`. Read as data from `<app>/<module>/doctype/<doctype>/os/` (the owning app
 	resolved through the safe `app_of_module` seam, so a custom-module doctype degrades to {} rather
 	than 500ing); {} when the doctype ships none. The later folders (indicator rules, scoped actions)
-	consume this off live meta."""
+	consume this off live meta. Request-cached: opening one doctype reads its manifest from three
+	seams in the same request — scoped contributions, live meta, and indicator rules — and the files
+	change only on deploy."""
 	directory = frappe.get_app_path(
 		app_of_module(module), frappe.scrub(module), "doctype", frappe.scrub(doctype), MANIFEST_DIR
 	)
