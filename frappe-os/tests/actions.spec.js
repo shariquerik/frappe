@@ -955,7 +955,8 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
   it('invoking over a multi-row selection calls the standard bulk-update method with the selected rows', async () => {
     os.openListGlobal('ToDo')
     os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
-    invoke(setOpenVerb(), os) // fires the run Handler; callPost calls fetch synchronously
+    invoke(setOpenVerb(), os) // fires the run Handler; the write POSTs after joining the job room first
+    await new Promise((resolve) => setTimeout(resolve)) // drain the pre-write watchTask (subscribe-before-write, review #2)
     const call = bulkCall()
     expect(call).toBeDefined()
     expect(call[1].method).toBe('POST')
@@ -984,6 +985,7 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
     await new Promise((resolve) => setTimeout(resolve)) // let the list-open's own load settle
     fetchMock.mockClear() // watch only the calls the bulk invoke makes
     invoke(setOpenVerb(), os)
+    await new Promise((resolve) => setTimeout(resolve)) // drain the pre-write watchTask, then the write POSTs
     expect(bulkCall()).toBeDefined() // the bulk POST still fires
     await new Promise((resolve) => setTimeout(resolve)) // drain the fire-and-forget write
     const listCall = fetchMock.mock.calls.find(([url]) => String(url).includes('get_list'))

@@ -7,7 +7,7 @@
 
 import { reactive } from 'vue'
 import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue } from '@/data/api'
-import { onTaskComplete } from '@/data/realtime'
+import { watchTask, type TaskWatch } from '@/data/realtime'
 import { notify } from '@/data/notify'
 import { registerScopedContributions } from '@/registry'
 import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult } from '@/types'
@@ -170,30 +170,38 @@ export async function createDoc(doctype: string, values: Record<string, unknown>
 // selection runs INLINE (a `failed` array back): the rows are mutated now, so we refresh the open
 // list windows and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed
 // yet, so we must NOT refresh eagerly (a refresh would show stale rows under a false success) nor
-// read [] as "all succeeded". Instead we acknowledge the enqueue, then watch the job's realtime
-// channel (keyed by a client-generated `task_id`) and refresh + confirm the moment it finishes —
-// closing the honest-but-silent gap (data/realtime.ts; the Desk `_server_messages` alert the backend
-// emits never reaches the OS shell, so feedback must ride `toast`, not that alert).
+// read [] as "all succeeded". Instead we acknowledge the enqueue and let the pre-joined watch refresh
+// + confirm the moment the job finishes (data/realtime.ts; the Desk `_server_messages` alert the
+// backend emits never reaches the OS shell, so feedback rides `toast`, not that alert).
+//
+// We JOIN the job's realtime room (keyed by a client-generated `task_id`) BEFORE firing the write, so
+// a fast enqueued job can't finish before we're listening (review #2); then we commit to one outcome —
+// arm the watch (enqueued) or cancel it (inline ran synchronously; a stray terminal emit is ignored).
 export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<BulkUpdateResult> {
   const taskId = newTaskId()
+  const watch = await watchTask(taskId)
   const failed = await apiBulkUpdate(doctype, docnames, changes, taskId)
-  if (failed === null) {
-    notify(`Updating ${recordCount(docnames.length, doctype)} in the background…`)
-    onTaskComplete(taskId, (result) => {
-      refreshLists(doctype)
-      // The job carries its `failed` list on the terminal event, so the enqueued completion reports
-      // failures exactly like the inline path. When the seam is dark and the fallback fires with no
-      // result, we can't itemize — say so softly rather than claim a false "all updated".
-      const done = (result as { failed?: string[] } | undefined)?.failed
-      notify(done ? bulkSummary(docnames.length, done, doctype) : `Background update finished.`)
-    })
-    return { enqueued: true, failed: [] }
-  }
+  if (failed === null) return enqueuedBulk(doctype, docnames.length, watch)
+  watch.cancel()
   await refreshLists(doctype)
   // The inline run applied now — confirm it and surface any rows the backend rejected instead of
   // silently dropping the returned `failed` array (same summary the enqueued completion uses).
   notify(bulkSummary(docnames.length, failed, doctype))
   return { enqueued: false, failed }
+}
+
+// The enqueued tail: acknowledge the background job, then refresh + confirm when its terminal event
+// lands. The job carries its `failed` list on that event, so the completion reports failures exactly
+// like the inline path; when the seam is dark and the timeout fallback fires with no result, we can't
+// itemize — say so softly rather than claim a false "all updated".
+function enqueuedBulk(doctype: string, total: number, watch: TaskWatch): BulkUpdateResult {
+  notify(`Updating ${recordCount(total, doctype)} in the background…`)
+  watch.onComplete((result) => {
+    refreshLists(doctype)
+    const done = (result as { failed?: string[] } | undefined)?.failed
+    notify(done ? bulkSummary(total, done, doctype) : `Background update finished.`)
+  })
+  return { enqueued: true, failed: [] }
 }
 
 // "3 ToDo records" / "1 ToDo record" — the shared count phrase for every bulk-update toast.

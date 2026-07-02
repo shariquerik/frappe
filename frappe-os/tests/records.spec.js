@@ -17,11 +17,14 @@ vi.mock('@/data/api', () => ({
 // records.ts drives the realtime seam (bulk-update completion signal) and the notify port
 // (enqueued/done feedback). Stub both — these specs pin records.ts's own branching, not the
 // socket transport or the toast rendering (which stay out of the store's frappe-ui-free graph).
-vi.mock('@/data/realtime', () => ({ onTaskComplete: vi.fn() }))
+// watchTask hands back one shared handle so a test can inspect which outcome records.ts committed to
+// (armed `onComplete` = enqueued; `cancel` = inline).
+const mockWatch = { onComplete: vi.fn(), cancel: vi.fn() }
+vi.mock('@/data/realtime', () => ({ watchTask: vi.fn(async () => mockWatch) }))
 vi.mock('@/data/notify', () => ({ notify: vi.fn() }))
 
 import * as api from '@/data/api'
-import { onTaskComplete } from '@/data/realtime'
+import { watchTask } from '@/data/realtime'
 import { notify } from '@/data/notify'
 import {
   listFor, loadList, loadMore, docFor, loadDoc, countFor, loadCount,
@@ -231,6 +234,8 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     expect(result).toEqual({ enqueued: false, failed: ['MANGO-2'] })
     expect(api.getList).toHaveBeenCalledWith('Mangosteen', { fields: ['*'], limit: 100, start: 0 })
     expect(notify).toHaveBeenCalledWith('Updated 1 Mangosteen record; 1 failed.') // failures surfaced, not dropped
+    expect(mockWatch.cancel).toHaveBeenCalled() // inline ran synchronously — drop the pre-joined watch
+    expect(mockWatch.onComplete).not.toHaveBeenCalled() // no terminal event to wait on
   })
 
   it('inline full success: refreshes and confirms with a completion notify', async () => {
@@ -246,13 +251,17 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     expect(notify).toHaveBeenCalledWith('Updated 2 Lychee records.') // the inline "done" confirmation
   })
 
-  it('threads a task_id into the bulk write so the enqueued job is watchable', async () => {
+  it('joins the job room on the same task_id it threads into the write, BEFORE firing it', async () => {
     api.bulkUpdate.mockResolvedValue(null)
     await bulkUpdate('Tangerine', Array.from({ length: 25 }, (_, i) => `T-${i}`), { status: 'Open' })
     const taskId = api.bulkUpdate.mock.calls[0][3] // (doctype, docnames, changes, taskId)
     expect(typeof taskId).toBe('string')
     expect(taskId.length).toBeGreaterThan(0)
-    expect(onTaskComplete).toHaveBeenCalledWith(taskId, expect.any(Function)) // same id it subscribes on
+    expect(watchTask).toHaveBeenCalledWith(taskId) // the room it joins is keyed by the id it threads
+    // Pre-subscribe (review #2): the room must be joined before the write races to a fast completion.
+    expect(watchTask.mock.invocationCallOrder[0]).toBeLessThan(api.bulkUpdate.mock.invocationCallOrder[0])
+    expect(mockWatch.onComplete).toHaveBeenCalledWith(expect.any(Function)) // enqueued → armed, not cancelled
+    expect(mockWatch.cancel).not.toHaveBeenCalled()
   })
 
   it('enqueued (null): acknowledges but does NOT refresh or claim success yet', async () => {
@@ -273,7 +282,7 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     expect(api.getList).not.toHaveBeenCalled() // nothing refreshed until the job actually finishes
     notify.mockClear() // drop the "enqueued" ack; watch only what completion does
 
-    const onDone = onTaskComplete.mock.calls[0][1] // the completion callback records.ts registered
+    const onDone = mockWatch.onComplete.mock.calls[0][0] // the completion callback records.ts registered
     api.getList.mockResolvedValue([{ name: 'S-0' }])
     await onDone({ failed: [] }) // the terminal event carries the job's result (no failures)
     expect(api.getList).toHaveBeenCalledWith('Soursop', { fields: ['*'], limit: 100, start: 0 })
@@ -286,7 +295,7 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     await bulkUpdate('Durian', Array.from({ length: 25 }, (_, i) => `D-${i}`), { status: 'Open' })
     notify.mockClear()
 
-    const onDone = onTaskComplete.mock.calls[0][1]
+    const onDone = mockWatch.onComplete.mock.calls[0][0]
     await onDone({ failed: ['D-1', 'D-2', 'D-3'] }) // three rows the background job rejected
     expect(notify).toHaveBeenCalledWith('Updated 22 Durian records; 3 failed.') // failures reported, not swallowed
   })
@@ -297,7 +306,7 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     await bulkUpdate('Guava', Array.from({ length: 25 }, (_, i) => `G-${i}`), { status: 'Open' })
     notify.mockClear()
 
-    const onDone = onTaskComplete.mock.calls[0][1]
+    const onDone = mockWatch.onComplete.mock.calls[0][0]
     await onDone() // the fallback fires without the terminal event's result — failures unknowable
     expect(notify).toHaveBeenCalledWith('Background update finished.') // honest, no fabricated counts
   })
