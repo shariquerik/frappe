@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // frappe-ui ListView wrapper for Frappe OS. Renders the render-ready columns it is given
-// (the library's Meta-derived `view.columns.wire`, ADR-0025) and classifies each cell via
-// `cellKind`. The four curated kinds (status pill / avatar / primary / plain) stay in the
-// tree but are dormant: Meta-derived columns carry raw Frappe fieldtypes, so cells render
-// plain/typed until the deferred Display-config enrichment layer returns. Rows come from
+// (the live wire columns with the dedicated indicator column folded in by the host, ADR-0028)
+// and classifies each cell via `cellKind` into the four kinds the `#cell` slot draws: the
+// dedicated indicator column resolves the whole row to a status pill, the title column renders
+// primary, a person Link renders an avatar, everything else plain. Rows come from
 // the records store (the host stays the single coherent cache) — ListView is presentation
 // only. Selection is live (selectable) and emitted; bulk actions are deferred. Loading/
 // error are owned here; ListView owns only the empty state. Row click opens a form window
@@ -75,10 +75,9 @@ function onResizerDoubleClick(event: MouseEvent) {
   if (column) emit('column-width-reset', { key: column.key })
 }
 
-// The per-record cell context (ADR-0028): the status field the pill resolves against, the
-// title field that renders primary, and the spec `indicatorFor` reads. Derived live, not curated.
+// The per-record cell context (ADR-0028): the title field that renders primary, and the spec the
+// dedicated indicator column resolves the whole row through. Derived live, not curated.
 const cellContext = computed(() => ({
-  statusField: props.spec?.statusField,
   titleField: props.titleField,
   spec: props.spec,
 }))

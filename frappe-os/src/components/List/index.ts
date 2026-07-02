@@ -4,5 +4,5 @@
 // at the files inside, so the folder's internals stay free to move.
 export { default as OSList } from './OSList.vue'
 export { default as OSListView } from './OSListView.vue'
-export { cellKind, listFetchFields } from './list-columns'
+export { cellKind, listFetchFields, withIndicatorColumn, hasIndicator, INDICATOR_COLUMN_KEY } from './list-columns'
 export type { ListViewColumn, Cell, CellKindName } from './types'

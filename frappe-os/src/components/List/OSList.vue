@@ -12,7 +12,7 @@ import { SortBy } from "@framework/ui/SortBy";
 import { QuickFilter } from "@framework/ui/QuickFilter";
 import { ColumnSettings } from "@framework/ui/ColumnSettings";
 import OSListView from "./OSListView.vue";
-import { listFetchFields } from "./list-columns";
+import { listFetchFields, withIndicatorColumn, INDICATOR_COLUMN_KEY } from "./list-columns";
 import { useOS } from "@/desktop";
 import { useWorkingState } from "@/desktop/use-working-state";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
@@ -90,6 +90,12 @@ const scrollTop = ref(position.value?.scrollTop ?? 0);
 // Toggling a column on re-fetches (its field is now needed); `modified` rides in as a column.
 const fetchFields = computed(() => listFetchFields(view.columns.wire.value, indicatorSpec.value));
 
+// The columns actually rendered (ADR-0028, Desk-parity): the live wire columns with the dedicated
+// Record-indicator column folded in — so the status pill renders whole-row, independent of whether
+// a status field is a visible column (fixes User/Note/Draft). The library keeps owning the wire
+// columns for ColumnSettings and fetching; this projection is render-only.
+const renderColumns = computed(() => withIndicatorColumn(view.columns.wire.value, indicatorSpec.value));
+
 // The fetch shape (fields/filters/order_by) that keys this window's rows in the store — passed
 // to BOTH the read (listFor) and the write (loadList) so they hit the SAME entry, and no
 // context-free reader (dashboard recents, post-save refresh) of the same doctype can clobber it.
@@ -164,12 +170,16 @@ watch(
 );
 
 // A column-header drag emits `{ key, width }`; write it back into the shared column state
-// so ColumnSettings and the table stay in sync (ADR-0006 / ADR-0025, two-way resize).
+// so ColumnSettings and the table stay in sync (ADR-0006 / ADR-0025, two-way resize). The
+// synthetic indicator column is render-only (fixed width, not in the library layout), so a
+// resize/reset on it is ignored rather than written into the persisted snapshot.
 function onColumnWidthUpdated(e: { key: string; width: string }) {
+	if (e.key === INDICATOR_COLUMN_KEY) return;
 	view.columns.setWidth(e.key, e.width);
 }
 
 function onColumnWidthReset(e: { key: string }) {
+	if (e.key === INDICATOR_COLUMN_KEY) return;
 	view.columns.resetWidth(e.key);
 }
 
@@ -246,7 +256,7 @@ const selectionActions = computed(() => {
 		<OSListView
 			ref="listViewRef"
 			:doctype="doctype"
-			:columns="view.columns.wire.value"
+			:columns="renderColumns"
 			:rows="records"
 			:meta="meta"
 			:spec="indicatorSpec"
