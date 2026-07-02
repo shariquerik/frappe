@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // The app window's left sidebar: a Home entry (when the app has a dashboard) plus the app's
 // modules, each listing its doctypes with a live record count. Counts load when the app
-// window first renders / the app changes. Styled on frappe-ui tokens.
+// window first renders / the app changes. Built on frappe-ui's Sidebar primitives
+// (SidebarSection + SidebarItem) so item styling follows espresso.
 import { computed, watch } from "vue";
+import { SidebarItem } from "frappe-ui";
 import { useOS } from "@/desktop";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see summary.md gotcha).
@@ -15,19 +17,23 @@ const s = computed(() => props.win.surface as BuiltinSurface);
 const app = computed(() => os.DATA.APP[s.value.appId!]);
 const mode = computed(() => s.value.view);
 
+// Reshape each module into a labelled group of SidebarItems: the module name is the group
+// label, its doctypes are SidebarItems (icon, live count as the suffix, active + click wired
+// to the OS). We render the group ourselves (rather than frappe-ui's SidebarSection) so the
+// per-row gap matches the design.
 const navGroups = computed(() =>
 	(app.value.modules || []).map((mod) => ({
-		module: mod.name,
+		label: mod.name,
 		items: mod.doctypes.map((dt) => {
 			const m = os.getMeta(dt);
-			const active =
-				(mode.value === "list" || mode.value === "form") && s.value.doctype === dt;
 			const count = os.countFor(dt).data;
 			return {
 				label: dt,
 				icon: m ? m.icon : ICON.table,
-				count: count == null ? "" : count,
-				active,
+				suffix: count == null ? "" : String(count),
+				isActive:
+					(mode.value === "list" || mode.value === "form") && s.value.doctype === dt,
+				onClick: () => os.openList(props.win.id, dt),
 			};
 		}),
 	})),
@@ -43,48 +49,26 @@ watch(
 
 <template>
 	<div
-		class="flex w-[228px] flex-shrink-0 flex-col overflow-hidden border-r border-outline-gray-1 bg-surface-gray-1"
+		class="flex w-60 flex-shrink-0 flex-col gap-1 overflow-y-auto overflow-x-hidden border-r border-outline-gray-1 bg-surface-sidebar p-2"
 	>
-		<div class="flex-1 overflow-auto px-2 py-2.5">
-			<div
-				v-if="app.hasDashboard"
-				class="mb-0.5 flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-[9px]"
-				@click="os.goHome(win.id)"
-				:class="
-					mode === 'dashboard'
-						? 'bg-surface-gray-3 font-semibold text-ink-gray-9'
-						: 'font-normal text-ink-gray-7'
-				"
-			>
-				<span class="lucide-layout-grid size-[15px] flex-shrink-0"></span>
-				<span class="text-[13px]">{{ app.dashTitle || "Home" }}</span>
-			</div>
-			<div v-for="(grp, gi) in navGroups" :key="gi" class="mt-[14px]">
-				<div class="mb-1 px-2 text-[11px] font-semibold text-ink-gray-5">
-					{{ grp.module }}
-				</div>
-				<div
-					v-for="(it, ii) in grp.items"
-					:key="ii"
-					class="my-px flex h-[30px] cursor-pointer items-center gap-2.5 rounded-[7px] px-[9px]"
-					@click="os.openList(win.id, it.label)"
-					:class="it.active ? 'bg-surface-gray-3' : ''"
-				>
-					<span :class="it.icon" class="size-[15px] text-ink-gray-5 flex-shrink-0"></span>
-					<span
-						class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]"
-						:class="
-							it.active
-								? 'font-semibold text-ink-gray-9'
-								: 'font-normal text-ink-gray-7'
-						"
-						>{{ it.label }}</span
-					>
-					<span class="ml-auto flex-shrink-0 text-[11px] tabular-nums text-ink-gray-4">{{
-						it.count
-					}}</span>
-				</div>
-			</div>
+		<SidebarItem
+			v-if="app.hasDashboard"
+			:label="app.dashTitle || 'Home'"
+			icon="lucide-layout-grid"
+			:isActive="mode === 'dashboard'"
+			:onClick="() => os.goHome(win.id)"
+		/>
+		<div v-for="grp in navGroups" :key="grp.label" class="flex flex-col gap-1">
+			<div class="px-2 pt-4 pb-0.5 text-sm text-ink-gray-5">{{ grp.label }}</div>
+			<SidebarItem
+				v-for="it in grp.items"
+				:key="it.label"
+				:label="it.label"
+				:icon="it.icon"
+				:suffix="it.suffix"
+				:isActive="it.isActive"
+				:onClick="it.onClick"
+			/>
 		</div>
 	</div>
 </template>
