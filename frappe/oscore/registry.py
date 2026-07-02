@@ -45,10 +45,12 @@ REGISTRY_DOCTYPES = [
 ]
 
 
-def _app_of(doctype):
+def _app_of(meta):
 	"""The app that ships a doctype (via its module), defaulting to frappe — through the shared
-	safe module→app seam, so a custom-module doctype resolves instead of raising."""
-	return manifest.app_of_module(frappe.db.get_value("DocType", doctype, "module"))
+	safe module→app seam, so a custom-module doctype resolves instead of raising. Reads the module
+	off the meta already in hand (readable_meta), so it costs no extra query; the request-cached
+	seam then collapses the module→app lookup across the whole registry."""
+	return manifest.app_of_module(meta.module)
 
 
 def _view_contribution(doctype, name, label, app, order):
@@ -119,7 +121,7 @@ def _doctype_contributions(doctype, meta, setters):
 	registry and on-demand resolution (resolve_doctype). The base display-config carries the
 	app-default projection; this site's doctype Property Setters ride along as a __site__ patch
 	(ADR-0007 App-default ⊕ Site-layer)."""
-	app = _app_of(doctype)
+	app = _app_of(meta)
 	out = [
 		{
 			"type": "display-config",

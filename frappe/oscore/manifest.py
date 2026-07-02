@@ -84,13 +84,16 @@ def _read_scopes(directory, scopes):
 	return scoped
 
 
+@request_cache
 def app_of_module(module):
 	"""The app that owns a module, defaulting to frappe — the safe module→app seam. Reads
 	`Module Def.app_name`, so a custom / UI-created Module Def (absent from every app's `modules.txt`,
 	and so from `frappe.local.module_app`) still resolves instead of raising: the `module_app`
 	subscript KeyErrors on such a module and `get_module_path` / `get_module_app` throw
 	DoesNotExistError. A module with no owning app — or none given — rides frappe, the framework
-	default (its `os/` folder is then simply absent, degrading to an empty manifest)."""
+	default (its `os/` folder is then simply absent, degrading to an empty manifest). Request-cached
+	like its manifest siblings: the boot registry and each doctype's scoped contributions resolve the
+	same handful of modules many times per request, and the mapping changes only on deploy."""
 	return (module and frappe.db.get_value("Module Def", module, "app_name")) or "frappe"
 
 
