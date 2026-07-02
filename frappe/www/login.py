@@ -10,6 +10,7 @@ from frappe import _
 from frappe.apps import get_default_path
 from frappe.auth import LoginManager
 from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo
+from frappe.os_core.desk import landing_path
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, get_url
 from frappe.utils.data import escape_html
@@ -31,7 +32,8 @@ def get_context(context):
 			if frappe.session.data.user_type == "Website User":
 				redirect_to = get_default_path() or get_home_page()
 			else:
-				redirect_to = get_default_path() or "/desk"
+				# System users land on their chosen shell — /os for OS users, else classic Desk.
+				redirect_to = get_default_path() or landing_path()
 
 		if redirect_to != "login":
 			frappe.local.flags.redirect_location = redirect_to

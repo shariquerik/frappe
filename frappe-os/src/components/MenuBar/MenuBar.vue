@@ -9,6 +9,7 @@ import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
 import { fileMenuOptions } from "@/actions";
 import { useAccount } from "@/data/account";
+import { logout, switchToDesk } from "@/data/session";
 import { windowRole, systemWindowTitle } from "@/surface";
 import type { OsWindow } from "@/types";
 
@@ -82,9 +83,14 @@ const appleMenu = [
 	{
 		group: "c",
 		hideLabel: true,
+		items: [{ label: "Switch to Desk…", onClick: () => switchToDesk() }],
+	},
+	{
+		group: "d",
+		hideLabel: true,
 		items: [
 			{ label: "Lock screen", onClick: () => {} },
-			{ label: "Log out…", onClick: () => {} },
+			{ label: "Log out…", onClick: () => logout() },
 		],
 	},
 ];

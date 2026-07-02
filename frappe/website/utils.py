@@ -103,6 +103,13 @@ def get_home_page():
 		home_page = None
 		# for user
 		if frappe.session.user != "Guest":
+			# Frappe OS: a user who switched to the OS shell lands there after login (ADR-0030).
+			# Checked before role/workspace resolution so the choice wins over the Desk defaults.
+			from frappe.os_core.desk import preferred_shell
+
+			if preferred_shell() == "os":
+				return "os"
+
 			# by role
 			for role in frappe.get_roles():
 				home_page = frappe.db.get_value("Role", role, "home_page")

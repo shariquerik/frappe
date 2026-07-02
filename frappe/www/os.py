@@ -14,13 +14,19 @@ from urllib.parse import urlencode
 
 import frappe
 import frappe.sessions
-from frappe.os_core.account import change_password  # noqa: F401 — re-exported RPC surface
-from frappe.os_core.boot import boot, get_boot  # noqa: F401 — `boot` is re-exported RPC surface
-from frappe.os_core.desk import setup_desk_switch  # noqa: F401 — re-exported ops entry point
-from frappe.os_core.meta import card_value, get_doctype_meta  # noqa: F401 — re-exported RPC surface
-from frappe.os_core.placements import delete_placement_override, save_placement_override  # noqa: F401
-from frappe.os_core.recents import record_recent  # noqa: F401 — re-exported RPC surface
-from frappe.os_core.registry import resolve_doctype  # noqa: F401 — re-exported RPC surface
+from frappe.os_core.account import change_password  # re-exported RPC surface
+from frappe.os_core.boot import boot, get_boot  # `boot` is re-exported RPC surface
+from frappe.os_core.desk import (  # re-exported RPC + ops entry
+	set_preferred_shell,
+	setup_desk_switch,
+)
+from frappe.os_core.meta import card_value, get_doctype_meta  # re-exported RPC surface
+from frappe.os_core.placements import (  # re-exported RPC surface
+	delete_placement_override,
+	save_placement_override,
+)
+from frappe.os_core.recents import record_recent  # re-exported RPC surface
+from frappe.os_core.registry import resolve_doctype  # re-exported RPC surface
 
 no_cache = 1
 
