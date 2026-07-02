@@ -990,3 +990,52 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
     expect(listCall).toBeUndefined() // no stale refresh on the enqueued path
   })
 })
+
+// ADR-0032 slice 04 — per-window selection (state.selection[winId]) must not outlive the surface
+// it was made on. A window that swaps its surface (in-window nav, back/fwd, close) carries a bulk
+// verb's docnames; if the stale selection survives, a verb fires against the WRONG doctype
+// (select ToDo rows → nav same window to User → "Set as Open" would bulkUpdate('User', ['TODO-1',…])).
+// clearSelection(winId) at every surface-swap seam is the guard. With only 'frappe' registered,
+// appForDoctype(dt) === 'frappe' for every dt, so ToDo and User share window 'app:frappe' and the
+// second openListGlobal is an in-window navigateWindow — exactly the seam under test.
+describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', () => {
+  const os = useOS()
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = { user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] } }
+  let fetchMock
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.activeId = null
+    fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: [] }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    initRegistry(boot)
+  })
+  afterEach(() => { vi.unstubAllGlobals(); initRegistry(null) })
+
+  it('in-window navigation to another list clears the stale selection', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    expect(os.selectedRecords()).toEqual(['TODO-0001', 'TODO-0002'])
+    os.openListGlobal('User') // same window → navigateWindow fires (appForDoctype is 'frappe' for both)
+    expect(os.selectedRecords()).toEqual([]) // front window's selection is gone
+    expect(os.state.selection[winId]).toBeUndefined() // and the slice itself was deleted, not emptied
+  })
+
+  it('winBack clears the selection too', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.openListGlobal('User') // push back-history so there's a prior surface to return to
+    os.setSelection(winId, ['USR-0001']) // seed a selection on the current (User) surface
+    os.winBack(winId)
+    expect(os.state.selection[winId]).toBeUndefined()
+    expect(os.selectedRecords()).toEqual([])
+  })
+
+  it('closing a window drops its selection so a reused id starts clean', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.setSelection(winId, ['TODO-1'])
+    os.closeWin(winId)
+    expect(os.state.selection[winId]).toBeUndefined()
+  })
+})

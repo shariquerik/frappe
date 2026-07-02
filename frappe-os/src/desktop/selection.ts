@@ -14,6 +14,13 @@ export function setSelection(winId: string, names: string[]): void {
   else delete state.selection[winId]
 }
 
+// Drop a window's selection outright. The selected names belong to the surface currently shown, so
+// any surface swap (in-window navigation, back/forward) or close must clear them — otherwise a stale
+// selection carries onto the next surface and a bulk verb would act on the wrong doctype's records.
+export function clearSelection(winId: string): void {
+  delete state.selection[winId]
+}
+
 // The selected record names on the FRONT window's list, or [] when nothing is selected — the
 // multi-row selection a bulk run Handler reads to act on (the Region gate already hid the verb
 // when this is empty, so a handler seeing [] is a clean no-op, never a crash).

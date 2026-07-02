@@ -12,6 +12,7 @@ import {
   initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
+import { clearSelection } from './selection'
 import type { DockPosition, OsWindow, RowOpenTarget, Surface, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
@@ -42,6 +43,7 @@ export function winBack(id: string) {
   w.fwd.push({ ...w.surface })
   w.surface = w.back.pop()!
   pruneWindow(id, reachableSubjects(w))
+  clearSelection(id)
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
 }
 export function winFwd(id: string) {
@@ -51,6 +53,7 @@ export function winFwd(id: string) {
   w.back.push({ ...w.surface })
   w.surface = w.fwd.pop()!
   pruneWindow(id, reachableSubjects(w))
+  clearSelection(id)
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
 }
 
@@ -68,6 +71,7 @@ function navigateWindow(w: OsWindow, surface: Surface) {
   pushHist(w, surface)
   w.surface = surface
   pruneWindow(w.id, reachableSubjects(w))
+  clearSelection(w.id)
 }
 
 // ---- opening apps / lists / records ------------------------------------------
@@ -253,6 +257,7 @@ export function closeWin(id: string) {
   // Ephemeral Working state dies with the window; durable survives (a reopened window reuses its id
   // and its durable slab), mirroring how the geometry below is deliberately kept.
   dropWindow(id)
+  clearSelection(id)
   if (state.closeConfirm === id) state.closeConfirm = null
   state.windows = state.windows.filter((w) => w.id !== id)
   if (state.activeId === id) {
