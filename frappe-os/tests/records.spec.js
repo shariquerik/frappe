@@ -11,13 +11,14 @@ vi.mock('@/data/api', () => ({
   getDoctypeMeta: vi.fn(),
   saveDoc: vi.fn(),
   createDoc: vi.fn(),
+  bulkUpdate: vi.fn(),
   cardValue: vi.fn(),
 }))
 
 import * as api from '@/data/api'
 import {
   listFor, loadList, loadMore, docFor, loadDoc, countFor, loadCount,
-  fieldMetaFor, loadFieldMeta, saveDoc, createDoc, recordsFor, recordObj,
+  fieldMetaFor, loadFieldMeta, saveDoc, createDoc, bulkUpdate, recordsFor, recordObj,
 } from '../src/data/records'
 
 beforeEach(() => vi.clearAllMocks())
@@ -169,6 +170,27 @@ describe('writes refresh the cache through the live API', () => {
     expect(result).toBe(created)
     expect(docFor('Lemon', 'LEMON-9').data).toEqual(created)
     expect(api.getList).toHaveBeenCalledWith('Lemon', { fields: ['*'], limit: 100 })
+  })
+})
+
+// The standard bulk method applies a small selection inline but ENQUEUES 20+ rows in the background,
+// so bulkUpdate must not conflate them: an inline run mutated the rows (refresh + report failures),
+// but an enqueued run (api → null) has changed nothing yet — refreshing would show stale rows under
+// a false "done", and [] would read as full success. The two paths return distinct BulkUpdateResults.
+describe('bulkUpdate (inline vs enqueued)', () => {
+  it('inline: refreshes the list and reports the failed docnames', async () => {
+    api.bulkUpdate.mockResolvedValue(['MANGO-2']) // < 20 rows → runs inline, returns failures
+    api.getList.mockResolvedValue([{ name: 'MANGO-1' }])
+    const result = await bulkUpdate('Mangosteen', ['MANGO-1', 'MANGO-2'], { status: 'Open' })
+    expect(result).toEqual({ enqueued: false, failed: ['MANGO-2'] })
+    expect(api.getList).toHaveBeenCalledWith('Mangosteen', { fields: ['*'], limit: 100 })
+  })
+
+  it('enqueued (null): does NOT refresh and does NOT claim success', async () => {
+    api.bulkUpdate.mockResolvedValue(null) // 20+ rows → enqueued in background, nothing applied yet
+    const result = await bulkUpdate('Rambutan', Array.from({ length: 25 }, (_, i) => `R-${i}`), { status: 'Open' })
+    expect(result).toEqual({ enqueued: true, failed: [] })
+    expect(api.getList).not.toHaveBeenCalled() // no stale refresh under a false "done"
   })
 })
 

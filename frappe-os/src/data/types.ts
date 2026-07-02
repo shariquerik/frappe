@@ -47,6 +47,16 @@ export interface GetListOptions {
   filters?: ListFilters
 }
 
+// The outcome of a bulk write (records.bulkUpdate). The standard bulk method applies a small
+// selection inline but ENQUEUES 20+ rows in a background job, so the two must not be conflated:
+// an enqueued run has changed nothing yet (its `failed` is [] because nothing has run, NOT because
+// everything succeeded), and the list is deliberately left un-refreshed rather than showing stale
+// rows under a false "done". `enqueued` lets the caller tell "applied now" from "applied later".
+export interface BulkUpdateResult {
+  enqueued: boolean // true → running in the background; the list is not yet refreshed
+  failed: string[] // docnames the inline run failed on; [] when enqueued (nothing has run yet)
+}
+
 // ── Store surface ─────────────────────────────────────────────────────────────────
 // `OsStore` is the *exact* surface useOS() returns — derived from the assembly in
 // desktop/index.ts (the type-only import above) rather than hand-maintained, so it can

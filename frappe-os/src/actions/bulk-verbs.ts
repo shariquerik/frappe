@@ -10,9 +10,10 @@ import { registerRunHandlers } from './contributions'
 import type { OsStore } from '@/types'
 
 // Set the front list's selected rows to status "Open" through the records store's bulk-update write
-// seam (which refreshes the list). A no-selection invoke is a clean no-op — the Region gate already
-// hid the verb. Fire-and-forget (ADR-0007 — run Handlers have no lifecycle). The status field/value
-// are hard-coded here; a data-parameterised bulk-set verb is deferred
+// seam (which refreshes the list when the write runs inline; a 20+-row selection is enqueued in the
+// background and refreshed later — see records.bulkUpdate). A no-selection invoke is a clean no-op —
+// the Region gate already hid the verb. Fire-and-forget (ADR-0007 — run Handlers have no lifecycle).
+// The status field/value are hard-coded here; a data-parameterised bulk-set verb is deferred
 // (.scratch/deferred-hardcoded/issues/16-parameterised-bulk-set-field-verb).
 function setSelectedOpen(os: OsStore): void {
   const doctype = contextForOS(os).doctype

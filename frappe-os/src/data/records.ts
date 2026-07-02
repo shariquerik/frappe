@@ -8,7 +8,7 @@
 import { reactive } from 'vue'
 import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue } from '@/data/api'
 import { registerScopedContributions } from '@/registry'
-import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions } from '@/types'
+import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult } from '@/types'
 
 const lists = reactive<Record<string, CacheEntry<FrappeDoc[]>>>({}) // doctype -> entry, data is rows[]
 const docs = reactive<Record<string, CacheEntry<FrappeDoc | null>>>({}) // "doctype/name" -> entry, data is the doc
@@ -136,12 +136,18 @@ export async function createDoc(doctype: string, values: Record<string, unknown>
   return created
 }
 
-// Bulk-update a field across many docnames, then refresh the list so the new values show — the
-// write-then-refresh seam a bulk run Handler drives (ADR-0032), mirroring saveDoc/createDoc.
-export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<string[]> {
+// Bulk-update a field across many docnames — the write-then-refresh seam a bulk run Handler drives
+// (ADR-0032), mirroring saveDoc/createDoc, but split on how the backend applies the write. A small
+// selection runs INLINE (a `failed` array back): the rows are mutated now, so we refresh the list
+// and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed yet, so we must
+// NOT refresh (a refresh would show stale rows under a false success) nor read [] as "all succeeded"
+// — we return `enqueued` instead. Refreshing the list when the background job finishes needs a
+// realtime completion signal; deferred (.scratch/deferred-hardcoded/issues/17-bulk-update-enqueued-refresh.md).
+export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<BulkUpdateResult> {
   const failed = await apiBulkUpdate(doctype, docnames, changes)
+  if (failed === null) return { enqueued: true, failed: [] }
   await loadList(doctype)
-  return failed ?? []
+  return { enqueued: false, failed }
 }
 
 // ---- synchronous getters (compat bridge for components, Phase 4 wires loads) -

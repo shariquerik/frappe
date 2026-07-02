@@ -929,4 +929,23 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
     invoke(setOpenVerb(), os)
     expect(bulkCall()).toBeUndefined()
   })
+
+  it('an enqueued bulk run (20+ rows → null) fires the write but does NOT refresh the list', async () => {
+    // The bulk method enqueues 20+ rows in the background and returns null (nothing applied yet).
+    // The write seam must not then re-fetch the list — a refresh would paint stale rows under a
+    // false "done" — so no get_list call follows the bulk POST.
+    fetchMock.mockImplementation(async (url) =>
+      String(url).includes('submit_cancel_or_update_docs')
+        ? { ok: true, json: async () => ({ message: null }) }
+        : { ok: true, json: async () => ({ message: [] }) })
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, Array.from({ length: 25 }, (_, i) => `TODO-${i}`))
+    await new Promise((resolve) => setTimeout(resolve)) // let the list-open's own load settle
+    fetchMock.mockClear() // watch only the calls the bulk invoke makes
+    invoke(setOpenVerb(), os)
+    expect(bulkCall()).toBeDefined() // the bulk POST still fires
+    await new Promise((resolve) => setTimeout(resolve)) // drain the fire-and-forget write
+    const listCall = fetchMock.mock.calls.find(([url]) => String(url).includes('get_list'))
+    expect(listCall).toBeUndefined() // no stale refresh on the enqueued path
+  })
 })
