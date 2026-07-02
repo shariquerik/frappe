@@ -88,9 +88,18 @@ const scrollTop = ref(position.value?.scrollTop ?? 0);
 // Toggling a column on re-fetches (its field is now needed); `modified` rides in as a column.
 const fetchFields = computed(() => listFetchFields(view.columns.wire.value, indicatorSpec.value));
 
+// The fetch shape (fields/filters/order_by) that keys this window's rows in the store — passed
+// to BOTH the read (listFor) and the write (loadList) so they hit the SAME entry, and no
+// context-free reader (dashboard recents, post-save refresh) of the same doctype can clobber it.
+const listShape = computed(() => ({
+	fields: fetchFields.value,
+	filters: wireFilters.value,
+	order_by: orderBy.value,
+}));
+
 // Live rows + filter-aware count (keyed by the SAME wire filters it is loaded with, so the
 // footer's "X of Y" reflects the active filters rather than the unfiltered total).
-const listState = computed(() => os.listFor(doctype.value));
+const listState = computed(() => os.listFor(doctype.value, listShape.value));
 const records = computed(() => listState.value.data || []);
 const countState = computed(() => os.countFor(doctype.value, wireFilters.value));
 const total = computed(() =>
@@ -106,12 +115,7 @@ const hasMore = computed(() => records.value.length < total.value);
 watchEffect(() => {
 	const dt = doctype.value;
 	if (!dt) return;
-	os.loadList(dt, {
-		fields: fetchFields.value,
-		filters: wireFilters.value,
-		order_by: orderBy.value,
-		limit: visibleCount.value,
-	});
+	os.loadList(dt, { ...listShape.value, limit: visibleCount.value });
 	os.loadCount(dt, wireFilters.value);
 });
 // Load More grows the window by one page; the watchEffect above refetches the larger window.

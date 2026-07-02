@@ -10,7 +10,20 @@ import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as ap
 import { registerScopedContributions } from '@/registry'
 import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult } from '@/types'
 
-const lists = reactive<Record<string, CacheEntry<FrappeDoc[]>>>({}) // doctype -> entry, data is rows[]
+// A list entry carries, beside the reactive slot, the doctype and the SHAPE it was last
+// fetched with — so a context-free write can find and replay every open window of that
+// doctype (see refreshLists) rather than clobbering them with one unfiltered read.
+interface ListEntry extends CacheEntry<FrappeDoc[]> {
+  doctype: string
+  options: GetListOptions
+}
+
+// Lists are keyed by REQUEST SHAPE (fields + filters + order_by), mirroring countKey — so a
+// filtered/lean list window and a context-free read of the same doctype (dashboard recents,
+// post-save refresh) keep SEPARATE row arrays and can't overwrite each other. `limit`/`start`
+// are deliberately NOT part of the key: paging grows the same entry (a wider window replaces,
+// a `start > 0` page appends).
+const lists = reactive<Record<string, ListEntry>>({})
 const docs = reactive<Record<string, CacheEntry<FrappeDoc | null>>>({}) // "doctype/name" -> entry, data is the doc
 const counts = reactive<Record<string, CacheEntry<number | null>>>({}) // cache key -> entry, data is a number
 const fieldMetas = reactive<Record<string, CacheEntry<any>>>({}) // doctype -> entry, data is the live field schema
@@ -19,18 +32,23 @@ const entry = <T>(data: T): CacheEntry<T> => ({ loading: false, data, error: nul
 const docKey = (doctype: string, name: string) => `${doctype}/${name}`
 const countKey = (doctype: string, filters?: ListFilters, fieldname?: string) =>
   JSON.stringify([doctype, filters || null, fieldname || null])
+const listKey = (doctype: string, options: GetListOptions = {}) =>
+  JSON.stringify([doctype, options.fields ?? null, options.filters ?? null, options.order_by ?? null])
 
 // ---- list cache --------------------------------------------------------------
-export function listFor(doctype: string): CacheEntry<FrappeDoc[]> {
-  if (!lists[doctype]) lists[doctype] = entry<FrappeDoc[]>([])
-  return lists[doctype]
+// The caller passes the fetch shape (fields/filters/order_by) so its window is looked up by
+// that shape — the list view its lean set (name + visible wire columns + Record-indicator
+// resolver fields, ADR-0028 / #04b); a context-free reader passes nothing and shares the
+// unfiltered `['*']` entry. `limit`/`start` don't change the key (paging grows one window).
+export function listFor(doctype: string, options: GetListOptions = {}): CacheEntry<FrappeDoc[]> {
+  const key = listKey(doctype, options)
+  if (!lists[key]) lists[key] = { loading: false, data: [], error: null, doctype, options }
+  return lists[key]
 }
 
-// The caller projects the fields to fetch: the list view passes its lean set (name + visible
-// wire columns + Record-indicator resolver fields, ADR-0028 / #04b). `['*']` stays only as the
-// fallback for context-free refreshes (post-save, dashboard recents) that hold no column shape.
 export async function loadList(doctype: string, options: GetListOptions = {}): Promise<CacheEntry<FrappeDoc[]>> {
-  const state = listFor(doctype)
+  const state = listFor(doctype, options) as ListEntry
+  state.options = options // remember the latest shape so a context-free write can replay it
   state.loading = true
   state.error = null
   try {
@@ -49,7 +67,16 @@ export async function loadList(doctype: string, options: GetListOptions = {}): P
 // active filters/sort/limit. Paging lives in the OS store (the single fetch seam,
 // ADR-0025), not the library's useListData.
 export async function loadMore(doctype: string, options: GetListOptions = {}): Promise<CacheEntry<FrappeDoc[]>> {
-  return loadList(doctype, { ...options, start: listFor(doctype).data.length })
+  return loadList(doctype, { ...options, start: listFor(doctype, options).data.length })
+}
+
+// Refresh every open list window of a doctype after a context-free write (saveDoc/createDoc/
+// bulkUpdate hold no column shape). Each window is re-fetched with ITS OWN remembered shape,
+// from page 1, so the filtered/paged lists on screen refill correctly instead of being
+// replaced by one unfiltered read. Nothing open → nothing to refresh (the next view fetches fresh).
+async function refreshLists(doctype: string): Promise<void> {
+  const open = Object.values(lists).filter((state) => state.doctype === doctype)
+  await Promise.all(open.map((state) => loadList(doctype, { ...state.options, start: 0 })))
 }
 
 // ---- single-doc cache --------------------------------------------------------
@@ -125,28 +152,28 @@ export async function loadFieldMeta(doctype: string): Promise<CacheEntry<any>> {
 export async function saveDoc(doctype: string, name: string, changes: Record<string, unknown>): Promise<FrappeDoc> {
   const saved = await apiSaveDoc(doctype, name, changes)
   docFor(doctype, name).data = saved
-  await loadList(doctype)
+  await refreshLists(doctype)
   return saved
 }
 
 export async function createDoc(doctype: string, values: Record<string, unknown>): Promise<FrappeDoc> {
   const created = await apiCreateDoc(doctype, values)
   if (created && created.name) docFor(doctype, created.name).data = created
-  await loadList(doctype)
+  await refreshLists(doctype)
   return created
 }
 
 // Bulk-update a field across many docnames — the write-then-refresh seam a bulk run Handler drives
 // (ADR-0032), mirroring saveDoc/createDoc, but split on how the backend applies the write. A small
-// selection runs INLINE (a `failed` array back): the rows are mutated now, so we refresh the list
-// and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed yet, so we must
-// NOT refresh (a refresh would show stale rows under a false success) nor read [] as "all succeeded"
-// — we return `enqueued` instead. Refreshing the list when the background job finishes needs a
-// realtime completion signal; deferred (.scratch/deferred-hardcoded/issues/17-bulk-update-enqueued-refresh.md).
+// selection runs INLINE (a `failed` array back): the rows are mutated now, so we refresh the open
+// list windows and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed yet,
+// so we must NOT refresh (a refresh would show stale rows under a false success) nor read [] as "all
+// succeeded" — we return `enqueued` instead. Refreshing the list when the background job finishes needs
+// a realtime completion signal; deferred (.scratch/deferred-hardcoded/issues/17-bulk-update-enqueued-refresh.md).
 export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<BulkUpdateResult> {
   const failed = await apiBulkUpdate(doctype, docnames, changes)
   if (failed === null) return { enqueued: true, failed: [] }
-  await loadList(doctype)
+  await refreshLists(doctype)
   return { enqueued: false, failed }
 }
 
@@ -154,7 +181,10 @@ export async function bulkUpdate(doctype: string, docnames: string[], changes: R
 // Pure reads — they never create a cache entry, so calling them during a component
 // render can't mutate reactive state. They return whatever the load* actions have
 // cached so far (empty until Phase 4 triggers loads).
-export const recordsFor = (doctype: string): FrappeDoc[] => (lists[doctype] && lists[doctype].data) || []
+export const recordsFor = (doctype: string): FrappeDoc[] => {
+  const state = lists[listKey(doctype)]
+  return (state && state.data) || []
+}
 export const recordObj = (doctype: string, name: string): FrappeDoc | null => {
   const state = docs[docKey(doctype, name)]
   return state ? state.data : null

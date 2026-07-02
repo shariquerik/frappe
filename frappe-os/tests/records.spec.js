@@ -24,9 +24,9 @@ import {
 beforeEach(() => vi.clearAllMocks())
 
 describe('list cache', () => {
-  it('starts as an empty, not-loading entry', () => {
+  it('starts as an empty, not-loading entry (carrying its doctype + shape for refresh)', () => {
     const state = listFor('Apple')
-    expect(state).toEqual({ loading: false, data: [], error: null })
+    expect(state).toMatchObject({ loading: false, data: [], error: null })
   })
 
   it('loadList fills data and clears loading, fetching all fields', async () => {
@@ -51,6 +51,18 @@ describe('list cache', () => {
     const handle = listFor('Date')
     await loadList('Date')
     expect(handle.data).toEqual([{ name: 'x' }])
+  })
+
+  it('keys rows by request shape, so two shapes of one doctype do not clobber each other', async () => {
+    // A filtered/lean list window and an unfiltered context-free read of the SAME doctype.
+    const windowShape = { fields: ['name', 'status'], filters: [['status', '=', 'Open']], order_by: 'modified desc' }
+    api.getList.mockResolvedValue([{ name: 'open-1', status: 'Open' }])
+    await loadList('Ugni', windowShape)
+    api.getList.mockResolvedValue([{ name: 'a' }, { name: 'b' }, { name: 'c' }]) // dashboard's ['*'] read
+    await loadList('Ugni')
+    // The window keeps its own filtered rows; the context-free read has its own.
+    expect(listFor('Ugni', windowShape).data).toEqual([{ name: 'open-1', status: 'Open' }])
+    expect(listFor('Ugni').data).toEqual([{ name: 'a' }, { name: 'b' }, { name: 'c' }])
   })
 })
 
@@ -150,8 +162,17 @@ describe('field-meta cache', () => {
   })
 })
 
-describe('writes refresh the cache through the live API', () => {
-  it('saveDoc updates the doc entry and reloads the list', async () => {
+// A context-free write holds no column shape, so it refreshes every OPEN list window of the
+// doctype by replaying each window's remembered shape from page 1 — the filtered/paged lists
+// on screen refill correctly instead of being replaced by one unfiltered read. Nothing open →
+// nothing to refresh.
+describe('writes refresh the open list windows through the live API', () => {
+  it('saveDoc updates the doc entry and replays each open window shape', async () => {
+    const shape = { fields: ['name', 'subject'], filters: [['status', '=', 'Open']], limit: 20 }
+    api.getList.mockResolvedValue([])
+    await loadList('Kiwi', shape) // an open, filtered, paged window
+    api.getList.mockClear()
+
     const saved = { name: 'KIWI-1', subject: 'new' }
     api.saveDoc.mockResolvedValue(saved)
     api.getList.mockResolvedValue([saved])
@@ -159,17 +180,31 @@ describe('writes refresh the cache through the live API', () => {
     expect(api.saveDoc).toHaveBeenCalledWith('Kiwi', 'KIWI-1', { subject: 'new' })
     expect(result).toBe(saved)
     expect(docFor('Kiwi', 'KIWI-1').data).toEqual(saved)
-    expect(api.getList).toHaveBeenCalledWith('Kiwi', { fields: ['*'], limit: 100 })
+    // The refresh preserves the window's fields/filters/limit and restarts at page 1.
+    expect(api.getList).toHaveBeenCalledWith('Kiwi', {
+      fields: ['name', 'subject'], filters: [['status', '=', 'Open']], limit: 20, start: 0,
+    })
   })
 
-  it('createDoc caches the new doc under its returned name and reloads the list', async () => {
+  it('createDoc caches the new doc under its returned name and refreshes the open window', async () => {
+    api.getList.mockResolvedValue([])
+    await loadList('Lemon') // an open unfiltered window
+    api.getList.mockClear()
+
     const created = { name: 'LEMON-9', subject: 'fresh' }
     api.createDoc.mockResolvedValue(created)
     api.getList.mockResolvedValue([created])
     const result = await createDoc('Lemon', { subject: 'fresh' })
     expect(result).toBe(created)
     expect(docFor('Lemon', 'LEMON-9').data).toEqual(created)
-    expect(api.getList).toHaveBeenCalledWith('Lemon', { fields: ['*'], limit: 100 })
+    expect(api.getList).toHaveBeenCalledWith('Lemon', { fields: ['*'], limit: 100, start: 0 })
+  })
+
+  it('a write with no open list window of the doctype fetches nothing', async () => {
+    const saved = { name: 'PLUM-1', subject: 'x' }
+    api.saveDoc.mockResolvedValue(saved)
+    await saveDoc('Plum', 'PLUM-1', { subject: 'x' })
+    expect(api.getList).not.toHaveBeenCalled() // no window to refill
   })
 })
 
@@ -178,12 +213,16 @@ describe('writes refresh the cache through the live API', () => {
 // but an enqueued run (api → null) has changed nothing yet — refreshing would show stale rows under
 // a false "done", and [] would read as full success. The two paths return distinct BulkUpdateResults.
 describe('bulkUpdate (inline vs enqueued)', () => {
-  it('inline: refreshes the list and reports the failed docnames', async () => {
+  it('inline: refreshes the open list windows and reports the failed docnames', async () => {
+    api.getList.mockResolvedValue([]) // open a window so there is something to refresh
+    await loadList('Mangosteen')
+    api.getList.mockClear()
+
     api.bulkUpdate.mockResolvedValue(['MANGO-2']) // < 20 rows → runs inline, returns failures
     api.getList.mockResolvedValue([{ name: 'MANGO-1' }])
     const result = await bulkUpdate('Mangosteen', ['MANGO-1', 'MANGO-2'], { status: 'Open' })
     expect(result).toEqual({ enqueued: false, failed: ['MANGO-2'] })
-    expect(api.getList).toHaveBeenCalledWith('Mangosteen', { fields: ['*'], limit: 100 })
+    expect(api.getList).toHaveBeenCalledWith('Mangosteen', { fields: ['*'], limit: 100, start: 0 })
   })
 
   it('enqueued (null): does NOT refresh and does NOT claim success', async () => {

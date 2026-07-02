@@ -53,13 +53,18 @@ describe('data', () => {
   })
 
   it('saveDoc writes through the records store (api write + list refresh)', async () => {
+    const data = createOsApi(boot()).data
+    api.getList.mockResolvedValue([]) // an open list window (via the store), so the write has something to refresh
+    await useOS().loadList('Gamma')
+    api.getList.mockClear()
+
     const saved = { name: 'G-1', subject: 'x' }
     api.saveDoc.mockResolvedValue(saved)
     api.getList.mockResolvedValue([saved])
-    const result = await createOsApi(boot()).data.saveDoc('Gamma', 'G-1', { subject: 'x' })
+    const result = await data.saveDoc('Gamma', 'G-1', { subject: 'x' })
     expect(api.saveDoc).toHaveBeenCalledWith('Gamma', 'G-1', { subject: 'x' })
     expect(result).toBe(saved)
-    expect(api.getList).toHaveBeenCalledWith('Gamma', { fields: ['*'], limit: 100 })
+    expect(api.getList).toHaveBeenCalledWith('Gamma', { fields: ['*'], limit: 100, start: 0 })
   })
 
   it('createDoc writes through the records store', async () => {
