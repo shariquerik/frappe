@@ -83,10 +83,17 @@ function recordShadows(command: string, region: string, competitors: Action[], w
 // shadows when it declares none — re-presenting a default must not silently relocate the item.
 // An override that DOES set group/order keeps its own (a deliberate relocation, ADR-0014). Never
 // mutates the winning Action (no shared-state leak across contexts/windows).
+//
+// The slot is inherited from the STRONGEST shadowed default that actually declares one — the loser
+// the winner most directly overrides — not the first placement-bearing competitor in registration
+// order. A weak global competitor carrying its own placement must not hijack the slot from the
+// higher-tier default the winner is re-presenting, and a re-title chain (App < Site < User, all
+// placement-less above the default) must reach past the runner-up to the default that holds it.
 function inheritPlacement(winner: Action, competitors: Action[]): Action {
   if (winner.group !== undefined && winner.order !== undefined) return winner
-  const base = competitors.find((c) => c !== winner && (c.group !== undefined || c.order !== undefined))
-  if (!base) return winner
+  const placed = competitors.filter((c) => c !== winner && (c.group !== undefined || c.order !== undefined))
+  if (!placed.length) return winner
+  const base = placed.reduce((best, c) => (compareActions(c, best) > 0 ? c : best))
   return { ...winner, group: winner.group ?? base.group, order: winner.order ?? base.order }
 }
 

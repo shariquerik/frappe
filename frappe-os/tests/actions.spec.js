@@ -180,6 +180,28 @@ describe('resolve (tiebreak chain: specificity → layer → order → true-tie)
     const { items } = resolve([base, override], 'menubar:file', { activeApp: 'erpnext' })
     expect(items[0]).toMatchObject({ group: 'z', order: 5 })
   })
+
+  // Finding #8: the winner inherits the slot from the default it SHADOWS — the strongest loser it
+  // overrides — not from whichever placement-bearing competitor happens to be registered first. A
+  // weak global competitor with its own placement, registered first, must NOT hijack the slot.
+  it('inherits from the strongest shadowed default, not the first placement-bearing competitor', () => {
+    const weak = act('x', { sourceApp: 'noise', group: 'z', order: 9 }) // global tier, registered FIRST
+    const shadowed = act('x', { sourceApp: 'frappe', group: 'a', order: 1, when: { activeApp: 'crm' } }) // window tier
+    const winner = act('x', { sourceApp: 'erpnext', when: { doctype: 'CRM Lead' } }) // surface tier, no placement
+    const { items } = resolve([weak, shadowed, winner], 'menubar:file', { activeApp: 'crm', doctype: 'CRM Lead' })
+    expect(items[0]).toMatchObject({ sourceApp: 'erpnext', group: 'a', order: 1 })
+  })
+
+  // A re-title chain (App < Site < User, all no-placement above the default): the placement lives on
+  // the app default lower down the stack, so the winner must chain past the placement-less runner-up
+  // to the strongest loser that actually declares a slot.
+  it('chains placement past a placement-less runner-up to the app default that carries the slot', () => {
+    const appDefault = act('x', { sourceApp: 'frappe', layer: 'app', group: 'a', order: 1 })
+    const siteRetitle = act('x', { sourceApp: 'site', layer: 'site' }) // outranks app default, no placement
+    const userWinner = act('x', { sourceApp: 'user', layer: 'user' }) // wins, no placement
+    const { items } = resolve([appDefault, siteRetitle, userWinner], 'menubar:file', {})
+    expect(items[0]).toMatchObject({ sourceApp: 'user', group: 'a', order: 1 })
+  })
 })
 
 // Slice 3 (ADR-0014 removal): a removal is an ordinary Action carrying `removed:true` instead of
