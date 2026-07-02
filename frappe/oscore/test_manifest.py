@@ -113,20 +113,56 @@ class TestReadScopes(unittest.TestCase):
 		self.assertEqual(manifest._read_scopes("/no/such/doctype/os", ("doctype", "list", "form")), {})
 
 
-class TestDoctypeManifest(unittest.TestCase):
-	"""A doctype carries its own `os/` folder under `<module>/doctype/<doctype>/os/`."""
+class TestAppOfModule(unittest.TestCase):
+	"""The safe module→app seam: `Module Def.app_name`, frappe when the module has no owning app.
+	A custom / UI-created Module Def (absent from `frappe.local.module_app`) must resolve, not raise."""
 
-	def test_reads_folder_via_module_path(self):
+	def test_no_module_rides_frappe(self):
+		# The falsy short-circuit never touches the DB — no site needed.
+		self.assertEqual(manifest.app_of_module(None), "frappe")
+		self.assertEqual(manifest.app_of_module(""), "frappe")
+
+	def test_resolves_module_to_its_app(self):
+		import frappe
+
+		with unittest.mock.patch.object(frappe, "db", unittest.mock.Mock(get_value=lambda *a, **k: "erpnext")):
+			self.assertEqual(manifest.app_of_module("Selling"), "erpnext")
+
+	def test_unresolved_custom_module_rides_frappe(self):
+		import frappe
+
+		# A UI-created Module Def with no app_name → frappe, instead of the old KeyError/DoesNotExist.
+		with unittest.mock.patch.object(frappe, "db", unittest.mock.Mock(get_value=lambda *a, **k: None)):
+			self.assertEqual(manifest.app_of_module("My Custom Module"), "frappe")
+
+
+class TestDoctypeManifest(unittest.TestCase):
+	"""A doctype carries its own `os/` folder under `<app>/<module>/doctype/<doctype>/os/`."""
+
+	def test_reads_folder_via_app_path(self):
 		import frappe
 
 		with tempfile.TemporaryDirectory() as directory:
 			(Path(directory) / "list.json").write_text('{"columns": ["status"]}')
-			module_path = frappe.get_module_path
-			frappe.get_module_path = lambda *segments: directory
+			app_of_module = manifest.app_of_module
+			get_app_path = frappe.get_app_path
+			manifest.app_of_module = lambda module: "frappe"
+			frappe.get_app_path = lambda *segments: directory
 			try:
 				self.assertEqual(manifest.doctype_manifest("ToDo", "Desk"), {"list": {"columns": ["status"]}})
 			finally:
-				frappe.get_module_path = module_path
+				manifest.app_of_module = app_of_module
+				frappe.get_app_path = get_app_path
+
+	def test_custom_module_without_manifest_degrades_to_empty(self):
+		# A doctype in a custom module (absent from module_app) resolves to frappe and, finding no
+		# os/ folder there, returns {} — the crash path get_module_path took is gone.
+		app_of_module = manifest.app_of_module
+		manifest.app_of_module = lambda module: "frappe"
+		try:
+			self.assertEqual(manifest.doctype_manifest("Some DocType", "My Custom Module"), {})
+		finally:
+			manifest.app_of_module = app_of_module
 
 	def test_shipped_todo_tracer_is_discovered(self):
 		import frappe

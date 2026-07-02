@@ -96,17 +96,17 @@ class TestScopeStamping(unittest.TestCase):
 		self._apps = contributions._installed_os_apps
 		self._read = contributions.manifest.read
 		self._doctype_manifest = contributions.manifest.doctype_manifest
-		self._module_app = getattr(frappe.local, "module_app", None)
+		self._app_of_module = contributions.manifest.app_of_module
 		self._logger = frappe.logger
 		contributions._installed_os_apps = lambda: ["erpnext"]
-		frappe.local.module_app = {"selling": "erpnext"}
+		contributions.manifest.app_of_module = lambda module: "erpnext"
 		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
 
 	def tearDown(self):
 		contributions._installed_os_apps = self._apps
 		contributions.manifest.read = self._read
 		contributions.manifest.doctype_manifest = self._doctype_manifest
-		frappe.local.module_app = self._module_app
+		contributions.manifest.app_of_module = self._app_of_module
 		frappe.logger = self._logger
 
 	def test_app_scope_stamped_on_actions_json(self):
@@ -153,10 +153,10 @@ class TestTodoBulkTracer(unittest.TestCase):
 	def setUp(self):
 		self._apps = contributions._installed_os_apps
 		self._doctype_manifest = contributions.manifest.doctype_manifest
-		self._module_app = getattr(frappe.local, "module_app", None)
+		self._app_of_module = contributions.manifest.app_of_module
 		self._logger = frappe.logger
 		contributions._installed_os_apps = lambda: ["frappe"]
-		frappe.local.module_app = {"desk": "frappe"}
+		contributions.manifest.app_of_module = lambda module: "frappe"
 		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
 		# Read the real manifest file directly (no site/DB), and hand it to the projector as the
 		# doctype's scoped manifest — the exact bytes shipped in the repo drive the assertion.
@@ -168,7 +168,7 @@ class TestTodoBulkTracer(unittest.TestCase):
 	def tearDown(self):
 		contributions._installed_os_apps = self._apps
 		contributions.manifest.doctype_manifest = self._doctype_manifest
-		frappe.local.module_app = self._module_app
+		contributions.manifest.app_of_module = self._app_of_module
 		frappe.logger = self._logger
 
 	def test_todo_manifest_projects_the_bulk_verb_as_data(self):

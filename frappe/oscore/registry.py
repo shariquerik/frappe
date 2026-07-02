@@ -8,7 +8,7 @@
 
 import frappe
 from frappe import _
-from frappe.oscore import contributions
+from frappe.oscore import contributions, manifest
 from frappe.oscore.common import readable_meta
 
 # Doctypes Frappe OS should expose, mirroring the curated frontend config
@@ -46,10 +46,9 @@ REGISTRY_DOCTYPES = [
 
 
 def _app_of(doctype):
-	"""The app that ships a doctype (via its module), defaulting to frappe."""
-	module = frappe.db.get_value("DocType", doctype, "module")
-	app = frappe.db.get_value("Module Def", module, "app_name") if module else None
-	return app or "frappe"
+	"""The app that ships a doctype (via its module), defaulting to frappe — through the shared
+	safe module→app seam, so a custom-module doctype resolves instead of raising."""
+	return manifest.app_of_module(frappe.db.get_value("DocType", doctype, "module"))
 
 
 def _view_contribution(doctype, name, label, app, order):

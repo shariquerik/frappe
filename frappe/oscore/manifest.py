@@ -84,11 +84,25 @@ def _read_scopes(directory, scopes):
 	return scoped
 
 
+def app_of_module(module):
+	"""The app that owns a module, defaulting to frappe — the safe module→app seam. Reads
+	`Module Def.app_name`, so a custom / UI-created Module Def (absent from every app's `modules.txt`,
+	and so from `frappe.local.module_app`) still resolves instead of raising: the `module_app`
+	subscript KeyErrors on such a module and `get_module_path` / `get_module_app` throw
+	DoesNotExistError. A module with no owning app — or none given — rides frappe, the framework
+	default (its `os/` folder is then simply absent, degrading to an empty manifest)."""
+	return (module and frappe.db.get_value("Module Def", module, "app_name")) or "frappe"
+
+
 def doctype_manifest(doctype, module):
 	"""A doctype's co-located `os/` manifest (ADR-0030), keyed by scope — `doctype` (carries to all
-	views), `list`, `form`. Read as data from `<module>/doctype/<doctype>/os/`; {} when the doctype
-	ships none. The later folders (indicator rules, scoped actions) consume this off live meta."""
-	directory = frappe.get_module_path(module, "doctype", frappe.scrub(doctype), MANIFEST_DIR)
+	views), `list`, `form`. Read as data from `<app>/<module>/doctype/<doctype>/os/` (the owning app
+	resolved through the safe `app_of_module` seam, so a custom-module doctype degrades to {} rather
+	than 500ing); {} when the doctype ships none. The later folders (indicator rules, scoped actions)
+	consume this off live meta."""
+	directory = frappe.get_app_path(
+		app_of_module(module), frappe.scrub(module), "doctype", frappe.scrub(doctype), MANIFEST_DIR
+	)
 	return _read_scopes(directory, DOCTYPE_MANIFEST_SCOPES)
 
 

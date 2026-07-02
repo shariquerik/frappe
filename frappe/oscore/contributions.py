@@ -279,7 +279,7 @@ def doctype_scoped_contributions(doctype, module):
 	delivery-by-scope, twinning the boot-delivered App scope. Each scope file's `actions`/`commands`
 	are projected into the same uniform envelope; actions carry the file's Scope so the client
 	auto-derives Eligibility. sourceApp is the app owning the doctype's module."""
-	app = frappe.local.module_app[frappe.scrub(module)]
+	app = manifest.app_of_module(module)
 	rows = []
 	for scope_file, config in manifest.doctype_manifest(doctype, module).items():
 		project = _action_project(_const(_doctype_scope(scope_file, doctype)))
