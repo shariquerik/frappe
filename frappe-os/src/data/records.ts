@@ -180,7 +180,16 @@ export async function createDoc(doctype: string, values: Record<string, unknown>
 export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<BulkUpdateResult> {
   const taskId = newTaskId()
   const watch = await watchTask(taskId)
-  const failed = await apiBulkUpdate(doctype, docnames, changes, taskId)
+  // A rejected write (network / 417 / CSRF) means the job never ran, so its terminal event will
+  // never come — cancel the pre-joined watch before re-throwing, else its room membership and
+  // reconnect resubscriber leak on the shared, process-lifetime socket until the timeout fires.
+  let failed: string[] | null
+  try {
+    failed = await apiBulkUpdate(doctype, docnames, changes, taskId)
+  } catch (error) {
+    watch.cancel()
+    throw error
+  }
   if (failed === null) return enqueuedBulk(doctype, docnames.length, watch)
   watch.cancel()
   await refreshLists(doctype)

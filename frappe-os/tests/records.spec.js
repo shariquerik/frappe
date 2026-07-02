@@ -300,6 +300,17 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     expect(notify).toHaveBeenCalledWith('Updated 22 Durian records; 3 failed.') // failures reported, not swallowed
   })
 
+  it('a rejected write cancels the pre-joined watch (no leaked room) and propagates the error', async () => {
+    // watchTask joined the job room BEFORE the write. If the POST rejects, the job never ran and
+    // its terminal event never comes — the watch must be cancelled so its room membership and
+    // reconnect handler don't leak on the shared socket until the 120s timeout.
+    api.bulkUpdate.mockRejectedValue(new Error('Network Error'))
+    await expect(bulkUpdate('Kiwi', ['K-1', 'K-2'], { status: 'Open' })).rejects.toThrow('Network Error')
+    expect(mockWatch.cancel).toHaveBeenCalledTimes(1) // watch dropped, not left armed
+    expect(mockWatch.onComplete).not.toHaveBeenCalled() // never treated as enqueued
+    expect(api.getList).not.toHaveBeenCalled() // nothing to refresh — the write didn't apply
+  })
+
   it('on job completion with no result (dark seam fallback): confirms without claiming a false success', async () => {
     api.getList.mockResolvedValue([])
     api.bulkUpdate.mockResolvedValue(null)
