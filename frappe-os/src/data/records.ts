@@ -7,6 +7,8 @@
 
 import { reactive } from 'vue'
 import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue } from '@/data/api'
+import { onTaskComplete } from '@/data/realtime'
+import { notify } from '@/data/notify'
 import { registerScopedContributions } from '@/registry'
 import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult } from '@/types'
 
@@ -166,15 +168,46 @@ export async function createDoc(doctype: string, values: Record<string, unknown>
 // Bulk-update a field across many docnames — the write-then-refresh seam a bulk run Handler drives
 // (ADR-0032), mirroring saveDoc/createDoc, but split on how the backend applies the write. A small
 // selection runs INLINE (a `failed` array back): the rows are mutated now, so we refresh the open
-// list windows and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed yet,
-// so we must NOT refresh (a refresh would show stale rows under a false success) nor read [] as "all
-// succeeded" — we return `enqueued` instead. Refreshing the list when the background job finishes needs
-// a realtime completion signal; deferred (.scratch/deferred-hardcoded/issues/17-bulk-update-enqueued-refresh.md).
+// list windows and report the failures. 20+ rows are ENQUEUED (`null` back): nothing has changed
+// yet, so we must NOT refresh eagerly (a refresh would show stale rows under a false success) nor
+// read [] as "all succeeded". Instead we acknowledge the enqueue, then watch the job's realtime
+// channel (keyed by a client-generated `task_id`) and refresh + confirm the moment it finishes —
+// closing the honest-but-silent gap (data/realtime.ts; the Desk `_server_messages` alert the backend
+// emits never reaches the OS shell, so feedback must ride `toast`, not that alert).
 export async function bulkUpdate(doctype: string, docnames: string[], changes: Record<string, unknown>): Promise<BulkUpdateResult> {
-  const failed = await apiBulkUpdate(doctype, docnames, changes)
-  if (failed === null) return { enqueued: true, failed: [] }
+  const taskId = newTaskId()
+  const failed = await apiBulkUpdate(doctype, docnames, changes, taskId)
+  if (failed === null) {
+    notify(`Updating ${recordCount(docnames.length, doctype)} in the background…`)
+    onTaskComplete(taskId, () => {
+      refreshLists(doctype)
+      notify(`Finished updating ${recordCount(docnames.length, doctype)}.`)
+    })
+    return { enqueued: true, failed: [] }
+  }
   await refreshLists(doctype)
+  // The inline run applied now — confirm it (symmetric with the enqueued path's "Finished…"), and
+  // surface any rows the backend rejected instead of silently dropping the returned `failed` array.
+  notify(inlineBulkSummary(docnames.length, failed, doctype))
   return { enqueued: false, failed }
+}
+
+// "3 ToDo records" / "1 ToDo record" — the shared count phrase for every bulk-update toast.
+function recordCount(count: number, doctype: string): string {
+  return `${count} ${doctype} record${count === 1 ? '' : 's'}`
+}
+
+// The inline-completion toast: a clean "Updated N …" on full success, or "Updated X …; K failed"
+// when some rows were rejected — the failures are reported, never swallowed.
+function inlineBulkSummary(total: number, failed: string[], doctype: string): string {
+  if (!failed.length) return `Updated ${recordCount(total, doctype)}.`
+  return `Updated ${recordCount(total - failed.length, doctype)}; ${failed.length} failed.`
+}
+
+// A short unique id naming the enqueued job's realtime progress channel (`task_progress:{id}`).
+// `crypto.randomUUID` where available; a random fallback for older/test environments.
+function newTaskId(): string {
+  return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2, 12)
 }
 
 // ---- synchronous getters (compat bridge for components, Phase 4 wires loads) -

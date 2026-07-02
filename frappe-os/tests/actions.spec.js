@@ -285,6 +285,7 @@ describe('contextForOS (derive Context from the active window)', () => {
   beforeEach(() => {
     os.state.windows = []
     os.state.geo = {}
+    os.state.selection = {}
     os.state.activeId = null
   })
 
@@ -300,6 +301,24 @@ describe('contextForOS (derive Context from the active window)', () => {
   it('a form window adds the recordName coordinate', () => {
     os.openRecordGlobal('CRM Lead', 'CRM-LEAD-0001')
     expect(contextForOS(os)).toMatchObject({ activeApp: 'crm', doctype: 'CRM Lead', recordName: 'CRM-LEAD-0001', view: 'form' })
+  })
+
+  it('carries no selection marker while the front list has no selection', () => {
+    os.openListGlobal('ToDo')
+    expect(contextForOS(os).selection).toBeUndefined()
+  })
+
+  it('sets the selection marker (presence, not value) when the front list has selected rows', () => {
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    expect(contextForOS(os).selection).toBe('rows')
+  })
+
+  it('drops the selection marker again once the selection is cleared', () => {
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, ['TODO-0001'])
+    os.setSelection(os.state.activeId, []) // deselect all → sparse entry removed
+    expect(contextForOS(os).selection).toBeUndefined()
   })
 })
 

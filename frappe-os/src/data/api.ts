@@ -110,16 +110,21 @@ export async function saveDoc(
 // the docnames that failed ([] on full success); for 20+ rows it ENQUEUES a background job and
 // returns nothing — surfaced here as `null` (nothing applied yet), which records.ts branches on so
 // it never mistakes the enqueued path for instant success. `undefined` is normalised to `null`.
+// `taskId` names the realtime progress channel (`task_progress:{taskId}`) the enqueued job publishes
+// on, so the caller can watch for its completion (data/realtime.ts); the backend threads it into
+// `frappe.publish_progress`. Omitted for callers that don't track completion.
 export async function bulkUpdate(
   doctype: string,
   docnames: string[],
   changes: Record<string, unknown>,
+  taskId?: string,
 ): Promise<string[] | null> {
   const failed = await callPost('frappe.desk.doctype.bulk_update.bulk_update.submit_cancel_or_update_docs', {
     doctype,
     docnames,
     action: 'update',
     data: changes,
+    ...(taskId ? { task_id: taskId } : {}),
   })
   return failed ?? null
 }

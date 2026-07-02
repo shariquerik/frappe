@@ -69,4 +69,12 @@ export interface BootData {
   // The server-resolved per-user Recents log (ADR-0024): record opens, newest-first, deduped +
   // permission-gated + capped. Tolerant like `placements` — an older server omits it (→ empty Recents).
   recents?: unknown[]
+  // Realtime coordinates for the OS socket seam (data/realtime.ts). `sitename` names the per-site
+  // Socket.IO namespace (`/{sitename}`); `socketio_port` is where the realtime process listens
+  // (used only in dev); `developer_mode` picks the dev host (explicit port) over the production
+  // same-origin path. All optional/tolerant (ADR-0008) — an older server omits them, so the
+  // realtime seam simply degrades to no live refresh rather than throwing.
+  sitename?: string
+  socketio_port?: number
+  developer_mode?: boolean
 }

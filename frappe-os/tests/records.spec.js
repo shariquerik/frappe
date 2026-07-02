@@ -14,8 +14,15 @@ vi.mock('@/data/api', () => ({
   bulkUpdate: vi.fn(),
   cardValue: vi.fn(),
 }))
+// records.ts drives the realtime seam (bulk-update completion signal) and the notify port
+// (enqueued/done feedback). Stub both — these specs pin records.ts's own branching, not the
+// socket transport or the toast rendering (which stay out of the store's frappe-ui-free graph).
+vi.mock('@/data/realtime', () => ({ onTaskComplete: vi.fn() }))
+vi.mock('@/data/notify', () => ({ notify: vi.fn() }))
 
 import * as api from '@/data/api'
+import { onTaskComplete } from '@/data/realtime'
+import { notify } from '@/data/notify'
 import {
   listFor, loadList, loadMore, docFor, loadDoc, countFor, loadCount,
   fieldMetaFor, loadFieldMeta, saveDoc, createDoc, bulkUpdate, recordsFor, recordObj,
@@ -223,13 +230,54 @@ describe('bulkUpdate (inline vs enqueued)', () => {
     const result = await bulkUpdate('Mangosteen', ['MANGO-1', 'MANGO-2'], { status: 'Open' })
     expect(result).toEqual({ enqueued: false, failed: ['MANGO-2'] })
     expect(api.getList).toHaveBeenCalledWith('Mangosteen', { fields: ['*'], limit: 100, start: 0 })
+    expect(notify).toHaveBeenCalledWith('Updated 1 Mangosteen record; 1 failed.') // failures surfaced, not dropped
   })
 
-  it('enqueued (null): does NOT refresh and does NOT claim success', async () => {
+  it('inline full success: refreshes and confirms with a completion notify', async () => {
+    api.getList.mockResolvedValue([])
+    await loadList('Lychee')
+    api.getList.mockClear()
+
+    api.bulkUpdate.mockResolvedValue([]) // < 20 rows, no failures → applied inline
+    api.getList.mockResolvedValue([{ name: 'LY-1' }])
+    const result = await bulkUpdate('Lychee', ['LY-1', 'LY-2'], { status: 'Open' })
+    expect(result).toEqual({ enqueued: false, failed: [] })
+    expect(api.getList).toHaveBeenCalledWith('Lychee', { fields: ['*'], limit: 100, start: 0 })
+    expect(notify).toHaveBeenCalledWith('Updated 2 Lychee records.') // the inline "done" confirmation
+  })
+
+  it('threads a task_id into the bulk write so the enqueued job is watchable', async () => {
+    api.bulkUpdate.mockResolvedValue(null)
+    await bulkUpdate('Tangerine', Array.from({ length: 25 }, (_, i) => `T-${i}`), { status: 'Open' })
+    const taskId = api.bulkUpdate.mock.calls[0][3] // (doctype, docnames, changes, taskId)
+    expect(typeof taskId).toBe('string')
+    expect(taskId.length).toBeGreaterThan(0)
+    expect(onTaskComplete).toHaveBeenCalledWith(taskId, expect.any(Function)) // same id it subscribes on
+  })
+
+  it('enqueued (null): acknowledges but does NOT refresh or claim success yet', async () => {
     api.bulkUpdate.mockResolvedValue(null) // 20+ rows → enqueued in background, nothing applied yet
     const result = await bulkUpdate('Rambutan', Array.from({ length: 25 }, (_, i) => `R-${i}`), { status: 'Open' })
     expect(result).toEqual({ enqueued: true, failed: [] })
+    expect(notify).toHaveBeenCalledTimes(1) // the "enqueued" acknowledgement only — no "done" yet
     expect(api.getList).not.toHaveBeenCalled() // no stale refresh under a false "done"
+  })
+
+  it('on job completion: refreshes the open windows and confirms via notify', async () => {
+    api.getList.mockResolvedValue([]) // open a Soursop window so completion has something to refresh
+    await loadList('Soursop')
+    api.getList.mockClear()
+
+    api.bulkUpdate.mockResolvedValue(null)
+    await bulkUpdate('Soursop', Array.from({ length: 25 }, (_, i) => `S-${i}`), { status: 'Open' })
+    expect(api.getList).not.toHaveBeenCalled() // nothing refreshed until the job actually finishes
+    notify.mockClear() // drop the "enqueued" ack; watch only what completion does
+
+    const onDone = onTaskComplete.mock.calls[0][1] // the completion callback records.ts registered
+    api.getList.mockResolvedValue([{ name: 'S-0' }])
+    await onDone() // the realtime seam fires this when percent ≥ 100
+    expect(api.getList).toHaveBeenCalledWith('Soursop', { fields: ['*'], limit: 100, start: 0 })
+    expect(notify).toHaveBeenCalledTimes(1) // the "done" confirmation
   })
 })
 

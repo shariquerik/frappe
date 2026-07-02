@@ -16,6 +16,8 @@ import { listFetchFields } from "./list-columns";
 import { useOS } from "@/desktop";
 import { useWorkingState } from "@/desktop/use-working-state";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
+import { toolbarItems } from "@/actions/toolbar";
+import { LIST_SELECTION } from "@/actions/regions";
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
 // resolver — see DoctypeView.vue).
 import type { ViewProps } from "@/config/types";
@@ -180,6 +182,25 @@ const toolbarSlot = inject(TOOLBAR_SLOT, shallowRef<HTMLElement | null>(null));
 // (WINDOW_FOCUSED, provided by OSWindow). Unprovided (chromeless mount) → defaults to solid.
 const windowFocused = inject(WINDOW_FOCUSED, null);
 const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid" : "subtle"));
+
+// The selection/bulk bar's verbs (ADR-0032). OSListView reports its selection through
+// `update:selections`; feed it into the OS store keyed by the active window — the same key
+// `selectedRecords()`/`contextForOS` read — so the selection Context marker lights up and the
+// bar renders. An empty Set clears the entry (see setSelection).
+function onSelectionUpdate(selections: Set<unknown>) {
+	const winId = os.state.activeId;
+	if (winId) os.setSelection(winId, [...selections] as string[]);
+}
+
+// The bulk verbs projected for the selection/bulk bar. It reads `fieldMeta.data` so the effect
+// re-runs when the doctype's scoped Actions fold into the registry (a NON-reactive write inside
+// loadFieldMeta, right after the reactive `data` write) — depending only on `os` would race the
+// async meta load and render empty. It also re-runs on selection change via `selectedRecords()`
+// inside contextForOS (the Region gate returns [] until a selection exists).
+const selectionActions = computed(() => {
+	void fieldMeta.value.data; // dependency: re-project once scoped Actions are folded in
+	return toolbarItems(LIST_SELECTION, os);
+});
 </script>
 
 <template>
@@ -235,6 +256,8 @@ const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid
 			:on-open="onOpen"
 			:on-open-inline="onOpenInline"
 			:on-open-new-window="onOpenNewWindow"
+			:selection-actions="selectionActions"
+			@update:selections="onSelectionUpdate"
 			@column-width-updated="onColumnWidthUpdated"
 			@column-width-reset="onColumnWidthReset"
 			@scroll="onListScroll"

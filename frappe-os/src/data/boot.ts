@@ -21,6 +21,11 @@ function fromWindow(): BootData {
     registry: w.registry || [],
     permissions: w.permissions || {},
     placements: Array.isArray(w.placements) ? w.placements : [],
+    // Realtime coordinates (data/realtime.ts). Injected as window globals in production;
+    // read defensively so an older server / offline boot degrades to no live refresh.
+    sitename: typeof w.sitename === 'string' ? w.sitename : undefined,
+    socketio_port: typeof w.socketio_port === 'number' ? w.socketio_port : undefined,
+    developer_mode: !!w.developer_mode,
   }
 }
 

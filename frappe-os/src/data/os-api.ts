@@ -10,6 +10,7 @@
 import type { InjectionKey } from 'vue'
 import { toast } from 'frappe-ui'
 import { getList, getDoc, call } from './api'
+import { setNotifier } from './notify'
 import { useOS } from '@/desktop'
 import { useRegistry, resolveApplet } from '@/registry'
 import type {
@@ -106,6 +107,9 @@ export const OS_KEY: InjectionKey<OsApi> = Symbol('frappe-os:os')
 let current: OsApi | null = null
 export function initOsApi(boot: BootData): OsApi {
   current = createOsApi(boot)
+  // Wire the frappe-ui-free data-layer notify port to the seam's toast, so writes below the seam
+  // (records.bulkUpdate's enqueued-job feedback) surface through the same notifications as the UI.
+  setNotifier(current.ui.notify)
   return current
 }
 export function getOsApi(): OsApi {

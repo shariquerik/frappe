@@ -23,6 +23,13 @@ def get_boot():
 		"permissions": get_permissions(),
 		"placements": get_placements(),
 		"recents": get_recents(),
+		# Realtime coordinates for the OS socket seam (data/realtime.ts): the per-site
+		# Socket.IO namespace is `/{sitename}`; in dev the shell reaches the realtime
+		# process directly on `socketio_port`, in production it rides the same origin
+		# (nginx proxies /socket.io). `developer_mode` is the dev-vs-prod switch.
+		"sitename": frappe.local.site,
+		"socketio_port": frappe.conf.socketio_port,
+		"developer_mode": bool(frappe.conf.developer_mode),
 	}
 
 

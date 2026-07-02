@@ -9,7 +9,7 @@
 // error are owned here; ListView owns only the empty state. Row click opens a form window
 // via `onOpen` — the OS opens windows, not router routes, so we use options.onRowClick.
 import { computed, ref } from 'vue'
-import { ListView, ListHeader, ListRows, ListSelectBanner, Avatar } from 'frappe-ui'
+import { Button, ListView, ListHeader, ListRows, ListSelectBanner, Avatar } from 'frappe-ui'
 import StatusPill from '../StatusPill.vue'
 import OSContextMenu from '../OSContextMenu.vue'
 import { cellKind } from './list-columns'
@@ -17,6 +17,7 @@ import { cellKind } from './list-columns'
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
 import type { DoctypeMeta } from '@/config/types'
 import type { IndicatorSpec } from '@/indicators/types'
+import type { ToolbarItem } from '@/actions/toolbar'
 import type { ListViewColumn } from './types'
 import type { FrappeDoc } from '@/data/types'
 
@@ -32,9 +33,11 @@ const props = withDefaults(defineProps<{
   onOpen?: (doctype: string, name: string) => void // left-click: follows the row open-target preference
   onOpenInline?: (doctype: string, name: string) => void // context-menu "Open": always same window
   onOpenNewWindow?: (doctype: string, name: string) => void
+  selectionActions?: ToolbarItem[] // bulk verbs for the selection/bulk bar, projected by the host from toolbarItems(LIST_SELECTION)
 }>(), {
   columns: () => [],
   rows: () => [],
+  selectionActions: () => [],
 })
 
 const emit = defineEmits<{
@@ -158,8 +161,23 @@ const options = computed(() => ({
       />
       <ListRows />
       <!-- Overriding the default slot drops frappe-ui's built-in selection banner, so we
-             re-add it here; it reads the shared `list` provide and shows on selection. -->
-      <ListSelectBanner />
+             re-add it here; it reads the shared `list` provide and shows on selection. The
+             `#actions` slot draws the OS bulk verbs (projected by the host from
+             toolbarItems(LIST_SELECTION)). Firing a verb also clears the selection via the
+             banner's own `unselectAll` — that empties frappe-ui's Set, whose `update:selections`
+             emit clears the OS store, drops `context.selection`, and hides the bar. -->
+      <ListSelectBanner>
+        <template #actions="{ unselectAll }">
+          <div class="flex items-center gap-2">
+            <Button
+              v-for="item in selectionActions"
+              :key="item.label"
+              :label="item.label"
+              @click="() => { item.onClick(); unselectAll() }"
+            />
+          </div>
+        </template>
+      </ListSelectBanner>
       <!-- `data-row-name` on every cell lets the container-level contextmenu resolve the
            clicked record from anywhere in the row (see rowNameFromEvent). -->
       <template #cell="{ column, item, row }">

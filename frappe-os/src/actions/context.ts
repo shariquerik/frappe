@@ -16,5 +16,10 @@ export function contextForOS(os: OsStore): Context {
     if (surface.doctype) context.doctype = surface.doctype
     if (surface.recordName) context.recordName = surface.recordName
   }
+  // The surface-tier selection marker: PRESENCE (not value) — the selection/bulk-bar Region gates
+  // on it (regions.ts). Set only when the front window's list has selected rows, so the bar mounts
+  // for real once rows are picked and vanishes when cleared. `selectedRecords()` reads state.activeId,
+  // the same window this Context is derived from.
+  if (os.selectedRecords().length) context.selection = 'rows'
   return context
 }
