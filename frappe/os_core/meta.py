@@ -7,7 +7,7 @@
 
 import frappe
 from frappe import _
-from frappe.oscore import contributions, indicators, manifest
+from frappe.os_core import contributions, indicators, manifest
 
 # Fieldtypes that are layout-only or unsupported by the rendering engine. Section Break is handled
 # specially (its label groups the following fields) before this skip.

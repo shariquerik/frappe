@@ -23,14 +23,14 @@
    "reqd": 1
   },
   {
-   "description": "The rule this delta targets (ADR-0031): the condition of an app/Site/default rule to recolor or hide, or a new condition of the user's own rule. Blank is the catch-all. Stored canonically so the identity match holds.",
+   "description": "The rule's identity and its match (ADR-0031): a Frappe filter over the record's fields (e.g. status,=,Overdue). Repeating an app/default rule's condition targets that rule; a new condition adds a rule. Blank is the catch-all.",
    "fieldname": "condition",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Condition"
   },
   {
-   "description": "The pill text. Absent for a hide.",
+   "description": "The pill text. Leave blank only on a hide row.",
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -44,7 +44,7 @@
   },
   {
    "default": "0",
-   "description": "A non-destructive personal hide (tombstone): suppresses the matching app/Site/default rule for this user's own view only, leaving the source untouched (ADR-0031).",
+   "description": "Hide the matching app/default rule (a tombstone) instead of adding or replacing one — the site-wide equivalent of a personal hide (ADR-0031). The source rule is left untouched.",
    "fieldname": "hidden",
    "fieldtype": "Check",
    "label": "Hidden"
@@ -54,17 +54,21 @@
  "links": [],
  "modified": "2026-07-01 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Desk",
- "name": "OS Indicator Rule Override",
+ "module": "OS Core",
+ "name": "OS Indicator Rule",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
-   "if_owner": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
    "read": 1,
-   "role": "Desk User",
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
    "write": 1
   }
  ],

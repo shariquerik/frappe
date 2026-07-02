@@ -8,7 +8,7 @@
 import json
 
 import frappe
-from frappe.oscore import manifest
+from frappe.os_core import manifest
 
 
 def readable_meta(doctype):

@@ -4,13 +4,13 @@
 # Pure unit tests for the server-side indicator projection (ADR-0028 / ADR-0031): the OS default
 # rules, the app-rules-over-defaults merge, and the auto-fetch field list. No DB — meta, workflow
 # and the manifest reader are faked.
-#   bench run-tests --module frappe.oscore.test_indicators
-# or standalone:  ./env/bin/python -m unittest frappe.oscore.test_indicators
+#   bench run-tests --module frappe.os_core.test_indicators
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.test_indicators
 
 import unittest
 import unittest.mock
 
-from frappe.oscore import indicators
+from frappe.os_core import indicators
 
 
 class TestDefaultIndicatorRules(unittest.TestCase):

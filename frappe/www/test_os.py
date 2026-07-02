@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # License: MIT. See LICENSE
 #
-# Guards the `frappe.www.os` facade (ADR-0030): the OS engine lives in the `frappe.oscore` package, and
+# Guards the `frappe.www.os` facade (ADR-0030): the OS engine lives in the `frappe.os_core` package, and
 # `www/os.py` re-exports the whitelisted methods the frontend calls by the path `frappe.www.os.<name>`.
 # A re-export must stay callable AND whitelisted, else the RPC 404s or 403s at runtime. Pure — no site:
 #   bench run-tests --module frappe.www.test_os

@@ -3,14 +3,14 @@
 #
 # Pure unit tests for the live-meta manifest projection (ADR-0030). get_doctype_meta carries the
 # doctype's `os/` manifest onto live meta via the reader, keyed by the doctype's module:
-#   bench run-tests --module frappe.oscore.test_meta
-# or standalone:  ./env/bin/python -m unittest frappe.oscore.test_meta
+#   bench run-tests --module frappe.os_core.test_meta
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.test_meta
 
 import unittest
 import unittest.mock
 
 import frappe
-from frappe.oscore import meta
+from frappe.os_core import meta
 
 
 class TestCardValue(unittest.TestCase):

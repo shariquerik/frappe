@@ -8,7 +8,7 @@
 # order — is uniform and lives here once; `registry.py` assembles these with the doctype views.
 
 import frappe
-from frappe.oscore import manifest
+from frappe.os_core import manifest
 
 
 def _os_app_decl(app):

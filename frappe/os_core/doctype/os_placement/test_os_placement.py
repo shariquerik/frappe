@@ -3,13 +3,13 @@
 #
 # Pure unit tests for the Placement resolver merge (ADR-0023). `merge_placements` takes its
 # permission gate injected, so the layered fold is exercised with no site/DB:
-#   bench run-tests --module frappe.desk.doctype.os_placement.test_os_placement
-# or standalone:  ./env/bin/python -m unittest frappe.desk.doctype.os_placement.test_os_placement
+#   bench run-tests --module frappe.os_core.doctype.os_placement.test_os_placement
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.doctype.os_placement.test_os_placement
 
 import json
 import unittest
 
-from frappe.oscore.placements import merge_placements
+from frappe.os_core.placements import merge_placements
 
 
 def desktop(ref, position=None, **extra):

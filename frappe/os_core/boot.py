@@ -8,9 +8,9 @@
 import frappe
 import frappe.sessions
 
-from frappe.oscore.placements import get_placements
-from frappe.oscore.recents import get_recents
-from frappe.oscore.registry import get_permissions, get_registry
+from frappe.os_core.placements import get_placements
+from frappe.os_core.recents import get_recents
+from frappe.os_core.registry import get_permissions, get_registry
 
 
 def get_boot():

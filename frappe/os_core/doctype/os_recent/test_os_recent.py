@@ -4,12 +4,12 @@
 # Pure unit tests for the Recents read projection (ADR-0024). `recents_view` takes a newest-first
 # list of references plus an injected permission gate, so dedup / cap / visibility are exercised
 # with no site or DB (the same shape as merge_placements' tests):
-#   bench run-tests --module frappe.desk.doctype.os_recent.test_os_recent
-# or standalone:  ./env/bin/python -m unittest frappe.desk.doctype.os_recent.test_os_recent
+#   bench run-tests --module frappe.os_core.doctype.os_recent.test_os_recent
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.doctype.os_recent.test_os_recent
 
 import unittest
 
-from frappe.oscore.recents import recents_view
+from frappe.os_core.recents import recents_view
 
 
 def form_ref(name):

@@ -3,15 +3,16 @@
 #
 # Pure unit tests for the OS-manifest reader (ADR-0030). The reader is data-only — it parses
 # an app's co-located `os/` folder and never executes it — so these run with no site/DB:
-#   bench run-tests --module frappe.oscore.test_manifest
-# or standalone:  ./env/bin/python -m unittest frappe.oscore.test_manifest
+#   bench run-tests --module frappe.os_core.test_manifest
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.test_manifest
 
 import tempfile
 import unittest
 import unittest.mock
 from pathlib import Path
 
-from frappe.oscore import manifest
+import frappe
+from frappe.os_core import manifest
 
 
 class TestReadJson(unittest.TestCase):
@@ -45,6 +46,11 @@ class TestReadJson(unittest.TestCase):
 
 class TestAppDeclaration(unittest.TestCase):
 	"""`app.json` must be a dict to count; a non-dict payload is treated as no manifest."""
+
+	def setUp(self):
+		# app_declaration is @request_cache; drop its cached entries so each test exercises its own
+		# patched read rather than a value another test cached for the same app.
+		frappe.local.request_cache.pop(manifest.app_declaration.__wrapped__, None)
 
 	def test_non_dict_declaration_is_none(self):
 		manifest_read = manifest.read

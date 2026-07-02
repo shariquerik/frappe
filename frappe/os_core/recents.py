@@ -9,7 +9,7 @@
 
 import frappe
 
-from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
+from frappe.os_core.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
 
 RECENTS_CAP = 50
 

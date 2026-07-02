@@ -4,8 +4,8 @@
 # Pure unit tests for the OS-manifest → Registry projection (ADR-0030). The projection reads an
 # app's `os/` manifest (a JSON list, or a folder of files) and emits uniform contributions; here
 # both the installed-app list and the manifest read are injected, so it runs with no site/DB:
-#   bench run-tests --module frappe.oscore.test_contributions
-# or standalone:  ./env/bin/python -m unittest frappe.oscore.test_contributions
+#   bench run-tests --module frappe.os_core.test_contributions
+# or standalone:  ./env/bin/python -m unittest frappe.os_core.test_contributions
 
 import json
 import os
@@ -13,7 +13,7 @@ import unittest
 import unittest.mock
 
 import frappe
-from frappe.oscore import contributions
+from frappe.os_core import contributions
 
 
 def _echo_project(spec, app):

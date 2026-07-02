@@ -4,7 +4,7 @@
 # Web entry for "Frappe OS" — a metadata-driven desktop shell that runs alongside Desk at /os.
 # This is the thin web layer: its own job is rendering the host page (injecting the boot payload).
 # The OS engine — boot assembly, registry, live meta, placements, recents, the manifest reader, plus
-# the account and Desk-integration seams — lives in the `frappe.oscore` package (ADR-0030).
+# the account and Desk-integration seams — lives in the `frappe.os_core` package (ADR-0030).
 #
 # The frontend calls the engine's whitelisted methods by the path `frappe.www.os.<name>`, so this
 # module re-exports them: the imported objects are the SAME functions `@frappe.whitelist` registered
@@ -14,13 +14,13 @@ from urllib.parse import urlencode
 
 import frappe
 import frappe.sessions
-from frappe.oscore.account import change_password  # noqa: F401 — re-exported RPC surface
-from frappe.oscore.boot import boot, get_boot  # noqa: F401 — `boot` is re-exported RPC surface
-from frappe.oscore.desk import setup_desk_switch  # noqa: F401 — re-exported ops entry point
-from frappe.oscore.meta import card_value, get_doctype_meta  # noqa: F401 — re-exported RPC surface
-from frappe.oscore.placements import delete_placement_override, save_placement_override  # noqa: F401
-from frappe.oscore.recents import record_recent  # noqa: F401 — re-exported RPC surface
-from frappe.oscore.registry import resolve_doctype  # noqa: F401 — re-exported RPC surface
+from frappe.os_core.account import change_password  # noqa: F401 — re-exported RPC surface
+from frappe.os_core.boot import boot, get_boot  # noqa: F401 — `boot` is re-exported RPC surface
+from frappe.os_core.desk import setup_desk_switch  # noqa: F401 — re-exported ops entry point
+from frappe.os_core.meta import card_value, get_doctype_meta  # noqa: F401 — re-exported RPC surface
+from frappe.os_core.placements import delete_placement_override, save_placement_override  # noqa: F401
+from frappe.os_core.recents import record_recent  # noqa: F401 — re-exported RPC surface
+from frappe.os_core.registry import resolve_doctype  # noqa: F401 — re-exported RPC surface
 
 no_cache = 1
 

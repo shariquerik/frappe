@@ -7,7 +7,7 @@
 
 import frappe
 
-from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
+from frappe.os_core.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
 
 # The App-default baseline — OS-shipped pins reproducing today's desktop set for a fresh user
 # (the desktop analog of APP_ORDER). OS-owned for v1; each is a structural placement (region +

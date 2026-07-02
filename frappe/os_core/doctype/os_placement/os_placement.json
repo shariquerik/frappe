@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "region",
+  "role",
   "surface_ref",
-  "position",
-  "hidden"
+  "position"
  ],
  "fields": [
   {
@@ -23,41 +23,47 @@
    "reqd": 1
   },
   {
-   "description": "The base identity this delta targets, or the reference of a brand-new user pin (ADR-0023): a bare app, a dashboard, an applet, or a doctype + view.",
+   "description": "The role this placement is scoped to. Leave blank to offer it to every user. A user receives the union of every role-scoped placement they qualify for (ADR-0023).",
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Role",
+   "options": "Role"
+  },
+  {
+   "description": "The stable, app-qualified surface reference this pin targets (ADR-0021): a bare app, a dashboard, an applet, or a doctype + view. Stored as data; the client resolves it.",
    "fieldname": "surface_ref",
    "fieldtype": "JSON",
    "label": "Surface Reference",
    "reqd": 1
   },
   {
-   "description": "The moved position (an edge-anchored desktop cell {column, row} or a 1-D dock {order}); absent for a hide. Never raw pixels (ADR-0023).",
+   "description": "Region-appropriate position (ADR-0023): an edge-anchored grid cell {column, row} for the desktop, a 1-D {order} for the dock. Never raw pixels.",
    "fieldname": "position",
    "fieldtype": "JSON",
    "label": "Position"
-  },
-  {
-   "default": "0",
-   "description": "A non-destructive personal hide (tombstone): suppresses the matching pin for this user's own view only, leaving the source baseline/Site row untouched (ADR-0023).",
-   "fieldname": "hidden",
-   "fieldtype": "Check",
-   "label": "Hidden"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
  "modified": "2026-06-25 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Desk",
- "name": "OS Placement Override",
+ "module": "OS Core",
+ "name": "OS Placement",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
-   "if_owner": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
    "read": 1,
-   "role": "Desk User",
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
    "write": 1
   }
  ],

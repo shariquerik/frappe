@@ -5,7 +5,7 @@ import { indicatorFor, normalizeColor } from '../indicator'
 
 // A spec with every tier off; each test switches on only the tier it exercises. The former
 // field-name tiers (states/publication/enabled) are now OS default rules built server-side
-// (frappe.oscore.indicators) — their parity lives in test_indicators.py, not here.
+// (frappe.os_core.indicators) — their parity lives in test_indicators.py, not here.
 const emptySpec = { statusField: null, workflow: {}, isSubmittable: false, rules: [], fields: [] }
 const spec = (over) => ({ ...emptySpec, ...over })
 
