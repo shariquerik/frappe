@@ -29,7 +29,7 @@ import { openPalette, closePalette, paletteResults } from './palette'
 import { selectedRecords, setSelection } from './selection'
 import { hydrate, startAutosave } from './persistence'
 import {
-  recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
+  recordObj, listFor, docFor, countFor, fieldMetaFor,
   loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate,
 } from '@/data/records'
 import { ensureDoctype } from '@/data/doctype-resolver'
@@ -51,7 +51,7 @@ export function useOS() {
     geoMap, clockText, currentWp, paletteResults,
     initials, pill, getMeta, appForDoctype, knownApplet, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
-    recordsFor, recordObj, listFor, docFor, countFor, fieldMetaFor,
+    recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate,
     // window lifecycle + navigation
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,

@@ -95,6 +95,22 @@ no-op for the process lifetime.
 - **Keep the fire-and-forget `onTaskComplete` signature.** It can't express join-before-write or an
   inline cancel, and gives the caller no handle to tear down — the very gaps #2/#3 are about.
 
+## Why not reuse frappe-ui's socket client (review #7 — won't-fix)
+
+Review #7 asked whether this custom seam should migrate onto frappe-ui. It should not, and #7 is
+closed **won't-fix**:
+
+- frappe-ui exports only `initSocket` — a ~10-line per-call `io()` factory reading `window.site_name`
+  + a port option, **not** the boot payload our `socketUrl` derives from.
+- Its `onDocUpdate` handles only `list_update`/`doctype_subscribe`, is **unexported**, and carries the
+  **same reconnect bug** this ADR fixes (#6) — so it is not even a model to copy.
+- It has **no task-progress / task-complete helper at all** — no `task_subscribe`, no completion
+  event. That pattern is the entire reason this seam exists.
+
+Our client is boot-driven (one shared, deduped singleton with a degrade path and bounded reconnects),
+and after this change it is strictly more correct than frappe-ui's for the completion use case. The
+seam stays additive (ADR-0008); if frappe-ui grows a real task-completion primitive later, revisit.
+
 ## Relationship to prior ADRs
 
 - **ADR-0008 (additive-only).** Grows the realtime seam in place — no reshape of its role; a dark seam

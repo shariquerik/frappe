@@ -223,14 +223,11 @@ function newTaskId(): string {
   return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2, 12)
 }
 
-// ---- synchronous getters (compat bridge for components, Phase 4 wires loads) -
-// Pure reads — they never create a cache entry, so calling them during a component
-// render can't mutate reactive state. They return whatever the load* actions have
-// cached so far (empty until Phase 4 triggers loads).
-export const recordsFor = (doctype: string): FrappeDoc[] => {
-  const state = lists[listKey(doctype)]
-  return (state && state.data) || []
-}
+// ---- synchronous getter (compat bridge for components, Phase 4 wires loads) --
+// A pure read — it never creates a cache entry, so calling it during a component render can't
+// mutate reactive state. Returns whatever the load* actions have cached so far, keyed by
+// doctype/name (the shaped LIST keys are never bare-doctype, so there is no synchronous list
+// getter here — a window reads its own listFor(doctype, shape) entry, ADR-0028).
 export const recordObj = (doctype: string, name: string): FrappeDoc | null => {
   const state = docs[docKey(doctype, name)]
   return state ? state.data : null

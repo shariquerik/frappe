@@ -28,7 +28,7 @@ import { watchTask } from '@/data/realtime'
 import { notify } from '@/data/notify'
 import {
   listFor, loadList, loadMore, docFor, loadDoc, countFor, loadCount,
-  fieldMetaFor, loadFieldMeta, saveDoc, createDoc, bulkUpdate, recordsFor, recordObj,
+  fieldMetaFor, loadFieldMeta, saveDoc, createDoc, bulkUpdate, recordObj,
 } from '../src/data/records'
 
 beforeEach(() => vi.clearAllMocks())
@@ -312,14 +312,7 @@ describe('bulkUpdate (inline vs enqueued)', () => {
   })
 })
 
-describe('synchronous compat getters', () => {
-  it('recordsFor returns [] before any load, then the loaded rows', async () => {
-    expect(recordsFor('Mango')).toEqual([])
-    api.getList.mockResolvedValue([{ name: 'm1' }])
-    await loadList('Mango')
-    expect(recordsFor('Mango')).toEqual([{ name: 'm1' }])
-  })
-
+describe('synchronous compat getter', () => {
   it('recordObj returns null for an unloaded record without creating an entry', () => {
     expect(recordObj('Nectarine', 'NONE')).toBe(null)
   })
