@@ -164,6 +164,15 @@ describe('indicatorFor rule list (ADR-0031)', () => {
       expect(match('per_billed,<,100', {})).toBe(false)
     })
 
+    it('numeric comparison treats an unset value as unset, not 0', () => {
+      // null / "" are not 0: an amount-less record must not satisfy `amount,<,100`.
+      expect(match('amount,<,100', { amount: null })).toBe(false)
+      expect(match('amount,<,100', { amount: '' })).toBe(false)
+      // a real zero is set and still compares.
+      expect(match('amount,<,100', { amount: 0 })).toBe(true)
+      expect(match('amount,<,100', { amount: 50 })).toBe(true)
+    })
+
     it('in / not in over a comma list', () => {
       expect(match('status,in,Open,Overdue', { status: 'Overdue' })).toBe(true)
       expect(match('status,in,Open,Overdue', { status: 'Paid' })).toBe(false)

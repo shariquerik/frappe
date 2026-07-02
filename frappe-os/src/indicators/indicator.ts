@@ -97,6 +97,7 @@ function isSet(value: unknown): boolean {
 
 // Compare a record value against a rule value numerically; a non-numeric side never matches.
 function numericMatch(operator: string, recordValue: unknown, ruleValue: string): boolean {
+  if (!isSet(recordValue)) return false // null / "" are unset, not 0 — an unset value never compares
   const left = Number(recordValue)
   const right = Number(ruleValue)
   if (Number.isNaN(left) || Number.isNaN(right)) return false
