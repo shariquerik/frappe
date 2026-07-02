@@ -680,6 +680,7 @@ function add_frappe_os_build(build_apps) {
 
 async function run_app_build(app, root_app_path) {
 	const started = Date.now();
+	await ensure_linked_source_deps(app, root_app_path);
 	let node_modules = path.resolve(root_app_path, "node_modules");
 	if (!fs.existsSync(node_modules)) {
 		await run_command("yarn install --frozen-lockfile", {
@@ -694,6 +695,37 @@ async function run_app_build(app, root_app_path) {
 	if (!VERBOSE) {
 		const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 		log(`${chalk.green("✔")} ${chalk.bold(app)} built in ${elapsed}s`);
+	}
+}
+
+// A `link:` dependency is a sibling SOURCE package the host bundler compiles in
+// place through the symlink (e.g. frappe-os → @framework/ui at ../ui). The deps
+// that package owns (leaflet, vuedraggable, …) resolve by realpath from ITS OWN
+// node_modules, so that folder must be installed before the host build follows
+// the symlink into it. A fresh bench build installs only the app being built, so
+// without this the sibling's node_modules is absent and its imports fail to
+// resolve. Idempotent: skips when the linked node_modules already exists.
+async function ensure_linked_source_deps(app, root_app_path) {
+	const package_json = path.resolve(root_app_path, "package.json");
+	if (!fs.existsSync(package_json)) {
+		return;
+	}
+	const { dependencies = {}, devDependencies = {} } = require(package_json);
+	for (const spec of Object.values({ ...dependencies, ...devDependencies })) {
+		if (typeof spec !== "string" || !spec.startsWith("link:")) {
+			continue;
+		}
+		const target = path.resolve(root_app_path, spec.slice("link:".length));
+		const has_manifest = fs.existsSync(path.resolve(target, "package.json"));
+		const already_installed = fs.existsSync(path.resolve(target, "node_modules"));
+		if (!has_manifest || already_installed) {
+			continue;
+		}
+		await run_command("yarn install --frozen-lockfile", {
+			cwd: target,
+			app: `${app} → ${path.basename(target)}`,
+			step: "install",
+		});
 	}
 }
 
