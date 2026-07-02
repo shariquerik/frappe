@@ -3,7 +3,7 @@
 // menu bar, dock, command palette. Owns the global keyboard
 // (⌘K / Esc) and pointer (drag/resize + dock auto-hide) listeners. Theme is
 // owned by frappe-ui's useTheme (it writes <html data-theme>); we just boot it.
-import { computed, onMounted, onBeforeUnmount } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
@@ -15,6 +15,7 @@ import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
 import { OSWindow, CloseConfirmDialog } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
+import OSContextMenu from "./components/OSContextMenu.vue";
 
 const os = useOS();
 
@@ -91,6 +92,14 @@ const deskLabelStyle = computed(() =>
 		: "font-size:11.5px;max-width:74px;text-align:center;line-height:1.2;color:var(--ink-gray-7);text-shadow:0 1px 2px var(--surface-alpha-white-5);",
 );
 
+// Right-click the wallpaper: a small context menu pinned to the cursor, rather than jumping
+// straight into Settings. The one entry opens the Wallpaper pane — the old direct behaviour.
+const deskMenu = ref<{ x: number; y: number } | null>(null);
+const deskMenuItems = [{ label: "Change Wallpaper…", onClick: () => os.openSettings("Wallpaper") }];
+function onDesktopContext(e: MouseEvent) {
+	deskMenu.value = { x: e.clientX, y: e.clientY };
+}
+
 function onKey(e: KeyboardEvent) {
 	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
 		e.preventDefault();
@@ -144,8 +153,17 @@ onBeforeUnmount(() => {
 		<div
 			class="absolute inset-0 z-0"
 			:style="{ background: wp.bg }"
-			@contextmenu.prevent="os.openSettings('Wallpaper')"
+			@contextmenu.prevent="onDesktopContext"
 		></div>
+
+		<!-- desktop context menu (right-click the wallpaper) -->
+		<OSContextMenu
+			v-if="deskMenu"
+			:x="deskMenu.x"
+			:y="deskMenu.y"
+			:items="deskMenuItems"
+			@close="deskMenu = null"
+		/>
 
 		<!-- desktop icons: edge-anchored grid cells (ADR-0023), each absolutely positioned at its
 		     cell's projected pixel; drag snaps to a cell and writes a User-layer override. -->
