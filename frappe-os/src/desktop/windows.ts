@@ -36,14 +36,26 @@ function pushHist(w: OsWindow, next: Surface) {
     w.fwd = []
   }
 }
+// Swap what a window shows, dropping its now-stale row selection in the same move. EVERY surface
+// change routes through here — in-window nav, per-window back/fwd, and the browser-history restore —
+// so a selection made on one surface can never survive onto another and mislead a bulk verb into
+// firing against the wrong doctype's records (ADR-0032). A caller that also prunes Working state
+// does so AFTER this, since pruneWindow reads the freshly-set surface.
+// Gated on a REAL surface change: restoreWin refocuses on browser back/forward and can be handed the
+// surface the window already shows (two same-doctype instances differ only by `?instance=n`), so an
+// unconditional clear would wipe a live selection on a pure refocus. mirrors pushHist's sameSurface skip.
+function swapSurface(w: OsWindow, surface: Surface) {
+  if (sameSurface(w.surface, surface)) return
+  w.surface = surface
+  clearSelection(w.id)
+}
 export function winBack(id: string) {
   const w = state.windows.find((x) => x.id === id)
   if (!w || !w.back || !w.back.length) return
   w.fwd = w.fwd || []
   w.fwd.push({ ...w.surface })
-  w.surface = w.back.pop()!
+  swapSurface(w, w.back.pop()!)
   pruneWindow(id, reachableSubjects(w))
-  clearSelection(id)
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
 }
 export function winFwd(id: string) {
@@ -51,9 +63,8 @@ export function winFwd(id: string) {
   if (!w || !w.fwd || !w.fwd.length) return
   w.back = w.back || []
   w.back.push({ ...w.surface })
-  w.surface = w.fwd.pop()!
+  swapSurface(w, w.fwd.pop()!)
   pruneWindow(id, reachableSubjects(w))
-  clearSelection(id)
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
 }
 
@@ -69,9 +80,8 @@ function reachableSubjects(w: OsWindow): string[] {
 // forward navigation (which clears `fwd`) reclaims the drafts it just made unreachable.
 function navigateWindow(w: OsWindow, surface: Surface) {
   pushHist(w, surface)
-  w.surface = surface
+  swapSurface(w, surface)
   pruneWindow(w.id, reachableSubjects(w))
-  clearSelection(w.id)
 }
 
 // ---- opening apps / lists / records ------------------------------------------
@@ -232,7 +242,7 @@ export const activateWin = (id: string) => { const z = bumpZ(); setGeo(id, { z, 
 export function restoreWin(id: string, surface?: Surface): boolean {
   const w = state.windows.find((x) => x.id === id)
   if (!w) return false
-  if (windowRole(id) === 'app' && surface) w.surface = surface
+  if (windowRole(id) === 'app' && surface) swapSurface(w, surface)
   const z = bumpZ(); setGeo(id, { z, min: false }); state.activeId = id
   return true
 }

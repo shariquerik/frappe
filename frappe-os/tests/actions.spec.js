@@ -14,6 +14,7 @@ import { fileMenuOptions } from '../src/actions/menubar'
 import { toolbarItems } from '../src/actions/toolbar'
 import { REGIONS, regionById, regionRenders, LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR } from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
+import { listSurface } from '../src/surface'
 import { initRegistry, useRegistry, registerScopedContributions } from '../src/registry'
 
 describe('eligibility (when, evaluated as data)', () => {
@@ -1039,5 +1040,26 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
     os.setSelection(winId, ['TODO-1'])
     os.closeWin(winId)
     expect(os.state.selection[winId]).toBeUndefined()
+  })
+
+  it('restoreWin (browser back/forward onto another surface) clears the stale selection too', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    // The browser-history path swaps the surface WITHOUT touching the per-window stacks; it must
+    // still drop the selection, or a bulk verb fires against the newly-shown doctype's rows.
+    os.restoreWin(winId, listSurface('User'))
+    expect(os.selectedRecords()).toEqual([])
+    expect(os.state.selection[winId]).toBeUndefined()
+  })
+
+  it('restoreWin onto the SAME surface (pure refocus) keeps the selection', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    // Browser back/forward between two same-doctype instances refocuses a window with the surface it
+    // already shows; that is not a surface swap, so the per-window selection must survive it.
+    os.restoreWin(winId, listSurface('ToDo'))
+    expect(os.selectedRecords()).toEqual(['TODO-0001', 'TODO-0002'])
   })
 })
