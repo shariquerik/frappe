@@ -1,43 +1,43 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # License: MIT. See LICENSE
 #
-# Guards the `frappe.www.os` facade (ADR-0030): the OS engine lives in the `frappe.os_core` package, and
-# `www/os.py` re-exports the whitelisted methods the frontend calls by the path `frappe.www.os.<name>`.
-# A re-export must stay callable AND whitelisted, else the RPC 404s or 403s at runtime. Pure — no site:
+# Guards the OS RPC contract (ADR-0030): the engine lives in `frappe.os_core`, and the frontend calls
+# its whitelisted methods at their real path `frappe.os_core.<module>.<name>`. Each such path must stay
+# resolvable AND whitelisted, else the RPC 404s or 403s at runtime. Pure — no site:
 #   bench run-tests --module frappe.www.test_os
 
 import unittest
 
 import frappe
-from frappe.www import os as facade
 
-# The whitelisted RPCs the frontend calls as `frappe.www.os.<name>` (verified against the client).
+# The whitelisted RPC paths the frontend calls, verbatim from the client (frappe-os/src). Keep this
+# tuple in lockstep with the `call`/`callPost` strings — a rename here without one there breaks the RPC.
 FRONTEND_RPCS = (
-	"boot",
-	"get_doctype_meta",
-	"resolve_doctype",
-	"card_value",
-	"save_placement_override",
-	"delete_placement_override",
-	"record_recent",
-	"change_password",
+	"frappe.os_core.boot.boot",
+	"frappe.os_core.meta.get_doctype_meta",
+	"frappe.os_core.meta.card_value",
+	"frappe.os_core.registry.resolve_doctype",
+	"frappe.os_core.placements.save_placement_override",
+	"frappe.os_core.placements.delete_placement_override",
+	"frappe.os_core.recents.record_recent",
+	"frappe.os_core.desk.set_preferred_shell",
+	"frappe.os_core.account.change_password",
 )
 
 
-class TestFacadeSurface(unittest.TestCase):
+class TestOSRPCContract(unittest.TestCase):
 	def test_every_frontend_rpc_resolves_and_stays_whitelisted(self):
-		for name in FRONTEND_RPCS:
-			method = getattr(facade, name, None)
-			self.assertIsNotNone(method, f"frappe.www.os.{name} is missing — the RPC path would 404")
+		for path in FRONTEND_RPCS:
+			method = frappe.get_attr(path)
 			self.assertIn(
 				method,
 				frappe.whitelisted,
-				f"frappe.www.os.{name} is not whitelisted — the RPC path would 403",
+				f"{path} is not whitelisted — the RPC path would 403",
 			)
 
 	def test_setup_desk_switch_stays_reachable(self):
-		# Documented ops entry point: `bench execute frappe.www.os.setup_desk_switch`.
-		self.assertTrue(callable(getattr(facade, "setup_desk_switch", None)))
+		# Documented ops entry point: `bench execute frappe.os_core.desk.setup_desk_switch`.
+		self.assertTrue(callable(frappe.get_attr("frappe.os_core.desk.setup_desk_switch")))
 
 
 if __name__ == "__main__":

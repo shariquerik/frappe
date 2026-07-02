@@ -83,7 +83,7 @@ describe('the server write is debounced', () => {
     recordRecent('ToDo', 'a')
     vi.runAllTimers()
     expect(callPost).toHaveBeenCalledTimes(1)
-    expect(callPost).toHaveBeenCalledWith('frappe.www.os.record_recent', {
+    expect(callPost).toHaveBeenCalledWith('frappe.os_core.recents.record_recent', {
       surface_ref: JSON.stringify(formRef('a')),
     })
   })

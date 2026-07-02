@@ -60,7 +60,7 @@ The package exports `Link`, `Phone`, `Grid`, `TableMultiSelect`, `useDoctypeLayo
 `useScriptedLayout`. Only `FormLayout` is used.
 - **`useDoctypeLayout`** builds a `FormLayoutSchema` from a doctype automatically.
   `DocView.vue` instead hand-builds the layout (manual section grouping + alternating
-  two-column split) **and** relies on a custom backend method `frappe.www.os.get_doctype_meta`.
+  two-column split) **and** relies on a custom backend method `frappe.os_core.meta.get_doctype_meta`.
 - The documented gaps — *"Link fields render as disabled inputs; long Text fields don't
   span both columns"* — are almost certainly **caused by** hand-rolling the layout instead
   of using `useDoctypeLayout`, which handles field types and column spans natively.

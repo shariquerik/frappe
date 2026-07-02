@@ -26,7 +26,7 @@ SWITCH_PATHS = ("'/os'", "'/x'")
 SWITCH_LABEL = "Switch to OS"
 SWITCH_ICON = "grid"
 # One JS expression (Desk evals it as `return <action>`): remember the choice, then land on /os.
-SWITCH_ACTION = "frappe.xcall('frappe.www.os.set_preferred_shell', {shell: 'os'}).then(() => window.location.href = '/os')"
+SWITCH_ACTION = "frappe.xcall('frappe.os_core.desk.set_preferred_shell', {shell: 'os'}).then(() => window.location.href = '/os')"
 
 
 def _is_switch_row(item) -> bool:
@@ -67,7 +67,7 @@ def setup_desk_switch():
 
 	Data-driven via Navbar Settings — no Desk JS changes, no asset rebuild. Matches an existing row by
 	its action so a label/icon change updates in place rather than appending a duplicate.
-	Run once: bench --site <site> execute frappe.www.os.setup_desk_switch
+	Run once: bench --site <site> execute frappe.os_core.desk.setup_desk_switch
 	"""
 	settings = frappe.get_doc("Navbar Settings")
 	matches = [i for i in settings.settings_dropdown if _is_switch_row(i)]

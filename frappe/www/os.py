@@ -2,31 +2,16 @@
 # License: MIT. See LICENSE
 #
 # Web entry for "Frappe OS" — a metadata-driven desktop shell that runs alongside Desk at /os.
-# This is the thin web layer: its own job is rendering the host page (injecting the boot payload).
+# This is the thin web layer: its only job is rendering the host page (injecting the boot payload).
 # The OS engine — boot assembly, registry, live meta, placements, recents, the manifest reader, plus
-# the account and Desk-integration seams — lives in the `frappe.os_core` package (ADR-0030).
-#
-# The frontend calls the engine's whitelisted methods by the path `frappe.www.os.<name>`, so this
-# module re-exports them: the imported objects are the SAME functions `@frappe.whitelist` registered
-# in the package, so `frappe.www.os.<name>` stays a valid, whitelisted RPC with no path change.
+# the account and Desk-integration seams — lives in the `frappe.os_core` package (ADR-0030), and the
+# frontend calls those whitelisted methods at their real path `frappe.os_core.<module>.<name>`.
 
 from urllib.parse import urlencode
 
 import frappe
 import frappe.sessions
-from frappe.os_core.account import change_password  # re-exported RPC surface
-from frappe.os_core.boot import boot, get_boot  # `boot` is re-exported RPC surface
-from frappe.os_core.desk import (  # re-exported RPC + ops entry
-	set_preferred_shell,
-	setup_desk_switch,
-)
-from frappe.os_core.meta import card_value, get_doctype_meta  # re-exported RPC surface
-from frappe.os_core.placements import (  # re-exported RPC surface
-	delete_placement_override,
-	save_placement_override,
-)
-from frappe.os_core.recents import record_recent  # re-exported RPC surface
-from frappe.os_core.registry import resolve_doctype  # re-exported RPC surface
+from frappe.os_core.boot import get_boot
 
 no_cache = 1
 

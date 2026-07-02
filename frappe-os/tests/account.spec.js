@@ -109,7 +109,7 @@ describe('changePassword — rides the rate-limited whitelisted method', () => {
   it('POSTs both passwords as snake_case params, not a doc save', async () => {
     api.callPost.mockResolvedValue(null)
     await changePassword('old-secret', 'new-secret')
-    expect(api.callPost).toHaveBeenCalledWith('frappe.www.os.change_password', {
+    expect(api.callPost).toHaveBeenCalledWith('frappe.os_core.account.change_password', {
       old_password: 'old-secret',
       new_password: 'new-secret',
     })

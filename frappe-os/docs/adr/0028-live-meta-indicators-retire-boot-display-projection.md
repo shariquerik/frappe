@@ -62,7 +62,7 @@ doctype (including third-party, which the curated map never could), and stays in
 
 The status spec is neither raw schema nor curated presentation — it is **backend-defined
 semantics** (states/workflow/docstatus are the site's data). Its home is the OS's own live meta
-endpoint, `frappe.www.os.get_doctype_meta` (already permission-checked, already lean, already
+endpoint, `frappe.os_core.meta.get_doctype_meta` (already permission-checked, already lean, already
 consumed as `os.fieldMetaFor(doctype)`). We extend that payload with a normalized **indicator
 spec** — `statusField`, a `states` map, a workflow style map, `isSubmittable`, and `enabledField`
 (the enabled-state field name, `enabled` or `disabled`, or null — the resolver reads polarity from

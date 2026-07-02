@@ -14,6 +14,6 @@ export async function logout(): Promise<void> {
 // Hand back to classic Desk and remember the choice, so the next login lands on Desk too. The
 // symmetric partner of Desk's "Switch to OS" navbar action — both write the same per-user default.
 export async function switchToDesk(): Promise<void> {
-  await callPost('frappe.www.os.set_preferred_shell', { shell: 'desk' })
+  await callPost('frappe.os_core.desk.set_preferred_shell', { shell: 'desk' })
   window.location.href = '/desk'
 }

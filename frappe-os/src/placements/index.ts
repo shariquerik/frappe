@@ -114,7 +114,7 @@ export function applyLocalOverride(delta: OverrideDelta): void {
 // forget on the write; a rejection logs and the next boot reconciles from the server resolver.
 export async function writePlacementOverride(delta: OverrideDelta): Promise<void> {
   applyLocalOverride(delta)
-  await callPost('frappe.www.os.save_placement_override', {
+  await callPost('frappe.os_core.placements.save_placement_override', {
     region: delta.region,
     surface_ref: JSON.stringify(delta.ref),
     position: delta.position != null ? JSON.stringify(delta.position) : undefined,
@@ -128,7 +128,7 @@ export async function writePlacementOverride(delta: OverrideDelta): Promise<void
 export async function removePlacementOverride(region: PlacementRegion, ref: SurfaceRef): Promise<void> {
   const i = store.list.findIndex((p) => sameIdentity(p, region, ref))
   if (i >= 0) store.list.splice(i, 1)
-  await callPost('frappe.www.os.delete_placement_override', {
+  await callPost('frappe.os_core.placements.delete_placement_override', {
     region,
     surface_ref: JSON.stringify(ref),
   }).catch((error) => console.error('delete_placement_override failed', error))

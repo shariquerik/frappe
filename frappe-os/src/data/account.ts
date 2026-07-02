@@ -80,7 +80,7 @@ async function save(changes: Record<string, unknown>): Promise<void> {
 // `change_password` whitelisted method, which verifies the old password server-side (a wrong
 // current password or a rate-limit hit rejects with a message the dialog surfaces).
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
-  await callPost('frappe.www.os.change_password', { old_password: oldPassword, new_password: newPassword })
+  await callPost('frappe.os_core.account.change_password', { old_password: oldPassword, new_password: newPassword })
 }
 
 export function useAccount() {

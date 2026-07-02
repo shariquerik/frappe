@@ -112,7 +112,7 @@ class DesktopPage {
 				label: "Switch to OS",
 				onClick: function () {
 					// Remember the choice (per-user default) so the next login lands on /os too, then go.
-					frappe.xcall("frappe.www.os.set_preferred_shell", { shell: "os" }).then(() => {
+					frappe.xcall("frappe.os_core.desk.set_preferred_shell", { shell: "os" }).then(() => {
 						window.location.href = "/os";
 					});
 				},

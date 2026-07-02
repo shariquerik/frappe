@@ -60,7 +60,7 @@ export function recordRecent(doctype: string, name: string): void {
     key,
     setTimeout(() => {
       timers.delete(key)
-      callPost('frappe.www.os.record_recent', { surface_ref: JSON.stringify(ref) }).catch((error) =>
+      callPost('frappe.os_core.recents.record_recent', { surface_ref: JSON.stringify(ref) }).catch((error) =>
         console.error('record_recent failed', error),
       )
     }, DEBOUNCE_MS),

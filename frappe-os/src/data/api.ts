@@ -147,14 +147,14 @@ export async function createDoc(
 
 // Lean field descriptors (grouped by Section Break) for building the form layout.
 export async function getDoctypeMeta(doctype: string): Promise<any> {
-  return call('frappe.www.os.get_doctype_meta', { doctype })
+  return call('frappe.os_core.meta.get_doctype_meta', { doctype })
 }
 
 // Registry contributions for ONE uncurated doctype, resolved on demand so a deep link to any
 // DocType opens its list (the boot registry only ships the curated set). Null when the doctype
 // is missing or the user may not read it — the caller then falls back to the app's default window.
 export async function resolveDoctype(doctype: string): Promise<Contribution[] | null> {
-  return call('frappe.www.os.resolve_doctype', { doctype })
+  return call('frappe.os_core.registry.resolve_doctype', { doctype })
 }
 
 // Live dashboard card value: a count, or a sum of `fieldname` when given.
@@ -163,7 +163,7 @@ export async function cardValue(
   filters?: ListFilters,
   fieldname?: string,
 ): Promise<number> {
-  return call('frappe.www.os.card_value', {
+  return call('frappe.os_core.meta.card_value', {
     doctype,
     ...(filters ? { filters } : {}),
     ...(fieldname ? { fieldname } : {}),

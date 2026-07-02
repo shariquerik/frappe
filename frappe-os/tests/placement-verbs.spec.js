@@ -80,7 +80,7 @@ describe('Add to Desktop / Add to Dock → a resolved placement for the active s
   it('persists the Add as a User-layer override upsert (the only write path)', () => {
     os.openListGlobal('ToDo')
     run('frappe.placement.add-desktop')
-    expect(callPost).toHaveBeenCalledWith('frappe.www.os.save_placement_override', expect.objectContaining({ region: 'desktop' }))
+    expect(callPost).toHaveBeenCalledWith('frappe.os_core.placements.save_placement_override', expect.objectContaining({ region: 'desktop' }))
   })
 
   it('does nothing on a bare desktop (no active surface → nothing to pin)', () => {
@@ -97,7 +97,7 @@ describe('Remove clears the user\'s OWN pin (a row delete, not a hide)', () => {
     os.openListGlobal('ToDo')
     invoke(PLACEMENT_COMMANDS.find((c) => c.id === 'frappe.placement.remove-desktop'), os)
     expect(usePlacements().desktop()).toEqual([])
-    expect(callPost).toHaveBeenCalledWith('frappe.www.os.delete_placement_override', expect.objectContaining({ region: 'desktop' }))
+    expect(callPost).toHaveBeenCalledWith('frappe.os_core.placements.delete_placement_override', expect.objectContaining({ region: 'desktop' }))
   })
 })
 
@@ -112,8 +112,8 @@ describe('Remove tombstones an INHERITED pin (a personal hide, never a delete)',
     os.openApp('crm')
     invoke(PLACEMENT_COMMANDS.find((c) => c.id === 'frappe.placement.remove-dock'), os)
     expect(usePlacements().dock()).toEqual([])
-    expect(callPost).toHaveBeenCalledWith('frappe.www.os.save_placement_override', expect.objectContaining({ region: 'dock', hidden: 1 }))
-    expect(callPost).not.toHaveBeenCalledWith('frappe.www.os.delete_placement_override', expect.anything())
+    expect(callPost).toHaveBeenCalledWith('frappe.os_core.placements.save_placement_override', expect.objectContaining({ region: 'dock', hidden: 1 }))
+    expect(callPost).not.toHaveBeenCalledWith('frappe.os_core.placements.delete_placement_override', expect.anything())
   })
 
   it('an inherited pin the user MOVED (carries a position) still tombstones, never deletes', () => {
@@ -122,8 +122,8 @@ describe('Remove tombstones an INHERITED pin (a personal hide, never a delete)',
     initPlacements(boot([{ region: 'desktop', ref: { doctype: 'ToDo', view: 'list' }, position: { column: 2, row: 1 }, inherited: true }]))
     os.openListGlobal('ToDo')
     invoke(PLACEMENT_COMMANDS.find((c) => c.id === 'frappe.placement.remove-desktop'), os)
-    expect(callPost).toHaveBeenCalledWith('frappe.www.os.save_placement_override', expect.objectContaining({ region: 'desktop', hidden: 1 }))
-    expect(callPost).not.toHaveBeenCalledWith('frappe.www.os.delete_placement_override', expect.anything())
+    expect(callPost).toHaveBeenCalledWith('frappe.os_core.placements.save_placement_override', expect.objectContaining({ region: 'desktop', hidden: 1 }))
+    expect(callPost).not.toHaveBeenCalledWith('frappe.os_core.placements.delete_placement_override', expect.anything())
   })
 })
 

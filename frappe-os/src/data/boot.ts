@@ -32,7 +32,7 @@ function fromWindow(): BootData {
 export async function getBoot(): Promise<BootData> {
   if (cached) return cached
   const injected = fromWindow()
-  cached = injected.user ? injected : ((await call('frappe.www.os.boot')) as BootData)
+  cached = injected.user ? injected : ((await call('frappe.os_core.boot.boot')) as BootData)
   setCsrf(cached.csrf_token)
   return cached
 }
