@@ -105,6 +105,14 @@ class TestMergeRuleLayer(unittest.TestCase):
 		self.assertEqual(patched[0], {"condition": "priority,=,High", "label": "High", "color": "red"})
 		self.assertEqual(len(patched), 3)
 
+	def test_empty_condition_add_is_a_bottom_floor_not_a_top_catch_all(self):
+		# A label-only (empty-condition) rule matches every record, so it is a fallthrough floor:
+		# it must sit LAST, below the real rules, not be prepended as a top catch-all that shadows them.
+		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "", "label": "Other", "color": "gray"}])
+		self.assertEqual(patched[:2], self._ladder())
+		self.assertEqual(patched[-1], {"condition": "", "label": "Other", "color": "gray"})
+		self.assertEqual(len(patched), 3)
+
 	def test_spacing_variants_match_the_same_rule(self):
 		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": " status , = , Paid ", "label": "Paid", "color": "gold"}])
 		self.assertEqual(patched[0]["color"], "gold")

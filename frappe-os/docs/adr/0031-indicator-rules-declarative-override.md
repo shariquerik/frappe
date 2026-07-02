@@ -60,9 +60,9 @@ rule's condition — the same way a Placement names its target by the surface re
 (ADR-0023's `ref_key`), not by a separate id. There is no extra `id`/`name` field on a rule; the
 meaningful payload *is* the identity, keeping ADR-0031's promise of one small grammar with no
 ceremony. The condition is canonicalized (whitespace trimmed per `field,op,value` clause) so
-spacing variants collapse to one key; the empty condition `""` is the catch-all key. First-match
-resolution already makes a condition unique within an effective list — a second rule with the same
-condition never fires — so the condition is a sound key.
+spacing variants collapse to one key; the empty condition `""` is the fallthrough-floor key.
+First-match resolution already makes a condition unique within an effective list — a second rule
+with the same condition never fires — so the condition is a sound key.
 
 **Merge semantics (a rule is a Collection member, not a Singleton — ADR-0007).** Defaults are the
 base ladder; **App, Site, User are three equal patch layers** folded lowest-to-highest by
@@ -72,8 +72,11 @@ base ladder; **App, Site, User are three equal patch layers** folded lowest-to-h
   Placements, whose list order is not evaluation precedence).
 - **Remove** — a `hidden` patch drops the matching ladder rule (a tombstone; the source layer is
   untouched, so an app upgrade still flows through).
-- **Add** — a rule with a new condition is *prepended* ahead of the ladder, so a higher layer's
-  new rule wins (User → Site → App → defaults, earlier-wins).
+- **Add** — a rule with a new *non-empty* condition is *prepended* ahead of the ladder, so a
+  higher layer's new rule wins (User → Site → App → defaults, earlier-wins). A rule with an
+  *empty* condition matches every record, so it is instead *appended* as a bottom fallthrough
+  floor: it fires only when no real rule above it matched, never as a top catch-all that would
+  shadow the whole ladder (the opposite of an author's intent for a label-only fallback).
 
 An override is a **full re-supply** of the rule (`{condition, label, color}`), not a field-level
 partial patch — the rule is three fields, so "same format in both places" beats patch-merge

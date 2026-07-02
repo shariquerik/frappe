@@ -140,8 +140,9 @@ def default_indicator_rules(status_field, states, is_submittable, publication_fi
 
 def _clean_rule(rule):
 	"""A manifest-declared rule normalized to {condition, label, color}, or None if malformed. A
-	label is required; condition defaults to "" (a catch-all), color to gray. Lenient by design —
-	one bad rule is skipped, never fatal (ADR-0014)."""
+	label is required; condition defaults to "" (a bottom fallthrough floor — `merge_rule_layer`
+	appends it below the real rules), color to gray. Lenient by design — one bad rule is skipped,
+	never fatal (ADR-0014)."""
 	if not isinstance(rule, dict) or not rule.get("label"):
 		return None
 	return {
@@ -175,11 +176,14 @@ def merge_rule_layer(ladder, patches):
 	"""Fold one override layer over an ordered rule ladder, keyed by condition (ADR-0031). A patch
 	whose condition matches a ladder rule replaces it in place (same slot — a recolor never changes
 	which rule wins first-match); a `hidden` patch drops the matching rule (tombstone); a patch with
-	a new condition is a fresh rule prepended ahead of the ladder, so a higher layer wins. Malformed
-	patches are skipped (ADR-0014). Layers are applied lowest-to-highest."""
+	a new non-empty condition is prepended ahead of the ladder, so a higher layer wins. A new
+	empty-condition (`""`) patch matches every record, so it is *appended* as a bottom fallthrough
+	floor, not prepended as a top catch-all that would shadow every real rule. Malformed patches are
+	skipped (ADR-0014). Layers are applied lowest-to-highest."""
 	slots = {_condition_key(rule["condition"]): index for index, rule in enumerate(ladder)}
 	resolved = list(ladder)
-	additions = []
+	prepended = []
+	appended = []
 	for patch in patches:
 		key = _condition_key(patch.get("condition"))
 		if patch.get("hidden"):
@@ -191,9 +195,11 @@ def merge_rule_layer(ladder, patches):
 			continue
 		if key in slots:
 			resolved[slots[key]] = rule
+		elif key == "":
+			appended.append(rule)
 		else:
-			additions.append(rule)
-	return additions + [rule for rule in resolved if rule is not None]
+			prepended.append(rule)
+	return prepended + [rule for rule in resolved if rule is not None] + appended
 
 
 def _layer_row_rule(row):
