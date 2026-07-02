@@ -9,7 +9,7 @@
 
 import frappe
 
-from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible
+from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
 
 RECENTS_CAP = 50
 
@@ -48,9 +48,7 @@ def record_recent(surface_ref: str):
 	and is stored canonically so a re-open finds its existing row by exact match."""
 	ref = canonical_json(surface_ref)
 	existing = frappe.db.get_value("OS Recent", {"owner": frappe.session.user, "surface_ref": ref})
-	doc = frappe.get_doc("OS Recent", existing) if existing else frappe.new_doc("OS Recent")
-	doc.update({"surface_ref": ref, "opened_at": frappe.utils.now()})
-	doc.save() if existing else doc.insert()
+	doc = upsert("OS Recent", existing, {"surface_ref": ref, "opened_at": frappe.utils.now()})
 	_trim_recents()
 	return {"name": doc.name}
 

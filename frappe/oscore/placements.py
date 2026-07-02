@@ -7,7 +7,7 @@
 
 import frappe
 
-from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible
+from frappe.oscore.common import canonical_json, layer_rows, ref_key, ref_visible, upsert
 
 # The App-default baseline — OS-shipped pins reproducing today's desktop set for a fresh user
 # (the desktop analog of APP_ORDER). OS-owned for v1; each is a structural placement (region +
@@ -109,9 +109,11 @@ def save_placement_override(region: str, surface_ref: str, position: str | None 
 	and `position` arrive as JSON strings and are stored canonically so the identity match holds."""
 	ref = canonical_json(surface_ref)
 	existing = _own_override(region, ref)
-	doc = frappe.get_doc("OS Placement Override", existing) if existing else frappe.new_doc("OS Placement Override")
-	doc.update({"region": region, "surface_ref": ref, "position": canonical_json(position), "hidden": int(hidden)})
-	doc.save() if existing else doc.insert()
+	doc = upsert(
+		"OS Placement Override",
+		existing,
+		{"region": region, "surface_ref": ref, "position": canonical_json(position), "hidden": int(hidden)},
+	)
 	return {"name": doc.name}
 
 

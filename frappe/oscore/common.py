@@ -56,3 +56,15 @@ def canonical_json(value):
 	if value is None:
 		return None
 	return json.dumps(frappe.parse_json(value) if isinstance(value, str) else value, sort_keys=True)
+
+
+def upsert(doctype, name, values):
+	"""Get-or-create one doc, then persist it on the right path: load `name` when the caller's
+	identity lookup found an existing row, else start a fresh doc; apply `values`; save an update or
+	insert a create. The User-layer override writes (placements ADR-0023, indicators ADR-0031) and
+	the Recents bump (ADR-0024) are all this shape — an upstream lookup decides identity, this does
+	the write under standard permissions. Returns the saved doc."""
+	doc = frappe.get_doc(doctype, name) if name else frappe.new_doc(doctype)
+	doc.update(values)
+	doc.save() if name else doc.insert()
+	return doc

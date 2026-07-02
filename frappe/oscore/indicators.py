@@ -15,7 +15,7 @@
 import frappe
 
 from frappe.oscore import manifest
-from frappe.oscore.common import layer_rows
+from frappe.oscore.common import layer_rows, upsert
 
 # Publication/visibility field -> its (on, off) pill, on = truthy. Each field's own polarity is
 # baked in (is_private truthy = Private). The generic desk `listview_settings.get_indicator` tier,
@@ -254,13 +254,11 @@ def save_indicator_override(
 	condition is stored canonically so the identity match holds; only the caller's own row is touched."""
 	key = _condition_key(condition)
 	existing = _own_indicator_override(document_type, key)
-	doc = (
-		frappe.get_doc("OS Indicator Rule Override", existing)
-		if existing
-		else frappe.new_doc("OS Indicator Rule Override")
+	doc = upsert(
+		"OS Indicator Rule Override",
+		existing,
+		{"document_type": document_type, "condition": key, "label": label, "color": color, "hidden": int(hidden)},
 	)
-	doc.update({"document_type": document_type, "condition": key, "label": label, "color": color, "hidden": int(hidden)})
-	doc.save() if existing else doc.insert()
 	return {"name": doc.name}
 
 
