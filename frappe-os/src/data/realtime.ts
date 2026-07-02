@@ -11,19 +11,22 @@ import { io, type Socket } from 'socket.io-client'
 import { getBoot } from './boot'
 import type { BootData } from '@/types'
 
-// The realtime server publishes background-job progress on the `progress` event (that is the event
-// name `frappe.publish_progress` emits — see frappe/realtime/__init__.py and Desk's own
-// socketio_client.js `on("progress", …)`), scoped to the `task_progress:{taskId}` room a client joins
-// by emitting `task_subscribe` (frappe/realtime/handlers.js). The room is task-keyed; the event is not.
-const PROGRESS = 'progress'
+// A background job finishing rides the `task_complete` event (frappe.publish_task_complete —
+// frappe/realtime/__init__.py), scoped to the `task_progress:{taskId}` room a client joins by
+// emitting `task_subscribe` (frappe/realtime/handlers.js). We key completion off this terminal
+// event, NOT a `percent >= 100` progress tick: a job whose last row fails never emits 100, but it
+// always emits `task_complete`. The room is task-keyed; the event is not. (The server still streams
+// per-row `progress` ticks for a future progress bar — this seam just doesn't consume them yet.)
+const TASK_COMPLETE = 'task_complete'
 const TASK_SUBSCRIBE = 'task_subscribe'
 const TASK_UNSUBSCRIBE = 'task_unsubscribe'
 
-// One progress message: the per-row publish from `_bulk_action`. `percent` reaches 100 on the last
-// row, which is our completion signal (bulk_update.py). Free-form beyond these two fields.
-interface TaskProgress {
+// The terminal message: the single publish `_bulk_action` fires when the job ends. `result` is the
+// job's opaque payload (a bulk action puts `{ failed: [...] }` there) — this seam stays generic and
+// hands it back untyped; the caller that knows the job knows the shape.
+interface TaskComplete {
   task_id?: string
-  percent?: number
+  result?: unknown
 }
 
 let socket: Socket | null = null
@@ -51,23 +54,23 @@ async function getSocket(): Promise<Socket | null> {
   return socket
 }
 
-// Run `onDone` once, when the background job named by `taskId` reports completion (percent ≥ 100),
-// then unsubscribe. Fire-and-forget: errors (an unreachable socket, an unconfigured seam) are
-// swallowed so a UI caller is never left with an unhandled rejection — the job still runs, the list
-// just won't refresh on its own. Subscribes before returning so a caller that has already fired the
-// write is listening for the tail of the job.
-export function onTaskComplete(taskId: string, onDone: () => void): void {
+// Run `onDone` once, when the background job named by `taskId` fires its terminal `task_complete`
+// event, passing the job's `result` through untyped. Then unsubscribe. Fire-and-forget: errors (an
+// unreachable socket, an unconfigured seam) are swallowed so a UI caller is never left with an
+// unhandled rejection — the job still runs, the list just won't refresh on its own. Subscribes
+// before returning so a caller that has already fired the write is listening for the tail of the job.
+export function onTaskComplete(taskId: string, onDone: (result?: unknown) => void): void {
   void (async () => {
     try {
       const sock = await getSocket()
       if (!sock) return
-      const handler = (data: TaskProgress) => {
-        if (data.task_id !== taskId || (data.percent ?? 0) < 100) return
-        sock.off(PROGRESS, handler)
+      const handler = (data: TaskComplete) => {
+        if (data.task_id !== taskId) return
+        sock.off(TASK_COMPLETE, handler)
         sock.emit(TASK_UNSUBSCRIBE, taskId)
-        onDone()
+        onDone(data.result)
       }
-      sock.on(PROGRESS, handler)
+      sock.on(TASK_COMPLETE, handler)
       sock.emit(TASK_SUBSCRIBE, taskId)
     } catch {
       // Realtime is best-effort feedback; never surface its failures into the write path.

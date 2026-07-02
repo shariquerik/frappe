@@ -78,6 +78,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 	"get_meta": ("frappe.model.meta", "get_meta"),
 	# frappe.realtime
 	"publish_progress": ("frappe.realtime", "publish_progress"),
+	"publish_task_complete": ("frappe.realtime", "publish_task_complete"),
 	"publish_realtime": ("frappe.realtime", "publish_realtime"),
 	# frappe.utils
 	"get_traceback": ("frappe.utils", "get_traceback"),
@@ -186,7 +187,7 @@ if TYPE_CHECKING:  # pragma: no cover
 		get_site_path,
 	)
 	from frappe.query_builder.builder import MariaDB, Postgres, SQLite
-	from frappe.realtime import publish_progress, publish_realtime
+	from frappe.realtime import publish_progress, publish_realtime, publish_task_complete
 	from frappe.utils import (
 		create_folder,
 		get_attr,

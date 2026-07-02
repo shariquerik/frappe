@@ -144,6 +144,11 @@ def _bulk_action(doctype, docnames, action, data, task_id=None):
 			failed.append(docname)
 			frappe.db.rollback()
 
+	# The terminal signal: fires on every outcome (the loop swallows per-row errors, so control
+	# always reaches here even when the last row failed), carrying the failures a percent tick can't.
+	# The inline path reaches this too and emits into an empty room — harmless; the enqueued path is
+	# the one whose client is subscribed and learns completion + failures from this single event.
+	frappe.publish_task_complete(result={"failed": failed}, task_id=task_id)
 	return failed
 
 

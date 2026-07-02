@@ -2,6 +2,7 @@
 # See LICENSE
 
 import time
+from unittest.mock import patch
 
 import frappe
 from frappe.core.doctype.doctype.test_doctype import new_doctype
@@ -103,6 +104,26 @@ class TestBulkUpdate(IntegrationTestCase):
 		docnames_bg = frappe.get_all(self.doctype, {"docstatus": 0}, limit=20, pluck="name")
 		submit_cancel_or_update_docs(self.doctype, docnames_bg, action="update", data=update_data)
 		self.wait_for_assertion(lambda: check_child_field(docnames_bg, "_Test Child Updated"))
+
+	def test_bulk_action_emits_task_complete_with_failed_list(self):
+		"""The terminal `task_complete` event fires with the run's `failed` list, so an enqueued
+		client learns completion + failures from one event (a `percent >= 100` tick can't carry it)."""
+		docnames = frappe.get_all(self.doctype, {"docstatus": 0}, limit=5, pluck="name")
+		with patch.object(frappe, "publish_task_complete") as emit:
+			failed = submit_cancel_or_update_docs(
+				self.doctype, docnames, action="update", data={"some_fieldname": "_Test Emit"}, task_id="tid-1"
+			)
+		self.assertEqual(failed, [])
+		emit.assert_called_once_with(result={"failed": failed}, task_id="tid-1")
+
+	def test_task_complete_scopes_to_actor_not_the_whole_site(self):
+		"""Without a task_id the terminal event must reach only the actor's room (mirroring
+		publish_progress), never get_site_room() — a broadcast to every Desk user."""
+		with patch("frappe.realtime.publish_realtime") as pub:
+			frappe.publish_task_complete(result={"failed": []})
+		_, kwargs = pub.call_args
+		self.assertEqual(kwargs.get("user"), frappe.session.user)
+		self.assertIsNone(kwargs.get("task_id"))
 
 	def test_bulk_update_conditions(self):
 		"""Test the whitelisted bulk update method"""

@@ -26,6 +26,21 @@ def publish_progress(percent, title=None, doctype=None, docname=None, descriptio
 	)
 
 
+def publish_task_complete(result=None, task_id=None):
+	"""Announce that an enqueued background task has finished, carrying its result.
+
+	The terminal counterpart to `publish_progress`: `progress` streams per-step ticks, this fires
+	once when the task is done. Unlike a `percent >= 100` tick (which a failing final step never
+	emits), this is a distinct event a caller emits unconditionally at the end of the job, so a
+	client can key completion off it and read the job's `result` (e.g. a bulk action's `failed` list).
+
+	Scoped to `frappe.session.user` — mirroring `publish_progress` — so a caller with no `task_id`
+	reaches only the actor's room, never `get_site_room()` (a broadcast to every Desk user). When a
+	`task_id` IS given it wins over the user room, so the enqueued watcher is unaffected.
+	"""
+	publish_realtime("task_complete", {"result": result}, user=frappe.session.user, task_id=task_id)
+
+
 def publish_realtime(
 	event: str | None = None,
 	message: dict | None = None,

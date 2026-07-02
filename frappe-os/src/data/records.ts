@@ -179,16 +179,20 @@ export async function bulkUpdate(doctype: string, docnames: string[], changes: R
   const failed = await apiBulkUpdate(doctype, docnames, changes, taskId)
   if (failed === null) {
     notify(`Updating ${recordCount(docnames.length, doctype)} in the background…`)
-    onTaskComplete(taskId, () => {
+    onTaskComplete(taskId, (result) => {
       refreshLists(doctype)
-      notify(`Finished updating ${recordCount(docnames.length, doctype)}.`)
+      // The job carries its `failed` list on the terminal event, so the enqueued completion reports
+      // failures exactly like the inline path. When the seam is dark and the fallback fires with no
+      // result, we can't itemize — say so softly rather than claim a false "all updated".
+      const done = (result as { failed?: string[] } | undefined)?.failed
+      notify(done ? bulkSummary(docnames.length, done, doctype) : `Background update finished.`)
     })
     return { enqueued: true, failed: [] }
   }
   await refreshLists(doctype)
-  // The inline run applied now — confirm it (symmetric with the enqueued path's "Finished…"), and
-  // surface any rows the backend rejected instead of silently dropping the returned `failed` array.
-  notify(inlineBulkSummary(docnames.length, failed, doctype))
+  // The inline run applied now — confirm it and surface any rows the backend rejected instead of
+  // silently dropping the returned `failed` array (same summary the enqueued completion uses).
+  notify(bulkSummary(docnames.length, failed, doctype))
   return { enqueued: false, failed }
 }
 
@@ -197,9 +201,10 @@ function recordCount(count: number, doctype: string): string {
   return `${count} ${doctype} record${count === 1 ? '' : 's'}`
 }
 
-// The inline-completion toast: a clean "Updated N …" on full success, or "Updated X …; K failed"
-// when some rows were rejected — the failures are reported, never swallowed.
-function inlineBulkSummary(total: number, failed: string[], doctype: string): string {
+// The bulk-completion toast, shared by both paths (inline now, enqueued when its terminal event
+// lands): a clean "Updated N …" on full success, or "Updated X …; K failed" when some rows were
+// rejected — the failures are reported, never swallowed.
+function bulkSummary(total: number, failed: string[], doctype: string): string {
   if (!failed.length) return `Updated ${recordCount(total, doctype)}.`
   return `Updated ${recordCount(total - failed.length, doctype)}; ${failed.length} failed.`
 }

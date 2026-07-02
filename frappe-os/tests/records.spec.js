@@ -275,9 +275,31 @@ describe('bulkUpdate (inline vs enqueued)', () => {
 
     const onDone = onTaskComplete.mock.calls[0][1] // the completion callback records.ts registered
     api.getList.mockResolvedValue([{ name: 'S-0' }])
-    await onDone() // the realtime seam fires this when percent ≥ 100
+    await onDone({ failed: [] }) // the terminal event carries the job's result (no failures)
     expect(api.getList).toHaveBeenCalledWith('Soursop', { fields: ['*'], limit: 100, start: 0 })
-    expect(notify).toHaveBeenCalledTimes(1) // the "done" confirmation
+    expect(notify).toHaveBeenCalledWith('Updated 25 Soursop records.') // same phrasing as the inline path
+  })
+
+  it('on job completion: surfaces the failed rows the terminal event carries', async () => {
+    api.getList.mockResolvedValue([])
+    api.bulkUpdate.mockResolvedValue(null)
+    await bulkUpdate('Durian', Array.from({ length: 25 }, (_, i) => `D-${i}`), { status: 'Open' })
+    notify.mockClear()
+
+    const onDone = onTaskComplete.mock.calls[0][1]
+    await onDone({ failed: ['D-1', 'D-2', 'D-3'] }) // three rows the background job rejected
+    expect(notify).toHaveBeenCalledWith('Updated 22 Durian records; 3 failed.') // failures reported, not swallowed
+  })
+
+  it('on job completion with no result (dark seam fallback): confirms without claiming a false success', async () => {
+    api.getList.mockResolvedValue([])
+    api.bulkUpdate.mockResolvedValue(null)
+    await bulkUpdate('Guava', Array.from({ length: 25 }, (_, i) => `G-${i}`), { status: 'Open' })
+    notify.mockClear()
+
+    const onDone = onTaskComplete.mock.calls[0][1]
+    await onDone() // the fallback fires without the terminal event's result — failures unknowable
+    expect(notify).toHaveBeenCalledWith('Background update finished.') // honest, no fabricated counts
   })
 })
 
