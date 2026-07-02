@@ -1,7 +1,7 @@
 // cellKind projection (ADR-0028): one record + live wire column + indicator spec -> its
 // rendered cell kind. Pure decision table, no Vue/store (mirrors route-map.spec).
 import { describe, expect, it } from 'vitest'
-import { cellKind, listFetchFields, hasIndicator, withIndicatorColumn, INDICATOR_COLUMN_KEY } from '../list-columns'
+import { cellKind, listFetchFields, hasIndicator, indicatorColumn } from '../list-columns'
 
 describe('cellKind', () => {
   // Live per-doctype context (ADR-0028): the indicator column resolves the whole row through the
@@ -14,7 +14,8 @@ describe('cellKind', () => {
     fields: ['status', 'docstatus'],
   }
   const ctx = { titleField: 'title', spec }
-  const indicatorCol = { key: INDICATOR_COLUMN_KEY, type: 'Status' }
+  // The synthetic indicator column is recognised by its `type: 'Status'` render hint (ADR-0033).
+  const indicatorCol = { key: '_indicator', type: 'Status' }
 
   it('resolves the indicator column through the whole row (a matching rule)', () => {
     expect(cellKind({ status: 'Paid', docstatus: 1 }, indicatorCol, ctx)).toEqual({ kind: 'status', display: 'Paid', theme: 'green' })
@@ -101,28 +102,21 @@ describe('hasIndicator', () => {
   })
 })
 
-describe('withIndicatorColumn', () => {
-  const cols = [{ key: 'subject', label: 'Subject' }, { key: 'status', label: 'Status' }, { key: 'modified', label: 'Modified' }]
-
-  it('inserts the indicator column after the title column and drops the raw status field (Desk-parity)', () => {
+describe('indicatorColumn', () => {
+  it('builds the synthetic declaration: after-title, type Status, subsuming the status field (ADR-0033)', () => {
     const spec = { statusField: 'status', workflow: {}, isSubmittable: false, rules: [{ condition: 'status,=,Open', label: 'Open', color: 'red' }], fields: ['status'] }
-    const out = withIndicatorColumn(cols, spec)
-    expect(out.map((c) => c.key)).toEqual(['subject', INDICATOR_COLUMN_KEY, 'modified'])
-    expect(out[1]).toMatchObject({ key: INDICATOR_COLUMN_KEY, label: 'Status', type: 'Status' })
+    expect(indicatorColumn(spec)).toEqual({ key: '_indicator', label: 'Status', type: 'Status', place: 'after-title', subsumes: 'status' })
   })
 
-  it('adds the indicator column even when no status field is visible (submittable / enabled)', () => {
+  it('subsumes nothing when the indicator has no visible status field (submittable / enabled)', () => {
     const spec = { statusField: null, workflow: {}, isSubmittable: true, rules: [], fields: ['docstatus'] }
-    expect(withIndicatorColumn([{ key: 'subject' }], spec).map((c) => c.key)).toEqual(['subject', INDICATOR_COLUMN_KEY])
+    expect(indicatorColumn(spec)).toMatchObject({ key: '_indicator', place: 'after-title', subsumes: undefined })
   })
 
-  it('returns the columns untouched when the doctype has no indicator', () => {
+  it('is null when the doctype has no indicator, and when no spec is held yet', () => {
     const spec = { statusField: null, workflow: {}, isSubmittable: false, rules: [], fields: [] }
-    expect(withIndicatorColumn(cols, spec)).toBe(cols)
-  })
-
-  it('is a no-op with no spec held yet', () => {
-    expect(withIndicatorColumn(cols, null)).toBe(cols)
+    expect(indicatorColumn(spec)).toBeNull()
+    expect(indicatorColumn(null)).toBeNull()
   })
 })
 
@@ -151,5 +145,13 @@ describe('listFetchFields', () => {
 
   it('is just name + columns when no spec is held yet', () => {
     expect(listFetchFields(cols, null)).toEqual(['name', 'title', 'status', 'modified'])
+  })
+
+  it('skips synthetic `_`-prefixed keys — there is no docfield to fetch for them (ADR-0033)', () => {
+    // The synthetic `_indicator` column rides in the wire columns now; its real fields come via
+    // `spec.fields`, so the fetch must never request `_indicator`.
+    const spec = { statusField: 'status', workflow: {}, isSubmittable: true, rules: [], fields: ['status', 'docstatus'] }
+    const withIndicator = [{ key: 'title' }, { key: '_indicator' }, { key: 'status' }]
+    expect(listFetchFields(withIndicator, spec)).toEqual(['name', 'title', 'status', 'docstatus'])
   })
 })

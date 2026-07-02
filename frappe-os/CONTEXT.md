@@ -172,6 +172,20 @@ _Avoid_: "get_indicator"/"status rule" (desk's client-JS predecessor); calling t
 **condition** an **Eligibility** — a condition filters *record fields*, an Eligibility filters *UI
 context*.
 
+**Synthetic column**:
+A list **Column** declared by the *host*, not resolved from doctype Meta — it carries its own key,
+label, width, align, and render `type` instead of deriving them from a docfield. The counterpart is
+a **field column** (the Meta-backed `{fieldname, label, width?}` the controls default to). A
+synthetic column is a first-class member of the shared column state: it lives in `shown`, persists
+in the **View Snapshot**, and appears in **ColumnSettings** (a `pinned` synthetic column is shown
+but not removable, Desk's always-on "Status"). The library stays presentation-agnostic — a synthetic
+column *declares* itself; the **host** draws its cell through the `#cell` slot (cell **kind**), the
+library never learns how. The **Record indicator** column is the first synthetic column; future ones
+(action columns, avatar columns) reuse the same seam.
+_Avoid_: "virtual"/"computed" column — those imply a value *derived from other columns*; a synthetic
+column's content is host-supplied, not a formula. Do not conflate the synthetic column's declared
+`type` with a rendered cell's **kind** (the same distinction field columns already draw).
+
 **List View Controls** (consumed from `@framework/ui`):
 The shared SortBy / Filter / ColumnSettings / QuickFilter controls (plus the `useListView`
 state composable) that frappe-os mounts into a **list** Surface's toolbar. They are

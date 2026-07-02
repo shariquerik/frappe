@@ -15,6 +15,20 @@ export interface ListViewColumn {
   options?: string
 }
 
+// A synthetic list column (ADR-0033): a column the host DECLARES rather than resolving from
+// doctype Meta, carrying its own render metadata. Mirrors `@framework/ui`'s `SyntheticColumn`
+// (the library ships untyped and is shimmed to `any` here, so the host owns the local shape).
+// The Record indicator is the OS's first synthetic column; `indicatorColumn` builds it.
+export interface SyntheticColumn {
+  key: string // reserved identity, leading `_` (never a docfield); rides the persisted fieldname slot
+  label: string
+  type?: string // render hint the `#cell` slot reads (`'Status'`); also drives the align default
+  align?: 'left' | 'right'
+  width?: string // default width; a user resize overrides it
+  place?: 'start' | 'after-title' | 'end' // default fold position (default `'end'`)
+  subsumes?: string // a docfield this column replaces in the default seed (stays re-addable)
+}
+
 export type CellKindName = 'status' | 'avatar' | 'primary' | 'plain'
 
 export interface Cell {

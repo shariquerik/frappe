@@ -12,7 +12,7 @@ import { SortBy } from "@framework/ui/SortBy";
 import { QuickFilter } from "@framework/ui/QuickFilter";
 import { ColumnSettings } from "@framework/ui/ColumnSettings";
 import OSListView from "./OSListView.vue";
-import { listFetchFields, withIndicatorColumn, INDICATOR_COLUMN_KEY } from "./list-columns";
+import { listFetchFields, indicatorColumn } from "./list-columns";
 import { useOS } from "@/desktop";
 import { useWorkingState } from "@/desktop/use-working-state";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
@@ -29,23 +29,6 @@ const props = withDefaults(defineProps<ViewProps>(), {
 const os = useOS();
 const doctype = computed(() => props.doctype);
 
-// The shared list-view state (filter / sort / columns / quick-filter), bound to the
-// controls in later slices (ADR-0025). `useListView` takes doctype BY VALUE, so this
-// component is remounted on doctype change via `:key` in DoctypeView — no reset watcher.
-// Columns are Meta-derived here (`view.columns.wire`); the host keeps fetching.
-const view = useListView(props.doctype);
-
-// Working state (ADR-0029): the list View Snapshot (ADR-0007's filters/sort/columns/quick-filter)
-// is DURABLE working state, held in the OS store so it survives in-window navigation and window
-// unmount — and, via slice 05, a reload. Seed the controls from any held snapshot BEFORE wiring
-// the write-back, so the restore isn't echoed straight back as a change. `pageLength` is
-// deliberately NOT part of the snapshot — see below.
-const listWorkingState = useWorkingState({ persist: "durable" });
-view.restore(listWorkingState.value ?? {});
-watch(view.snapshot, (snap) => {
-	listWorkingState.value = snap;
-});
-
 // The "New" button needs create permission, which rides on the live field schema.
 const fieldMeta = computed(() => os.fieldMetaFor(doctype.value));
 watch(
@@ -60,6 +43,32 @@ const canCreate = computed(() => !!fieldMeta.value.data?.can_create);
 // and mark the primary column — from the same field-meta fetch `can_create` rides.
 const indicatorSpec = computed(() => fieldMeta.value.data?.indicator ?? null);
 const titleField = computed(() => fieldMeta.value.data?.title_field ?? "name");
+
+// The Record indicator is a SYNTHETIC column (ADR-0033): a host-declared column `useListView` folds
+// into the column state (after the title, subsuming the raw status field), so it toggles, resizes,
+// and persists like any column. Derived live from the spec, so it appears the moment the field-meta
+// fetch resolves — `useColumns` takes this reactively.
+const syntheticColumns = computed(() => {
+	const indicator = indicatorColumn(indicatorSpec.value);
+	return indicator ? [indicator] : [];
+});
+
+// The shared list-view state (filter / sort / columns / quick-filter), bound to the controls
+// (ADR-0025). `useListView` takes doctype BY VALUE, so this component is remounted on doctype change
+// via `:key` in DoctypeView — no reset watcher. The synthetic indicator column rides the column
+// state now (no render-only projection); the host keeps fetching (`view.columns.wire`).
+const view = useListView(props.doctype, { synthetic: syntheticColumns });
+
+// Working state (ADR-0029): the list View Snapshot (ADR-0007's filters/sort/columns/quick-filter)
+// is DURABLE working state, held in the OS store so it survives in-window navigation and window
+// unmount — and, via slice 05, a reload. Seed the controls from any held snapshot BEFORE wiring
+// the write-back, so the restore isn't echoed straight back as a change. `pageLength` is
+// deliberately NOT part of the snapshot — see below.
+const listWorkingState = useWorkingState({ persist: "durable" });
+view.restore(listWorkingState.value ?? {});
+watch(view.snapshot, (snap) => {
+	listWorkingState.value = snap;
+});
 
 // Fetch projections drive the OS-store reads (ADR-0025): the controls own filter/sort
 // state, the host owns fetching. Empty filters normalize to `undefined` so the unfiltered
@@ -89,12 +98,6 @@ const scrollTop = ref(position.value?.scrollTop ?? 0);
 // resolver reads, derived from the spec the client already holds — no `['*']`, no dark tiers.
 // Toggling a column on re-fetches (its field is now needed); `modified` rides in as a column.
 const fetchFields = computed(() => listFetchFields(view.columns.wire.value, indicatorSpec.value));
-
-// The columns actually rendered (ADR-0028, Desk-parity): the live wire columns with the dedicated
-// Record-indicator column folded in — so the status pill renders whole-row, independent of whether
-// a status field is a visible column (fixes User/Note/Draft). The library keeps owning the wire
-// columns for ColumnSettings and fetching; this projection is render-only.
-const renderColumns = computed(() => withIndicatorColumn(view.columns.wire.value, indicatorSpec.value));
 
 // The fetch shape (fields/filters/order_by) that keys this window's rows in the store — passed
 // to BOTH the read (listFor) and the write (loadList) so they hit the SAME entry, and no
@@ -171,15 +174,13 @@ watch(
 
 // A column-header drag emits `{ key, width }`; write it back into the shared column state
 // so ColumnSettings and the table stay in sync (ADR-0006 / ADR-0025, two-way resize). The
-// synthetic indicator column is render-only (fixed width, not in the library layout), so a
-// resize/reset on it is ignored rather than written into the persisted snapshot.
+// synthetic indicator column is a first-class column now (ADR-0033), so its width persists
+// through the same path — no special-casing.
 function onColumnWidthUpdated(e: { key: string; width: string }) {
-	if (e.key === INDICATOR_COLUMN_KEY) return;
 	view.columns.setWidth(e.key, e.width);
 }
 
 function onColumnWidthReset(e: { key: string }) {
-	if (e.key === INDICATOR_COLUMN_KEY) return;
 	view.columns.resetWidth(e.key);
 }
 
@@ -247,6 +248,7 @@ const selectionActions = computed(() => {
 				<ColumnSettings
 					v-model="view.columns.shown.value"
 					:doctype="doctype"
+					:synthetic="view.columns.synthetic.value"
 					:can-reset="view.columns.isCustomized.value"
 					@reset="view.columns.reset()"
 				/>
@@ -256,7 +258,7 @@ const selectionActions = computed(() => {
 		<OSListView
 			ref="listViewRef"
 			:doctype="doctype"
-			:columns="renderColumns"
+			:columns="view.columns.wire.value"
 			:rows="records"
 			:meta="meta"
 			:spec="indicatorSpec"
