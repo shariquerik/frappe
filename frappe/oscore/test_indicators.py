@@ -118,6 +118,15 @@ class TestMergeRuleLayer(unittest.TestCase):
 		self.assertEqual(patched[0]["color"], "gold")
 		self.assertEqual(len(patched), 2)
 
+	def test_spacing_inside_an_in_value_list_matches_the_same_rule(self):
+		# The client trims each item of an `in` list, so `Open,Overdue` and `Open, Overdue` are the
+		# same condition. The server key must agree — otherwise the override lands as a dead duplicate
+		# above the app rule instead of recoloring it in place.
+		ladder = [{"condition": "status,in,Open,Overdue", "label": "Active", "color": "red"}]
+		patched = indicators.merge_rule_layer(ladder, [{"condition": "status,in,Open, Overdue", "label": "Active", "color": "amber"}])
+		self.assertEqual(len(patched), 1)
+		self.assertEqual(patched[0]["color"], "amber")
+
 	def test_labelless_add_is_skipped_hidden_miss_is_noop(self):
 		patched = indicators.merge_rule_layer(self._ladder(), [{"condition": "x,=,1"}, {"condition": "y,=,1", "hidden": True}])
 		self.assertEqual(patched, self._ladder())

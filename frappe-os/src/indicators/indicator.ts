@@ -133,7 +133,9 @@ function clauseMatches(doc: Record<string, unknown>, { field, operator, value }:
   }
 }
 
-// The comma list an `in` / `not in` value carries, trimmed and de-blanked.
+// The comma list an `in` / `not in` value carries, trimmed and de-blanked. The server mirrors this
+// when it keys a rule for override merge (frappe/oscore/indicators.py `_clause_key`) — keep the two
+// in step, or a spaced override drifts from the app rule it means to replace.
 function valueList(value: string): string[] {
   return value
     .split(',')

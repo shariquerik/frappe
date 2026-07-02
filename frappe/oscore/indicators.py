@@ -162,14 +162,23 @@ def app_indicator_rules(doctype, module):
 	return [rule for rule in (_clean_rule(entry) for entry in declared) if rule]
 
 
+def _clause_key(clause):
+	"""Canonicalize one `field,op,value` clause: trim each part. For `in` / `not in`, also trim
+	and de-blank each item of the comma value list — mirroring the client's `valueList`
+	(frappe-os/src/indicators/indicator.ts) — so `Open,Overdue` and `Open, Overdue` collapse to
+	one key. Any other operator keeps its value verbatim (its space is significant to `=`). `""`
+	stays `""` — the fallthrough-floor key."""
+	parts = [part.strip() for part in clause.split(",", 2)]
+	if len(parts) > 2 and parts[1] in ("in", "not in"):
+		parts[2] = ",".join(item.strip() for item in parts[2].split(",") if item.strip())
+	return ",".join(parts)
+
+
 def _condition_key(condition):
 	"""A rule's identity — its condition, canonicalized so spacing variants collapse to one key
 	(ADR-0031: a rule is addressed by what it matches, like a Placement by its ref). Each
-	`field,op,value` clause is trimmed; `""` is the catch-all key."""
-	clauses = []
-	for clause in str(condition or "").split("|"):
-		clauses.append(",".join(part.strip() for part in clause.split(",", 2)))
-	return "|".join(clauses)
+	`field,op,value` clause is canonicalized; `""` is the fallthrough-floor key."""
+	return "|".join(_clause_key(clause) for clause in str(condition or "").split("|"))
 
 
 def merge_rule_layer(ladder, patches):
