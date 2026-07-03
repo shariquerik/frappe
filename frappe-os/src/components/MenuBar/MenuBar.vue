@@ -132,7 +132,7 @@ const editMenu = [
 		],
 	},
 ];
-const viewMenu = [
+const viewMenu = computed(() => [
 	{
 		group: "a",
 		hideLabel: true,
@@ -141,8 +141,17 @@ const viewMenu = [
 			{ label: "Show as list", onClick: listActive },
 		],
 	},
-	{ group: "b", hideLabel: true, items: [{ label: "Enter full screen", onClick: zoomActive }] },
-];
+	{
+		group: "b",
+		hideLabel: true,
+		items: [
+			{
+				label: os.isFullscreen.value ? "Exit full screen" : "Enter full screen",
+				onClick: () => os.toggleFullscreen(),
+			},
+		],
+	},
+]);
 const windowMenu = [
 	{
 		group: "a",
@@ -196,7 +205,7 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 	<!-- Transparent + soft top scrim (no frosted glass, no bottom hairline). Ink and
 	     scrim flip with the wallpaper's darkness so the menu reads on any ground. -->
 	<div
-		class="absolute left-0 right-0 top-0 z-[90000] flex h-8 items-center gap-0.5 px-2.5"
+		class="os-menubar absolute left-0 right-0 top-0 z-[90000] flex h-8 items-center gap-0.5 px-2.5"
 		:class="barTextClass"
 		:style="barStyle"
 	>
@@ -233,7 +242,10 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 		<OSDropdown :options="helpMenu" placement="bottom-start"
 			><button :class="btnCls(false)">Help</button></OSDropdown
 		>
-		<div class="flex-1"></div>
+		<!-- The empty middle doubles as the window's drag handle: with the title bar gone
+		     (window-controls-overlay), this is what the user grabs to move the window.
+		     Ignored in a normal browser tab. -->
+		<div class="flex-1 self-stretch" style="-webkit-app-region: drag"></div>
 		<button
 			class="inline-flex h-6 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-transparent"
 			:class="iconHover"
@@ -252,3 +264,20 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 		</button>
 	</div>
 </template>
+
+<style scoped>
+/* Installed as a PWA with window-controls-overlay, this bar rises into the vacated title-bar
+   strip, so it must keep clear of the OS window buttons drawn over it: the macOS traffic lights
+   at the left, the ⋮ app menu at the right. env(titlebar-area-*) gives the exact free region on
+   a real install; the fixed floors (78px / 148px) keep the corners clear even when those vars
+   aren't populated (e.g. DevTools emulation). No effect in a normal browser tab or standalone. */
+@media (display-mode: window-controls-overlay) {
+	.os-menubar {
+		padding-left: max(env(titlebar-area-x, 0px), 100px);
+		padding-right: max(
+			calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)),
+			160px
+		);
+	}
+}
+</style>

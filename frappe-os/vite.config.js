@@ -148,8 +148,14 @@ export default defineConfig({
         // proxy and let Vite's own middleware serve it. `/os/*` is the OS app (base `/os/`),
         // `/src` are the unbundled host/broker modules, `/@*` are Vite's virtual/fs modules,
         // `/node_modules` are pre-bundled deps, `/__*` are Vite endpoints (ping, open-in-editor).
+        // Exception: the PWA files `/os/manifest.json` and `/os/sw.js` are served by the bench
+        // (www/os/*), not Vite — the negative lookahead lets them fall through to the proxy so
+        // dev returns real JSON/JS instead of Vite's SPA fallback (which reads as a manifest
+        // syntax error and an unregisterable worker).
         bypass: (req) =>
-          /^\/(os(\/|$)|src\/|node_modules\/|@|__)/.test(req.url) ? req.url : undefined,
+          /^\/(os(?!\/(manifest\.json|sw\.js)(\?|$))(\/|$)|src\/|node_modules\/|@|__)/.test(req.url)
+            ? req.url
+            : undefined,
       },
     },
   },

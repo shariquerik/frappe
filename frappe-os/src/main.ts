@@ -192,6 +192,16 @@ async function boot() {
   watch(() => focusSig(os), () => { if (!restoring) pushFocus() })
 
   app.mount('#app')
+
+  registerServiceWorker()
+}
+
+// Register the desktop-PWA service worker so /os is installable in its own window.
+// Only in production: sw.js is a Frappe www file served under /os/, so it 404s under
+// the pure-vite dev server. Scope is /os/ — the worker only controls its own subtree.
+function registerServiceWorker() {
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return
+  navigator.serviceWorker.register('/os/sw.js', { scope: '/os/' }).catch(() => {})
 }
 
 boot()

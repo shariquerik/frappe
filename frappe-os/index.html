@@ -4,6 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Frappe OS</title>
+  <!-- Desktop PWA: makes /os installable in its own standalone window. The service
+       worker is registered from main.ts (production only). -->
+  <link rel="manifest" href="/os/manifest.json" />
+  <link rel="icon" href="/assets/frappe/images/os-icon-192.png" />
+  <!-- Title-bar/chrome color follows the system light/dark theme. Used by the browser for any
+       drawn chrome (the standalone fallback bar when window-controls-overlay isn't active, e.g.
+       fullscreen or unsupported browsers). With WCO active the app draws the strip itself. -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1c1c1e" />
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
     #app { height: 100vh; }

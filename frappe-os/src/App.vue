@@ -17,6 +17,7 @@ import { Dock } from "./components/Dock";
 import { OSWindow, CloseConfirmDialog } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
 import OSContextMenu from "./components/OSContextMenu.vue";
+import FullscreenPrompt from "./components/FullscreenPrompt.vue";
 
 const os = useOS();
 
@@ -205,6 +206,7 @@ onBeforeUnmount(() => {
 		<Dock />
 		<CommandPalette />
 		<CloseConfirmDialog />
+		<FullscreenPrompt />
 		<ToastProvider />
 		<div id="os-popover-layer" class="absolute z-[94000]"></div>
 	</div>

@@ -1,0 +1,26 @@
+{
+	"id": "/os/",
+	"name": "Frappe OS",
+	"short_name": "Frappe OS",
+	"description": "A macOS-style desktop shell for Frappe.",
+	"start_url": "/os/",
+	"scope": "/os/",
+	"display": "standalone",
+	"display_override": ["window-controls-overlay"],
+	"background_color": "#ffffff",
+	"theme_color": "#ffffff",
+	"icons": [
+		{
+			"src": "/assets/frappe/images/os-icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/assets/frappe/images/os-icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		}
+	]
+}

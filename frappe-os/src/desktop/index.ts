@@ -26,6 +26,7 @@ import {
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
+import { isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt } from './fullscreen'
 import { selectedRecords, setSelection } from './selection'
 import { hydrate, startAutosave } from './persistence'
 import {
@@ -61,6 +62,9 @@ export function useOS() {
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
     setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
     setDeskEl, setDockEl, deskRef, syncDeskSize,
+    // browser fullscreen (edge-to-edge, no browser chrome) — the "Enter full screen" action,
+    // plus the prompt shown when the green button leaves the bar up
+    isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt,
     // list multi-row selection (ADR-0032 slice 04) — read by bulk run Handlers
     selectedRecords, setSelection,
   }
