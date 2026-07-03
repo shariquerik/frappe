@@ -11,6 +11,7 @@ import { usePlacements, placementView, writePlacementOverride } from "@/placemen
 import { placementSurface, isAppRef } from "@/surface";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
 import { dirtyWindows } from "@/desktop/working-state";
+import AppIconTile from "./components/AppIconTile.vue";
 import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
 import { OSWindow, CloseConfirmDialog } from "./components/Window";
@@ -93,11 +94,13 @@ function openPlacement(ref: SurfaceRef): void {
 	const surface = placementSurface(ref);
 	if (surface) os.openSurface(surface);
 }
-const deskLabelStyle = computed(() =>
-	wp.value.dark
-		? "font-size:11.5px;max-width:74px;text-align:center;line-height:1.2;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.45);"
-		: "font-size:11.5px;max-width:74px;text-align:center;line-height:1.2;color:var(--ink-gray-7);text-shadow:0 1px 2px var(--surface-alpha-white-5);",
-);
+// Desktop icon labels sit on top of an arbitrary wallpaper. Following macOS Finder: one treatment
+// for every wallpaper — slightly heavier white text with a soft two-layer dark halo (a tight ring
+// plus a drop shadow), no box. The wide blur is what keeps it legible over busy or light backgrounds.
+const deskLabelStyle =
+	"font-size:12px;line-height:1.3;text-align:center;font-weight:500;color:#fff;" +
+	"text-shadow:0 0 3px rgba(0,0,0,0.55),0 1px 4px rgba(0,0,0,0.5);";
+
 
 // Right-click the wallpaper: a small context menu pinned to the cursor, rather than jumping
 // straight into Settings. The one entry opens the Wallpaper pane — the old direct behaviour.
@@ -182,18 +185,7 @@ onBeforeUnmount(() => {
 			:style="{ left: di.x + 'px', top: di.y + 'px', width: CELL_W - 14 + 'px' }"
 			@pointerdown="onIconPointerDown(di, $event)"
 		>
-				<img
-					v-if="di.logo"
-					:src="di.logo"
-					:alt="di.label"
-					class="h-[46px] w-[46px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]"
-				/>
-				<span
-					v-else
-					class="inline-flex h-[46px] w-[46px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]"
-				>
-					<span :class="di.icon" class="size-[22px]"></span>
-				</span>
+				<AppIconTile :logo="di.logo" :icon="di.icon" :label="di.label" />
 				<span :style="deskLabelStyle">{{ di.label }}</span>
 			</button>
 

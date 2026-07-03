@@ -14,6 +14,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AccountSection: typeof import('./src/components/Settings/AccountSection.vue')['default']
     AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+    AppIconTile: typeof import('./src/components/AppIconTile.vue')['default']
     AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
     AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
     AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']
@@ -49,6 +50,7 @@ declare module 'vue' {
 declare global {
   const AccountSection: typeof import('./src/components/Settings/AccountSection.vue')['default']
   const AppDashboard: typeof import('./src/components/Window/AppDashboard.vue')['default']
+  const AppIconTile: typeof import('./src/components/AppIconTile.vue')['default']
   const AppSettings: typeof import('./src/components/Settings/AppSettings.vue')['default']
   const AppSidebar: typeof import('./src/components/Window/AppSidebar.vue')['default']
   const AppToolbar: typeof import('./src/components/Window/AppToolbar.vue')['default']

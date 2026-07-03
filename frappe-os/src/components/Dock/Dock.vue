@@ -9,6 +9,7 @@ import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-
 import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } from '@/surface'
 import { usePlacements, placementView, writePlacementOverride } from '@/placements'
 import OSDropdown from '../OSDropdown.vue'
+import AppIconTile from '../AppIconTile.vue'
 import type { OsWindow, BuiltinSurface, SurfaceRef } from '@/types'
 const os = useOS()
 
@@ -86,7 +87,11 @@ const behind = computed(() => {
 // Behind a window → opaque light tray + dark ink. On the bare wallpaper → floating
 // glyphs whose ink follows the wallpaper's darkness.
 const trayClass = computed(() => (behind.value ? TRAY : ''))
-const iconShadow = computed(() => (behind.value ? 'shadow-[var(--shadow-sm)]' : 'shadow-[var(--shadow-lg)]'))
+// Drop shadow for the icon tiles as a drop-shadow filter (AppIconTile is filter-based): smaller when
+// the dock sits on an opaque tray, larger when floating on the wallpaper.
+const iconShadow = computed(() =>
+  behind.value ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' : 'drop-shadow(0 3px 6px rgba(0,0,0,0.38))',
+)
 const dividerClass = computed(() =>
   behind.value ? 'bg-[var(--outline-gray-2)]' : dark.value ? 'bg-white/25' : 'bg-black/10',
 )
@@ -270,10 +275,7 @@ const ctxOptions = computed(() => [
         @dragstart="draggingKey = d.key" @dragend="draggingKey = null"
         @dragover.prevent @drop.prevent="onPinDrop(i)">
         <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
-          <img v-if="d.logo" :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
-          <span v-else class="inline-flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-outline-gray-2 bg-surface-base text-ink-gray-6" :class="iconShadow">
-            <span :class="d.icon" class="size-[20px]"></span>
-          </span>
+          <AppIconTile :logo="d.logo" :icon="d.icon" :label="d.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
           <!-- running indicator: a second dot hints at multiple windows -->
           <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
             <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
@@ -301,7 +303,7 @@ const ctxOptions = computed(() => [
       <!-- transient running-but-unpinned apps: gone when their last window closes -->
       <div v-for="d in transientItems" :key="d.key" class="relative flex items-end">
         <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
-          <img :src="d.logo" :alt="d.name" class="h-[46px] w-[46px] rounded-xl object-contain" :class="iconShadow" />
+          <AppIconTile :logo="d.logo" :label="d.name" radius="rounded-xl" :shadow="iconShadow" />
           <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
             <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
             <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
