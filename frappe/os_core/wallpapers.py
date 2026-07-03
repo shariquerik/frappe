@@ -11,8 +11,9 @@
 import os
 
 import frappe
-
 from frappe.os_core.common import layer_rows, upsert
+from frappe.os_core.wallpaper_images import WEBP_EXTENSION, derive_thumbnail, derive_wallpaper_assets
+from frappe.utils.file_manager import save_file
 
 # The key the user's chosen wallpaper roams under (frappe.defaults, per-user) — the wallpaper analog
 # of PREFERRED_SHELL_KEY. None until the user picks one; the client then falls back to the default.
@@ -45,10 +46,11 @@ DEFAULT_GRADIENTS = [
 
 # The shipped default images live in the app's static assets; a file dropped here becomes a global
 # wallpaper on the next migrate (seed scans the folder, ADR-0036). Served at /assets/frappe/<folder>.
-# Each desktop image has a small sibling under THUMBNAIL_FOLDER (same filename) that the picker grid
-# draws instead of the full background — see scripts that generate the web-sized assets. Ship WebP:
-# the originals are downscaled at build time, so the folder holds only web-sized files, never raw
-# multi-megabyte camera JPEGs (ADR-0036 perf).
+# Migrate generates each image's small `<stem>.webp` sibling under THUMBNAIL_FOLDER (the tile the picker
+# grid draws instead of the full background, so the gallery never loads full-resolution files) — see
+# _prepare_shipped_images. Only that thumbnail is generated: the desktop image is served as committed and
+# never rewritten, so ship it already web-sized. Thumbnail generation is best-effort and tolerant of a
+# read-only asset mount (ADR-0036, deferred-issue 03).
 IMAGE_FOLDER = "wallpapers"
 THUMBNAIL_FOLDER = "thumbnails"
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
@@ -126,39 +128,87 @@ def _label_from_filename(filename):
 	return " ".join(tokens) or stem
 
 
-def _image_defaults():
-	"""The shipped image wallpapers — every image file under the app's static wallpaper folder, mapped
-	to a global seed entry (ADR-0036). Scanned so dropping a file in and re-migrating publishes it; []
-	when the folder is absent. Each carries a `thumbnail` (the small sibling under THUMBNAIL_FOLDER the
-	picker draws) so the gallery never loads full backgrounds. `dark` is on: labels read white with a
-	shadow, legible over most photos."""
-	folder = frappe.get_app_path("frappe", "public", IMAGE_FOLDER)
-	if not os.path.isdir(folder):
-		return []
-	files = sorted(
+def _source_images(folder):
+	"""The image filenames directly under a wallpaper folder (not its thumbnails subdir), sorted — the
+	shared scan the seed step and the catalog both read."""
+	return sorted(
 		f
 		for f in os.listdir(folder)
 		if f.lower().endswith(IMAGE_EXTENSIONS) and os.path.isfile(os.path.join(folder, f))
 	)
-	return [
-		{
-			"label": _label_from_filename(f),
-			"image": f"/assets/frappe/{IMAGE_FOLDER}/{f}",
-			"thumbnail": f"/assets/frappe/{IMAGE_FOLDER}/{THUMBNAIL_FOLDER}/{f}",
-			"category": IMAGE_CATEGORY,
-			"dark": 1,
-		}
-		for f in files
-	]
+
+
+def _image_defaults():
+	"""The shipped image wallpapers — every image file under the app's static wallpaper folder, mapped
+	to a global seed entry (ADR-0036). Scanned so dropping a file in and re-migrating publishes it; []
+	when the folder is absent. `thumbnail` points at the small sibling under THUMBNAIL_FOLDER the picker
+	draws, but only when that sibling actually exists — otherwise it is omitted and the picker falls back
+	to the full image (the seed step normally generates it first). `dark` is on: labels read white with a
+	shadow, legible over most photos."""
+	folder = frappe.get_app_path("frappe", "public", IMAGE_FOLDER)
+	if not os.path.isdir(folder):
+		return []
+	return [_image_default(folder, f) for f in _source_images(folder)]
+
+
+def _image_default(folder, filename):
+	"""One shipped image filename → its global seed entry. The desktop `image` is served as committed; the
+	`thumbnail` is the small `<stem>.webp` sibling under THUMBNAIL_FOLDER, included only when that file
+	exists so an un-generated thumbnail never becomes a 404 (the picker then falls back to the full image)."""
+	thumbnail_name = f"{os.path.splitext(filename)[0]}{WEBP_EXTENSION}"
+	has_thumbnail = os.path.isfile(os.path.join(folder, THUMBNAIL_FOLDER, thumbnail_name))
+	return {
+		"label": _label_from_filename(filename),
+		"image": f"/assets/frappe/{IMAGE_FOLDER}/{filename}",
+		"thumbnail": f"/assets/frappe/{IMAGE_FOLDER}/{THUMBNAIL_FOLDER}/{thumbnail_name}" if has_thumbnail else None,
+		"category": IMAGE_CATEGORY,
+		"dark": 1,
+	}
+
+
+def _prepare_shipped_images(folder):
+	"""Generate each shipped image's picker thumbnail at migrate time (ADR-0036) — so dropping a photo into
+	public/wallpapers/ and re-migrating publishes it with a thumbnail, no separate build step. Only the
+	small thumbnail is derived; the desktop image is served exactly as committed and is never rewritten or
+	deleted, so migrate never mutates a source original. Tolerant: if the asset dir is not writable (a
+	read-only production mount) the whole step is skipped and the picker falls back to the full image via
+	_image_defaults' existence check — a wallpaper thumbnail never fails a migrate."""
+	thumbnail_dir = os.path.join(folder, THUMBNAIL_FOLDER)
+	try:
+		os.makedirs(thumbnail_dir, exist_ok=True)
+		for filename in _source_images(folder):
+			_ensure_thumbnail(folder, thumbnail_dir, filename)
+	except OSError:
+		pass
+
+
+def _ensure_thumbnail(folder, thumbnail_dir, filename):
+	"""Write one shipped image's `<stem>.webp` picker thumbnail when it is missing or older than the image,
+	so a replaced photo refreshes it and an unchanged one is skipped (a normal migrate does no work)."""
+	image = os.path.join(folder, filename)
+	thumbnail = os.path.join(thumbnail_dir, f"{os.path.splitext(filename)[0]}{WEBP_EXTENSION}")
+	if os.path.exists(thumbnail) and os.path.getmtime(thumbnail) >= os.path.getmtime(image):
+		return
+	with open(image, "rb") as handle:
+		_write_file(thumbnail, derive_thumbnail(handle.read()))
+
+
+def _write_file(path, content):
+	with open(path, "wb") as handle:
+		handle.write(content)
 
 
 def seed_wallpapers():
-	"""Idempotently publish the shipped global wallpapers (after_migrate): the built-in gradients keyed
-	by label, the shipped images keyed by their asset path. Re-running updates presentation in place and
-	never duplicates; a user's own uploads are never touched."""
+	"""Idempotently publish the shipped global wallpapers (after_migrate): the built-in gradients keyed by
+	label, the shipped images keyed by their asset path. Missing picker thumbnails are generated first
+	(_prepare_shipped_images) so a dropped-in photo publishes with one. Re-running updates presentation in
+	place and never duplicates; a user's own uploads are never touched."""
 	for wp in DEFAULT_GRADIENTS:
 		existing = frappe.db.get_value("OS Wallpaper", {"is_global": 1, "label": wp["label"], "image": ["is", "not set"]})
 		upsert("OS Wallpaper", existing, _global_values({**wp, "category": GRADIENT_CATEGORY}))
+	folder = frappe.get_app_path("frappe", "public", IMAGE_FOLDER)
+	if os.path.isdir(folder):
+		_prepare_shipped_images(folder)
 	for wp in _image_defaults():
 		existing = frappe.db.get_value("OS Wallpaper", {"is_global": 1, "image": wp["image"]})
 		upsert("OS Wallpaper", existing, _global_values(wp))
@@ -185,12 +235,44 @@ def set_wallpaper(name: str):
 @frappe.whitelist(methods=["POST"])
 def upload_wallpaper(label: str, image: str, dark: int = 0):
 	"""Catalog an uploaded image as the caller's own private wallpaper (ADR-0036) — always owner-scoped
-	and non-global, so a user can never mint a global row. `image` is the URL of an already-uploaded
-	File (the client uploads via the standard File flow, then calls this). Returns the new catalog row."""
+	and non-global, so a user can never mint a global row. `image` is the URL of an already-uploaded File
+	(the client uploads via the standard File flow, then calls this). The source is run through the shared
+	derivation seam (deferred-issue 03) so the stored `image` is a downscaled desktop WebP and `thumbnail`
+	a small picker tile — never the raw multi-megabyte upload, which is then discarded. Returns the new
+	catalog row."""
 	doc = frappe.new_doc("OS Wallpaper")
-	doc.update({"label": label, "image": image, "dark": int(dark), "is_global": 0, "is_default": 0})
+	doc.update({"label": label, "dark": int(dark), "is_global": 0, "is_default": 0})
 	doc.insert()
+	source = _own_source_file(image)
+	doc.image, doc.thumbnail = _derive_upload(doc.name, image, source)
+	doc.save()
+	if source:
+		frappe.delete_doc("File", source.name, ignore_permissions=True, delete_permanently=True)
 	return wallpaper_dict(doc.as_dict())
+
+
+def _own_source_file(image):
+	"""The caller's OWN uploaded File at `image`, or None. Owner-scoped so upload_wallpaper can never read
+	or discard another user's File by passing its URL — it only ever derives from the caller's own upload
+	(a foreign or external URL matches nothing and is cataloged verbatim, without a thumbnail)."""
+	name = frappe.db.get_value("File", {"file_url": image, "owner": frappe.session.user})
+	return frappe.get_doc("File", name) if name else None
+
+
+def _derive_upload(name, image, source):
+	"""Run the caller's uploaded `source` File through the derivation seam and store its two web-sized WebP
+	derivatives as private Files attached to the wallpaper, returning (desktop_url, thumbnail_url). Falls
+	back to the source URL with no thumbnail when there is no own source File, so a non-derivable upload
+	still catalogs (the picker then draws the full image)."""
+	if not source:
+		return image, None
+	desktop, thumbnail = derive_wallpaper_assets(source.get_content())
+	stem = (source.file_name or "wallpaper").rsplit(".", 1)[0]
+	desktop_file = save_file(f"{stem}{WEBP_EXTENSION}", desktop, "OS Wallpaper", name, df="image", is_private=1)
+	thumbnail_file = save_file(
+		f"{stem}-thumbnail{WEBP_EXTENSION}", thumbnail, "OS Wallpaper", name, df="thumbnail", is_private=1
+	)
+	return desktop_file.file_url, thumbnail_file.file_url
 
 
 @frappe.whitelist(methods=["POST"])

@@ -62,8 +62,10 @@ is a picker grouping, distinct from a Settings *pane*; it does not revive Frappe
 
 Default images live in the app's `public/wallpapers/` (served at `/assets/frappe/wallpapers/…`). The
 `after_migrate` seed **scans the folder** and publishes each image as a global row, deriving a label
-from the filename — so dropping a file in and re-migrating publishes it, with no per-file code. Seeding
-is idempotent (gradients keyed by label, images by asset path); re-running updates presentation in
+from the filename — so dropping a file in and re-migrating publishes it, with no per-file code. Migrate
+also generates the image's small picker thumbnail if it is missing (see the thumbnail section), so no
+separate build step is needed; the desktop image itself is served as committed, so ship it web-sized.
+Seeding is idempotent (gradients keyed by label, images by asset path); re-running updates presentation in
 place and never touches a user's uploads.
 
 ## The picker draws a thumbnail, not the full image
@@ -71,10 +73,15 @@ place and never touches a user's uploads.
 Each image row carries a small `thumbnail` (a web-sized sibling under `wallpapers/thumbnails/`) next
 to the full desktop `image`. The picker grid draws the thumbnail; only the *selected* wallpaper loads
 its full background. Without this the gallery loaded every full-resolution photo at once — 23 shipped
-originals were ~85 MB, so opening Settings ▸ Wallpaper janked the whole shell. Shipped photos are
-downscaled to web-sized WebP (desktop ~2560px, thumb ~480px); a gradient and a user upload have no
-thumbnail, and the picker falls back to `image`. Generating those derivatives (build step + on upload)
-is still a manual shortcut — see deferred-hardcoded issue 03.
+originals were ~85 MB, so opening Settings ▸ Wallpaper janked the whole shell. Thumbnails are web-sized
+WebP (longest edge ~480px, transparency preserved) from one server-side derivation seam
+(`frappe/os_core/wallpaper_images.py`). For **shipped** photos `after_migrate` generates any missing
+`<stem>.webp` thumbnail — best-effort and tolerant of a read-only asset mount, and it only ever writes the
+small thumbnail, never rewriting or deleting the committed desktop image (so ship the desktop image
+web-sized). For a **user upload** `upload_wallpaper` runs the source through the same seam server-side,
+storing a downscaled `image` (longest edge ~2560px) + `thumbnail` and discarding the raw original. A
+gradient has no thumbnail; the picker's `image` fallback serves a not-yet-generated shipped file or a
+legacy row.
 
 ## Uploads reuse the standard File flow
 
