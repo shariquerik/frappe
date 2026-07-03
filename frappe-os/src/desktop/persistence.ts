@@ -1,8 +1,9 @@
 // Session persistence: the URL only holds *focus*; the rest of the desktop (which
 // windows exist, their geometry, z-order, split, per-window nav history,
-// wallpaper, toggles, durable working state) lives in one localStorage blob, debounced 250ms. Theme is
-// not here — frappe-ui's useTheme persists it under its own `theme` key. Ephemeral
-// overlay flags (palette / menu) and the transient settings / wallpaper windows are
+// toggles, durable working state) lives in one localStorage blob, debounced 250ms. Theme is
+// not here — frappe-ui's useTheme persists it under its own `theme` key. The wallpaper selection
+// is not here either — it roams per-user on the server (src/wallpapers/, ADR-0036). Ephemeral
+// overlay flags (palette / menu) and the transient settings window are
 // excluded — a refresh never restores an open overlay or a system pane.
 import { watch } from 'vue'
 import { useRegistry, getMeta, knownApplet } from '@/registry'
@@ -63,7 +64,6 @@ export function serialize() {
       back: (w.back || []).slice(-HIST_CAP), fwd: (w.fwd || []).slice(-HIST_CAP),
     })),
     geo: state.geo, split: state.split, activeId: state.activeId,
-    wallpaper: state.wallpaper,
     toggles: state.toggles, sidebarHidden: state.sidebarHidden,
     // Durable-only working state (ADR-0029). An OPTIONAL key: old blobs simply lack it and
     // hydrate reads `workingState || {}`, so adding it needs no BLOB_VERSION bump (a bump would
@@ -104,7 +104,6 @@ export function hydrate(): boolean {
   // was bare (clearFocus / minimize-to-empty); don't resurrect focus onto the last
   // window, or a cold /os would auto-open it and redirect to /os/<app>.
   state.activeId = ids.has(blob.activeId) ? blob.activeId : null
-  state.wallpaper = blob.wallpaper || null
   state.toggles = blob.toggles || {}
   state.sidebarHidden = blob.sidebarHidden || {}
   state.rowOpenTarget = blob.rowOpenTarget === 'new-window' ? 'new-window' : 'inline'
@@ -130,7 +129,7 @@ export function hydrate(): boolean {
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 export function startAutosave(): void {
   watch(
-    () => [state.windows, state.geo, state.split, state.activeId, state.wallpaper, state.toggles, state.sidebarHidden, state.workingState, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
+    () => [state.windows, state.geo, state.split, state.activeId, state.toggles, state.sidebarHidden, state.workingState, state.rowOpenTarget, state.rememberWindowSize, state.dockPosition, state.dockAutoHide],
     () => {
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { try { localStorage.setItem(BLOB_KEY, JSON.stringify(serialize())) } catch { /* quota / private mode: skip */ } }, 250)

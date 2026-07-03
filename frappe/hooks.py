@@ -318,6 +318,7 @@ after_migrate = [
 	"frappe.website.doctype.website_theme.website_theme.after_migrate",
 	"frappe.search.sqlite_search.build_index_in_background",
 	"frappe.desk.doctype.notification_type.notification_type.install_notification_types",
+	"frappe.os_core.wallpapers.seed_wallpapers",
 ]
 
 otp_methods = ["OTP App", "Email", "SMS"]

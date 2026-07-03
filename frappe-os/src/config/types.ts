@@ -35,13 +35,26 @@ export interface AppDef {
   modules: AppModule[]
 }
 
-// A desktop wallpaper option (id + label + CSS background; `dark` flips chrome to the
-// dark palette). The full set lives in desktop/windows.ts's wallpaperDefs().
+// A desktop wallpaper option (ADR-0036). `id` is the OS Wallpaper row name the selection stores;
+// an image wallpaper carries `image` (an /assets or /files URL, drawn cover/center), a gradient
+// carries `bg` (a CSS background). `dark` flips desktop chrome to the light palette. `isGlobal` marks
+// a shipped default (vs the user's own upload, which shows a remove control); `isDefault` marks the
+// fallback applied before the user picks one. The catalog is server-resolved and shipped in boot;
+// the client seam is src/wallpapers/, surfaced through desktop/windows.ts's wallpaperDefs().
 export interface WallpaperDef {
   id: string
   label: string
-  bg: string
+  bg?: string
+  image?: string
+  // A small sibling of `image` the picker grid draws instead of the full desktop background
+  // (ADR-0036 perf); undefined for a gradient or a user upload, which fall back to `image`.
+  thumbnail?: string
+  // The picker section this wallpaper is grouped under (e.g. Colors, Photos). A shipped default
+  // carries one; a user upload leaves it undefined and groups under "Your Wallpapers".
+  category?: string
   dark: boolean
+  isGlobal?: boolean
+  isDefault?: boolean
 }
 
 // One command-palette result: a label/subtitle/icon row plus the action it runs when

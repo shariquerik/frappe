@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-03 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "image",
+  "thumbnail",
+  "background",
+  "category",
+  "dark",
+  "is_global",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "description": "Display name shown under the thumbnail in the Wallpaper picker.",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1
+  },
+  {
+   "description": "The wallpaper image, drawn cover/center behind the desktop. Set for an image wallpaper (a shipped default or a user upload); absent for a CSS-gradient wallpaper.",
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "description": "A small (web-sized) version of Image the Wallpaper picker grid draws instead of the full background, so the gallery never loads full-resolution files (ADR-0036). A shipped image carries one; absent for a gradient or a user upload (which falls back to Image).",
+   "fieldname": "thumbnail",
+   "fieldtype": "Attach Image",
+   "label": "Thumbnail"
+  },
+  {
+   "description": "A CSS background value (gradient) drawn behind the desktop when there is no image. The presentation of the built-in gradient wallpapers; ignored when Image is set.",
+   "fieldname": "background",
+   "fieldtype": "Small Text",
+   "label": "Background"
+  },
+  {
+   "description": "The section the wallpaper is grouped under in the picker (e.g. Colors, Photos). A shipped default carries one; a user upload leaves it blank and is grouped under 'Your Wallpapers'.",
+   "fieldname": "category",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Category"
+  },
+  {
+   "default": "0",
+   "description": "The wallpaper is dark, so desktop-icon labels and chrome read in the light palette over it (App.vue).",
+   "fieldname": "dark",
+   "fieldtype": "Check",
+   "label": "Dark"
+  },
+  {
+   "default": "0",
+   "description": "A shipped wallpaper available to every user. Cleared (private to the owner) for a user upload. Only seeding/admins create global rows; the upload path always forces this off.",
+   "fieldname": "is_global",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Global"
+  },
+  {
+   "default": "0",
+   "description": "The fallback wallpaper applied when a user has not chosen one. Exactly one global row carries this (the OS ground, Duotone).",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "OS Core",
+ "name": "OS Wallpaper",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "if_owner": 1,
+   "read": 1,
+   "role": "Desk User",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

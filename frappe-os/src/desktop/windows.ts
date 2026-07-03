@@ -5,6 +5,7 @@
 import { computed } from 'vue'
 import { appForDoctype } from '@/registry'
 import { recordRecent } from '@/recents'
+import { useWallpapers, wallpaperSelection, setSelection } from '@/wallpapers'
 import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
@@ -347,28 +348,20 @@ export function enterSplit() {
 export const exitSplit = () => { state.split = null }
 
 // ---- appearance (wallpaper / toggles) ----------------------------------------
-// Theme lives in frappe-ui's useTheme (light/dark/system), not here.
+// Theme lives in frappe-ui's useTheme (light/dark/system), not here. The wallpaper catalog + the
+// per-user selection are the server-backed src/wallpapers/ seam (ADR-0036); these thin wrappers keep
+// the useOS() surface stable (wallpaperDefs / currentWp / setWallpaper) for the desktop and picker.
 export function wallpaperDefs(): WallpaperDef[] {
-  return [
-    // The OS default ground: "Product Duotone" — ERPNext indigo → CRM teal. A
-    // colored (not neutral) gradient; dark, so chrome reads white over it.
-    { id: 'duotone', label: 'Duotone', bg: 'radial-gradient(150% 130% at 12% -10%, #5b54e6 0%, #2c3a9e 42%, #0f7d78 100%)', dark: true },
-    { id: 'mist', label: 'Mist', bg: 'radial-gradient(140% 130% at 0% 0%, #f8fafc 0%, #eef1f5 46%, #e1e6ec 100%)', dark: false },
-    { id: 'linen', label: 'Linen', bg: 'radial-gradient(140% 130% at 0% 0%, #faf7f3 0%, #f2ece4 50%, #e8ddd0 100%)', dark: false },
-    { id: 'sky', label: 'Sky', bg: 'radial-gradient(130% 130% at 100% 0%, #ecf5fe 0%, #d6e8fb 54%, #bdd6f3 100%)', dark: false },
-    { id: 'sage', label: 'Sage', bg: 'radial-gradient(130% 130% at 0% 100%, #eef6f0 0%, #d9e9dd 54%, #c6dccc 100%)', dark: false },
-    { id: 'dusk', label: 'Dusk', bg: 'linear-gradient(155deg, #6c7fdb 0%, #5160ad 52%, #3c4884 100%)', dark: true },
-    { id: 'frappe', label: 'Frappe', bg: 'linear-gradient(155deg, #38a6fb 0%, #0d8ef8 42%, #0a62b6 100%)', dark: true },
-    { id: 'graphite', label: 'Graphite', bg: 'radial-gradient(140% 130% at 0% 0%, #34383e 0%, #25282d 54%, #191b1e 100%)', dark: true },
-    { id: 'ink', label: 'Ink', bg: 'radial-gradient(130% 130% at 100% 0%, #2c3050 0%, #1d2032 58%, #14161f 100%)', dark: true },
-  ]
+  return useWallpapers()
 }
+// The wallpaper the desktop draws: the user's selected row, else the default global, else the first —
+// never undefined (App.vue renders its bg/image unconditionally). Reactive over the seam store.
 export const currentWp = computed(() => {
-  const id = state.wallpaper || 'duotone'
   const list = wallpaperDefs()
-  return list.find((w) => w.id === id) || list[0]
+  const id = wallpaperSelection()
+  return list.find((w) => w.id === id) || list.find((w) => w.isDefault) || list[0]
 })
-export const setWallpaper = (id: string) => { state.wallpaper = id }
+export const setWallpaper = (id: string) => setSelection(id)
 // Settings is the per-user singleton window holding the user's Account plus the desktop-wide
 // preferences (General/window behavior, Appearance/theme, Wallpaper, Dock): open focuses the
 // existing one or spawns it, re-targeting its `pane`; close just removes it. Transient —

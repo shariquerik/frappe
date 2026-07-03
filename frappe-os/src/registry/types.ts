@@ -69,6 +69,12 @@ export interface BootData {
   // The server-resolved per-user Recents log (ADR-0024): record opens, newest-first, deduped +
   // permission-gated + capped. Tolerant like `placements` — an older server omits it (→ empty Recents).
   recents?: unknown[]
+  // The server-resolved wallpaper catalog (ADR-0036): global defaults ∪ the caller's own uploads,
+  // and their chosen wallpaper name (`wallpaper`, the selection roams per-user in frappe.defaults).
+  // Tolerant like `placements` — an older server omits them, so the wallpaper seam falls back to
+  // the built-in default (→ Duotone) with an empty catalog.
+  wallpapers?: unknown[]
+  wallpaper?: string | null
   // Realtime coordinates for the OS socket seam (data/realtime.ts). `sitename` names the per-site
   // Socket.IO namespace (`/{sitename}`); `socketio_port` is where the realtime process listens
   // (used only in dev); `developer_mode` picks the dev host (explicit port) over the production

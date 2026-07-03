@@ -11,6 +11,7 @@ import frappe.sessions
 from frappe.os_core.placements import get_placements
 from frappe.os_core.recents import get_recents
 from frappe.os_core.registry import get_permissions, get_registry
+from frappe.os_core.wallpapers import get_selection, get_wallpapers
 
 
 def get_boot():
@@ -23,6 +24,10 @@ def get_boot():
 		"permissions": get_permissions(),
 		"placements": get_placements(),
 		"recents": get_recents(),
+		# The wallpaper catalog (global defaults ∪ the caller's own uploads) and their chosen
+		# wallpaper name — the selection roams per-user in frappe.defaults (ADR-0036).
+		"wallpapers": get_wallpapers(),
+		"wallpaper": get_selection(),
 		# Realtime coordinates for the OS socket seam (data/realtime.ts): the per-site
 		# Socket.IO namespace is `/{sitename}`; in dev the shell reaches the realtime
 		# process directly on `socketio_port`, in production it rides the same origin

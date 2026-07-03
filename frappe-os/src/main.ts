@@ -10,6 +10,7 @@ import { getBoot, initOsApi } from '@/data'
 import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
 import { initRecents } from '@/recents'
+import { initWallpapers } from '@/wallpapers'
 import { router, pathForFocus, focusSig, applyRoute, INSTANCE_KEY } from '@/routing'
 import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId, paneForSlug, SETTINGS_PANES, APP_SETTINGS_PANES } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
@@ -146,11 +147,13 @@ async function boot() {
     initRegistry(bootData)
     initPlacements(bootData)
     initRecents(bootData)
+    initWallpapers(bootData)
     initOsApi(bootData)
   } catch {
     initRegistry(null)
     initPlacements(null)
     initRecents(null)
+    initWallpapers(null)
   }
 
   // 1. Hydrate the saved desktop FIRST — a deep-link layers onto the restored

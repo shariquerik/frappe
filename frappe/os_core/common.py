@@ -39,14 +39,17 @@ def ref_visible(ref):
 	return bool(app) and app in manifest.installed_os_apps()
 
 
-def layer_rows(doctype, fields, filters=None):
+def layer_rows(doctype, fields, filters=None, or_filters=None):
 	"""This site's stored rows for a placement layer, or [] before the DocType is migrated (boot
 	must never crash). Reading the config table itself is not sensitive — the genuine gate is the
 	per-reference permission check in the resolver (ADR-0010) — so this reads with permissions off
-	and the resolver applies role-scoping / visibility."""
+	and the resolver applies role-scoping / visibility. `or_filters` supports a union read (the
+	wallpaper catalog's global ∪ own, ADR-0036)."""
 	if not frappe.db.exists("DocType", doctype):
 		return []
-	return frappe.get_all(doctype, filters=filters or {}, fields=fields, ignore_permissions=True)
+	return frappe.get_all(
+		doctype, filters=filters or {}, or_filters=or_filters or {}, fields=fields, ignore_permissions=True
+	)
 
 
 def canonical_json(value):

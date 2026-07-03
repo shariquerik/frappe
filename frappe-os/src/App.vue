@@ -27,6 +27,13 @@ const os = useOS();
 useTheme();
 
 const wp = computed(() => os.currentWp.value);
+// The wallpaper fill: an image wallpaper is drawn cover/center; a gradient is its raw CSS background
+// (ADR-0036). One style object so the desktop layer branches on image presence, not two elements.
+const wpStyle = computed(() =>
+	wp.value.image
+		? { backgroundImage: `url("${wp.value.image}")`, backgroundSize: "cover", backgroundPosition: "center" }
+		: { background: wp.value.bg },
+);
 
 // The desktop size is a single reactive source (os.deskRef), refreshed on mount and on resize via
 // os.syncDeskSize, so the cell→pixel projection, the live drag clamp, AND the drop-snap on release
@@ -152,7 +159,7 @@ onBeforeUnmount(() => {
 		<!-- wallpaper -->
 		<div
 			class="absolute inset-0 z-0"
-			:style="{ background: wp.bg }"
+			:style="wpStyle"
 			@contextmenu.prevent="onDesktopContext"
 		></div>
 

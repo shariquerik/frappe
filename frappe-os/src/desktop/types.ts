@@ -73,7 +73,6 @@ export interface OsState {
   split: [string, string] | null
   paletteOpen: boolean
   paletteQuery: string
-  wallpaper: string | null
   toggles: Record<string, boolean>
   sidebarHidden: Record<string, boolean>
   // Working state (ADR-0029), keyed winId -> subjectKey -> entry. Sparse: a window gets a map

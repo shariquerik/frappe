@@ -14,7 +14,6 @@ export const state = reactive<OsState>({
   split: null, // [rightId, leftId]
   paletteOpen: false,
   paletteQuery: '',
-  wallpaper: null,
   toggles: {},
   sidebarHidden: {},
   workingState: {}, // winId -> subjectKey -> { persist, value, dirty? } (ADR-0029)
