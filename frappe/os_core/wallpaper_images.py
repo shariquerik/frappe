@@ -3,7 +3,7 @@
 #
 # The wallpaper image-derivation seam (ADR-0036 perf, deferred-issue 03). Given a source image's bytes
 # it produces the web-sized WebP derivatives every image wallpaper serves — a desktop background
-# (~2560px) and a picker thumbnail (~480px) — so the gallery never loads full-resolution files and an
+# (~3840px, 4K-crisp) and a picker thumbnail (~480px) — so the gallery never loads full-resolution files and an
 # upload's raw multi-megabyte original is never served as a background. One seam, run by BOTH the
 # shipped-image thumbnail step at migrate (wallpapers._prepare_shipped_images) and upload_wallpaper. Pure
 # Pillow, bytes in / bytes out: no frappe or filesystem knowledge, so it is testable with no site.
@@ -13,10 +13,12 @@ import io
 from PIL import Image, ImageOps
 
 # The web-sizing budget (ADR-0036) — the longest edge each derivative is fit within, so a tall portrait
-# is capped by height just as a wide landscape is by width. A desktop background caps at 2560px (retina-
-# crisp, a few hundred KB of WebP); a picker thumbnail at 480px (the grid tile is 78px, crisp at 2x).
-DESKTOP_MAX_EDGE = 2560
-DESKTOP_QUALITY = 82
+# is capped by height just as a wide landscape is by width. A desktop background caps at 3840px so it
+# paints 1:1 on a 4K display (background-size: cover upscales in device pixels — a lower cap looks soft
+# on 4K/retina); quality 88 holds smooth skies free of banding. A picker thumbnail caps at 480px (the
+# grid tile is 78px, crisp at 2x) at a lighter quality — it is never shown full-screen.
+DESKTOP_MAX_EDGE = 3840
+DESKTOP_QUALITY = 88
 THUMBNAIL_MAX_EDGE = 480
 THUMBNAIL_QUALITY = 72
 

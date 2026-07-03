@@ -78,8 +78,9 @@ WebP (longest edge ~480px, transparency preserved) from one server-side derivati
 (`frappe/os_core/wallpaper_images.py`). For **shipped** photos `after_migrate` generates any missing
 `<stem>.webp` thumbnail — best-effort and tolerant of a read-only asset mount, and it only ever writes the
 small thumbnail, never rewriting or deleting the committed desktop image (so ship the desktop image
-web-sized). For a **user upload** `upload_wallpaper` runs the source through the same seam server-side,
-storing a downscaled `image` (longest edge ~2560px) + `thumbnail` and discarding the raw original. A
+web-sized at ~3840px so it paints 1:1 on a 4K display). For a **user upload** `upload_wallpaper` runs the
+source through the same seam server-side, storing a downscaled `image` (longest edge ~3840px) +
+`thumbnail` and discarding the raw original. A
 gradient has no thumbnail; the picker's `image` fallback serves a not-yet-generated shipped file or a
 legacy row.
 
