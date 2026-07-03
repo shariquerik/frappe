@@ -157,10 +157,13 @@ yarn cypress       # Cypress interactive runner
   `applyRoute` (`routing/route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
   `desktop/windows.ts`, and the `route-map.spec.js` decision tables.
 - **Framed applet 404 / blank window**: a framed applet (e.g. raven's `chat`) loads its asset
-  from `/assets/<app>/os-applets/<fileName>.js`, which is a **build output, not auto-generated**.
-  After renaming/changing an applet, rebuild it (`cd apps/<app>/<app>/os-applets/<name> && yarn
-  build`) or the dynamic `import()` 404s and the window stays blank. `sites/assets/<app>` must
-  symlink the app's `public/` (it does after `bench build`/`bench setup`).
+  from `/assets/<app>/os-applets/<fileName>.js`, a **build output** (gitignored). `bench build`
+  produces it: frappe-os's build chains `scripts/build-applets.js`, which discovers every installed
+  app's `os-applets/<name>` and builds each into that app's `public/os-applets/`. So a fresh deploy
+  (Frappe Cloud) ships the asset automatically — apps carry applet *source* only, no build wiring
+  and no dependency on frappe-os. In dev you can rebuild one applet directly (`cd
+  apps/<app>/<app>/os-applets/<name> && yarn build`). `sites/assets/<app>` must symlink the app's
+  `public/` (it does after `bench build`/`bench setup`).
 - **Dev proxy is a generic catch-all** (`vite.config.js`): the OS dev server owns only `/os/*`
   + Vite internals (`/src`, `/@*`, `/node_modules`, `/__*`); everything else forwards to the bench
   (ADR-0020). Never name a framed app (`^/raven`) in the config — that was the retired

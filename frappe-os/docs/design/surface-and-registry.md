@@ -560,8 +560,10 @@ then swapped to the server `Registry` (step 4) with no renderer change.
 >   the rest to the bench), retiring the bespoke `^/raven` rule — no framed app named in build config.
 > - **Build gotcha (no silent caps):** the `chat` applet asset is a build output. It 404'd in the
 >   first live test because `public/os-applets/` was empty after the raven→chat rename; built via the
->   official preset (`os-applets/raven` → `yarn build`) → `chat.js`. Applets must be (re)built when
->   their source/name changes; this is not chained into the main host build.
+>   official preset (`os-applets/raven` → `yarn build`) → `chat.js`. **Now chained into the host
+>   build:** frappe-os's `build` runs `scripts/build-applets.js`, which discovers and builds every
+>   installed app's applet, so `bench build` (incl. Frappe Cloud) ships the assets — apps carry
+>   applet source only. In dev, rebuild one applet directly when its source/name changes.
 > - **Deliberately deferred (need separate grilling):** rung 3 (first doctype list) pending the
 >   exposed-doctype / nav source; the dashboard concept (rung 2) is provisional; the write-path UI for
 >   editing Site/User `default-surface` overrides (the *resolver* honours them already).
