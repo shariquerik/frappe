@@ -157,13 +157,16 @@ yarn cypress       # Cypress interactive runner
   `applyRoute` (`routing/route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
   `desktop/windows.ts`, and the `route-map.spec.js` decision tables.
 - **Framed applet 404 / blank window**: a framed applet (e.g. raven's `chat`) loads its asset
-  from `/assets/<app>/os-applets/<fileName>.js`, a **build output** (gitignored). `bench build`
-  produces it: frappe-os's build chains `scripts/build-applets.js`, which discovers every installed
-  app's `os-applets/<name>` and builds each into that app's `public/os-applets/`. So a fresh deploy
-  (Frappe Cloud) ships the asset automatically — apps carry applet *source* only, no build wiring
-  and no dependency on frappe-os. In dev you can rebuild one applet directly (`cd
-  apps/<app>/<app>/os-applets/<name> && yarn build`). `sites/assets/<app>` must symlink the app's
-  `public/` (it does after `bench build`/`bench setup`).
+  from `/assets/<app>/os-applets/<fileName>.js`, a **build output** (gitignored). The app builds
+  it as part of **its own** build: the app's root `build` script chains an applet build (e.g.
+  raven's `build:os-applet` → `os-applets/<name>` → `build.mjs`), guarded so it skips on stock
+  frappe (no frappe-os) instead of failing. This is deliberate: Frappe Cloud builds each app in its
+  **own** layer (`bench get-app` → that app's `build_assets`), where sibling apps aren't on disk yet
+  — only the app-owns-its-applet-build model survives that (frappe, hence frappe-os, is always built
+  first, so it's present when a later app's layer builds). The applet still compiles via frappe-os's
+  shared preset + Vite (`preset/applet.js`); the app ships no build deps of its own. In dev, rebuild
+  directly (`cd apps/<app>/<app>/os-applets/<name> && yarn build`). `sites/assets/<app>` must symlink
+  the app's `public/` (it does after `bench build`/`bench setup`).
 - **Dev proxy is a generic catch-all** (`vite.config.js`): the OS dev server owns only `/os/*`
   + Vite internals (`/src`, `/@*`, `/node_modules`, `/__*`); everything else forwards to the bench
   (ADR-0020). Never name a framed app (`^/raven`) in the config — that was the retired

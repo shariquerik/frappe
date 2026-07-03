@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/build-applets.js",
+    "build": "vite build",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit && vue-tsc -p tsconfig.node.json --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
