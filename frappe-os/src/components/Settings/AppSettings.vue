@@ -59,7 +59,7 @@ function flip(key: string, def: boolean) { os.tog(k(key), def) }
 <template>
   <div class="flex min-h-0 flex-1">
     <!-- panes -->
-        <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
+        <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-sidebar px-2 py-2.5">
           <div v-for="t in panes" :key="t" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setAppSettingsPane(win.id, t)"
             :style="{ color: pane===t ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: pane===t ? 600 : 400,
               background: pane===t ? 'var(--surface-gray-3)' : 'transparent' }">

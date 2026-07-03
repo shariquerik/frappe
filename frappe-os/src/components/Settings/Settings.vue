@@ -34,7 +34,7 @@ const dockPositions: { label: string; value: DockPosition }[] = [
 <template>
   <div class="flex min-h-0 flex-1">
     <!-- pane nav -->
-    <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
+    <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-sidebar px-2 py-2.5">
       <div v-for="s in panes" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsPane(s)"
         :style="{ color: pane===s ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: pane===s ? 600 : 400,
           background: pane===s ? 'var(--surface-gray-3)' : 'transparent' }">

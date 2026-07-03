@@ -32,7 +32,7 @@ const location = computed<Location>(() =>
 <template>
   <div class="flex min-h-0 flex-1">
     <!-- Locations rail -->
-    <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-gray-1 px-2 py-2.5">
+    <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-sidebar px-2 py-2.5">
       <div class="mb-1 px-2.5 text-[11px] font-semibold tracking-[0.02em] text-ink-gray-5">LOCATIONS</div>
       <div v-for="loc in LOCATIONS" :key="loc" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setFinderLocation(loc)"
         :style="{ color: location===loc ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: location===loc ? 600 : 400,
