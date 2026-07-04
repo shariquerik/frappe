@@ -22,10 +22,13 @@ its own window. So a workspace gets its own window, and the coordinate becomes w
   is *that workspace's doctypes*. Two workbenches (Selling, Stock) can be open at once, each its
   own window.
 
-**Single-workspace apps skip the hub.** crm resolves to one workspace, so there is nothing to
-choose — opening crm opens the workbench directly. The hub only earns its place when an app has
+**Single-workspace apps skip the hub.** An app that resolves to a single workspace has nothing to
+choose — opening it opens the workbench directly. The hub only earns its place when an app has
 more than one workspace. This is the same backward-compatible-absence pattern as before: one
-implicit workspace means "the app is the window."
+implicit workspace means "the app is the window." (Whether a given app is single-workspace is a
+fact of its real modules, not an assumption: seeding is honest to `DocType.module`, so e.g. crm
+resolves to *two* — its main `FCRM` pipeline plus the secondary `Lead Syncing` module — and so
+earns a hub. An app is single-workspace only when it genuinely ships one module with doctypes.)
 
 ## Identity: app owns the dock, workspace owns the window
 
