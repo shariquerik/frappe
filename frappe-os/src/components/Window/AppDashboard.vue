@@ -4,8 +4,8 @@
 // curated config; the values are live from the store, loaded when the dashboard renders /
 // the app changes. Styled on frappe-ui tokens; Button/Avatar come from frappe-ui.
 //
-// NOTE: the `team` panel still holds hardcoded demo members (deferred to issue 02 —
-// real team-member source); the greeting below is now driven by the live boot user.
+// The team panel lists the live site users (same source as App Settings ▸ Members);
+// the greeting is driven by the live boot user.
 import { computed, watch } from "vue";
 import { Button, Avatar } from "frappe-ui";
 import { useOS } from "@/desktop";
@@ -67,20 +67,20 @@ const recents = computed(() => {
 const actions = computed(() =>
 	(app.value.modules[0].doctypes || []).slice(0, 4).map((dt) => ({ label: "New " + dt, dt })),
 );
-const team = computed(() => {
-	const dots: Record<string, string> = {
-		"Faris Ansari": "var(--surface-green-5)",
-		"Aditya N": "var(--surface-green-5)",
-		"Hussain R": "var(--outline-gray-3)",
-		"Riya Sharma": "var(--surface-amber-5)",
-	};
-	return [
-		{ name: "Faris Ansari", role: "System Manager" },
-		{ name: "Aditya N", role: "Sales Manager" },
-		{ name: "Riya Sharma", role: "Support Lead" },
-		{ name: "Hussain R", role: "Finance" },
-	].map((t) => ({ ...t, dot: dots[t.name] || "var(--outline-gray-3)" }));
-});
+// Live site users, excluding the framework's built-in accounts. No presence dot yet —
+// presenceFor() is still a stub (see deferred-hardcoded inventory), so we show none
+// rather than fake one.
+const TEAM_CAP = 5;
+const team = computed(() =>
+	(os.listFor("User").data || [])
+		.filter((u) => u.enabled !== 0 && u.name !== "Administrator" && u.name !== "Guest")
+		.slice(0, TEAM_CAP)
+		.map((u) => ({
+			name: u.full_name || u.name,
+			role: u.role_profile || "Member",
+			image: u.user_image,
+		})),
+);
 watch(
 	() => s.value.appId,
 	() => {
@@ -91,6 +91,7 @@ watch(
 			os.loadList(app.value.recentDoctype);
 			os.loadFieldMeta(app.value.recentDoctype);
 		}
+		os.loadList("User");
 	},
 	{ immediate: true },
 );
@@ -188,17 +189,13 @@ watch(
 							:key="i"
 							class="flex items-center gap-2.5"
 						>
-							<Avatar :label="tm.name" size="sm" />
+							<Avatar :image="tm.image" :label="tm.name" size="sm" />
 							<div class="flex min-w-0 flex-col">
 								<span
 									class="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-ink-gray-8"
 									>{{ tm.name }}</span
 								><span class="text-[11px] text-ink-gray-4">{{ tm.role }}</span>
 							</div>
-							<span
-								class="ml-auto h-[7px] w-[7px] flex-shrink-0 rounded-full"
-								:style="{ background: tm.dot }"
-							></span>
 						</div>
 					</div>
 				</div>

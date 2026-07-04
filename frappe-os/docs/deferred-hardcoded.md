@@ -13,13 +13,6 @@ up properly later. Grouped by how much they matter, with `file:line` references.
 
 The clearest "fix it later" stubs — literal demo content.
 
-- **`components/MenuBar/MenuBar.vue:21`** — `userName = "Faris Ansari"` hardcoded instead of
-  `os.state.userName`.
-- **`components/Window/AppDashboard.vue:23`** — greeting falls back to `"Faris"`.
-- **`components/Window/AppDashboard.vue:69–82`** — the entire **"Your team" panel** is
-  hardcoded demo people (Faris Ansari, Aditya N, Riya Sharma, Hussain R) with hardcoded roles
-  and status-dot colors. Flagged in-code: _architecture-review §3 item 4 — "should come from
-  boot/session."_
 - **`desktop/windows.ts:17–21`** — `presenceFor()` is a **stub**: the real backend has no
   viewer source, so a form always shows "You", lists/dashboards show nothing. Marked _Phase 4
   may add real presence._
@@ -91,7 +84,8 @@ The clearest "fix it later" stubs — literal demo content.
 
 ### Where the deliberate debt clusters
 
-1. **"Faris" demo data** — MenuBar / AppDashboard + the presence stub.
+1. **The presence stub** — `presenceFor()` (MenuBar userName, the greeting, and the
+   team panel are now live off boot/session and the User list).
 2. **Activities/Email Aspects + the dormant doctype-list rung** — "Coming soon".
 3. **The entire `config/` layer** — curated client-side guesses pending the **Phase 4
    live-metadata** wiring.
