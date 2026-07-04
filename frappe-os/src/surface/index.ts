@@ -15,14 +15,19 @@ import { DEFAULT_ASPECT } from './aspects'
 // ---- constructors ------------------------------------------------------------
 // `appId` is always populated (chrome/asset scoping need it); for doctype-bound views
 // it is derived from the doctype so the doctype stays authoritative over the app.
-export const dashboardSurface = (appId: string): BuiltinSurface => ({ kind: 'builtin', view: 'dashboard', appId })
-export const listSurface = (doctype: string): BuiltinSurface =>
-  ({ kind: 'builtin', view: 'list', doctype, recordName: null, appId: appForDoctype(doctype) })
+// `workspace` is the optional intra-app coordinate (ADR-0040); omitted stays off the descriptor
+// so a single-space surface/URL is byte-for-byte unchanged. Callers rarely pass it — the carry-
+// over rule in navFocus (windows.ts) inherits it across in-window nav so no per-call-site threads.
+export const dashboardSurface = (appId: string, workspace?: string): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'dashboard', appId, ...(workspace ? { workspace } : {}) })
+export const listSurface = (doctype: string, workspace?: string): BuiltinSurface =>
+  ({ kind: 'builtin', view: 'list', doctype, recordName: null, appId: appForDoctype(doctype),
+     ...(workspace ? { workspace } : {}) })
 // `aspect` is the form's selected facet (ADR-0018); omitted/default ('details') stays off the
 // descriptor so an existing form surface/URL is byte-for-byte unchanged.
-export const formSurface = (doctype: string, recordName: string, aspect?: string): BuiltinSurface =>
+export const formSurface = (doctype: string, recordName: string, aspect?: string, workspace?: string): BuiltinSurface =>
   ({ kind: 'builtin', view: 'form', doctype, recordName, appId: appForDoctype(doctype),
-     ...(aspect && aspect !== DEFAULT_ASPECT ? { aspect } : {}) })
+     ...(aspect && aspect !== DEFAULT_ASPECT ? { aspect } : {}), ...(workspace ? { workspace } : {}) })
 export const appSettingsSurface = (appId: string, pane = 'General'): BuiltinSurface =>
   ({ kind: 'builtin', view: 'app-settings', appId, params: { pane } })
 // The OS-owned placeholder a Window opens on when its app declares no default surface and has
@@ -138,6 +143,19 @@ export function surfaceAppId(s: Surface): string {
 // ---- pure helpers ------------------------------------------------------------
 export const isBuiltin = (s?: Surface | null): s is BuiltinSurface => !!s && s.kind === 'builtin'
 
+// Carry the workspace coordinate across an IN-WINDOW navigation (ADR-0040): when `next` stays in
+// the same app and names no workspace of its own, it inherits `current`'s — so a sidebar click
+// within Selling keeps its flavor without every opener threading `workspace`. One rule, one place:
+// navFocus routes in-window nav through here; the global openers (Spotlight/Finder/cross-app entry)
+// bypass it, so those correctly arrive with no workspace unless one is explicit. Crossing apps, an
+// applet on either side, or an explicit `next.workspace` all leave `next` untouched.
+export function carryWorkspace(current: Surface | undefined | null, next: Surface): Surface {
+  if (!isBuiltin(next) || next.workspace) return next
+  if (!isBuiltin(current) || !current.workspace) return next
+  if (surfaceAppId(current) !== surfaceAppId(next)) return next
+  return { ...next, workspace: current.workspace }
+}
+
 // Which sidebar a window's Surface drives (ADR-0018, ADR-0026): a built-in form shows the Aspect
 // rail and every other built-in (list/dashboard/settings) keeps the app nav rail. An applet's rail
 // is its OWN explicit choice (ADR-0026 `nav` capability) — orthogonal to how it renders (`kind`):
@@ -205,7 +223,10 @@ export function sameSurface(a?: Surface | null, b?: Surface | null): boolean {
   if (a.kind === 'applet') return a.appletId === (b as typeof a).appletId
   const y = b as BuiltinSurface
   // The Aspect is part of a form's content address (ADR-0018), so two aspects of one record are
-  // NOT the same place — per-window history then steps between them like any other navigation.
+  // NOT the same place — per-window history then steps between them like any other navigation. The
+  // workspace is likewise part of the address (ADR-0040): the same list entered under a different
+  // workspace is a different place, so a switcher change steps history like any other navigation.
   return a.view === y.view && (a.doctype || '') === (y.doctype || '')
     && (a.recordName || '') === (y.recordName || '') && (a.aspect || '') === (y.aspect || '')
+    && (a.workspace || '') === (y.workspace || '')
 }

@@ -48,6 +48,10 @@ export interface Context {
   view?: string
   appletId?: string
   selection?: string
+  // The surface-tier workspace coordinate (ADR-0040) — published when the front window's surface
+  // names one, so app menus can gate their content with `when: { workspace: 'selling' }`. Absent
+  // for a single-space app or any surface with no workspace, a clean non-match for such a `when`.
+  workspace?: string
 }
 
 // Eligibility predicate — equality-only, evaluated as data, never `eval` (CONTEXT.md →

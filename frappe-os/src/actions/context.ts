@@ -15,6 +15,9 @@ export function contextForOS(os: OsStore): Context {
     if (surface.view) context.view = surface.view
     if (surface.doctype) context.doctype = surface.doctype
     if (surface.recordName) context.recordName = surface.recordName
+    // The surface-tier workspace coordinate (ADR-0040) — published only when present, so a
+    // `when: { workspace: X }` is a clean non-match on a single-space surface.
+    if (surface.workspace) context.workspace = surface.workspace
   }
   // The surface-tier selection marker: PRESENCE (not value) — the selection/bulk-bar Region gates
   // on it (regions.ts). Set only when the front window's list has selected rows, so the bar mounts

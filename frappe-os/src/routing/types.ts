@@ -6,6 +6,10 @@
 // window instance (`app:<id>#n`); absent/null means the canonical instance.
 export interface RouteParams {
   app?: string
+  // The optional workspace segment between app and doctype (ADR-0040), resolved by parseSegments
+  // from the raw path only when it names a known workspace of `app` — else the segment is the
+  // doctype and this stays absent (honest disambiguation, no doctype-name guessing).
+  workspace?: string
   doctype?: string
   name?: string
   // The trailing path segment after the record name — read as a form Aspect id only when it

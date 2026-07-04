@@ -12,22 +12,22 @@ import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
 import { initRecents } from '@/recents'
 import { initWallpapers } from '@/wallpapers'
-import { router, pathForFocus, focusSig, applyRoute, INSTANCE_KEY } from '@/routing'
+import { router, pathForFocus, focusSig, applyRoute, parseSegments, INSTANCE_KEY } from '@/routing'
 import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId, paneForSlug, SETTINGS_PANES, APP_SETTINGS_PANES } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
 
 const os = useOS()
 
-// vue-router's params/query are `string | string[]` per key; our routes only ever bind
-// single segments, so collapse to the `{ app, doctype, name, instance }` shape route-map
-// expects. `instance` parses the reserved `?instance=n` query (junk → null = canonical).
+// The router's `:segments*` capture is a decoded string[] (a single string for one segment, or
+// undefined/'' for the bare desktop); normalize to a clean array so parseSegments can reshape it
+// into the { app, workspace, doctype, name, aspect } coordinate (workspace-vs-doctype resolved by
+// lookup, ADR-0040). `instance` parses the reserved `?instance=n` query (junk → null = canonical).
 function routeParams(loc: { params: RouteParamsGeneric; query: LocationQuery }): RouteParams {
   const one = (v: string | (string | null)[] | undefined | null) => (Array.isArray(v) ? v[0] : v) || undefined
+  const segments = (Array.isArray(loc.params.segments) ? loc.params.segments : [loc.params.segments]).filter(Boolean) as string[]
   const raw = one(loc.query[INSTANCE_KEY])
   const instance = raw ? Number.parseInt(raw, 10) : NaN
-  return { app: one(loc.params.app), doctype: one(loc.params.doctype), name: one(loc.params.name),
-    aspect: one(loc.params.aspect),
-    instance: Number.isInteger(instance) ? instance : null }
+  return { ...parseSegments(os, segments), instance: Number.isInteger(instance) ? instance : null }
 }
 
 // Resolve an uncurated-but-real doctype segment into the registry BEFORE routing, so a cold deep
@@ -93,7 +93,7 @@ function pushFocus() {
 function restoreFromHistory(to: RouteLocationNormalized) {
   const st = window.history.state || {}
   const winId: string | null = st.osWin || null
-  const { app, doctype, name, instance, aspect } = routeParams(to)
+  const { app, workspace, doctype, name, instance, aspect } = routeParams(to)
 
   // App-settings windows: path is /<app>/settings/<pane>, state id is app-settings:<app>.
   // openAppSettings refocuses if still open (re-targeting the pane), else respawns it — the pane
@@ -126,9 +126,10 @@ function restoreFromHistory(to: RouteLocationNormalized) {
 
   let surface: Surface
   // A known trailing Aspect rides the restored form surface; an unknown tail is ignored (default).
-  if (doctype && name) surface = formSurface(doctype, name, isAspectId(aspect) ? aspect : undefined)
-  else if (doctype) surface = listSurface(doctype)
-  else surface = dashboardSurface(app)
+  // The workspace coordinate (ADR-0040) rides every restored builtin so a reload keeps the flavor.
+  if (doctype && name) surface = formSurface(doctype, name, isAspectId(aspect) ? aspect : undefined, workspace)
+  else if (doctype) surface = listSurface(doctype, workspace)
+  else surface = dashboardSurface(app, workspace)
 
   if (winId && os.restoreWin(winId, surface)) return
   applyRoute(os, routeParams(to))

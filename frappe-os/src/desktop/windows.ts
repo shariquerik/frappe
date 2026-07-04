@@ -10,7 +10,7 @@ import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
-  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
+  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey, carryWorkspace,
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import { clearSelection } from './selection'
@@ -162,14 +162,22 @@ function freshAppWindowId(appId: string): string {
 export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
   spawnWindow(freshAppWindowId(appId), appId, surface ?? null)
 
-export const openListGlobal = (dt: string, instance?: number | null) => ensureApp(appForDoctype(dt), listSurface(dt), instance)
+// `workspace` seeds the intra-app coordinate (ADR-0040) from a cold deep-link / reload; omitted on
+// Spotlight/Finder/cross-app entry, which never guess a workspace. Global openers do NOT carry it
+// over (that is navFocus's in-window rule) — they only take one when the URL explicitly named it.
+export const openListGlobal = (dt: string, instance?: number | null, workspace?: string) =>
+  ensureApp(appForDoctype(dt), listSurface(dt, workspace), instance)
 // `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.
 // A real record open is the one event that feeds Recents (ADR-0024) — both global and inline form
 // openers note it (debounced server-side); list/app/dashboard opens deliberately do not.
-export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string) => {
+export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string, workspace?: string) => {
   recordRecent(dt, name)
-  return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance)
+  return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect, workspace), instance)
 }
+// Open an app's workspace Overview (ADR-0040) — the dashboard surface scoped to a workspace, the
+// `{ view: 'dashboard', workspace }` surface a `/erpnext/selling` URL lands on.
+export const openWorkspace = (appId: string, workspace: string) =>
+  ensureApp(appId, dashboardSurface(appId, workspace))
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)
@@ -179,10 +187,14 @@ export const openApplet = (appId: string, appletId: string, props?: Record<strin
 // the same `ensureApp`). Component surfaces resolve to their declared `appId`.
 export const openSurface = (surface: Surface) => ensureApp(surfaceAppId(surface), surface)
 
+// In-window navigation (sidebar click, Aspect switch, goHome, new form). The single place the
+// workspace coordinate is carried forward (ADR-0040): a nav that stays in the same app inherits
+// the current surface's workspace, so a Selling sidebar click keeps Selling's flavor without every
+// opener threading it. Global openers (ensureApp) bypass this, so cross-app/Spotlight entry drops it.
 function navFocus(winId: string, surface: Surface) {
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === winId)
-  if (w) navigateWindow(w, surface)
+  if (w) navigateWindow(w, carryWorkspace(w.surface, surface))
   setGeo(winId, { z, min: false })
   state.activeId = winId
 }

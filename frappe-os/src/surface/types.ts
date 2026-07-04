@@ -21,6 +21,11 @@ export interface BuiltinSurface {
   // restored on reload and stepped by browser back/forward. Absent = the default ('details'),
   // which projects to the bare form path. Only meaningful when view === 'form'.
   aspect?: string
+  // The workspace the surface is scoped to (ADR-0040) — the intra-app coordinate (erpnext's
+  // Selling vs Stock). Serializable, URL-addressable (a path segment between app and doctype),
+  // and carried across in-window navigation by navFocus. Absent = the app's one implicit space;
+  // never guessed on cold/global entry (Spotlight/Finder/cross-app), only inherited or explicit.
+  workspace?: string
   params?: Record<string, unknown>
 }
 

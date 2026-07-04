@@ -9,7 +9,7 @@
 // so the store surface is derived from this assembly rather than hand-maintained. Adding
 // a member here automatically widens OsStore for every consumer (route-map, components).
 import { initials, pill } from '@/config/apps'
-import { useRegistry, getMeta, appForDoctype, knownApplet, ICON } from '@/registry'
+import { useRegistry, getMeta, appForDoctype, knownApplet, workspaceForSlug, ICON } from '@/registry'
 import type { AppDef } from '@/types'
 
 import { state, clockText } from './state'
@@ -19,7 +19,7 @@ import {
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
-  openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
+  openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
@@ -50,12 +50,12 @@ export function useOS() {
     get DATA() { return { APP: appMap(), ICON } },
     get APP_ORDER() { return useRegistry().apps().map((a) => a.id) },
     geoMap, clockText, currentWp, paletteResults,
-    initials, pill, getMeta, appForDoctype, knownApplet, ensureDoctype, wallpaperDefs, presenceFor,
+    initials, pill, getMeta, appForDoctype, knownApplet, workspaceForSlug, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
     recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate,
     // window lifecycle + navigation
-    openApp, newAppWindow, openListGlobal, openRecordGlobal, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
+    openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,

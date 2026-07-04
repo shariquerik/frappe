@@ -1,7 +1,7 @@
 // route-map projection: focus -> URL path, and route params -> store action.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
-import { pathForFocus, applyRoute, focusSig } from '../src/routing/route-map'
+import { pathForFocus, applyRoute, focusSig, parseSegments } from '../src/routing/route-map'
 
 const os = useOS()
 
@@ -105,6 +105,49 @@ describe('pathForFocus', () => {
     os.newAppWindow('crm')                          // app:crm#2 focused
     os.openRecordGlobal('CRM Lead', 'L-1', 2, 'email')
     expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1/email', query: { instance: '2' } })
+  })
+
+  // ── workspace coordinate (ADR-0040): a segment between app and doctype ──────────
+  it('a workspace-scoped list projects to /<app>/<workspace>/<doctype>', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead', query: {} })
+  })
+
+  it('a workspace-scoped form inserts the workspace before the doctype', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, undefined, 'sales')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead/L-1', query: {} })
+  })
+
+  it('the workspace segment composes with a trailing Aspect', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'sales')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead/L-1/activities', query: {} })
+  })
+
+  it('a workspace Overview projects to /<app>/<workspace> (the scoped dashboard)', () => {
+    os.openWorkspace('erpnext', 'selling')
+    expect(pathForFocus(os)).toEqual({ path: '/erpnext/selling', query: {} })
+  })
+})
+
+describe('parseSegments (raw path → coordinate, workspace vs doctype)', () => {
+  it('an empty path yields an empty coordinate (bare desktop)', () => {
+    expect(parseSegments(os, [])).toEqual({})
+  })
+
+  it('reads a known workspace segment between app and doctype', () => {
+    expect(parseSegments(os, ['crm', 'sales', 'CRM Lead'])).toEqual({
+      app: 'crm', workspace: 'sales', doctype: 'CRM Lead', name: undefined, aspect: undefined,
+    })
+  })
+
+  it('treats an unrecognised second segment as the doctype (no workspace guessed)', () => {
+    expect(parseSegments(os, ['crm', 'CRM Lead', 'L-1'])).toEqual({
+      app: 'crm', workspace: undefined, doctype: 'CRM Lead', name: 'L-1', aspect: undefined,
+    })
+  })
+
+  it('reads a workspace with no doctype (the Overview path)', () => {
+    expect(parseSegments(os, ['erpnext', 'selling'])).toMatchObject({ app: 'erpnext', workspace: 'selling', doctype: undefined })
   })
 })
 
@@ -260,6 +303,36 @@ describe('applyRoute', () => {
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
     expect(w.surface.aspect).toBeUndefined()
+  })
+
+  // ── workspace coordinate (ADR-0040): reload restores the flavor ────────────────
+  it('a workspace-scoped list restores the workspace on the surface', () => {
+    applyRoute(os, { app: 'crm', workspace: 'sales', doctype: 'CRM Lead' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'list', doctype: 'CRM Lead', workspace: 'sales' })
+  })
+
+  it('a workspace-scoped form restores the workspace alongside the record', () => {
+    applyRoute(os, { app: 'crm', workspace: 'sales', doctype: 'CRM Lead', name: 'L-1' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', workspace: 'sales' })
+  })
+
+  it('a workspace with no doctype opens that workspace Overview', () => {
+    applyRoute(os, { app: 'erpnext', workspace: 'selling' })
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'dashboard', appId: 'erpnext', workspace: 'selling' })
+  })
+
+  it('round-trips the coordinate: pathForFocus → parseSegments → applyRoute preserves the workspace', () => {
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'sales')
+    const { path } = pathForFocus(os) // '/crm/sales/CRM%20Lead/L-1/activities'
+    const segments = path.split('/').filter(Boolean).map(decodeURIComponent)
+    os.state.windows = []
+    os.state.activeId = null
+    applyRoute(os, parseSegments(os, segments))
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', aspect: 'activities', workspace: 'sales' })
   })
 })
 

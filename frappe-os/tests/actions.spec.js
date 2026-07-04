@@ -397,6 +397,16 @@ describe('contextForOS (derive Context from the active window)', () => {
     os.setSelection(os.state.activeId, []) // deselect all → sparse entry removed
     expect(contextForOS(os).selection).toBeUndefined()
   })
+
+  it('publishes the workspace coordinate when the surface names one (ADR-0040)', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales')
+    expect(contextForOS(os).workspace).toBe('sales')
+  })
+
+  it('carries no workspace for a single-space surface', () => {
+    os.openListGlobal('ToDo')
+    expect(contextForOS(os).workspace).toBeUndefined()
+  })
 })
 
 // The File menu is EARNED, and the OS owns nothing in it (ADR-0039 rule 2: File is a middle menu

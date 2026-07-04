@@ -107,6 +107,26 @@ export function knownApplet(appId: string, appletId: string): boolean {
   return !!c && c.appId === appId
 }
 
+// ── workspaces (ADR-0040) ───────────────────────────────────────────────────────
+// The intra-app coordinate. DEFERRED (issue 08): until Workspace Sidebar ingestion lands, an
+// app's workspaces are sourced from the curated AppDef.modules — the fallback nav source ADR-0040
+// names. The id is the module name slugified; the URL segment and the surface coordinate both
+// carry this id. See .scratch/deferred-hardcoded/issues for the end-state source.
+export const workspaceSlug = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-')
+
+// The workspace ids an app declares (slugified module names) — the whitelist a URL parser and the
+// switcher validate against.
+export function appWorkspaces(appId: string): string[] {
+  return (ensureIndex().appById[appId]?.modules ?? []).map((m) => workspaceSlug(m.name))
+}
+
+// Resolve a URL workspace segment to a canonical workspace id for `app`, or undefined when it
+// names none — the membership guard route-map uses to tell a workspace segment from a doctype
+// (ADR-0040). Honest absence: an unrecognised segment is NOT a workspace, never a guess.
+export function workspaceForSlug(appId: string, slug?: string | null): string | undefined {
+  return slug && appWorkspaces(appId).includes(slug) ? slug : undefined
+}
+
 // Async resolution to the Vue component (the module's default export IS the SFC).
 export async function resolveApplet(appletId: string): Promise<Component> {
   const c = ensureIndex().applets[appletId]

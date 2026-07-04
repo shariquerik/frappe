@@ -14,9 +14,10 @@ export const router = createRouter({
   // server expects the `/os/` base, so a hard reload of `/os` is redirected back to
   // `/os/` by the `os-base-slash-redirect` middleware in vite.config.js.
   history: createWebHistory('/os'),
-  // Single catch-all. `:app` is redundant for list/form (derivable from doctype)
-  // but kept so the URL is self-describing and dashboards have a path. The optional
-  // `:aspect?` 4th segment carries a form's selected Aspect (ADR-0018); route-map reads it
-  // as an Aspect only when it matches a known id, so a record name never spills into it.
-  routes: [{ path: '/:app?/:doctype?/:name?/:aspect?', component: Empty }],
+  // Single catch-all capturing the raw path segments as an array (`:segments*`, zero-or-more).
+  // The positional scheme is /<app>/<workspace?>/<doctype?>/<name?>/<aspect?>: the optional
+  // workspace segment between app and doctype (ADR-0040) makes the shape variable-length, so
+  // route-map's `parseSegments` reshapes the array — resolving workspace-vs-doctype by lookup —
+  // rather than the router binding fixed positions (which can't express the optional middle slot).
+  routes: [{ path: '/:segments*', component: Empty }],
 })

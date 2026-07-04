@@ -152,6 +152,42 @@ describe('openAspect selects a form Aspect on the same window', () => {
   })
 })
 
+describe('workspace carry-over across in-window navigation (ADR-0040)', () => {
+  it('a sidebar list open within the app inherits the current workspace', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales') // app:crm, list scoped to the Sales workspace
+    os.openList('app:crm', 'CRM Deal') // sidebar click, same app
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface).toMatchObject({ view: 'list', doctype: 'CRM Deal', workspace: 'sales' })
+  })
+
+  it('opening a record inline keeps the workspace', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales')
+    os.openRecordInline('app:crm', 'CRM Lead', 'L-1')
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', workspace: 'sales' })
+  })
+
+  it('goHome within the app lands on the workspace Overview', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales')
+    os.goHome('app:crm')
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface).toMatchObject({ view: 'dashboard', workspace: 'sales' })
+  })
+
+  it('crossing into another app drops the workspace (never guessed)', () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales') // app:crm
+    os.openList('app:crm', 'ToDo') // a frappe doctype — different app
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface.workspace).toBeUndefined()
+  })
+
+  it('a global (Spotlight/Finder) open yields no workspace', () => {
+    os.openListGlobal('CRM Lead') // no workspace passed
+    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    expect(w.surface.workspace).toBeUndefined()
+  })
+})
+
 describe('openRow follows the row open-target preference (ADR-0018)', () => {
   it("defaults to 'inline' — left-click opens the record in the same window", () => {
     os.openListGlobal('CRM Lead') // app:crm on a list

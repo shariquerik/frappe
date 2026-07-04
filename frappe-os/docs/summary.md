@@ -108,9 +108,17 @@ kind (ADR-0013): a feature folder under `components/`/`applets/` colocates its s
 - **Custom chrome** (windows/dock/menu bar/split) is hand-built but styled only on frappe-ui CSS
   variable tokens (`--surface-*`, `--ink-*`, `--outline-*`). Use solid `--surface-base` for
   popovers over the wallpaper; alpha tokens wash out.
-- **Changing the window-id scheme or URL projection?** Update together: `pathForFocus`/`applyRoute`
-  (`routing/route-map.ts`), `restoreFromHistory` (`main.ts`), the id builders in
-  `desktop/windows.ts`, and the `route-map.spec.js` decision tables.
+- **Changing the window-id scheme or URL projection?** Update together: `pathForFocus`/`applyRoute`/
+  `parseSegments` (`routing/route-map.ts`), the router's `:segments*` capture (`routing/router.ts`),
+  `routeParams`/`restoreFromHistory` (`main.ts`), the id builders in `desktop/windows.ts`, and the
+  `route-map.spec.js` decision tables.
+- **The path is variable-length, not fixed positions** (ADR-0040): the scheme is
+  `/<app>/<workspace?>/<doctype?>/<name?>/<aspect?>`. The optional **workspace** segment between app
+  and doctype (`/erpnext/selling/Customer`) is disambiguated from a doctype by `parseSegments` via
+  `os.workspaceForSlug` — a membership lookup, never a guess. The workspace set is provisionally
+  sourced from `AppDef.modules` until Workspace Sidebar ingestion lands (deferred issue). Because a
+  cold link can't be parsed without that set, the registry must be seeded (boot step 0) before the
+  entry route is applied — it already is.
 - **`defineProps`/`defineEmits` macro types** must import from the CONCRETE module (e.g.
   `@/surface/types`), never the `@/types` barrel — only the dev `vite:vue` transform catches the
   violation; `vue-tsc` and `yarn build` don't.

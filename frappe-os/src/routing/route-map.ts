@@ -43,6 +43,9 @@ export function instanceQuery(id: string): Record<string, string> {
 function pathForSurface(os: OsStore, s: Surface): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
+  // The workspace coordinate (ADR-0040) projects to a segment between app and doctype
+  // (/erpnext/selling/Customer); absent = no segment, so a single-space URL is unchanged.
+  const ws = s.workspace ? `/${seg(s.workspace)}` : ''
   if (s.view === 'app-settings') {
     // Per-app settings; the URL segment stays `settings`. The selected pane projects to a
     // trailing segment; General is the default and stays on the bare /<app>/settings path.
@@ -60,14 +63,15 @@ function pathForSurface(os: OsStore, s: Surface): string {
   if (s.view === 'form') {
     // The selected Aspect projects to a trailing path segment (ADR-0018); Details is the
     // default and stays on the bare record path, so existing form URLs are unchanged.
-    const base = `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}/${seg(s.recordName!)}`
+    const base = `/${os.appForDoctype(s.doctype!)}${ws}/${seg(s.doctype!)}/${seg(s.recordName!)}`
     return s.aspect && s.aspect !== DEFAULT_ASPECT ? `${base}/${seg(s.aspect)}` : base
   }
-  if (s.view === 'list') return `/${os.appForDoctype(s.doctype!)}/${seg(s.doctype!)}`
+  if (s.view === 'list') return `/${os.appForDoctype(s.doctype!)}${ws}/${seg(s.doctype!)}`
   // Every app — including frappe — projects to /os/<appId>. Bare /os is reserved for the
   // focus-less desktop, so the frappe home window is /os/frappe (no alias), otherwise
-  // "nothing focused" and "frappe home focused" would share one URL.
-  return `/${s.appId}`
+  // "nothing focused" and "frappe home focused" would share one URL. A workspace-scoped
+  // dashboard (the Overview) adds its segment: /os/erpnext/selling (ADR-0040).
+  return `/${s.appId}${ws}`
 }
 
 // Signature that changes whenever focus OR the focused window's surface changes.
@@ -80,15 +84,29 @@ export function focusSig(os: OsStore): string {
   // entry — browser back/forward then steps between panes (ADR-0027), mirroring Aspects.
   if (s.view === 'settings') return `${w.id}|settings|${(s.params?.pane as string) || DEFAULT_SETTINGS_PANE}`
   if (s.view === 'app-settings') return `${w.id}|app-settings|${s.appId}|${(s.params?.pane as string) || DEFAULT_APP_SETTINGS_PANE}`
-  // Include the Aspect so switching facets of one record changes the signature and pushes a
-  // timeline entry — browser back/forward then steps between Aspects (ADR-0018).
-  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}`
+  // Include the Aspect and the workspace so switching either changes the signature and pushes a
+  // timeline entry — browser back/forward then steps between Aspects (ADR-0018) and between
+  // workspaces (ADR-0040), mirroring the trailing/leading URL segments.
+  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}|${s.workspace || ''}`
+}
+
+// Reshape the raw path segments (the router's `:segments*` capture) into RouteParams, resolving
+// the optional workspace segment between app and doctype (ADR-0040). `os.workspaceForSlug` is the
+// membership guard that tells a workspace from a doctype: an unrecognised second segment is the
+// doctype (existing scheme unchanged), a recognised one is the workspace and the rest shifts by
+// one. Pure and total — a bad/empty path yields an empty RouteParams (a bare desktop).
+export function parseSegments(os: OsStore, segments: string[]): RouteParams {
+  const [app, ...rest] = segments
+  if (!app) return {}
+  const workspace = os.workspaceForSlug(app, rest[0])
+  const [doctype, name, aspect] = workspace ? rest.slice(1) : rest
+  return { app, workspace, doctype, name, aspect }
 }
 
 // Turn a cold deep-link / respawn route into store actions. `params` is the route's
 // { app, doctype, name }. Dead doctype/record degrade gracefully.
 export function applyRoute(os: OsStore, params: RouteParams): void {
-  const { app, doctype, name, instance } = params
+  const { app, workspace, doctype, name, instance } = params
   // Read the trailing segment as an Aspect ONLY when it matches a known id (ADR-0018), so a
   // record name is never misread as `record/aspect` and an unknown tail produces no phantom Aspect.
   const aspect = isAspectId(params.aspect) ? params.aspect : undefined
@@ -109,6 +127,9 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   const knownApp = !!os.DATA.APP[app]
   const knownDoctype = doctype && doctype !== 'settings' && !!os.getMeta(doctype)
   if (!knownApp && !knownDoctype) { os.clearFocus(); return }
+  // Open the app's home surface, workspace-aware (ADR-0040): a URL that named a workspace but no
+  // doctype (/erpnext/selling) — or one with a junk tail — lands on that workspace's Overview.
+  const openHome = () => (workspace ? os.openWorkspace(app, workspace) : os.openApp(app, instance))
   // Per-app settings (/<app>/settings); a trailing segment (the route's `name`) selects the
   // pane (an unknown/absent slug degrades to General).
   if (doctype === 'settings') { if (knownApp) os.openAppSettings(app, paneForSlug(APP_SETTINGS_PANES, name)); return }
@@ -117,7 +138,7 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
     // knownDoctype was checked first, so a real doctype never reaches here — doctype-wins
     // precedence falls out for free. Otherwise it's an app deep-link with a junk tail.
     if (os.knownApplet(app, doctype)) { os.openApplet(app, doctype, undefined, instance); return }
-    if (knownApp) os.openApp(app, instance)
+    if (knownApp) openHome()
     return
   }
   // Records load live, so we can't prove a record exists synchronously: always open
@@ -125,10 +146,10 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // on a 404 (Phase 4). A doctype with no name opens its list. `instance` targets a
   // specific app window when the URL carried `?instance=n` (else the canonical one).
   if (doctype && name) {
-    os.openRecordGlobal(doctype, name, instance, aspect)
+    os.openRecordGlobal(doctype, name, instance, aspect, workspace)
   } else if (doctype) {
-    os.openListGlobal(doctype, instance)
+    os.openListGlobal(doctype, instance, workspace)
   } else if (knownApp) {
-    os.openApp(app, instance)
+    openHome()
   }
 }
