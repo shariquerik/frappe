@@ -109,11 +109,20 @@ export interface Invocation {
 
 // The verb — identity-bearing, placement-agnostic (CONTEXT.md → Command). One Command is
 // surfaced by one or more Actions.
+//
+// `shortcut` is the keyboard binding (ADR-0037): a `"mod+n"`-form string (mod = ⌘/Ctrl), owned by
+// the verb — NOT the Action — so one verb keeps one key everywhere it is placed (the muscle-memory
+// rule; a placement-level shortcut would let the same verb carry different keys per region). The OS
+// dispatcher (shortcuts.ts) resolves it against the same eligibility the menus use and fires the
+// identical `invoke`. `allowInInput` lets the binding fire while a text widget holds focus (a
+// composer verb like ⌘⏎ Send); default false, so ordinary shortcuts never steal keys while typing.
 export interface Command {
   id: string
   sourceApp: string
   title: string
   handler: Handler
+  shortcut?: string
+  allowInInput?: boolean
 }
 
 // A placement of a Command into a Region, carrying the conditions under which it appears

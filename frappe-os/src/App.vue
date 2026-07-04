@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // Frappe OS desktop root: wallpaper, desktop icons, windows, split-exit pill,
-// menu bar, dock, command palette. Owns the global keyboard
-// (⌘K / Esc) and pointer (drag/resize + dock auto-hide) listeners. Theme is
+// menu bar, dock, command palette. Owns the global keyboard listener — Command
+// shortcuts route through the OS dispatcher (ADR-0037), Esc dismisses — and the
+// pointer (drag/resize + dock auto-hide) listeners. Theme is
 // owned by frappe-ui's useTheme (it writes <html data-theme>); we just boot it.
 import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
-import { desktopContextItems } from "@/actions";
+import { desktopContextItems, dispatchShortcut } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, writePlacementOverride } from "@/placements";
 import { placementSurface, isAppRef } from "@/surface";
@@ -115,12 +116,13 @@ function onDesktopContext(e: MouseEvent) {
 	desktopMenu.value = { x: e.clientX, y: e.clientY };
 }
 
+// The one global keyboard listener. Command shortcuts (⌘K palette, ⌘N new window, …) are dispatched
+// through the OS dispatcher (ADR-0037) — the SAME eligibility/invoke path as the menus, no bespoke
+// per-key wiring. Escape is a modal dismiss, not a Command verb, so it stays here.
 function onKey(e: KeyboardEvent) {
-	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+	if (dispatchShortcut(e, os)) {
 		e.preventDefault();
-		os.state.paletteOpen = !os.state.paletteOpen;
-		os.state.paletteQuery = "";
-		os.state.menu = null;
+		return;
 	}
 	if (e.key === "Escape") {
 		os.state.paletteOpen = false;

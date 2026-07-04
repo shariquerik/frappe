@@ -24,5 +24,9 @@ export { MENUBAR_COMMANDS, MENUBAR_ACTIONS, suppressedToggleCommands } from './m
 export { desktopContextItems, dockContextOptions } from './context-menus'
 export type { ContextMenuItem, ContextMenuGroup } from './context-menus'
 export { invoke, registerRunHandlers } from './contributions'
+export {
+  dispatchShortcut, pickShortcut, shortcutIndex, canonicalBinding, eventBinding,
+  formatShortcut, isTextEntry,
+} from './shortcuts'
 export { PLACEMENT_COMMANDS, PLACEMENT_ACTIONS, surfaceToRef, liveVerb, suppressedPlacementCommands } from './placement-verbs'
 export { BULK_RUN_HANDLERS } from './bulk-verbs'

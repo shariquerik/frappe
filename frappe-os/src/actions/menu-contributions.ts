@@ -77,6 +77,7 @@ function showAsList({ os }: Invocation): void {
 // and an empty function would launder invoke's loud-throw guarantee into a silent do-nothing. About
 // opens its dialog; Frappe help opens the docs (it no longer just re-opens the palette).
 registerRunHandlers({
+  'open-palette': ({ os }) => os.openPalette(),
   'open-settings': ({ os }) => os.openSettings(),
   'open-wallpaper': ({ os }) => os.openSettings('Wallpaper'),
   'open-about': ({ os }) => os.openAbout(),
@@ -99,10 +100,16 @@ registerRunHandlers({
 // ── the declarative half: one Command per verb, one Action placing it into its menu Region ──
 
 // A `run` Command; the OS's are all runs (a menu item fires behavior, it doesn't navigate a Surface).
-const run = (id: string, title: string, ref: string): Command =>
-  ({ id, sourceApp: 'frappe', title, handler: { kind: 'run', ref } })
+// An optional `shortcut` (ADR-0037) rides the verb, so its key works wherever it is placed — and, for
+// a keyboard-only verb (the palette), even with no placement at all.
+const run = (id: string, title: string, ref: string, shortcut?: string): Command =>
+  ({ id, sourceApp: 'frappe', title, handler: { kind: 'run', ref }, ...(shortcut ? { shortcut } : {}) })
 
 export const MENUBAR_COMMANDS: Command[] = [
+  // The command palette is keyboard-only (⌘K): a Command with a shortcut and NO Action placement —
+  // reached by the Spotlight button, never a dropdown item (ADR-0039). Its shortcut still fires
+  // because a placement-less verb is globally eligible (shortcuts.ts).
+  run('frappe.palette.open', 'Command palette', 'open-palette', 'mod+k'),
   // system (the Frappe-logo menu): workspace + session verbs, plus whole-OS full screen — an
   // OS-wide toggle belongs in the OS menu, not the per-surface View menu (ADR-0039 rule 3). The
   // fullscreen pair is a live-state toggle (see suppressedToggleCommands). No Lock (deferred issue).
@@ -124,7 +131,7 @@ export const MENUBAR_COMMANDS: Command[] = [
   run('frappe.view.list', 'Show as list', 'show-as-list'),
   // window — window management, including New/Close (moved out of File: they are window verbs, not
   // file verbs). enter/exit-split is a live-state toggle handled by the split state, not a pair here.
-  run('frappe.window.new', 'New window', 'new-window'),
+  run('frappe.window.new', 'New window', 'new-window', 'mod+n'),
   run('frappe.window.close', 'Close window', 'close-active-window'),
   run('frappe.window.minimize', 'Minimize', 'minimize-active'),
   run('frappe.window.zoom', 'Zoom', 'zoom-active'),

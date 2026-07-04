@@ -5,6 +5,7 @@
 // Add/Remove verbs), and the `{app}` presentation token. Every one of the seven menus flows through
 // the ONE menuOptions path — no menu is special (File was the first migrated; now none are literal).
 import { invoke } from './contributions'
+import { formatShortcut } from './shortcuts'
 import { suppressedToggleCommands } from './menu-contributions'
 import { suppressedPlacementCommands } from './placement-verbs'
 import { projectRegion } from './project'
@@ -13,8 +14,10 @@ import { surfaceAppId } from '@/surface'
 import type { Action, Command, ResolvedAction } from './types'
 import type { OsStore } from '@/types'
 
-// One rendered menu item (label + click) and one divider group — the OSDropdown options shape.
-export interface MenuItem { label: string; onClick: () => void }
+// One rendered menu item (label + click, plus the optional keyboard-shortcut chip) and one divider
+// group — the OSDropdown options shape. `shortcut` is the command's binding as macOS glyphs (⌘N),
+// drawn as trailing presentation by the dropdown (ADR-0037); absent when the command has no key.
+export interface MenuItem { label: string; onClick: () => void; shortcut?: string }
 export interface MenuGroup { group: string; hideLabel: boolean; items: MenuItem[] }
 
 // The front app's display name, or "Finder" for the bare desktop — the `{app}` token's value. The
@@ -33,7 +36,8 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
   // (ADR-0007 Patch), without mutating the global Command Singleton; then `{app}` interpolates.
   const raw = action.commandPatch?.title ?? command.title
   const label = raw.replace('{app}', activeAppName(os))
-  group.items.push({ label, onClick: () => invoke(command, os) })
+  const shortcut = command.shortcut ? formatShortcut(command.shortcut) : undefined
+  group.items.push({ label, onClick: () => invoke(command, os), ...(shortcut ? { shortcut } : {}) })
 }
 
 // Menus that speak for the front app/window/surface, not the OS itself. An `os`-scope command in one

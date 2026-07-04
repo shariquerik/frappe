@@ -9,7 +9,10 @@ import { specificity, compareSpecificity } from '../src/actions/specificity'
 import { scopeWhen, effectiveWhen } from '../src/actions/scope'
 import { resolve } from '../src/actions/resolve'
 import { invoke, registerRunHandlers } from '../src/actions/contributions'
-import { MENUBAR_COMMANDS } from '../src/actions/menu-contributions'
+import { MENUBAR_COMMANDS, MENUBAR_ACTIONS } from '../src/actions/menu-contributions'
+import {
+  canonicalBinding, eventBinding, formatShortcut, isTextEntry, shortcutIndex, pickShortcut,
+} from '../src/actions/shortcuts'
 import { contextForOS } from '../src/actions/context'
 import { fileMenuOptions, menuOptions } from '../src/actions/menubar'
 import { suppressedToggleCommands } from '../src/actions/menu-contributions'
@@ -1702,5 +1705,121 @@ describe('the dock live-state overlay helpers', () => {
   it('selects exactly the position command matching the live side', () => {
     os.setDockPosition('right')
     expect([...selectedDockPositionCommands(os)]).toEqual(['frappe.dock.position-right'])
+  })
+})
+
+// ADR-0037 — a keyboard shortcut is a Command field (`shortcut`), one OS dispatcher, the SAME
+// resolve/eligibility as menus. Pure-data specs: canonicalization (author string ↔ KeyboardEvent),
+// the first-seen-wins binding index (ADR-0007 shadow), and pickShortcut's eligibility + text-entry
+// guard. No DOM, no boot — pickShortcut takes its commands/actions/context as plain data.
+describe('keyboard shortcuts (ADR-0037 — a Command field, one dispatcher)', () => {
+  const cmd = (id, shortcut, over = {}) =>
+    ({ id, sourceApp: 'test', title: id, handler: { kind: 'run', ref: id }, shortcut, ...over })
+  const act = (command, when) =>
+    ({ command, region: 'menubar:window', sourceApp: 'test', ...(when ? { when } : {}) })
+
+  describe('binding canonicalization', () => {
+    it('canonicalizes author strings to a stable form (mod folds cmd/ctrl, modifiers ordered)', () => {
+      expect(canonicalBinding('mod+n')).toBe('mod+n')
+      expect(canonicalBinding('Cmd+Shift+K')).toBe('mod+shift+k')
+      expect(canonicalBinding('ctrl+k')).toBe('mod+k')
+      expect(canonicalBinding('shift+mod+k')).toBe('mod+shift+k')
+    })
+    it('reads the same canonical form off a KeyboardEvent (meta or ctrl → mod)', () => {
+      expect(eventBinding({ metaKey: true, key: 'n' })).toBe('mod+n')
+      expect(eventBinding({ ctrlKey: true, key: 'k' })).toBe('mod+k')
+      expect(eventBinding({ metaKey: true, shiftKey: true, key: 'K' })).toBe('mod+shift+k')
+    })
+    it('a modifier-only keypress is not a binding', () => {
+      expect(eventBinding({ metaKey: true, key: 'Meta' })).toBe(null)
+      expect(eventBinding({ shiftKey: true, key: 'Shift' })).toBe(null)
+    })
+    it('formats a binding as macOS glyphs for the menu chip', () => {
+      expect(formatShortcut('mod+n')).toBe('⌘N')
+      expect(formatShortcut('mod+shift+k')).toBe('⌘⇧K')
+    })
+  })
+
+  describe('the binding index (first-seen-wins + loud shadow warn, ADR-0007)', () => {
+    it('keeps the first command for a binding and warns the shadowed one loudly', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const index = shortcutIndex([cmd('a.first', 'mod+j'), cmd('b.second', 'mod+j')])
+      expect(index.get('mod+j').id).toBe('a.first')
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('shortcut-collision'))
+      warn.mockRestore()
+    })
+    it('skips commands with no shortcut', () => {
+      const index = shortcutIndex([{ id: 'x', sourceApp: 't', title: 'x', handler: { kind: 'run', ref: 'x' } }])
+      expect(index.size).toBe(0)
+    })
+  })
+
+  describe('resolution (same eligibility as menus, plus the text-entry guard)', () => {
+    const context = { activeApp: 'crm', doctype: 'CRM Lead' }
+    it('fires only when the command has an eligible placement for the Context', () => {
+      const commands = [cmd('t.deal', 'mod+d')]
+      const eligible = [act('t.deal', { activeApp: 'crm' })]
+      const ineligible = [act('t.deal', { activeApp: 'erpnext' })]
+      expect(pickShortcut('mod+d', false, commands, eligible, context).id).toBe('t.deal')
+      expect(pickShortcut('mod+d', false, commands, ineligible, context)).toBe(null)
+    })
+    it('a command with no placement is a global verb (the keyboard-only palette case)', () => {
+      const commands = [cmd('t.palette', 'mod+k')]
+      expect(pickShortcut('mod+k', false, commands, [], context).id).toBe('t.palette')
+    })
+    it('an unbound keystroke resolves to nothing', () => {
+      expect(pickShortcut('mod+z', false, [cmd('t.deal', 'mod+d')], [], context)).toBe(null)
+    })
+    it('never fires a non-global shortcut while a text input holds focus', () => {
+      expect(pickShortcut('mod+d', true, [cmd('t.deal', 'mod+d')], [], context)).toBe(null)
+    })
+    it('a shortcut marked allowInInput still fires while typing', () => {
+      const commands = [cmd('t.send', 'mod+enter', { allowInInput: true })]
+      expect(pickShortcut('mod+enter', true, commands, [], context).id).toBe('t.send')
+    })
+  })
+
+  describe('the text-entry guard predicate', () => {
+    it('flags inputs, textareas and contenteditable, nothing else', () => {
+      expect(isTextEntry({ tagName: 'INPUT', isContentEditable: false })).toBe(true)
+      expect(isTextEntry({ tagName: 'TEXTAREA', isContentEditable: false })).toBe(true)
+      expect(isTextEntry({ tagName: 'DIV', isContentEditable: true })).toBe(true)
+      expect(isTextEntry({ tagName: 'DIV', isContentEditable: false })).toBe(false)
+      expect(isTextEntry(null)).toBe(false)
+    })
+  })
+
+  describe('the first-party OS shortcuts ride their Commands', () => {
+    it('New window declares its mod+n shortcut', () => {
+      expect(MENUBAR_COMMANDS.find((c) => c.id === 'frappe.window.new').shortcut).toBe('mod+n')
+    })
+    it('the palette command is keyboard-only (mod+k, no menu placement)', () => {
+      const palette = MENUBAR_COMMANDS.find((c) => c.id === 'frappe.palette.open')
+      expect(palette.shortcut).toBe('mod+k')
+      expect(MENUBAR_ACTIONS.some((a) => a.command === 'frappe.palette.open')).toBe(false)
+    })
+  })
+})
+
+// The menu chip (ADR-0037): a menu item carries its Command's binding as a display glyph, so the
+// renderer draws it as trailing presentation. Runs against the real store like the other menu specs.
+describe('menu items display their command shortcut (ADR-0037 chip)', () => {
+  const os = useOS()
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] },
+  }
+  beforeEach(() => { os.state.windows = []; os.state.geo = {}; os.state.activeId = null; initRegistry(boot) })
+  afterEach(() => { initRegistry(null) })
+
+  it('the New window item carries its ⌘N binding for the renderer', () => {
+    const item = menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'New window')
+    expect(item.shortcut).toBe('⌘N')
+  })
+
+  it('an item whose command has no shortcut leaves the chip empty', () => {
+    const item = menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Minimize')
+    expect(item.shortcut).toBeUndefined()
   })
 })
