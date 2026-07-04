@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
-  appWorkspaces, soleWorkspace, workspaceForSlug,
+  appWorkspaces, soleWorkspace, workspaceForSlug, orderedWorkspaces, defaultWorkspace,
 } from '../src/registry'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
@@ -419,5 +419,33 @@ describe('workspaces (ADR-0042)', () => {
     initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling' }] }))
     expect(workspaceForSlug('erpnext', 'selling')).toBe('selling')
     expect(workspaceForSlug('erpnext', 'ghost')).toBeUndefined()
+  })
+
+  // The hub (slice 04) reads the full WorkspaceInfo rows — it needs the labels the id-only
+  // appWorkspaces throws away — and opens onto the default workspace.
+  it('orderedWorkspaces returns the seeded WorkspaceInfo rows, labels and order intact', () => {
+    const rows = [{ id: 'selling', label: 'Selling', isDefault: false }, { id: 'stock', label: 'Stock', isDefault: true }]
+    initRegistry(bootWith({ erpnext: rows }))
+    expect(orderedWorkspaces('erpnext')).toEqual(rows)
+  })
+
+  it('orderedWorkspaces is empty for an app the server shipped no workspace data for', () => {
+    initRegistry(bootWith({}))
+    expect(orderedWorkspaces('ghost')).toEqual([])
+  })
+
+  it('defaultWorkspace picks the is_default row', () => {
+    initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling', isDefault: false }, { id: 'stock', label: 'Stock', isDefault: true }] }))
+    expect(defaultWorkspace('erpnext')).toBe('stock')
+  })
+
+  it('defaultWorkspace falls back to the first (lowest sequence) row when none is flagged', () => {
+    initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling', isDefault: false }, { id: 'stock', label: 'Stock', isDefault: false }] }))
+    expect(defaultWorkspace('erpnext')).toBe('selling')
+  })
+
+  it('defaultWorkspace is undefined for an app with no workspace data', () => {
+    initRegistry(bootWith({}))
+    expect(defaultWorkspace('ghost')).toBeUndefined()
   })
 })

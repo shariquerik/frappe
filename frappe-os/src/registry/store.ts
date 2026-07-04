@@ -157,6 +157,22 @@ export function workspaceForSlug(appId: string, slug?: string | null): string | 
   return slug && appWorkspaces(appId).includes(slug) ? slug : undefined
 }
 
+// The app's seeded workspaces as full rows (id + label + isDefault), already sequence-ordered by
+// the server. The hub (ADR-0042) reads these to render its workspace rail — it needs the labels the
+// id-only appWorkspaces throws away. Empty for an app the server shipped no data for (the hub then
+// falls back to the curated module rail, retired by issue 06). Never touches the module fallback:
+// the labels only exist in seeded data.
+export function orderedWorkspaces(appId: string): WorkspaceInfo[] {
+  return bootWorkspaces[appId] ?? []
+}
+
+// The workspace the hub opens onto (ADR-0042): the `is_default` row, falling back to the first
+// (lowest sequence) when none is flagged, and undefined when the app has no seeded workspaces.
+export function defaultWorkspace(appId: string): string | undefined {
+  const rows = orderedWorkspaces(appId)
+  return (rows.find((w) => w.isDefault) ?? rows[0])?.id
+}
+
 // Async resolution to the Vue component (the module's default export IS the SFC).
 export async function resolveApplet(appletId: string): Promise<Component> {
   const c = ensureIndex().applets[appletId]

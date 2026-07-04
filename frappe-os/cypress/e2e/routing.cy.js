@@ -227,6 +227,46 @@ describe('the workbench sidebar lists the workspace doctypes (ADR-0042, slice 03
   })
 })
 
+describe('the hub lists workspaces and opens them side by side (ADR-0042, slice 04)', () => {
+  // Opening a multi-workspace app opens the HUB: a plain app window whose sidebar lists the app's
+  // workspaces (not doctypes) and whose body is the app-wide overview. Clicking a workspace opens
+  // its workbench in a NEW window; a second workspace opens a second window alongside — two
+  // workbenches open at once is the whole point of ADR-0042. Selling/Stock are real seeded erpnext
+  // workspaces. Needs a live bench.
+  beforeEach(() => cy.clearLocalStorage())
+
+  it('opens the hub: the app window lists its workspaces, one flagged Default', () => {
+    cy.visit('/os/erpnext')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext')
+    cy.get('[data-win-id="app:erpnext"]').should('be.visible').within(() => {
+      cy.contains('Selling').should('be.visible') // a workspace row, not a doctype
+      cy.contains('Stock').should('be.visible')
+      cy.contains('Default').should('be.visible') // the is_default workspace is flagged
+    })
+  })
+
+  it('clicking two workspaces opens two workbench windows, both visible side by side', () => {
+    cy.visit('/os/erpnext')
+    // Open Selling from the hub → its own workbench window.
+    cy.get('[data-win-id="app:erpnext"]').contains('Selling').click()
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
+    // Open Stock from the hub too → a second window; Selling must stay visible alongside it.
+    cy.get('[data-win-id="app:erpnext"]').contains('Stock').click({ force: true })
+    cy.get('[data-win-id="app:erpnext/stock"]').should('be.visible')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
+    // Both survive a reload visible — the unfocused workbench is not wrongly hidden on hydrate.
+    // Wait for the 250ms-debounced autosave to persist BOTH windows before reloading, else the
+    // reload cold-boots from an unsaved desktop and only the URL window (stock) is recreated.
+    cy.window()
+      .its('localStorage')
+      .invoke('getItem', 'frappe-os:desktop')
+      .should('contain', 'app:erpnext/selling')
+    cy.reload()
+    cy.get('[data-win-id="app:erpnext/stock"]').should('be.visible')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
+  })
+})
+
 describe('Settings panes are addressable in the URL (ADR-0027)', () => {
   // The per-user Settings window carries a pane coordinate projected as a trailing path
   // segment; General is the default (bare /settings path). Needs a live bench behind `yarn dev`.
