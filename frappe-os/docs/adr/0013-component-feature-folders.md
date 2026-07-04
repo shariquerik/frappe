@@ -43,6 +43,10 @@ form half of `DocView`, with the pure live-schema→FormLayout `buildFormLayout`
 `DocView.vue` deliberately **stays flat** as the list/form switch that composes `ListView/`
 + `Form/`; `StatusPill.vue` and `OSDropdown.vue` stay flat as shared leaves.
 
+> **Correction (2026-07):** two names in the paragraph above have since moved — `components/ListView/`
+> is now `components/List/`, and the flat list/form switch `DocView.vue` is now the folder
+> `components/Views/` (`DoctypeView.vue`). The feature-folder decision is unchanged; only the names moved.
+
 One concern moved OUT of `components/` entirely: **applets live under a sibling `src/applets/`**
 (e.g. `applets/MyTodos/`). An applet reaches the OS only through the injected `OS_KEY` seam
 (ADR-0002/0009), not the store — so it is not a `components/` UI concern. The folder shape is

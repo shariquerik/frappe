@@ -8,7 +8,7 @@
 //   registry/types.ts  — Registry contributions + the boot payload
 //   placements/types.ts — Placements: resolved desktop/dock pins (ADR-0023)
 //   recents/types.ts    — Recents: resolved per-user record-open log (ADR-0024)
-//   wallpapers/types.ts — Wallpapers: the raw server catalog row (ADR-0032)
+//   wallpapers/types.ts — Wallpapers: the raw server catalog row (ADR-0036)
 //   desktop/types.ts   — the window-manager's OsState
 //   routing/types.ts   — the parsed RouteParams
 //   actions/types.ts   — the Action/extension model (Command/Action/Region/Handler/Context)

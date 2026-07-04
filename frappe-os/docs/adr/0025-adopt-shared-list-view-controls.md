@@ -1,8 +1,9 @@
 # Adopt the @framework/ui list-view controls as a controlled overlay
 
-> **Status:** Proposed (2026-06-30). Grilled, not implemented. First slice of replacing
-> `OSList`'s hand-rolled toolbar (the dead Filter/Sort buttons) with the shared list-view
-> controls extracted into `@framework/ui` (frappe/frappe#40404).
+> **Status:** Implemented (2026-07). Shipped as the `src/components/List/` feature folder —
+> `OSListView.vue` renders frappe-ui's shared `ListView`, and `list-columns.ts` maps doctype meta
+> into the render-ready columns it draws. First slice of replacing `OSList`'s hand-rolled toolbar
+> (the dead Filter/Sort buttons) with the shared list-view controls (frappe/frappe#40404).
 
 The **list** Surface's toolbar adopts the shared, controlled, meta-driven controls —
 **Filter**, **SortBy**, **ColumnSettings**, **QuickFilter** — bound to one `useListView(doctype)`

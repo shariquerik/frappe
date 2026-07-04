@@ -2,8 +2,9 @@
 
 Standalone Vue 3 macOS-style desktop shell for Frappe, served at `/os` and wired to the
 live backend (lists/forms/counts from the REST/whitelisted API; curated icons/colors/card
-defs in `src/config/*`). Read **`docs/summary.md`** first — it's the full orientation (mental
-model, store, routing, file map, gotchas). This file is just the commands and the rules.
+defs in `src/config/*`). Read **`docs/summary.md`** first — the durable orientation (mental
+model, what each subsystem owns, gotchas, ADR pointers); it deliberately leaves volatile
+specifics (exact ids/routes/exports) to the code. This file is just the commands and the rules.
 
 ## Commands
 ```

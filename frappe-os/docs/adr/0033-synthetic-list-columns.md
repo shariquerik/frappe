@@ -1,6 +1,8 @@
 # Synthetic list columns — a host-declared column that is not a docfield
 
-> **Status:** Accepted (2026-07-02). Grilled, not yet implemented. Extends ADR-0025
+> **Status:** Implemented (2026-07). The synthetic `type:'Status'` column ships in
+> `src/components/List/list-columns.ts` (`indicatorColumn`, fed to `useListView(doctype, { synthetic })`).
+> Extends ADR-0025
 > (shared list-view controls) and follows ADR-0028 (live Record indicators). Supersedes the
 > render-only indicator-column projection that shipped with the list-indicator fix
 > (`withIndicatorColumn` in `frappe-os/src/components/List/list-columns.ts`).

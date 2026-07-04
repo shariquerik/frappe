@@ -1,6 +1,8 @@
 # Live-meta indicators; retire the boot display projection
 
-> **Status:** Accepted (2026-07-01, grilled). Not yet implemented. Lands the "Display-config enrichment"
+> **Status:** Implemented (2026-07). The live indicator model ships in `src/indicators/`
+> (`indicator.ts` — `indicatorFor`/`normalizeColor`), consumed by `list-columns.ts`
+> (`hasIndicator`/`indicatorColumn`). Lands the "Display-config enrichment"
 > layer that ADR-0025 deferred — but as a **live, backend-derived indicator model**, not the
 > curated presentation ADR-0025 imagined. Supersedes the curated status/column config that
 > `.scratch/deferred-hardcoded/#07` set out to remove.

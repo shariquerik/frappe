@@ -34,11 +34,13 @@ The clearest "fix it later" stubs — literal demo content.
   cards with guessed filters/fieldnames** (e.g. `CRM Lead status: Open`, `CRM Deal
   annual_revenue`, Sales Invoice receivables). Comment marks these _"curated guesses to
   reconcile against live meta in Phase 4."_
-- **`config/doctypes.ts`** — per-doctype list columns, widths, title fields, and
-  `GENERIC_STATUS_THEMES` (Active→green, etc.) all hardcoded; comment: _"verify keys against
-  live field names when wiring live lists (Phase 4)."_ Some columns (`enabled_label`,
-  `status_label`, `stock_qty`) are **display-only with no backend field**, which forces the
-  `fields: ['*']` workaround in `data/records.ts:28–37`.
+- **`config/doctypes.ts`** — ~~per-doctype list columns, widths, title fields, and
+  `GENERIC_STATUS_THEMES`~~ **removed (ADR-0028/0033):** list columns are now live meta or
+  synthetic, and status colors come from the live indicator model; `doctypes.ts` keeps only the
+  curated label/color/icon. What survives is the unfiltered **`fields: ['*']`** fetch in
+  `data/records.ts:57` — a context-free reader (no view chosen) still over-fetches every column,
+  because the per-view fetch shape (the resolver's fields, ADR-0028) is only known once a view is
+  picked. That entry is the intentional fallback, not a workaround to remove.
 - **`config/icons.ts:40–65`** — `DOCTYPE_ICON`, a hardcoded 26-doctype→icon map that should
   derive from doctype metadata.
 - **`data/os-api.ts:75–83`** — `CAPABILITIES` flags hardcoded; component-surface **rendering

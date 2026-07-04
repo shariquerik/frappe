@@ -22,7 +22,7 @@ function fromWindow(): BootData {
     permissions: w.permissions || {},
     placements: Array.isArray(w.placements) ? w.placements : [],
     recents: Array.isArray(w.recents) ? w.recents : [],
-    // Wallpaper catalog + the chosen wallpaper name (ADR-0032); tolerated defensively so an older
+    // Wallpaper catalog + the chosen wallpaper name (ADR-0036); tolerated defensively so an older
     // server / offline boot degrades to the built-in default rather than throwing.
     wallpapers: Array.isArray(w.wallpapers) ? w.wallpapers : [],
     wallpaper: typeof w.wallpaper === 'string' ? w.wallpaper : null,
