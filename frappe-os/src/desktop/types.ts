@@ -15,6 +15,15 @@ import type { OsWindow, Geo, Surface } from '@/surface/types'
 // form draft.
 export type Persist = 'durable' | 'ephemeral'
 
+// One live record hit from the palette's record search (os_core.search.search_records):
+// a record reference plus the display title the server already resolved (title_field,
+// falling back to the name). Held by desktop/palette-search.ts, rendered by palette.ts.
+export interface RecordHit {
+  doctype: string
+  name: string
+  title: string
+}
+
 // One window×subject slot. `value` is the JSON-serializable work-in-progress (list snapshot,
 // form draft, applet blob). `dirty` is written by the mounted surface (a form's `isDirty`) and
 // read after unmount by `dirtyWindows()` to arm the unsaved-changes guards — so it lives as data,
