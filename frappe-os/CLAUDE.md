@@ -96,3 +96,9 @@ only what matters from a result — the user doesn't see subagent output.
 Exceptions: for a single known fact (you know the file/symbol), just read it —
 an agent only adds latency. Once you've delegated a search, don't also run it
 yourself; wait for the result.
+
+**Research before building goes to a subagent.** Whenever the current task needs
+you to look up how something is done elsewhere — how another feature solved it,
+what pattern a sibling module uses, where a convention lives — spawn an `Explore`
+subagent for that research rather than sweeping files inline. Bring back the
+conclusion, not the file dumps. Reserve inline reads for the single known fact.
