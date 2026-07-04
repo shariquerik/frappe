@@ -2,18 +2,17 @@
 // The Customizations view (ADR-0014 item 3, ADR-0015; CONTEXT.md → "Customizations view"): the
 // one human-facing surface that surfaces, rather than buries, the overrides and removals apps
 // impose on this site — the OS analogue of Frappe's Property Setter / Customize Form listing.
-// Read-only this slice. A first-party applet (bundled into the OS build, like MyTodos), so it
-// reads the client Registry seam directly rather than through the applet OS API: the declared
-// Action set (useRegistry().actions()) projected structurally, never a resolve() replay
-// (ADR-0015 §4), grouped by app with each app's kind (useRegistry().appKind, ADR-0014 item 4).
-import { computed } from "vue";
+// Read-only this slice. A first-party applet that dogfoods the same seam as MyTodos (ADR-0003):
+// it reaches Frappe OS ONLY through the injected OS API and renders the cooked catalog the OS
+// hands it — groups carrying appKind, rows carrying the baked-in `unexpected` flag (issue 05).
+// The applet does no projection of its own; the computation lives OS-side in os.registry.
+import { computed, inject } from "vue";
 import { Badge } from "frappe-ui";
-import { useRegistry } from "@/registry";
-import { customizationGroups, isUnexpectedRemoval } from "@/actions/customizations";
+import { OS_KEY } from "@/data/os-api";
 
-const registry = useRegistry();
+const os = inject(OS_KEY);
 
-const groups = computed(() => customizationGroups(registry.actions()));
+const groups = computed(() => os?.registry.customizations() ?? []);
 
 // A removal reads red, an override neutral — the resolver's vocabulary, surfaced as a Badge theme.
 function reasonTheme(reason: string): string {
@@ -43,8 +42,8 @@ function reasonTheme(reason: string): string {
         <Badge
           size="sm"
           theme="gray"
-          :label="registry.appKind(group.appId)"
-          :data-app-kind="registry.appKind(group.appId)"
+          :label="group.appKind"
+          :data-app-kind="group.appKind"
         />
         <span class="text-[11px] tabular-nums text-ink-gray-4">{{ group.rows.length }}</span>
       </div>
@@ -66,10 +65,10 @@ function reasonTheme(reason: string): string {
               {{ row.region }} · {{ row.whenScope }} · {{ row.layer }} layer
             </span>
           </div>
-          <!-- ADR-0015 §5: a feature app removing chrome is the surprising case — the human-facing
-               twin of removals.ts's console warning, from the same predicate. -->
+          <!-- ADR-0015 §5: a feature app removing chrome is the surprising case — the OS baked the
+               `unexpected` flag in from the same predicate as removals.ts's console warning. -->
           <Badge
-            v-if="isUnexpectedRemoval(row, registry.appKind(group.appId))"
+            v-if="row.unexpected"
             size="sm"
             theme="orange"
             label="unexpected — review this"

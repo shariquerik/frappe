@@ -13,6 +13,7 @@ import { getList, getDoc, call } from './api'
 import { setNotifier } from './notify'
 import { useOS } from '@/desktop'
 import { useRegistry, resolveApplet } from '@/registry'
+import { cookCustomizations } from '@/actions/customizations'
 import type {
   BootData, FrappeDoc, GetListOptions, OsApi, OsData, OsRegistry,
   OsSession, OsStore, OsUi, OsWindows, PermissionType, Surface,
@@ -69,6 +70,9 @@ function makeRegistry(): OsRegistry {
     displayConfig: (doctype: string) => reg.displayConfig(doctype),
     views: (doctype: string) => reg.views(doctype),
     resolveApplet: (appletId: string) => resolveApplet(appletId),
+    // Compose the pure catalog logic with the registry's Action set + appKind, so the seam hands
+    // the applet the cooked groups and never the raw Action model (issue 05).
+    customizations: () => cookCustomizations(reg.actions(), reg.appKind),
   }
 }
 
@@ -81,6 +85,7 @@ const CAPABILITIES: Record<string, boolean> = {
   'ui.notify': true,
   'ui.confirm': true,
   applets: true,
+  'registry.customizations': true,
 }
 
 // Assemble the seam from a resolved boot payload. Pure given (boot, store), so tests

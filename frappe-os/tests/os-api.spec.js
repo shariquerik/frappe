@@ -4,7 +4,7 @@
 // to the right backing, windows mutate observable store state, session projects boot,
 // and the registry reads curated config. Each test uses distinct doctypes/apps so the
 // module-singleton store state doesn't bleed between cases.
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/data/api', () => ({
   getList: vi.fn(),
@@ -22,7 +22,7 @@ import * as api from '@/data/api'
 import { toast } from 'frappe-ui'
 import { useOS } from '../src/desktop'
 import { listSurface } from '../src/surface/index'
-import { getMeta } from '../src/registry'
+import { getMeta, initRegistry } from '../src/registry'
 import { createOsApi, initOsApi, getOsApi } from '../src/data/os-api'
 
 const boot = (over = {}) => ({ user: 'admin@example.com', csrf_token: 't', registry: [], permissions: {}, ...over })
@@ -150,6 +150,57 @@ describe('registry', () => {
     const r = createOsApi(boot()).registry
     expect(typeof r.resolveApplet).toBe('function')
     await expect(r.resolveApplet('no-such-applet')).rejects.toThrow()
+  })
+})
+
+// The COOKED customizations catalog (ADR-0015, issue 05): the seam computes groups carrying
+// appKind and rows carrying the `unexpected` flag, so the applet only renders. The internal
+// Action model stays private — no raw actions()/appKind() leak onto the seam.
+describe('registry.customizations (cooked catalog projection)', () => {
+  // erpnext is a FEATURE app (it also ships a display-config surface) that removes chrome — the
+  // surprising case; cleaner is a PURE-CUSTOMIZATION app whose removal is its job (quiet).
+  const action = (command, sourceApp, over = {}) =>
+    ({ type: 'action', target: 'menubar:file', name: `${sourceApp}:${command}`, sourceApp,
+       payload: { command, region: 'menubar:file', sourceApp, ...over } })
+  const display = (sourceApp, doctype) =>
+    ({ type: 'display-config', target: doctype, name: 'display', sourceApp, payload: {} })
+  const serverBoot = (contributions) => boot({ registry: { schemaVersion: 1, contributions } })
+
+  beforeEach(() => initRegistry(serverBoot([
+    action('frappe.window.close', 'cleaner', { removed: true }),
+    action('frappe.window.close', 'erpnext', { removed: true }),
+    action('frappe.file.open', 'frappe'), // plain App-default placement — not a customization
+    display('erpnext', 'ZZ Custom Doctype'), // makes erpnext classify as a feature app
+  ])))
+  afterEach(() => initRegistry(null))
+
+  it('groups by app, sorted, dropping plain App-default placements', () => {
+    const groups = createOsApi(boot()).registry.customizations()
+    expect(groups.map((g) => g.appId)).toEqual(['cleaner', 'erpnext'])
+  })
+
+  it('bakes each group\'s appKind in — a chrome-only app is pure-customization, a surface app is feature', () => {
+    const groups = createOsApi(boot()).registry.customizations()
+    expect(groups.find((g) => g.appId === 'cleaner').appKind).toBe('pure-customization')
+    expect(groups.find((g) => g.appId === 'erpnext').appKind).toBe('feature')
+  })
+
+  it('bakes the unexpected flag in with parity to the removals warning predicate', () => {
+    const groups = createOsApi(boot()).registry.customizations()
+    // A feature app removing chrome is the surprising case → flagged.
+    expect(groups.find((g) => g.appId === 'erpnext').rows[0].unexpected).toBe(true)
+    // A pure-customization app removing chrome is its job → not flagged.
+    expect(groups.find((g) => g.appId === 'cleaner').rows[0].unexpected).toBe(false)
+  })
+
+  it('keeps the internal Action model private — no raw actions()/appKind() on the seam', () => {
+    const r = createOsApi(boot()).registry
+    expect(r.actions).toBeUndefined()
+    expect(r.appKind).toBeUndefined()
+  })
+
+  it('advertises the projection in capabilities', () => {
+    expect(createOsApi(boot()).capabilities['registry.customizations']).toBe(true)
   })
 })
 

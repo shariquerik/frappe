@@ -7,31 +7,15 @@
 // Context-filtered "winner" set. Read-only this slice; each row carries
 // sourceApp/region/command/layer/removed so a per-row Restore is additive later (ADR-0015 §1).
 import type { Action, Layer, When } from './types'
-import type { AppKind } from '@/types'
+import type { AppKind, CustomizationGroup, CustomizationRow } from '@/types'
 
-// Why an Action is a customizing contender, reusing the resolver's vocabulary (not its live
-// output): 'removal' when it suppresses the slot (`removed`), else 'override'.
-export type CustomizationReason = 'override' | 'removal'
-
-// One described customization. Carries every field a later Restore affordance needs
-// (sourceApp/region/command/layer/removed — ADR-0015 §1) plus the human-facing projection (the
-// `reason` and the `when` scope it applies under).
-export interface CustomizationRow {
-  sourceApp: string
-  region: string
-  command: string
-  layer: Layer
-  removed: boolean
-  reason: CustomizationReason
-  whenScope: string
-}
-
-// Customizations grouped by the overriding app (ADR-0015 §5 — the primary axis is the human
-// question "what has THIS app done to my OS?"). Region and reason stay secondary (row columns /
-// sort), not the top level.
-export interface CustomizationGroup {
+// Pre-cook shapes: the grouping primitive builds rows/groups WITHOUT the appKind-derived fields
+// (a row's `unexpected`, a group's `appKind`), because grouping is registry-free — it can't know
+// an app's kind. cookCustomizations() bakes those in once the kind resolver is composed (the seam).
+type RowDraft = Omit<CustomizationRow, 'unexpected'>
+interface GroupDraft {
   appId: string
-  rows: CustomizationRow[]
+  rows: RowDraft[]
 }
 
 const layerOf = (a: Action): Layer => a.layer ?? 'app'
@@ -53,7 +37,7 @@ export function describeWhen(when?: When): string {
   return 'when ' + keys.map((k) => `${k} = ${when![k]}`).join(', ')
 }
 
-function toRow(a: Action): CustomizationRow {
+function toRow(a: Action): RowDraft {
   return {
     sourceApp: a.sourceApp,
     region: a.region,
@@ -67,15 +51,15 @@ function toRow(a: Action): CustomizationRow {
 
 // Secondary sort within a group: by region, then command (ADR-0015 §5 — region/reason are
 // columns, not the top level), so one app's changes read in a stable order.
-function byRegionThenCommand(x: CustomizationRow, y: CustomizationRow): number {
+function byRegionThenCommand(x: RowDraft, y: RowDraft): number {
   return x.region.localeCompare(y.region) || x.command.localeCompare(y.command)
 }
 
 // Project the declared Action set into customizations grouped by app (ADR-0015 §4/§5). Pure: no
-// resolve(), no Context, no registry — the view layers appKind on top (ADR-0014 item 4). Groups
-// are app-sorted; rows within a group are region/command-sorted.
-export function customizationGroups(actions: Action[]): CustomizationGroup[] {
-  const byApp = new Map<string, CustomizationRow[]>()
+// resolve(), no Context, no registry — the appKind/unexpected fields are baked in later by
+// cookCustomizations (ADR-0014 item 4). Groups are app-sorted; rows region/command-sorted.
+export function customizationGroups(actions: Action[]): GroupDraft[] {
+  const byApp = new Map<string, RowDraft[]>()
   for (const action of actions) {
     if (!isCustomization(action)) continue
     const rows = byApp.get(action.sourceApp) ?? []
@@ -91,6 +75,24 @@ export function customizationGroups(actions: Action[]): CustomizationGroup[] {
 // warning, from the SAME predicate: a removal by a *feature* app is the surprising case ("review
 // this"); a pure-customization app removing chrome is its job (quiet). `kind` is injected so this
 // stays a pure unit, mirroring warnFeatureAppRemovals.
-export function isUnexpectedRemoval(row: CustomizationRow, kind: AppKind): boolean {
+export function isUnexpectedRemoval(row: RowDraft, kind: AppKind): boolean {
   return row.reason === 'removal' && kind === 'feature'
+}
+
+// Cook the grouped drafts into the seam-published catalog (issue 05): compose the registry's
+// appKind resolver in, baking each group's `appKind` and each row's `unexpected` flag. This is
+// the whole computation the OS API's registry.customizations() delegates to — the OS computes,
+// the applet only renders. `appKind` is injected so this stays a pure, registry-free unit.
+export function cookCustomizations(
+  actions: Action[],
+  appKind: (appId: string) => AppKind,
+): CustomizationGroup[] {
+  return customizationGroups(actions).map((group) => {
+    const kind = appKind(group.appId)
+    return {
+      appId: group.appId,
+      appKind: kind,
+      rows: group.rows.map((row) => ({ ...row, unexpected: isUnexpectedRemoval(row, kind) })),
+    }
+  })
 }

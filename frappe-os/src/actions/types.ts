@@ -3,6 +3,7 @@
 // these; nothing here carries raw code — a run Handler is a reference resolved by id, the
 // same way an Applet is (ADR-0008/0009). Re-exported via @/types.
 import type { Surface } from '@/surface/types'
+import type { AppKind } from '@/registry/types'
 
 // The override layers, in increasing precedence (ADR-0007). An Action defaults to 'app'.
 export type Layer = 'app' | 'site' | 'user'
@@ -115,4 +116,38 @@ export interface ShadowEvent {
   winner: Action
   loser: Action
   reason: 'override' | 'true-tie' | 'removal'
+}
+
+// ── the Customizations catalog (ADR-0015; CONTEXT.md → "Customizations view") ─────────
+// The COOKED, seam-published projection of the declared Action set: the OS computes it, the
+// applet only renders it (issue 05). Reachable via @/types so the applet types against it
+// without importing @/actions internals.
+
+// Why an Action is a customizing contender, reusing the resolver's vocabulary (not its live
+// output): 'removal' when it suppresses the slot (`removed`), else 'override'.
+export type CustomizationReason = 'override' | 'removal'
+
+// One described customization. Carries every field a later Restore affordance needs
+// (sourceApp/region/command/layer/removed — ADR-0015 §1), the human-facing projection (the
+// `reason` and the `when` scope it applies under), and the baked-in `unexpected` marker: a
+// feature app removing shared chrome is the surprising case (ADR-0014 item 4 / ADR-0015 §5),
+// computed OS-side from the same predicate as the removals warning.
+export interface CustomizationRow {
+  sourceApp: string
+  region: string
+  command: string
+  layer: Layer
+  removed: boolean
+  reason: CustomizationReason
+  whenScope: string
+  unexpected: boolean
+}
+
+// Customizations grouped by the overriding app (ADR-0015 §5 — the primary axis is the human
+// question "what has THIS app done to my OS?"), with the app's classification baked in
+// (ADR-0014 item 4). Region and reason stay secondary (row columns / sort), not the top level.
+export interface CustomizationGroup {
+  appId: string
+  appKind: AppKind
+  rows: CustomizationRow[]
 }

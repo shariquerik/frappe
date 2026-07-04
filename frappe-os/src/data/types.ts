@@ -8,6 +8,7 @@ import type { useOS } from '@/desktop'
 import type { FilterValue, DoctypeMeta, DoctypeViewPayload } from '@/config/types'
 import type { Surface } from '@/surface/types'
 import type { BootData } from '@/registry/types'
+import type { CustomizationGroup } from '@/actions/types'
 
 // ── Data layer (api.ts, records.ts) ──────────────────────────────────────────────
 // A Frappe document as returned by the REST/whitelisted API: a free-form field bag
@@ -116,6 +117,11 @@ export interface OsRegistry {
   // First-party applets resolve from a local map; external ESM loading is deferred
   // behind this same seam, so the contract never changes when it lands.
   resolveApplet(appletId: string): Promise<Component>
+  // The cooked Customizations catalog (ADR-0015, issue 05): groups carrying appKind, rows
+  // carrying the baked-in `unexpected` flag — the OS computes, the applet only renders. The
+  // internal Action model stays private (no raw actions()/appKind() on the seam); a fresh
+  // snapshot per call, like the other registry projections.
+  customizations(): CustomizationGroup[]
 }
 
 export interface OsApi {
