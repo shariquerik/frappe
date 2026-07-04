@@ -246,27 +246,30 @@ def _own_indicator_override(doctype, condition):
 
 @frappe.whitelist(methods=["POST"])
 def save_indicator_override(
-	document_type: str, condition: str, label: str | None = None, color: str | None = None, hidden: int = 0
+	doctype: str, condition: str, label: str | None = None, color: str | None = None, hidden: int = 0
 ) -> dict:
 	"""Upsert the caller's own User-layer indicator override for one (doctype, condition) identity
 	(ADR-0031) — the frontend's only indicator write path. A recolor/relabel supplies label + color;
 	a personal hide sets `hidden` to drop the matching app/default rule from this user's view. The
-	condition is stored canonically so the identity match holds; only the caller's own row is touched."""
+	condition is stored canonically so the identity match holds; only the caller's own row is touched.
+	The public param is `doctype` (the OS convention); it maps to the reserved-word `document_type`
+	DB field internally."""
 	key = _condition_key(condition)
-	existing = _own_indicator_override(document_type, key)
+	existing = _own_indicator_override(doctype, key)
 	doc = upsert(
 		"OS Indicator Rule Override",
 		existing,
-		{"document_type": document_type, "condition": key, "label": label, "color": color, "hidden": int(hidden)},
+		{"document_type": doctype, "condition": key, "label": label, "color": color, "hidden": int(hidden)},
 	)
 	return {"name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
-def delete_indicator_override(document_type: str, condition: str) -> dict:
+def delete_indicator_override(doctype: str, condition: str) -> dict:
 	"""Clear the caller's own indicator override for a (doctype, condition) — resetting that rule
-	back to the resolved Site/app/default. No-op if none exists."""
-	name = _own_indicator_override(document_type, _condition_key(condition))
+	back to the resolved Site/app/default. No-op if none exists. The public param is `doctype`; it
+	maps to the reserved-word `document_type` DB field internally."""
+	name = _own_indicator_override(doctype, _condition_key(condition))
 	if name:
 		frappe.delete_doc("OS Indicator Rule Override", name)
 	return {"deleted": bool(name)}

@@ -132,6 +132,37 @@ class TestMergeRuleLayer(unittest.TestCase):
 		self.assertEqual(patched, self._ladder())
 
 
+class TestIndicatorOverrideWrites(unittest.TestCase):
+	"""The two whitelisted write methods take `doctype` (the OS convention) and map it to the
+	reserved-word `document_type` DB field internally. DB helpers are stubbed — no DB."""
+
+	def test_save_maps_doctype_param_to_document_type_field(self):
+		with unittest.mock.patch.object(indicators, "_own_indicator_override", return_value=None) as own, \
+			unittest.mock.patch.object(indicators, "upsert", return_value=unittest.mock.Mock(name="row-1")) as upsert:
+			upsert.return_value.name = "row-1"
+			result = indicators.save_indicator_override(doctype="Sales Invoice", condition=" status , = , Paid ", color="teal")
+		own.assert_called_once_with("Sales Invoice", "status,=,Paid")
+		values = upsert.call_args.args[2]
+		self.assertEqual(values["document_type"], "Sales Invoice")
+		self.assertEqual(values["condition"], "status,=,Paid")
+		self.assertEqual(result, {"name": "row-1"})
+
+	def test_delete_maps_doctype_param_and_reports_deletion(self):
+		with unittest.mock.patch.object(indicators, "_own_indicator_override", return_value="row-1") as own, \
+			unittest.mock.patch.object(indicators.frappe, "delete_doc") as delete_doc:
+			result = indicators.delete_indicator_override(doctype="Sales Invoice", condition="status,=,Paid")
+		own.assert_called_once_with("Sales Invoice", "status,=,Paid")
+		delete_doc.assert_called_once_with("OS Indicator Rule Override", "row-1")
+		self.assertEqual(result, {"deleted": True})
+
+	def test_delete_is_a_noop_when_no_own_override_exists(self):
+		with unittest.mock.patch.object(indicators, "_own_indicator_override", return_value=None), \
+			unittest.mock.patch.object(indicators.frappe, "delete_doc") as delete_doc:
+			result = indicators.delete_indicator_override(doctype="Sales Invoice", condition="status,=,Paid")
+		delete_doc.assert_not_called()
+		self.assertEqual(result, {"deleted": False})
+
+
 class TestReferencedFields(unittest.TestCase):
 	def test_unions_status_docstatus_and_condition_fields_deduped(self):
 		rules = [
