@@ -3,13 +3,14 @@
 // (ADR-0001 dogfooding; MenuBar.vue was the standing violation). The run Handlers register through
 // the OPEN RUN_HANDLERS map (contributions.ts) exactly as an app's would; the resolver competes
 // this data with the folded app contributions, so an app customizes any menu the way it already
-// customizes File. Stub items (Undo, Lock screen, …) point at the shared `noop` Handler — still
-// declared as data, still resolved, just without behavior yet.
+// customizes File. Every item is BACKED — the `noop` stubs (the Edit menu, Lock, the Help-as-palette
+// placeholder) were deleted, not parked on a do-nothing ref (ADR-0039 rule 1). An empty menu earns
+// no title (MenuBar.vue), so the deleted verbs simply return when a real context contributes them.
 import { surfaceAppId, windowRole } from '@/surface'
 import { logout, switchToDesk } from '@/data/session'
 import { registerRunHandlers } from './contributions'
 import {
-  SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
+  SYSTEM_REGION, APP_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
 } from './regions'
 import type { Action, Command, Invocation } from './types'
 import type { OsStore } from '@/types'
@@ -71,14 +72,15 @@ function showAsList({ os }: Invocation): void {
   os.openList(win.id, os.DATA.APP[surfaceAppId(win.surface)].modules[0].doctypes[0])
 }
 
-// The OS's own menu run Handlers, keyed by the refs the Commands below cite. `noop` backs every
-// still-stubbed item (Undo/Redo/Cut/Copy/Paste, About, Lock screen) — one shared do-nothing, not a
-// per-stub ref — so a stub is genuine data that simply has no behavior yet.
+// The OS's own menu run Handlers, keyed by the refs the Commands below cite. Every ref does
+// something real — there is no shared `noop` (ADR-0039 rule 1): registering a ref asserts behavior,
+// and an empty function would launder invoke's loud-throw guarantee into a silent do-nothing. About
+// opens its dialog; Frappe help opens the docs (it no longer just re-opens the palette).
 registerRunHandlers({
-  noop: () => {},
-  'open-palette': ({ os }) => os.openPalette(),
   'open-settings': ({ os }) => os.openSettings(),
   'open-wallpaper': ({ os }) => os.openSettings('Wallpaper'),
+  'open-about': ({ os }) => os.openAbout(),
+  'help-frappe': () => window.open('https://docs.frappe.io', '_blank', 'noopener,noreferrer'),
   'switch-to-desk': () => switchToDesk(),
   logout: () => logout(),
   'new-window': newWindow,
@@ -101,46 +103,44 @@ const run = (id: string, title: string, ref: string): Command =>
   ({ id, sourceApp: 'frappe', title, handler: { kind: 'run', ref } })
 
 export const MENUBAR_COMMANDS: Command[] = [
-  // system (the Frappe-logo menu): workspace + session verbs
-  run('frappe.system.about', 'About this workspace', 'noop'),
+  // system (the Frappe-logo menu): workspace + session verbs, plus whole-OS full screen — an
+  // OS-wide toggle belongs in the OS menu, not the per-surface View menu (ADR-0039 rule 3). The
+  // fullscreen pair is a live-state toggle (see suppressedToggleCommands). No Lock (deferred issue).
+  run('frappe.system.about', 'About this workspace', 'open-about'),
   run('frappe.system.settings', 'Settings…', 'open-settings'),
   run('frappe.system.wallpaper', 'Change wallpaper…', 'open-wallpaper'),
+  run('frappe.system.enter-fullscreen', 'Enter full screen', 'toggle-fullscreen'),
+  run('frappe.system.exit-fullscreen', 'Exit full screen', 'toggle-fullscreen'),
   run('frappe.system.switch-desk', 'Switch to Desk…', 'switch-to-desk'),
-  run('frappe.system.lock', 'Lock screen', 'noop'),
   run('frappe.system.logout', 'Log out…', 'logout'),
   // app (the front app's own menu; `{app}` interpolates to its name at render time)
   run('frappe.app.settings', '{app} settings…', 'app-settings'),
   run('frappe.app.hide', 'Hide {app}', 'minimize-active'),
   run('frappe.app.quit', 'Quit {app}', 'quit-active-app'),
-  // file
-  run('frappe.file.open', 'Open…', 'open-palette'),
-  run('frappe.window.new', 'New window', 'new-window'),
-  run('frappe.window.close', 'Close window', 'close-active-window'),
-  // edit (all stubs today)
-  run('frappe.edit.undo', 'Undo', 'noop'),
-  run('frappe.edit.redo', 'Redo', 'noop'),
-  run('frappe.edit.cut', 'Cut', 'noop'),
-  run('frappe.edit.copy', 'Copy', 'noop'),
-  run('frappe.edit.paste', 'Paste', 'noop'),
-  // view (the fullscreen pair is a live-state toggle — see suppressedToggleCommands)
+  // The OS owns NO File menu — File is a middle menu apps earn (ADR-0039 rule 2). The palette is
+  // reached through the Spotlight ⌘K button, and the pin verbs live in Window (placement-verbs.ts).
+  // view — per-surface verbs only (full screen moved to System, ADR-0039 rule 3)
   run('frappe.view.dashboard', 'Show dashboard', 'show-dashboard'),
   run('frappe.view.list', 'Show as list', 'show-as-list'),
-  run('frappe.view.enter-fullscreen', 'Enter full screen', 'toggle-fullscreen'),
-  run('frappe.view.exit-fullscreen', 'Exit full screen', 'toggle-fullscreen'),
-  // window
+  // window — window management, including New/Close (moved out of File: they are window verbs, not
+  // file verbs). enter/exit-split is a live-state toggle handled by the split state, not a pair here.
+  run('frappe.window.new', 'New window', 'new-window'),
+  run('frappe.window.close', 'Close window', 'close-active-window'),
   run('frappe.window.minimize', 'Minimize', 'minimize-active'),
   run('frappe.window.zoom', 'Zoom', 'zoom-active'),
   run('frappe.window.enter-split', 'Enter split view', 'enter-split'),
   run('frappe.window.exit-split', 'Exit split view', 'exit-split'),
-  // help
-  run('frappe.help.frappe', 'Frappe help', 'open-palette'),
+  // help — a real destination (the Frappe docs), not a palette placeholder
+  run('frappe.help.frappe', 'Frappe help', 'help-frappe'),
 ]
 
-// Placement of each Command into its Region. `group` is the divider section the renderer draws;
-// `order` is the ascending within-region position. All global (`when` absent) EXCEPT the two View
-// verbs that only make sense on an app window. The fullscreen pair shares order 2 — only one ever
-// renders (the dead half is dropped by live state), so they never collide.
+// Placement of each Command into its menu Region. `group` is the divider section the renderer
+// draws; `order` is the ascending within-region position. The fullscreen pair shares one order —
+// only one ever renders (the dead half is dropped by live state), so they never collide. Full
+// screen is marked `os` scope: it names the whole machine, so the projector's scope-honesty check
+// (menubar.ts) keeps it out of app/surface-connoting menus.
 const APP_WINDOW = { windowRole: 'app' } as const
+const OS_SCOPE = { tier: 'os' } as const
 const place = (command: string, region: string, group: string, order: number, over: Partial<Action> = {}): Action =>
   ({ command, region, sourceApp: 'frappe', group, order, ...over })
 
@@ -148,38 +148,33 @@ export const MENUBAR_ACTIONS: Action[] = [
   place('frappe.system.about', SYSTEM_REGION, 'a', 0),
   place('frappe.system.settings', SYSTEM_REGION, 'b', 1),
   place('frappe.system.wallpaper', SYSTEM_REGION, 'b', 2),
-  place('frappe.system.switch-desk', SYSTEM_REGION, 'c', 3),
-  place('frappe.system.lock', SYSTEM_REGION, 'd', 4),
-  place('frappe.system.logout', SYSTEM_REGION, 'd', 5),
+  place('frappe.system.enter-fullscreen', SYSTEM_REGION, 'c', 3, { scope: OS_SCOPE }),
+  place('frappe.system.exit-fullscreen', SYSTEM_REGION, 'c', 3, { scope: OS_SCOPE }),
+  place('frappe.system.switch-desk', SYSTEM_REGION, 'd', 4),
+  place('frappe.system.logout', SYSTEM_REGION, 'e', 5),
   place('frappe.app.settings', APP_REGION, 'a', 0),
   place('frappe.app.hide', APP_REGION, 'a', 1),
   place('frappe.app.quit', APP_REGION, 'b', 2),
-  place('frappe.file.open', FILE_REGION, 'a', 0),
-  place('frappe.window.new', FILE_REGION, 'a', 1),
-  place('frappe.window.close', FILE_REGION, 'b', 2),
-  place('frappe.edit.undo', EDIT_REGION, 'a', 0),
-  place('frappe.edit.redo', EDIT_REGION, 'a', 1),
-  place('frappe.edit.cut', EDIT_REGION, 'b', 2),
-  place('frappe.edit.copy', EDIT_REGION, 'b', 3),
-  place('frappe.edit.paste', EDIT_REGION, 'b', 4),
   place('frappe.view.dashboard', VIEW_REGION, 'a', 0, { when: APP_WINDOW }),
   place('frappe.view.list', VIEW_REGION, 'a', 1, { when: APP_WINDOW }),
-  place('frappe.view.enter-fullscreen', VIEW_REGION, 'b', 2),
-  place('frappe.view.exit-fullscreen', VIEW_REGION, 'b', 2),
-  place('frappe.window.minimize', WINDOW_REGION, 'a', 0),
-  place('frappe.window.zoom', WINDOW_REGION, 'a', 1),
-  place('frappe.window.enter-split', WINDOW_REGION, 'b', 2),
-  place('frappe.window.exit-split', WINDOW_REGION, 'b', 3),
+  // Window groups: a (new/close) · b (minimize/zoom) · c (the pin verbs — placement-verbs.ts) ·
+  // d (split). The pin verbs slot between Zoom and split, so split moves to group 'd'.
+  place('frappe.window.new', WINDOW_REGION, 'a', 0),
+  place('frappe.window.close', WINDOW_REGION, 'a', 1),
+  place('frappe.window.minimize', WINDOW_REGION, 'b', 2),
+  place('frappe.window.zoom', WINDOW_REGION, 'b', 3),
+  place('frappe.window.enter-split', WINDOW_REGION, 'd', 6),
+  place('frappe.window.exit-split', WINDOW_REGION, 'd', 7),
   place('frappe.help.frappe', HELP_REGION, 'a', 0),
 ]
 
 // The fullscreen menu item is a single toggle whose label flips with live OS state — modeled as a
 // command PAIR (enter/exit) with the dead half suppressed at render, the same shape the File menu's
 // Add/Remove placement verbs use (suppressedPlacementCommands). Exactly one of the pair survives, so
-// the View menu shows one correctly-labelled item without any literal `os.isFullscreen ? …` in the
-// component.
+// the System menu shows one correctly-labelled item without any literal `os.isFullscreen ? …` in
+// the component.
 export function suppressedToggleCommands(os: OsStore): Set<string> {
   return new Set([
-    os.isFullscreen.value ? 'frappe.view.enter-fullscreen' : 'frappe.view.exit-fullscreen',
+    os.isFullscreen.value ? 'frappe.system.enter-fullscreen' : 'frappe.system.exit-fullscreen',
   ])
 }

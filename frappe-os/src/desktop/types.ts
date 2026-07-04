@@ -106,6 +106,9 @@ export interface OsState {
   // pending. Set by `requestCloseWin` when the window holds a dirty draft; the confirm dialog reads
   // it. Transient (never persisted), like the overlay flags.
   closeConfirm: string | null
+  // The About-this-workspace dialog's open flag (ADR-0039 rule 1 — About is a real dialog, not a
+  // noop). Transient like the other overlay flags; AboutDialog.vue reads its content live.
+  aboutOpen: boolean
   // Logged-in display name for the dashboard greeting. Not seeded yet (the shell
   // hardcodes a fallback), so it stays optional until boot wires the real user.
   userName?: string

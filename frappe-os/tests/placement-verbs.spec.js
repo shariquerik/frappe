@@ -15,7 +15,8 @@ import {
   surfaceToRef, liveVerb, suppressedPlacementCommands, PLACEMENT_COMMANDS,
 } from '../src/actions/placement-verbs'
 import { invoke } from '../src/actions/contributions'
-import { fileMenuOptions } from '../src/actions/menubar'
+import { menuOptions } from '../src/actions/menubar'
+import { WINDOW_REGION } from '../src/actions/regions'
 import { initPlacements, usePlacements } from '../src/placements'
 import { listSurface, dashboardSurface, appletSurface, formSurface, appSettingsSurface } from '../src/surface'
 import { initRegistry } from '../src/registry'
@@ -135,7 +136,7 @@ describe('a non-app (system/chrome) window suppresses every placement verb', () 
     expect(os.state.activeId).toBe('finder')
     const dead = suppressedPlacementCommands(os)
     expect(dead.size).toBe(PLACEMENT_COMMANDS.length)
-    expect(fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label))
+    expect(menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).map((i) => i.label))
       .not.toContain('Add to Desktop')
   })
 })
@@ -165,10 +166,10 @@ describe('liveVerb / suppressed half — the inverse appears only when already p
   })
 })
 
-// End-to-end through the File-menu projection (the seam MenuBar.vue renders): the live verbs show as
-// resolved Action items, the dead half is filtered, and clicking actually mutates the placement list.
-describe('fileMenuOptions surfaces the verbs as resolved Actions', () => {
-  const labels = () => fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label)
+// End-to-end through the Window-menu projection (the seam MenuBar.vue renders): the live verbs show
+// as resolved Action items, the dead half is filtered, and clicking actually mutates the placement list.
+describe('the Window menu surfaces the pin verbs as resolved Actions', () => {
+  const labels = () => menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).map((i) => i.label)
 
   it('an unpinned surface shows Add to Desktop + Add to Dock, not the Remove inverses', () => {
     os.openListGlobal('ToDo')
@@ -179,7 +180,7 @@ describe('fileMenuOptions surfaces the verbs as resolved Actions', () => {
 
   it('clicking Add to Desktop pins the active surface through the resolver', () => {
     os.openListGlobal('ToDo')
-    fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'Add to Desktop').onClick()
+    menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Add to Desktop').onClick()
     expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ doctype: 'ToDo', view: 'list' }])
   })
 

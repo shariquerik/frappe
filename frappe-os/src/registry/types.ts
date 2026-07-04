@@ -83,4 +83,7 @@ export interface BootData {
   sitename?: string
   socketio_port?: number
   developer_mode?: boolean
+  // The Frappe framework version (frappe.__version__), shown in the About dialog (ADR-0039).
+  // Optional/tolerant like the rest — an older server omits it and About shows no version line.
+  version?: string
 }

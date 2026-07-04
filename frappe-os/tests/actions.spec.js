@@ -18,7 +18,7 @@ import { suppressedDockHidingCommands, selectedDockPositionCommands } from '../s
 import { toolbarItems } from '../src/actions/toolbar'
 import {
   REGIONS, regionById, regionRenders, MENUBAR_REGIONS,
-  SYSTEM_REGION, APP_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
+  SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
   LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR, DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION,
 } from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
@@ -284,11 +284,6 @@ describe('first-party File commands + invoke', () => {
     expect(os.state.activeId).toBe('app:frappe')
   })
 
-  it('Open… opens the command palette through its run handler', () => {
-    invoke(command('frappe.file.open'), os)
-    expect(os.state.paletteOpen).toBe(true)
-  })
-
   it('Close window closes the active window through its run handler', () => {
     os.openApp('crm')
     invoke(command('frappe.window.close'), os)
@@ -404,9 +399,10 @@ describe('contextForOS (derive Context from the active window)', () => {
   })
 })
 
-// The File-menu projection — the testable seam MenuBar.vue renders (vitest deliberately
-// excludes .vue; this pure projector is the render contract, like route-map.ts / toolbar.ts).
-describe('fileMenuOptions (File menu rendered from resolved Actions)', () => {
+// The File menu is EARNED, and the OS owns nothing in it (ADR-0039 rule 2: File is a middle menu
+// apps populate — the OS's window/pin verbs moved to the Window menu). So fileMenuOptions resolves
+// to nothing until an app contributes; MenuBar.vue then never renders a File title.
+describe('fileMenuOptions (File is app-earned — the OS contributes nothing)', () => {
   const os = useOS()
   beforeEach(() => {
     os.state.windows = []
@@ -415,30 +411,28 @@ describe('fileMenuOptions (File menu rendered from resolved Actions)', () => {
     os.state.paletteOpen = false
   })
 
-  it('renders the File items from the resolver, in two divider groups', () => {
-    const opts = fileMenuOptions(os)
-    expect(opts.flatMap((g) => g.items.map((i) => i.label))).toEqual(['Open…', 'New window', 'Close window'])
-    expect(opts.map((g) => g.group)).toEqual(['a', 'b'])
+  it('resolves to nothing on a bare desktop', () => {
+    expect(fileMenuOptions(os)).toEqual([])
   })
 
-  it('wires each item to its Command handler — New window actually opens a window', () => {
-    const newWindow = fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'New window')
-    newWindow.onClick()
-    expect(os.state.windows).toHaveLength(1)
+  it('still resolves to nothing with an app window focused — no first-party File items remain', () => {
+    os.openApp('crm')
+    expect(fileMenuOptions(os)).toEqual([])
   })
 })
 
 // Slice 2: erpnext's hook-declared override of `frappe`'s New window, folded from the server
-// registry into the File menu's action data and gated `when:{activeApp:'erpnext'}`. The Action
-// competes in the (menubar:file, frappe.window.new) slot; its commandPatch re-titles the item
-// only when it wins. The OS default (global `when`) wins for every other app. Each win shadows
-// the default — attributed to erpnext and logged as a clean `override`, never a true-tie.
+// registry into the Window menu's action data and gated `when:{activeApp:'erpnext'}` (New/Close
+// window are window verbs — they live in menubar:window now, not File). The Action competes in the
+// (menubar:window, frappe.window.new) slot; its commandPatch re-titles the item only when it wins.
+// The OS default (global `when`) wins for every other app. Each win shadows the default —
+// attributed to erpnext and logged as a clean `override`, never a true-tie.
 describe('erpnext New window override (registry-folded, when-gated)', () => {
   const os = useOS()
   const overrideAction = {
-    type: 'action', target: 'menubar:file', name: 'frappe.window.new', sourceApp: 'erpnext',
+    type: 'action', target: 'menubar:window', name: 'frappe.window.new', sourceApp: 'erpnext',
     payload: {
-      command: 'frappe.window.new', region: 'menubar:file', sourceApp: 'erpnext',
+      command: 'frappe.window.new', region: 'menubar:window', sourceApp: 'erpnext',
       when: { activeApp: 'erpnext' }, commandPatch: { title: 'New ERPNext window' },
     },
   }
@@ -465,7 +459,7 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
   afterEach(() => { warn.mockRestore(); initRegistry(null) })
 
   const newWindowLabel = () =>
-    fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label).find((l) => l.includes('window') || l.includes('Window'))
+    menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).map((i) => i.label).find((l) => l.startsWith('New'))
 
   it('shows erpnext\'s re-titled item when an erpnext window is focused', () => {
     os.openApp('erpnext')
@@ -479,7 +473,7 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
 
   it('logs the shadow attributed to erpnext as a clean override, not a true-tie', () => {
     os.openApp('erpnext')
-    fileMenuOptions(os)
+    menuOptions(WINDOW_REGION, os)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.new'))
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('true-tie'))
@@ -487,33 +481,34 @@ describe('erpnext New window override (registry-folded, when-gated)', () => {
 
   it('still runs the real New window handler when the override wins (patch is presentation-only)', () => {
     os.openApp('erpnext')
-    const item = fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'New ERPNext window')
+    const item = menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'New ERPNext window')
     const newAppWindow = vi.spyOn(os, 'newAppWindow')
     item.onClick()
     expect(newAppWindow).toHaveBeenCalledWith('erpnext') // the real new-window Handler, unchanged
     newAppWindow.mockRestore()
   })
 
-  it('keeps the re-titled item in the OS default\'s slot — still two divider groups, not three', () => {
+  it('keeps the re-titled item in the OS default\'s slot — Window\'s divider groups are unchanged', () => {
     os.openApp('erpnext')
-    const opts = fileMenuOptions(os).filter((g) => g.group !== 'p') // 'p' = the #04 Add/Remove verbs
-    expect(opts.map((g) => g.group)).toEqual(['a', 'b']) // override inherits group 'a', no stray '' group
-    expect(opts.find((g) => g.group === 'a').items.map((i) => i.label)).toEqual(['Open…', 'New ERPNext window'])
+    const opts = menuOptions(WINDOW_REGION, os)
+    // a (new/close) · b (minimize/zoom) · c (pin verbs) · d (split); override inherits group 'a'.
+    expect(opts.map((g) => g.group)).toEqual(['a', 'b', 'c', 'd'])
+    expect(opts.find((g) => g.group === 'a').items.map((i) => i.label)).toEqual(['New ERPNext window', 'Close window'])
   })
 })
 
 // Slice 3: erpnext's hook-declared REMOVAL of `frappe`'s Close window (command
-// `frappe.window.close`), folded from the server registry into the File menu and gated
+// `frappe.window.close`), folded from the server registry into the Window menu and gated
 // `when:{activeApp:'erpnext'}` with `removed:true`. The removal competes in the
-// (menubar:file, frappe.window.close) slot; when it wins (an erpnext window focused) the item is
+// (menubar:window, frappe.window.close) slot; when it wins (an erpnext window focused) the item is
 // suppressed — absent from the rendered menu — and the strip is attributed to erpnext and logged
 // as `removal`. For every other app the OS default re-appears (the removal's `when` is ineligible).
 describe('erpnext Close window removal (registry-folded, when-gated, suppressed + logged)', () => {
   const os = useOS()
   const removalAction = {
-    type: 'action', target: 'menubar:file', name: 'frappe.window.close', sourceApp: 'erpnext',
+    type: 'action', target: 'menubar:window', name: 'frappe.window.close', sourceApp: 'erpnext',
     payload: {
-      command: 'frappe.window.close', region: 'menubar:file', sourceApp: 'erpnext',
+      command: 'frappe.window.close', region: 'menubar:window', sourceApp: 'erpnext',
       when: { activeApp: 'erpnext' }, removed: true,
     },
   }
@@ -539,23 +534,24 @@ describe('erpnext Close window removal (registry-folded, when-gated, suppressed 
   })
   afterEach(() => { warn.mockRestore(); initRegistry(null) })
 
-  // Exclude the #04 Add/Remove placement verbs (group 'p') — this suite covers the Close-window
-  // removal, not the placement verbs, which now also render for a focused window.
-  const labels = () => fileMenuOptions(os).filter((g) => g.group !== 'p').flatMap((g) => g.items).map((i) => i.label)
+  // Exclude the pin group ('c', the #04 Add/Remove verbs) — this suite covers the Close-window
+  // removal, not the pin verbs, which also render in Window for a focused app window.
+  const labels = () => menuOptions(WINDOW_REGION, os).filter((g) => g.group !== 'c').flatMap((g) => g.items).map((i) => i.label)
 
   it('suppresses Close window when an erpnext window is focused', () => {
     os.openApp('erpnext')
-    expect(labels()).toEqual(['Open…', 'New window']) // Close window is gone, the others stay
+    // Close window is gone; the other Window verbs stay.
+    expect(labels()).toEqual(['New window', 'Minimize', 'Zoom', 'Enter split view', 'Exit split view'])
   })
 
   it('keeps Close window when a non-erpnext window is focused (removal ineligible)', () => {
     os.openApp('crm')
-    expect(labels()).toEqual(['Open…', 'New window', 'Close window'])
+    expect(labels()).toEqual(['New window', 'Close window', 'Minimize', 'Zoom', 'Enter split view', 'Exit split view'])
   })
 
   it('logs the removal attributed to erpnext (never a silent strip)', () => {
     os.openApp('erpnext')
-    fileMenuOptions(os)
+    menuOptions(WINDOW_REGION, os)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('removal'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.close'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext'))
@@ -572,8 +568,8 @@ describe('feature-vs-customization removal warning (fileMenuOptions, ADR-0014 it
   const os = useOS()
   const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
   const removal = (sourceApp, when) => ({
-    type: 'action', target: 'menubar:file', name: 'frappe.window.close', sourceApp,
-    payload: { command: 'frappe.window.close', region: 'menubar:file', sourceApp, when, removed: true },
+    type: 'action', target: 'menubar:window', name: 'frappe.window.close', sourceApp,
+    payload: { command: 'frappe.window.close', region: 'menubar:window', sourceApp, when, removed: true },
   })
   // What makes erpnext a FEATURE app in this fixture: it ships an applet (a feature surface), not
   // merely chrome customizations. 'tweaks' ships only the removal action → pure-customization.
@@ -596,16 +592,16 @@ describe('feature-vs-customization removal warning (fileMenuOptions, ADR-0014 it
   it('warns loudly when a FEATURE app (erpnext, ships an applet) removes Close window', () => {
     initRegistry(boot([app('frappe', 'Frappe', 0), app('erpnext', 'ERPNext', 1), erpnextApplet, removal('erpnext', { activeApp: 'erpnext' })]))
     os.openApp('erpnext')
-    fileMenuOptions(os)
+    menuOptions(WINDOW_REGION, os)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('feature app'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext'))
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('menubar:file/frappe.window.close'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('menubar:window/frappe.window.close'))
   })
 
   it('stays quiet when a PURE-CUSTOMIZATION app (tweaks, only the removal) removes the same chrome', () => {
     initRegistry(boot([app('frappe', 'Frappe', 0), app('crm', 'CRM', 1), app('tweaks', 'Tweaks', 2), removal('tweaks', { activeApp: 'crm' })]))
     os.openApp('crm')
-    fileMenuOptions(os)
+    menuOptions(WINDOW_REGION, os)
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('feature app'))
     // ...but the removal is still recorded by the resolver's uniform log — never silent (slice 3).
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('removal'))
@@ -636,9 +632,9 @@ describe('Action referencing a missing Command (warned, not silently dropped)', 
   })
   afterEach(() => { warn.mockRestore(); initRegistry(null) })
 
-  it('warns and renders only the first-party items', () => {
+  it('warns and skips the orphan — File resolves to nothing (its only Action has no Command)', () => {
     const labels = fileMenuOptions(os).flatMap((g) => g.items).map((i) => i.label)
-    expect(labels).toEqual(['Open…', 'New window', 'Close window']) // the orphan does not appear
+    expect(labels).toEqual([]) // the orphan does not appear; the OS owns no File items
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext.ghost'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('no such Command'))
   })
@@ -837,14 +833,14 @@ describe('command-axis collision (an app cannot silently hijack a first-party ve
   afterEach(() => { warn.mockRestore(); initRegistry(null) })
 
   it('keeps the first-party verb — title and run Handler are not overwritten', () => {
-    const item = fileMenuOptions(os).flatMap((g) => g.items).find((i) => i.label === 'New window')
+    const item = menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'New window')
     expect(item).toBeDefined() // not re-titled to "HIJACKED"
     item.onClick() // the first-party run Handler, not the colliding "ghost" ref (which would throw)
     expect(os.state.windows).toHaveLength(1)
   })
 
   it('logs the collision attributed to both apps (never a silent overwrite)', () => {
-    fileMenuOptions(os)
+    menuOptions(WINDOW_REGION, os)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('command-collision'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('frappe.window.new'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('erpnext')) // the shadowed loser, attributed
@@ -1148,28 +1144,23 @@ describe('every menu-bar menu renders from the resolver (no literal arrays)', ()
     ])
   })
 
-  it('the system menu resolves its workspace + session verbs across four divider groups', () => {
+  it('the system menu resolves its workspace + session verbs, plus whole-OS full screen', () => {
     expect(labels(SYSTEM_REGION)).toEqual([
-      'About this workspace', 'Settings…', 'Change wallpaper…', 'Switch to Desk…', 'Lock screen', 'Log out…',
+      'About this workspace', 'Settings…', 'Change wallpaper…', 'Enter full screen', 'Switch to Desk…', 'Log out…',
     ])
-    expect(menuOptions(SYSTEM_REGION, os).map((g) => g.group)).toEqual(['a', 'b', 'c', 'd'])
+    expect(menuOptions(SYSTEM_REGION, os).map((g) => g.group)).toEqual(['a', 'b', 'c', 'd', 'e'])
   })
 
-  it('the edit menu resolves its (still-stubbed) verbs', () => {
-    expect(labels(EDIT_REGION)).toEqual(['Undo', 'Redo', 'Cut', 'Copy', 'Paste'])
+  it('the edit menu resolves nothing — its noop stubs were deleted (ADR-0039 rule 1)', () => {
+    expect(labels(EDIT_REGION)).toEqual([])
   })
 
-  it('the window menu resolves Minimize/Zoom plus both split verbs', () => {
-    expect(labels(WINDOW_REGION)).toEqual(['Minimize', 'Zoom', 'Enter split view', 'Exit split view'])
+  it('the window menu resolves New/Close plus Minimize/Zoom and both split verbs', () => {
+    expect(labels(WINDOW_REGION)).toEqual(['New window', 'Close window', 'Minimize', 'Zoom', 'Enter split view', 'Exit split view'])
   })
 
   it('the help menu resolves Frappe help', () => {
     expect(labels(HELP_REGION)).toEqual(['Frappe help'])
-  })
-
-  it('a stubbed item (Undo) is wired to the shared no-op run Handler — clicking never throws', () => {
-    const undo = menuOptions(EDIT_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Undo')
-    expect(() => undo.onClick()).not.toThrow()
   })
 })
 
@@ -1225,20 +1216,80 @@ describe('view menu eligibility + fullscreen toggle (decision table)', () => {
     expect(labels()).not.toContain('Show dashboard')
   })
 
-  it('shows Enter full screen when windowed and Exit full screen when full-screen — never both', () => {
-    os.isFullscreen.value = false
-    expect(labels()).toContain('Enter full screen')
-    expect(labels()).not.toContain('Exit full screen')
-    os.isFullscreen.value = true
-    expect(labels()).toContain('Exit full screen')
+  // Full screen moved to the System menu (ADR-0039 rule 3 — a whole-OS toggle, not a View verb).
+  const systemLabels = () => menuOptions(SYSTEM_REGION, os).flatMap((g) => g.items).map((i) => i.label)
+
+  it('the View menu no longer carries the fullscreen verbs', () => {
     expect(labels()).not.toContain('Enter full screen')
+    expect(labels()).not.toContain('Exit full screen')
+  })
+
+  it('System shows Enter full screen when windowed and Exit full screen when full-screen — never both', () => {
+    os.isFullscreen.value = false
+    expect(systemLabels()).toContain('Enter full screen')
+    expect(systemLabels()).not.toContain('Exit full screen')
+    os.isFullscreen.value = true
+    expect(systemLabels()).toContain('Exit full screen')
+    expect(systemLabels()).not.toContain('Enter full screen')
   })
 
   it('suppressedToggleCommands drops exactly the dead half of the fullscreen pair', () => {
     os.isFullscreen.value = false
-    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.view.exit-fullscreen'])
+    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.system.exit-fullscreen'])
     os.isFullscreen.value = true
-    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.view.enter-fullscreen'])
+    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.system.enter-fullscreen'])
+  })
+})
+
+// ADR-0039 acceptance — the menu bar is earned + honest. Rule 1: an empty region yields no menu
+// (MenuBar.vue renders only menus whose menuOptions is non-empty); no handler is a noop; About is a
+// real dialog. Rule 3: an os-scope command in an app-connoting menu warns loudly at projection time.
+describe('ADR-0039 — earned menus, no noops, scope honesty', () => {
+  const os = useOS()
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.activeId = null
+    os.state.aboutOpen = false; os.isFullscreen.value = false
+  })
+
+  it('on a bare desktop the middle menus resolve to nothing — File/Edit/View earn no title', () => {
+    expect(menuOptions(FILE_REGION, os)).toEqual([]) // OS owns no File items (app-earned)
+    expect(menuOptions(EDIT_REGION, os)).toEqual([]) // noop stubs deleted
+    expect(menuOptions(VIEW_REGION, os)).toEqual([]) // dashboard/list gated to an app window
+  })
+
+  it('the frame menus stay backed on a bare desktop — System/Window/Help never empty', () => {
+    expect(menuOptions(SYSTEM_REGION, os).length).toBeGreaterThan(0)
+    expect(menuOptions(WINDOW_REGION, os).length).toBeGreaterThan(0)
+    expect(menuOptions(HELP_REGION, os).length).toBeGreaterThan(0)
+  })
+
+  it('no first-party menu command points at a noop ref (registering a ref asserts behavior)', () => {
+    expect(MENUBAR_COMMANDS.map((c) => c.handler.ref)).not.toContain('noop')
+  })
+
+  it('About this workspace opens the real dialog through its run handler (no more noop)', () => {
+    const about = MENUBAR_COMMANDS.find((c) => c.id === 'frappe.system.about')
+    invoke(about, os)
+    expect(os.state.aboutOpen).toBe(true)
+  })
+
+  it('warns loudly when an os-scope command is placed in an app-connoting menu (rule 3)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+    const command = { type: 'command', target: '', name: 'x.big', sourceApp: 'x', payload: { id: 'x.big', sourceApp: 'x', title: 'Whole-OS thing', handler: { kind: 'run', ref: 'x-run' } } }
+    const action = { type: 'action', target: 'menubar:view', name: 'x.big', sourceApp: 'x', payload: { command: 'x.big', region: 'menubar:view', sourceApp: 'x', scope: { tier: 'os' } } }
+    initRegistry({ user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), app('x', 'X', 1), command, action] } })
+    menuOptions(VIEW_REGION, os)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('scope-dishonesty'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('x.big'))
+    warn.mockRestore(); initRegistry(null)
+  })
+
+  it('does NOT warn for the os-scope full screen in the System menu (System is the OS\'s own)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    menuOptions(SYSTEM_REGION, os)
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('scope-dishonesty'))
+    warn.mockRestore()
   })
 })
 

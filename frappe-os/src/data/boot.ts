@@ -31,6 +31,9 @@ function fromWindow(): BootData {
     sitename: typeof w.sitename === 'string' ? w.sitename : undefined,
     socketio_port: typeof w.socketio_port === 'number' ? w.socketio_port : undefined,
     developer_mode: !!w.developer_mode,
+    // Framework version for the About dialog (ADR-0039); tolerated like sitename so an older
+    // server / offline boot simply shows no version line.
+    version: typeof w.version === 'string' ? w.version : undefined,
   }
 }
 

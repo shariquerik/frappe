@@ -25,6 +25,7 @@ import {
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
 } from './windows'
 import { openPalette, closePalette, paletteResults } from './palette'
+import { openAbout, closeAbout } from './about'
 import { isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt } from './fullscreen'
 import { selectedRecords, setSelection } from './selection'
 import { hydrate, startAutosave } from './persistence'
@@ -59,7 +60,7 @@ export function useOS() {
     focusWin, activateWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
-    setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
+    setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette, openAbout, closeAbout,
     setDesktopEl, setDockEl, desktopRef, syncDesktopSize,
     // browser fullscreen (edge-to-edge, no browser chrome) — the "Enter full screen" action,
     // plus the prompt shown when the green button leaves the bar up

@@ -24,6 +24,7 @@ export const state = reactive<OsState>({
   dockMenu: null, // appId whose dock window-chooser popover is open
   dockContextOpen: false, // dock right-click menu open (keeps the dock revealed)
   closeConfirm: null, // winId awaiting an unsaved-changes close confirm (ADR-0029), else null
+  aboutOpen: false, // the About-this-workspace dialog (ADR-0039), else closed
 })
 
 function clockNow() {

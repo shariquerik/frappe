@@ -35,6 +35,8 @@ def get_boot():
 		"sitename": frappe.local.site,
 		"socketio_port": frappe.conf.socketio_port,
 		"developer_mode": bool(frappe.conf.developer_mode),
+		# The Frappe framework version, shown in the About-this-workspace dialog (ADR-0039).
+		"version": frappe.__version__,
 	}
 
 

@@ -1,13 +1,13 @@
 // The "Add to / Remove from Desktop / Dock" verbs (issue #04, ADR-0023) as first-party `frappe`
-// contributions, surfaced through the SAME Action machinery the File menu dogfoods (ADR-0001) —
-// four Commands placed by Actions into the `menubar:file` Region, NOT bespoke menu wiring. Each
-// pins/unpins WHATEVER the active window shows (its surface reference, ADR-0021), from ANY surface.
+// contributions, surfaced through the SAME Action machinery every menu dogfoods (ADR-0001) — four
+// Commands placed by Actions into the `menubar:window` Region, NOT bespoke menu wiring. They live in
+// the Window menu because they pin WHATEVER the active window shows (its surface reference, ADR-0021):
+// pinning the current window is a window verb, not a file one (the OS owns no File menu, ADR-0039).
 //
 // The resolver is equality-only (`when`), so it can't express "is this surface already pinned".
 // That toggle (Add ↔ Remove) is a pure function of the current pin state, decided at PROJECTION
-// time by suppressedPlacementCommands (which fileMenuOptions in menubar.ts filters through) —
-// exactly where fileMenuOptions picks labels/handlers — so the verbs stay genuine resolved Actions
-// while the inverse only appears when its identity matches.
+// time by suppressedPlacementCommands (which menuOptions in menubar.ts filters through for every
+// menu) — so the verbs stay genuine resolved Actions while the inverse only appears when it applies.
 import { surfaceAppId, windowRole } from '@/surface'
 import { usePlacements, placementKey, writePlacementOverride, removeResolvedPlacement } from '@/placements'
 import { nextDockOrder } from '@/desktop/dock-model'
@@ -15,7 +15,7 @@ import { nextFreeCell, layoutDesktop } from '@/desktop/grid'
 import type { OsStore, Surface, SurfaceRef, PlacementRegion } from '@/types'
 import type { Action, Command } from './types'
 import { registerRunHandlers, type RunHandler } from './contributions'
-import { FILE_REGION } from './regions'
+import { WINDOW_REGION } from './regions'
 
 // The surface reference (ADR-0021) a pin stores for what a window currently shows. Mirrors the
 // pinnable shapes placementSurface resolves back (applet / dashboard / doctype-list), so a pin
@@ -76,8 +76,8 @@ function removeFrom(os: OsStore, region: PlacementRegion): void {
   if (pin) void removeResolvedPlacement(pin)
 }
 
-// The four verbs as run Handlers, registered into the OPEN RUN_HANDLERS map the same way the File
-// menu's own defaults are (registerRunHandlers) — no privileged core, the general app seam.
+// The four verbs as run Handlers, registered into the OPEN RUN_HANDLERS map the same way the menu
+// bar's own defaults are (registerRunHandlers) — no privileged core, the general app seam.
 // Each verb acts on live pin state + the active window (not a Context coordinate), so it reaches
 // the store through the Invocation's `os` escape hatch (ADR-0037 — chrome-verb territory).
 export const PLACEMENT_RUN_HANDLERS: Record<string, RunHandler> = {
@@ -88,12 +88,12 @@ export const PLACEMENT_RUN_HANDLERS: Record<string, RunHandler> = {
 }
 
 // Wire the verbs into the open RUN_HANDLERS map on import (the same seam an app uses), so the
-// File-menu projector that imports these constants also makes their `run` refs invocable.
+// Window-menu projector that imports these constants also makes their `run` refs invocable.
 registerRunHandlers(PLACEMENT_RUN_HANDLERS)
 
 // The verb Commands. Add and Remove share a (region, command) identity per region so the menu
 // shows exactly ONE of each pair (decided by pin state in the projector below), competing in the
-// `menubar:file` Region like every other File item.
+// `menubar:window` Region like every other Window item.
 export const PLACEMENT_COMMANDS: Command[] = [
   { id: 'frappe.placement.add-desktop', sourceApp: 'frappe', title: 'Add to Desktop', handler: { kind: 'run', ref: 'add-to-desktop' } },
   { id: 'frappe.placement.remove-desktop', sourceApp: 'frappe', title: 'Remove from Desktop', handler: { kind: 'run', ref: 'remove-from-desktop' } },
@@ -101,13 +101,14 @@ export const PLACEMENT_COMMANDS: Command[] = [
   { id: 'frappe.placement.remove-dock', sourceApp: 'frappe', title: 'Remove from Dock', handler: { kind: 'run', ref: 'remove-from-dock' } },
 ]
 
-// Both Add and Remove are placed into the File Region (a new divider group 'p'); which of each
-// pair renders is the projector's pin-state decision, so an inverse only shows when it applies.
+// Both Add and Remove are placed into the Window Region's pin group ('c', between Zoom and split);
+// which of each pair renders is the projector's pin-state decision, so an inverse only shows when it
+// applies. add/remove-desktop share order 4, add/remove-dock order 5 — each pair is one live slot.
 export const PLACEMENT_ACTIONS: Action[] = [
-  { command: 'frappe.placement.add-desktop', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 10 },
-  { command: 'frappe.placement.remove-desktop', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 10 },
-  { command: 'frappe.placement.add-dock', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 11 },
-  { command: 'frappe.placement.remove-dock', region: FILE_REGION, sourceApp: 'frappe', group: 'p', order: 11 },
+  { command: 'frappe.placement.add-desktop', region: WINDOW_REGION, sourceApp: 'frappe', group: 'c', order: 4 },
+  { command: 'frappe.placement.remove-desktop', region: WINDOW_REGION, sourceApp: 'frappe', group: 'c', order: 4 },
+  { command: 'frappe.placement.add-dock', region: WINDOW_REGION, sourceApp: 'frappe', group: 'c', order: 5 },
+  { command: 'frappe.placement.remove-dock', region: WINDOW_REGION, sourceApp: 'frappe', group: 'c', order: 5 },
 ]
 
 // Which verb of a region's Add/Remove pair is live right now: Remove when the active surface is
@@ -121,7 +122,7 @@ export function liveVerb(os: OsStore, region: PlacementRegion): string {
   return pinned ? 'frappe.placement.remove-dock' : 'frappe.placement.add-dock'
 }
 
-// The set of placement command ids to DROP from a resolved File menu: the dead half of each
+// The set of placement command ids to DROP from a resolved Window menu: the dead half of each
 // Add/Remove pair. The projector (menubar.ts) filters resolved items through this so exactly the
 // live Add-or-Remove of each region renders. A bare desktop (no active surface to pin) drops ALL
 // four — a verb that could only no-op never shows.

@@ -8,9 +8,9 @@ import { invoke } from './contributions'
 import { suppressedToggleCommands } from './menu-contributions'
 import { suppressedPlacementCommands } from './placement-verbs'
 import { projectRegion } from './project'
-import { FILE_REGION } from './regions'
+import { FILE_REGION, APP_REGION, VIEW_REGION, WINDOW_REGION } from './regions'
 import { surfaceAppId } from '@/surface'
-import type { Action, Command } from './types'
+import type { Action, Command, ResolvedAction } from './types'
 import type { OsStore } from '@/types'
 
 // One rendered menu item (label + click) and one divider group — the OSDropdown options shape.
@@ -36,6 +36,23 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
   group.items.push({ label, onClick: () => invoke(command, os) })
 }
 
+// Menus that speak for the front app/window/surface, not the OS itself. An `os`-scope command in one
+// of these is a scope lie (ADR-0039 rule 3) — full screen names the whole machine, so it lives in the
+// System menu, never here. The System/File/Edit/Help menus are OS-neutral and carry no such rule.
+const APP_CONNOTING_REGIONS = new Set<string>([APP_REGION, VIEW_REGION, WINDOW_REGION])
+
+// Scope-honesty guard, checked at projection time (never a silent reshuffle): warn loudly if an
+// os-scope command resolved into an app-connoting menu. A guard for future misplacements — the
+// first-party set keeps full screen in System, so this fires only when a contribution breaks the rule.
+function warnScopeDishonesty(regionId: string, live: ResolvedAction[]): void {
+  if (!APP_CONNOTING_REGIONS.has(regionId)) return
+  for (const { action, command } of live) {
+    if (action.scope?.tier === 'os') {
+      console.warn(`[actions] ⚠ scope-dishonesty: os-scope command "${command.id}" placed in app-connoting menu ${regionId} (ADR-0039 rule 3)`)
+    }
+  }
+}
+
 // A menu Region, resolved against the live Context and grouped into its divider sections. The dead
 // half of every live-state toggle pair (fullscreen; the File menu's Add/Remove pin verbs) is dropped
 // by state so only the live verb of each pair renders — a per-command suppression that only touches
@@ -43,6 +60,7 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
 export function menuOptions(regionId: string, os: OsStore): MenuGroup[] {
   const dead = new Set([...suppressedPlacementCommands(os), ...suppressedToggleCommands(os)])
   const live = projectRegion(regionId, os).filter((r) => !dead.has(r.action.command))
+  warnScopeDishonesty(regionId, live)
   const groups: MenuGroup[] = []
   for (const { action, command } of live) appendItem(groups, action, command, os)
   return groups

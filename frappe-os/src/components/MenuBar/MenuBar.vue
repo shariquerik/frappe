@@ -28,6 +28,16 @@ const textMenus = [
 	{ region: HELP_REGION, label: "Help", slot: "help" },
 ];
 
+// A menu is EARNED (ADR-0039 rule 1): its title renders only when at least one real, eligible
+// Action resolves into its Region for the current Context. So File/Edit/View appear and disappear
+// with focus, while the frame menus (Window/Help) stay because the OS always backs them. Resolve
+// once per menu here — the template renders only the non-empty ones.
+const visibleTextMenus = computed(() =>
+	textMenus
+		.map((menu) => ({ ...menu, options: menuOptions(menu.region, os) }))
+		.filter((menu) => menu.options.length > 0),
+);
+
 // The menu-bar avatar shares the own-user doc with Settings ▸ Account (useAccount is a
 // singleton, load() no-ops once loaded), so the photo shows here without a second fetch.
 const account = useAccount();
@@ -104,9 +114,9 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 			</button>
 		</OSDropdown>
 		<OSDropdown
-			v-for="menu in textMenus"
+			v-for="menu in visibleTextMenus"
 			:key="menu.region"
-			:options="menuOptions(menu.region, os)"
+			:options="menu.options"
 			placement="bottom-start"
 			><button :class="btnCls(false)" :data-menu="menu.slot">{{ menu.label }}</button></OSDropdown
 		>

@@ -24,7 +24,7 @@ is **no `<router-view>` UI**. The URL is a side-channel that only mirrors the *f
 - **A window** = an entry in `state.windows[]` carrying its `id`, its `surface` (WHAT it shows —
   a builtin dashboard/list/form/settings surface or an applet, ADR-0012), and per-window nav
   history. The **id encodes the role**: `windowRole(id)` derives `app`|`settings`|`system` from
-  the id prefix. An app can have **multiple instances** (File ▸ New window): the first is the
+  the id prefix. An app can have **multiple instances** (Window ▸ New window): the first is the
   **canonical instance** (owns the bare `/os/<app>` path), extras get a `#n` suffix and are
   addressed by `?instance=n`. There is no separate record/pop-out window kind — opening a record
   in a new window mints an ordinary app instance already on that record's form (ADR-0016/0017).
@@ -62,7 +62,11 @@ the thin `src/types.ts` barrel so `@/types` stays one stable import path. What e
   menu and every surface toolbar renders through the one `projectRegion` path — menus via
   `menuOptions`, toolbars via `toolbarItems`. First-party OS verbs are `frappe` Commands/Actions
   (`menu-contributions.ts`); an app's folded contributions compete with them, so any menu is
-  customizable (ADR-0001/0007/0014/0032). `contributions.ts` is the run-Handler mechanism only.
+  customizable (ADR-0001/0007/0014/0032). The bar is **earned** (ADR-0039): a menu renders only
+  when a real Action resolves into it, so the OS owns no File menu (apps earn it), whole-OS verbs
+  like full screen live in System not View, and the pin verbs live in Window. `contributions.ts`
+  is the run-Handler mechanism only — a run Handler receives an **Invocation** (context + selection
+  snapshot frozen at click, ADR-0037), never the bare store.
 - `indicators/`, `placements/`, `recents/`, `wallpapers/` — the live-meta indicator model
   (ADR-0028), the user-arrangeable desktop/dock Placements (App<Site<User, ADR-0023), the per-user
   Recents record-open log (ADR-0024), and the wallpaper catalog/selection (ADR-0036). Each is a
