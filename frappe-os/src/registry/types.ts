@@ -34,6 +34,18 @@ export interface SurfaceRef {
   app?: string
 }
 
+// An app-declared menu-bar menu (ADR-0039 rule 2): its stable `id` (the menuId tail of the
+// `menubar:app:<appId>:<menuId>` Region), the dropdown `title`, and its render `order` among the
+// app's middle menus. Declared as data in an app's `os/menus.json`; the owning app (whose bar it
+// joins) is the contribution's `target` — any app may author a menu into any real app's band
+// (ADR-0001), the OS qualifies the id with that owning app to form the Region. Earned like every
+// menu — one with no eligible Action renders no title.
+export interface MenuDef {
+  id: string
+  title: string
+  order?: number
+}
+
 // How the OS classifies a contributing app from its Registry contributions alone (ADR-0014
 // item 4): a `feature` app ships a doctype/view/applet/card surface; a `pure-customization`
 // app contributes only chrome (command/action/patch). Used to decide whether a chrome removal

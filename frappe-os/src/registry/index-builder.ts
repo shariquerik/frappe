@@ -2,11 +2,11 @@
 // into the RegistryIndex every accessor in ./store reads. Singletons shallow patch-merge
 // (ADR-0007); collections accumulate in sorted order. The ingest path (./ingest) produces the
 // Contribution[] this consumes — from the config seed offline, or the server overlay at boot.
-import { APP_T, DISPLAY, VIEW, CARD, APPLET, COMMAND, ACTION, DEFAULT_SURFACE } from './extension-points'
+import { APP_T, DISPLAY, VIEW, CARD, APPLET, COMMAND, ACTION, DEFAULT_SURFACE, MENU } from './extension-points'
 import { FIRST_PARTY } from './applets'
 import type { AppletEntry, AppletPayload } from './applets'
 import type {
-  Action, AppDef, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, SurfaceRef,
+  Action, AppDef, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef,
 } from '@/types'
 
 export interface RegistryIndex {
@@ -15,6 +15,7 @@ export interface RegistryIndex {
   display: Record<string, DoctypeMeta>          // singleton per doctype (patch-merged)
   views: Record<string, DoctypeViewPayload[]>   // ordered collection per doctype
   cards: Record<string, Card[]>                 // ordered collection per app
+  menus: Record<string, MenuDef[]>              // owning app → its declared menu-bar menus (ADR-0039)
   owner: Record<string, string>                 // doctype → owning app
   applets: Record<string, AppletEntry>          // appletId → resolvable entry (ADR-0009)
   commands: Command[]                           // Action-model verbs folded from boot (App/OS scope)
@@ -53,6 +54,17 @@ export function addToIndex(ix: RegistryIndex, c: Contribution): void {
   }
   else if (c.type === VIEW) (ix.views[c.target] ||= []).push(c.payload as DoctypeViewPayload)
   else if (c.type === CARD) (ix.cards[c.target] ||= []).push(c.payload as Card)
+  // An app-declared menu (ADR-0039 rule 2) joins its OWNING app's bar (target). Authorship is open —
+  // any app may declare a menu into another app's band (a custom app extends erpnext, ADR-0001) — but
+  // the grammar stays closed: the target must be a REAL OS app in the registry, else it is inventing
+  // a menu in the OS frame or a non-existent app. That contribution is dropped LOUDLY, never rendered.
+  else if (c.type === MENU) {
+    if (!ix.appById[c.target]) {
+      console.warn(`[registry] dropped app-menu "${(c.payload as MenuDef).id}" from "${c.sourceApp}": target "${c.target}" is not an OS app (ADR-0039)`)
+    } else {
+      (ix.menus[c.target] ||= []).push(c.payload as MenuDef)
+    }
+  }
   else if (c.type === APPLET) {
     const p = c.payload as AppletPayload
     // `kind` is the ADR-0020 content-production flag (native | framed); a declaration that
@@ -81,7 +93,7 @@ export function indexContributions(contribs: Contribution[]): RegistryIndex {
   const apps = sorted.filter((c) => c.type === APP_T).map((c) => c.payload as AppDef)
   const ix: RegistryIndex = {
     apps, appById: Object.fromEntries(apps.map((a) => [a.id, a])),
-    display: {}, views: {}, cards: {}, owner: ownerMap(apps),
+    display: {}, views: {}, cards: {}, menus: {}, owner: ownerMap(apps),
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
     liveActions: {}, liveCommands: {}, // per-doctype live-meta slices (ADR-0032), filled by registerScopedContributions

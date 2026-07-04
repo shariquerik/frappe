@@ -10,3 +10,4 @@ export const APPLET = 'applet'
 export const COMMAND = 'command'   // the Action model's verb (CONTEXT.md → Command)
 export const ACTION = 'action'     // a verb's placement into a Region (CONTEXT.md → Action)
 export const DEFAULT_SURFACE = 'default-surface' // an app's declared surface reference (ADR-0021)
+export const MENU = 'app-menu'     // an app-declared menu-bar menu, target = the owning app (ADR-0039)

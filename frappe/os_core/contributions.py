@@ -226,6 +226,26 @@ def action_contributions():
 	)
 
 
+def menu_contributions():
+	"""App-declared menu-bar menu contributions (ADR-0039 rule 2): each installed OS app declares the
+	menus it adds in its `os/menus.json` manifest — `[{id, title, order?, target?}]`. Each becomes an
+	`app-menu` contribution whose `target` is the app whose bar the menu joins (`target` defaults to the
+	declaring app — the common self case). Authorship is open (ADR-0001): an app may declare a menu into
+	ANOTHER real app's band (a custom app extending erpnext), so `target` may differ from `sourceApp`;
+	the client drops a target that is not a real OS app. The client qualifies id → a
+	`menubar:app:<target>:<id>` Region, rendered while the target app is focused. A menu missing id/title
+	is rejected loudly (never crashes boot); ordering rides the declared `order`."""
+
+	def project(spec, app):
+		return "app-menu", spec.get("target", app), spec["id"], {
+			"id": spec["id"],
+			"title": spec["title"],
+			"order": spec.get("order", 0),
+		}
+
+	return _manifest_contributions("menus.json", ("id", "title"), project)
+
+
 def _doctype_scope(scope_file, doctype):
 	"""The Scope a doctype-manifest file implies (ADR-0032): `doctype.json` carries to all views
 	(Doctype scope); `list.json` / `form.json` are View scope for that one view."""

@@ -13,7 +13,7 @@ import type { AppletInfo, AppletKind } from './applets'
 import { ACTION, APPLET, COMMAND, DISPLAY } from './extension-points'
 import type { Component } from 'vue'
 import type {
-  Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, SurfaceRef,
+  Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef,
 } from '@/types'
 
 function buildIndex(boot?: BootData | null): RegistryIndex {
@@ -120,6 +120,17 @@ export function appWorkspaces(appId: string): string[] {
   return (ensureIndex().appById[appId]?.modules ?? []).map((m) => workspaceSlug(m.name))
 }
 
+// The menu-bar menus declared into an app's own bar (ADR-0039 rule 2), in render order. Each
+// becomes a `menubar:app:<appId>:<id>` Region the MenuBar projects (earned — an empty one is not
+// rendered). Menus are a Collection, so two apps may declare the same menu id into one bar (a custom
+// app extending erpnext's "Reports"); deduped by id, FIRST-SEEN wins its title/order — the same
+// first-wins rule the Command fold uses — then sorted by the declared `order`.
+export function appMenus(appId: string): MenuDef[] {
+  const seen = new Set<string>()
+  const unique = (ensureIndex().menus[appId] || []).filter((m) => !seen.has(m.id) && seen.add(m.id))
+  return [...unique].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
 // Resolve a URL workspace segment to a canonical workspace id for `app`, or undefined when it
 // names none — the membership guard route-map uses to tell a workspace segment from a doctype
 // (ADR-0040). Honest absence: an unrecognised segment is NOT a workspace, never a guess.
@@ -145,6 +156,7 @@ export function useRegistry() {
     displayConfig: getMeta,
     views: (doctype: string): DoctypeViewPayload[] => ix.views[doctype] || [],
     cards: (appId: string): Card[] => ix.cards[appId] || [],
+    menus: appMenus,
     knownApplet,
     appletKind,
     appletWantsNav,

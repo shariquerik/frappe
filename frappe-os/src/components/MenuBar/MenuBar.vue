@@ -9,34 +9,29 @@ import { Avatar } from "frappe-ui";
 import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
 import {
-  menuOptions, SYSTEM_REGION, APP_REGION,
+  menuOptions, appMenuRegion, SYSTEM_REGION, APP_REGION,
   FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
 } from "@/actions";
+import { useRegistry } from "@/registry";
 import { useAccount } from "@/data/account";
 import { windowRole, systemWindowTitle } from "@/surface";
 import type { OsWindow } from "@/types";
 
 const os = useOS();
 
-// The five text menus, left-to-right; system + app carry logo triggers so they stay explicit.
-// `slot` is the region's short tail, used as the stable `data-menu` test hook.
-const textMenus = [
-	{ region: FILE_REGION, label: "File", slot: "file" },
-	{ region: EDIT_REGION, label: "Edit", slot: "edit" },
-	{ region: VIEW_REGION, label: "View", slot: "view" },
-	{ region: WINDOW_REGION, label: "Window", slot: "window" },
-	{ region: HELP_REGION, label: "Help", slot: "help" },
+// The OS-owned MIDDLE menus (File/Edit/View) carry fixed `order` slots with gaps; app-declared menus
+// (ADR-0039 rule 2) interleave AMONG them by their own declared order — raven's Format can sit between
+// File and Edit. The FRAME menus (Window/Help) are always OS-backed and pinned after the middle band.
+// System + App carry logo triggers so they stay explicit. `slot` is the short `data-menu` test hook.
+const MIDDLE_MENUS = [
+	{ region: FILE_REGION, label: "File", slot: "file", order: 10 },
+	{ region: EDIT_REGION, label: "Edit", slot: "edit", order: 20 },
+	{ region: VIEW_REGION, label: "View", slot: "view", order: 30 },
 ];
-
-// A menu is EARNED (ADR-0039 rule 1): its title renders only when at least one real, eligible
-// Action resolves into its Region for the current Context. So File/Edit/View appear and disappear
-// with focus, while the frame menus (Window/Help) stay because the OS always backs them. Resolve
-// once per menu here — the template renders only the non-empty ones.
-const visibleTextMenus = computed(() =>
-	textMenus
-		.map((menu) => ({ ...menu, options: menuOptions(menu.region, os) }))
-		.filter((menu) => menu.options.length > 0),
-);
+const FRAME_MENUS = [
+	{ region: WINDOW_REGION, label: "Window", slot: "window", order: 0 },
+	{ region: HELP_REGION, label: "Help", slot: "help", order: 0 },
+];
 
 // The menu-bar avatar shares the own-user doc with Settings ▸ Account (useAccount is a
 // singleton, load() no-ops once loaded), so the photo shows here without a second fetch.
@@ -47,6 +42,30 @@ const activeWin = computed(() => os.state.windows.find((w) => w.id === os.state.
 const appIdOf = (w?: OsWindow) => (w && (w.surface as { appId?: string }).appId) || null;
 const aid = computed(() => appIdOf(activeWin.value));
 const aname = computed(() => (aid.value ? os.DATA.APP[aid.value].name : "Finder"));
+
+// The focused app's declared menus (ADR-0039 rule 2), each mapped to its `menubar:app:<app>:<id>`
+// Region. Only the front app's menus render — the app-qualified Region and the Actions' app scope
+// keep another app's menus out. Empty for the bare desktop (Finder) or an app that declares none.
+const appMenus = computed(() => {
+	const appId = aid.value;
+	if (!appId) return [];
+	return useRegistry().menus(appId).map((menu) => ({
+		region: appMenuRegion(appId, menu.id), label: menu.title, slot: `app-${menu.id}`, order: menu.order ?? 100,
+	}));
+});
+
+// A menu is EARNED (ADR-0039 rule 1): its title renders only when at least one real, eligible Action
+// resolves into its Region for the current Context. The middle band is the OS middle menus ⊕ the app's
+// declared menus, interleaved by order, each resolved once and dropped when empty; the frame menus
+// (Window/Help) follow, likewise earned. The template renders only the non-empty ones.
+const middleMenus = computed(() =>
+	[...MIDDLE_MENUS, ...appMenus.value].sort((left, right) => left.order - right.order),
+);
+const visibleMenus = computed(() =>
+	[...middleMenus.value, ...FRAME_MENUS]
+		.map((menu) => ({ ...menu, options: menuOptions(menu.region, os) }))
+		.filter((menu) => menu.options.length > 0),
+);
 const appLogo = computed(() => (aid.value ? os.DATA.APP[aid.value].logo : null));
 // The bold app-menu label names what's front-most. An app's settings pane keeps the app's own
 // identity here (name + logo) — the "CRM settings" title lives only in its window chrome — so
@@ -114,7 +133,7 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 			</button>
 		</OSDropdown>
 		<OSDropdown
-			v-for="menu in visibleTextMenus"
+			v-for="menu in visibleMenus"
 			:key="menu.region"
 			:options="menu.options"
 			placement="bottom-start"

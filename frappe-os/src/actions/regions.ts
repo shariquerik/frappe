@@ -30,6 +30,29 @@ export const LIST_TOOLBAR = 'list:toolbar'
 export const LIST_SELECTION = 'list:selection'
 export const FORM_TOOLBAR = 'form:toolbar'
 
+// The one PARAMETERIZED Region form (ADR-0039 rule 2): an app-declared menu-bar menu. The App slot
+// grows sub-coordinates — `menubar:app:<appId>:<menuId>` — so the id names both the OWNING app (whose
+// bar the menu joins, and while focused it renders) and the app's own menu. App-qualified, so two
+// apps' like-named menus never collide and ownership is structural. The bare App menu (`menubar:app`,
+// no tail) stays OS-owned and is NOT one of these. Authorship is open (ADR-0001): any app may declare
+// a menu into any REAL app's band (a custom app extends erpnext); only the grammar stays closed.
+export const APP_MENU_PREFIX = `${APP_REGION}:` // 'menubar:app:'
+
+// Build the Region an app-declared menu resolves through, from its owning app + menu id.
+export function appMenuRegion(appId: string, menuId: string): string {
+  return `${APP_MENU_PREFIX}${appId}:${menuId}`
+}
+
+// Parse an app-menu Region back into its (appId, menuId), or null if it is not the parameterized
+// form — the bare App menu `menubar:app` and every OS-frame region (`menubar:file`, …) yield null,
+// as does a malformed tail (missing segment or a colon inside the menu id).
+export function parseAppMenuRegion(region: string): { appId: string; menuId: string } | null {
+  if (!region.startsWith(APP_MENU_PREFIX)) return null
+  const [appId, menuId, ...rest] = region.slice(APP_MENU_PREFIX.length).split(':')
+  if (!appId || !menuId || rest.length) return null
+  return { appId, menuId }
+}
+
 // The two desktop-chrome context menus (right-click the wallpaper / the dock). CONTEXT.md's Region
 // entry already names them; they join the closed set so an app can contribute or customize their
 // entries exactly as it does any menu-bar menu (ADR-0001). Ungated — they always render whatever

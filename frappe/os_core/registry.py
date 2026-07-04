@@ -172,6 +172,7 @@ def get_registry():
 	rows.extend(contributions.applet_contributions())
 	rows.extend(contributions.command_contributions())
 	rows.extend(contributions.action_contributions())
+	rows.extend(contributions.menu_contributions())
 	return {"schemaVersion": 1, "contributions": rows}
 
 

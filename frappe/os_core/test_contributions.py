@@ -136,6 +136,56 @@ class TestCommandContributions(unittest.TestCase):
 		self.assertEqual(contributions.command_contributions(), [])
 
 
+class TestMenuContributions(unittest.TestCase):
+	"""App-declared menu-bar menus load from the `os/menus.json` manifest (ADR-0039 rule 2). Any app
+	may declare a menu into another REAL app's bar (cross-app extension), so `target` defaults to the
+	declaring app but may name another; a menu missing id/title is rejected. Injected app list +
+	manifest read, so it runs with no site/DB."""
+
+	def setUp(self):
+		self._apps = contributions._installed_os_apps
+		self._read = contributions.manifest.read
+		self._logger = frappe.logger
+		contributions._installed_os_apps = lambda: ["erpnext"]
+		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
+
+	def tearDown(self):
+		contributions._installed_os_apps = self._apps
+		contributions.manifest.read = self._read
+		frappe.logger = self._logger
+
+	def test_projects_menus_json_targeting_the_declaring_app_by_default(self):
+		contributions.manifest.read = lambda app, *segments: [{"id": "reports", "title": "Reports", "order": 20}]
+		out = contributions.menu_contributions()
+		self.assertEqual(len(out), 1)
+		self.assertEqual(out[0]["type"], "app-menu")
+		self.assertEqual(out[0]["name"], "reports")
+		self.assertEqual(out[0]["target"], "erpnext")  # defaults to the declaring app (the self case)
+		self.assertEqual(out[0]["sourceApp"], "erpnext")
+		self.assertEqual(out[0]["payload"], {"id": "reports", "title": "Reports", "order": 20})
+
+	def test_an_explicit_target_declares_into_another_app_bar(self):
+		contributions.manifest.read = lambda app, *segments: [{"id": "pricing", "title": "Pricing", "target": "shopify"}]
+		out = contributions.menu_contributions()
+		self.assertEqual(out[0]["target"], "shopify")  # cross-app: joins another app's bar
+		self.assertEqual(out[0]["sourceApp"], "erpnext")  # authored by the declaring app
+		self.assertEqual(out[0]["payload"]["order"], 0)  # order defaults to 0
+
+	def test_reads_menus_json_by_that_filename(self):
+		seen = []
+		contributions.manifest.read = lambda app, *segments: seen.append(segments) or None
+		contributions.menu_contributions()
+		self.assertEqual(seen, [("menus.json",)])
+
+	def test_menu_missing_a_required_key_is_skipped(self):
+		contributions.manifest.read = lambda app, *segments: [{"id": "reports"}]  # no title
+		self.assertEqual(contributions.menu_contributions(), [])
+
+	def test_absent_manifest_declares_no_menus(self):
+		contributions.manifest.read = lambda app, *segments: None
+		self.assertEqual(contributions.menu_contributions(), [])
+
+
 class TestScopeStamping(unittest.TestCase):
 	"""Delivery-by-scope (ADR-0032): the projector stamps the Scope a manifest tier implies. An
 	app's `os/actions.json` is App scope (boot); a doctype's `os/` manifest is Doctype/View scope

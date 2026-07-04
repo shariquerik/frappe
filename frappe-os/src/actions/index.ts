@@ -17,6 +17,7 @@ export {
   REGIONS, regionById, regionRenders, MENUBAR_REGIONS,
   SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
   LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR, DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION,
+  APP_MENU_PREFIX, appMenuRegion, parseAppMenuRegion,
 } from './regions'
 export type { Region } from './regions'
 export { MENUBAR_COMMANDS, MENUBAR_ACTIONS, suppressedToggleCommands } from './menu-contributions'

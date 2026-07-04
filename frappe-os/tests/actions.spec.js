@@ -20,6 +20,7 @@ import {
   REGIONS, regionById, regionRenders, MENUBAR_REGIONS,
   SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
   LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR, DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION,
+  appMenuRegion, parseAppMenuRegion,
 } from '../src/actions/regions'
 import { isValidKind, kindNamespace, warnForeignKind, ROWS, CORE_KINDS } from '../src/actions/kinds'
 import { useOS } from '../src/desktop/index'
@@ -1089,6 +1090,78 @@ describe('Region ⟂ Scope (surface-embedded Regions render via the resolver)', 
     const { items } = resolve([bulk], LIST_SELECTION, { doctype: 'CRM Lead' })
     expect(items).toHaveLength(1)
     expect(items[0].when).toBeUndefined() // no selection when hand-written on the Action
+  })
+})
+
+// ADR-0039 rule 2 — app-declared menus. The App slot grows a parameterized Region
+// `menubar:app:<appId>:<menuId>`: an app declares menus into a bar, ANY app may declare into a REAL
+// app's band (cross-app extension, ADR-0001), and each renders only while its owning app is focused.
+describe('app-declared menus (menubar:app:<appId>:<menuId>, ADR-0039 rule 2)', () => {
+  it('builds and parses the app-qualified Region', () => {
+    expect(appMenuRegion('erpnext', 'reports')).toBe('menubar:app:erpnext:reports')
+    expect(parseAppMenuRegion('menubar:app:erpnext:reports')).toEqual({ appId: 'erpnext', menuId: 'reports' })
+  })
+
+  it('parseAppMenuRegion rejects the bare App menu, OS-frame regions, and malformed tails', () => {
+    expect(parseAppMenuRegion(APP_REGION)).toBeNull()             // the OS-owned App menu, not app-declared
+    expect(parseAppMenuRegion(FILE_REGION)).toBeNull()            // an OS-frame region
+    expect(parseAppMenuRegion('menubar:app:erpnext')).toBeNull()  // missing menuId
+    expect(parseAppMenuRegion('menubar:app:erpnext:a:b')).toBeNull() // a colon inside the tail
+  })
+
+  it('an app-menu Region sits outside the closed set, so it is ungated — its Actions carry the gate', () => {
+    const region = appMenuRegion('erpnext', 'reports')
+    expect(regionById(region)).toBeUndefined()
+    expect(regionRenders(regionById(region), {})).toBe(true)
+  })
+
+  it('an app-scoped Action into an app-menu Region resolves only when that app is front', () => {
+    const region = appMenuRegion('erpnext', 'reports')
+    const a = { command: 'c', region, sourceApp: 'erpnext', scope: { tier: 'app', app: 'erpnext' } }
+    expect(resolve([a], region, { activeApp: 'erpnext' }).items).toHaveLength(1)
+    expect(resolve([a], region, { activeApp: 'crm' }).items).toEqual([]) // another app front → hidden
+  })
+
+  // Cross-app: crm authors an Action into erpnext's Reports menu (Shariq's custom-app case). The item
+  // is eligible under erpnext's Context (an explicit when), so it renders in erpnext's bar though crm
+  // shipped it — placement crosses apps freely (ADR-0001); only the menu grammar stays closed.
+  const os = useOS()
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const menu = (id, title, target, sourceApp, order) =>
+    ({ type: 'app-menu', target, name: id, sourceApp, payload: { id, title, order } })
+  const REPORTS = appMenuRegion('erpnext', 'reports')
+  const command = {
+    type: 'command', target: '', name: 'crm.report.pipeline', sourceApp: 'crm',
+    payload: { id: 'crm.report.pipeline', sourceApp: 'crm', title: 'Pipeline Report', handler: { kind: 'run', ref: 'noop' } },
+  }
+  const crmItemInErpnextReports = {
+    type: 'action', target: REPORTS, name: 'crm.report.pipeline', sourceApp: 'crm',
+    payload: { command: 'crm.report.pipeline', region: REPORTS, sourceApp: 'crm', when: { activeApp: 'erpnext' } },
+  }
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [
+      app('frappe', 'Frappe', 0), app('crm', 'CRM', 1), app('erpnext', 'ERPNext', 2),
+      menu('reports', 'Reports', 'erpnext', 'erpnext', 20), command, crmItemInErpnextReports,
+    ] },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.activeId = null
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    registerRunHandlers({ noop: () => {} })
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  it('renders erpnext\'s Reports menu carrying crm\'s item when erpnext is focused (cross-app, earned)', () => {
+    os.openApp('erpnext')
+    expect(menuOptions(REPORTS, os).flatMap((g) => g.items).map((i) => i.label)).toEqual(['Pipeline Report'])
+  })
+
+  it('hides the same menu when another app is focused (earned — no eligible Action resolves)', () => {
+    os.openApp('crm')
+    expect(menuOptions(REPORTS, os)).toEqual([])
   })
 })
 

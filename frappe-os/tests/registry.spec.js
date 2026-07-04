@@ -3,7 +3,7 @@
 // renderer + os-api read: the ordered app collection, doctype→app ownership, the merged
 // display-config singleton, the views collection, and the per-app dashboard-card
 // collection. Backed by the real curated config (frappe/crm/erpnext) — no mocks.
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
 } from '../src/registry'
@@ -107,6 +107,51 @@ describe('default-surface contributions', () => {
       surface('raven', { applet: 'reports' }, 'user', 2),        // User layer (sorted later → wins)
     ]))
     expect(useRegistry().defaultSurface('raven')).toEqual({ applet: 'reports' })
+  })
+})
+
+// Slice 06 (ADR-0039 rule 2): an app declares menu-bar menus in its `os/menus.json`; the server
+// projects each as an `app-menu` contribution whose `target` is the owning app. useRegistry().menus
+// folds them per owning app — deduped by id (first-seen wins) and sorted by declared order — and
+// drops loudly a menu whose target is not a real OS app (the grammar stays closed).
+describe('app-declared menu contributions', () => {
+  afterEach(() => initRegistry(null))
+  const boot = (contributions) =>
+    ({ user: 'a', csrf_token: 't', roles: [], registry: { schemaVersion: 1, contributions }, permissions: {} })
+  const app = (id) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name: id }, order: 0 })
+  const menu = (id, title, target, sourceApp, order) =>
+    ({ type: 'app-menu', target, name: id, sourceApp, payload: { id, title, order } })
+
+  it('folds a menu into its owning app\'s collection, sorted by declared order', () => {
+    initRegistry(boot([app('erpnext'), menu('reports', 'Reports', 'erpnext', 'erpnext', 20), menu('create', 'Create', 'erpnext', 'erpnext', 10)]))
+    expect(useRegistry().menus('erpnext')).toEqual([
+      { id: 'create', title: 'Create', order: 10 },
+      { id: 'reports', title: 'Reports', order: 20 },
+    ])
+  })
+
+  it('accepts a menu authored by another app into a real app\'s band (cross-app extension)', () => {
+    initRegistry(boot([app('erpnext'), app('acme'), menu('pricing', 'Pricing', 'erpnext', 'acme', 25)]))
+    expect(useRegistry().menus('erpnext')).toEqual([{ id: 'pricing', title: 'Pricing', order: 25 }])
+  })
+
+  it('drops loudly a menu whose target is not a real OS app (frame or typo)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    initRegistry(boot([app('erpnext'), menu('x', 'X', 'notanapp', 'erpnext', 0), menu('y', 'Y', 'menubar:file', 'erpnext', 0)]))
+    expect(useRegistry().menus('notanapp')).toEqual([])
+    expect(useRegistry().menus('menubar:file')).toEqual([])
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('not an OS app'))
+    warn.mockRestore()
+  })
+
+  it('dedupes a doubly-declared menu id by first-seen (a later app can\'t silently retitle it)', () => {
+    initRegistry(boot([app('erpnext'), menu('reports', 'Reports', 'erpnext', 'erpnext', 0), menu('reports', 'Hijacked', 'erpnext', 'acme', 0)]))
+    expect(useRegistry().menus('erpnext')).toEqual([{ id: 'reports', title: 'Reports', order: 0 }])
+  })
+
+  it('is empty for an app that declares no menus', () => {
+    initRegistry(boot([app('erpnext')]))
+    expect(useRegistry().menus('erpnext')).toEqual([])
   })
 })
 
