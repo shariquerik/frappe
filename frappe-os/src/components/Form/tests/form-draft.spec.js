@@ -6,9 +6,9 @@
 //     FormLayout + the full store, breaking the repo's pure-logic test convention).
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { computed, createApp, effectScope, nextTick, ref, watch } from 'vue'
-import { state } from '../src/desktop/state'
-import { WORKING_STATE_CONTEXT, useWorkingState } from '../src/desktop/use-working-state'
-import { seedDraft, draftToStore, changedFields } from '../src/components/Form/draft'
+import { state } from '@/desktop/state'
+import { WORKING_STATE_CONTEXT, useWorkingState } from '@/desktop/use-working-state'
+import { seedDraft, draftToStore, changedFields } from '../draft'
 
 describe('seedDraft', () => {
   it('adopts a held draft as-is (edits survive a remount)', () => {

@@ -6,13 +6,13 @@
 // User-layer desktop Placement override through the one write path. The layered placement merge and
 // the URL bridge are tested elsewhere (placements.spec / route-map.spec) — not re-tested here.
 import { beforeEach, afterEach, describe, expect, it } from 'vitest'
-import { useOS } from '../src/desktop/index'
-import { windowRole, placementSurface } from '../src/surface'
-import { serialize } from '../src/desktop/persistence'
-import { initRegistry } from '../src/registry'
-import { initPlacements, usePlacements, applyLocalOverride } from '../src/placements'
-import { initRecents } from '../src/recents'
-import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../src/components/Finder/locations'
+import { useOS } from '@/desktop/index'
+import { windowRole, placementSurface } from '@/surface'
+import { serialize } from '@/desktop/persistence'
+import { initRegistry } from '@/registry'
+import { initPlacements, usePlacements, applyLocalOverride } from '@/placements'
+import { initRecents } from '@/recents'
+import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../locations'
 
 const os = useOS()
 

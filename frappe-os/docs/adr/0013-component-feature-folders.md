@@ -50,6 +50,15 @@ the same (barrel + logic + `types.ts` + `tests/`), with one twist: the barrel's 
 export is the SFC**, because the applet loader (`store/registry.ts loadApplet`) resolves
 `load()` to a module whose `default` is the component.
 
+**Test placement is decided by folder kind, not by taste** (confirmed 2026-07-04). A
+**feature folder** under `components/` or `applets/` colocates its specs in a local `tests/`,
+next to the logic they cover — that is the whole point of the folder. A **subsystem folder**
+directly under `src/` (`desktop/`, `placements/`, `recents/`, `indicators/`, `registry/`, …)
+keeps its specs in the top-level `tests/`. So a spec's home is mechanical: is its subject a
+feature folder or a subsystem? A colocated spec imports its subject with `../<logic>` and
+anything cross-subsystem through the `@/` alias — never a top-level spec reaching down into a
+feature folder's internals, nor a colocated spec reaching up with `../../..`.
+
 This is recorded because it sets a **uniform shape every future component follows** and a
 **load-bearing test-glob dependency**, both cheap to honor going forward but disruptive to
 reverse once a dozen folders and their barrel imports exist.

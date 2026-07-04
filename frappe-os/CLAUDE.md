@@ -29,6 +29,13 @@ yarn cypress       # Cypress interactive runner
   before driving back/forward. **Needs a logged-in bench** behind `yarn dev` (live boot).
 - Always run `yarn test` after touching `desktop/*` or `routing/route-map.ts`; run Cypress after
   changing the URL↔focus bridge in `main.ts`.
+- **Where a spec lives is decided by its subject's folder kind** (ADR-0013). A **feature folder**
+  under `components/` or `applets/` colocates its specs in a local `tests/` (e.g.
+  `components/Finder/tests/finder.spec.js`); a **subsystem folder** directly under `src/`
+  (`desktop/`, `placements/`, `indicators/`, …) keeps its specs in the top-level `tests/`. The
+  Vitest glob (`vitest.config.js`) collects both homes — `tests/**` and `src/**` — so a colocated
+  spec is only run because that glob covers it. A colocated spec imports its subject with
+  `../<logic>` and anything cross-subsystem through the `@/` alias.
 
 ## TypeScript
 - The `src/` tree is now fully TypeScript (`.ts` / `<script lang="ts">`). Only the test

@@ -1,7 +1,7 @@
 // Record-indicator resolver (ADR-0028): decision table over the resolution order and the
 // lossy Frappe-color -> Badge-token mapping. Pure logic, no Vue/store (mirrors route-map.spec).
 import { describe, expect, it } from 'vitest'
-import { indicatorFor, normalizeColor } from '../indicator'
+import { indicatorFor, normalizeColor } from '../src/indicators/indicator'
 
 // A spec with every tier off; each test switches on only the tier it exercises. The former
 // field-name tiers (states/publication/enabled) are now OS default rules built server-side
