@@ -129,7 +129,7 @@ function addToIndex(ix: RegistryIndex, c: Contribution): void {
       appId: p.appId, label: p.label, assetUrl: p.assetUrl, kind: p.kind ?? 'native', nav: p.nav ?? false,
     }
   }
-  // Command/Action are Collections (ADR-0007): each app's hook-declared contributions
+  // Command/Action are Collections (ADR-0007): each app's manifest-declared contributions
   // accumulate here, then compete against the first-party OS defaults in the resolver
   // (the contextual override that lets erpnext re-title New window — Slice 2).
   else if (c.type === COMMAND) ix.commands.push(c.payload as Command)
@@ -294,8 +294,8 @@ export function getMeta(doctype: string): DoctypeMeta | null {
 // (routing/palette/persistence — "does this id exist?") and async resolveApplet (mount —
 // "give me the Vue component"). The map is seeded FIRST_PARTY ⊕ server `applet` contributions:
 // FIRST_PARTY are bundled into the OS build (can't come from the server — they're static
-// import()s the build code-splits); server contributions arrive from each app's `os_applets`
-// hook (server emission A) and fold in at index time. Offline / unit-test = FIRST_PARTY only.
+// import()s the build code-splits); server contributions arrive from each app's `os/applets/`
+// manifest (server emission A) and fold in at index time. Offline / unit-test = FIRST_PARTY only.
 // An entry resolves a Vue component two ways (mutually exclusive): `load` for a FIRST-PARTY
 // applet bundled into the OS (a static import the OS build code-splits), or `assetUrl` for a
 // SEPARATELY-BUILT applet shipped in another app's public assets, loaded at runtime as native
@@ -316,7 +316,7 @@ interface AppletEntry {
   nav: boolean
 }
 
-// The server `applet` contribution payload (ADR-0009, projected from the `os_applets` hook).
+// The server `applet` contribution payload (ADR-0009, projected from the `os/applets/` manifest).
 // `kind` is optional on the wire (ADR-0020) — absent means a native applet.
 interface AppletPayload {
   appletId: string

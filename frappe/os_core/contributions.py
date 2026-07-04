@@ -3,9 +3,9 @@
 #
 # Projecting an installed OS app's declarations into uniform Registry contributions (ADR-0001/0005).
 # An app opts into Frappe OS by shipping an `os/` manifest (ADR-0030); this reads that manifest as
-# data and emits the `app` identity, `default-surface`, applet, and action contributions (plus the
-# one surviving hook, `os_commands`). The envelope — sourceApp + ADR-0007 identity + declaration
-# order — is uniform and lives here once; `registry.py` assembles these with the doctype views.
+# data and emits the `app` identity, `default-surface`, applet, action, and command contributions.
+# The envelope — sourceApp + ADR-0007 identity + declaration order — is uniform and lives here
+# once; `registry.py` assembles these with the doctype views.
 
 import frappe
 from frappe.os_core import manifest
@@ -98,30 +98,6 @@ def _valid_contribution(spec, required, app, source):
 	return True
 
 
-def _hook_contributions(hook, required, project):
-	"""Project an installed-OS-app `os_*` hook into uniform Registry contributions (ADR-0001):
-	iterate installed OS apps only (ADR-0010), validate each entry (skip-with-warn, so one
-	malformed entry never crashes boot), and delegate the per-extension-point shape to `project`.
-	Still used for `os_commands`, the one OS hook ADR-0030 does not retire into the manifest."""
-	contributions = []
-	for app in _installed_os_apps():
-		for order, spec in enumerate(frappe.get_hooks(hook, app_name=app) or []):
-			if not _valid_contribution(spec, required, app, hook):
-				continue
-			contribution_type, target, name, payload = project(spec, app)
-			contributions.append(
-				{
-					"type": contribution_type,
-					"target": target,
-					"name": name,
-					"sourceApp": app,
-					"payload": payload,
-					"order": order,
-				}
-			)
-	return contributions
-
-
 def _project_specs(specs, required, project, app, source):
 	"""Validate a list of one app's manifest specs and project each into a uniform contribution
 	envelope (sourceApp + ADR-0007 identity + per-app declaration order). A malformed entry is
@@ -147,8 +123,8 @@ def _project_specs(specs, required, project, app, source):
 
 def _manifest_contributions(filename, required, project):
 	"""Project an installed-OS-app manifest file (`os/<filename>`, a JSON list) into uniform
-	Registry contributions (ADR-0030) — the folder-reader twin of `_hook_contributions`. Iterate
-	installed OS apps only (ADR-0010) and read the file as data (absent → skip, non-list →
+	Registry contributions (ADR-0030) — the single-file twin of `_manifest_folder_contributions`.
+	Iterate installed OS apps only (ADR-0010) and read the file as data (absent → skip, non-list →
 	skip-with-warn)."""
 	contributions = []
 	for app in _installed_os_apps():
@@ -200,21 +176,13 @@ def applet_contributions():
 
 
 def command_contributions():
-	"""Command contributions (Action model, CONTEXT.md → Command): each installed OS app declares
-	the verbs it adds/overrides via the `os_commands` hook. Identity (ADR-0007) is
-	(command, '', id, app); the payload is the client Command shape (id/sourceApp/title/handler).
-	The OS's own first-party File Commands stay bundled in the frontend (their run Handlers are
-	compiled in) — only app contributions flow through here."""
-
-	def project(spec, app):
-		return "command", "", spec["id"], {
-			"id": spec["id"],
-			"sourceApp": app,
-			"title": spec["title"],
-			"handler": spec["handler"],
-		}
-
-	return _hook_contributions("os_commands", ("id", "title", "handler"), project)
+	"""App-level Command contributions (Action model, CONTEXT.md → Command): each installed OS app
+	declares the verbs it adds/overrides in its `os/commands.json` manifest (ADR-0030) — the App-tier
+	twin of the doctype-scoped commands read off live meta. Identity (ADR-0007) is (command, '', id,
+	app); the payload is the client Command shape (id/sourceApp/title/handler). The OS's own
+	first-party File Commands stay bundled in the frontend (their run Handlers are compiled in) — only
+	app contributions flow through here."""
+	return _manifest_contributions("commands.json", ("id", "title", "handler"), _command_project)
 
 
 # Optional Action fields copied through to the client payload when present (ADR-0007): `when`

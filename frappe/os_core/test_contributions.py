@@ -87,6 +87,55 @@ class TestManifestFolderContributions(unittest.TestCase):
 		self.assertEqual(contributions._manifest_folder_contributions("applets", ("command",), _echo_project), [])
 
 
+class TestCommandContributions(unittest.TestCase):
+	"""App-level Commands load from the `os/commands.json` manifest (ADR-0030) — the App-tier twin
+	of the doctype-scoped commands read off live meta. The installed-app list and the manifest read
+	are injected, so it runs with no site/DB."""
+
+	def setUp(self):
+		self._apps = contributions._installed_os_apps
+		self._read = contributions.manifest.read
+		self._logger = frappe.logger
+		contributions._installed_os_apps = lambda: ["erpnext"]
+		frappe.logger = lambda *args, **kwargs: unittest.mock.Mock()
+
+	def tearDown(self):
+		contributions._installed_os_apps = self._apps
+		contributions.manifest.read = self._read
+		frappe.logger = self._logger
+
+	def test_projects_commands_json_into_the_client_command_shape(self):
+		handler = {"kind": "run", "ref": "erpnext-new-invoice"}
+		contributions.manifest.read = lambda app, *segments: [
+			{"id": "erpnext.new-invoice", "title": "New Invoice", "handler": handler}
+		]
+		out = contributions.command_contributions()
+		self.assertEqual(len(out), 1)
+		self.assertEqual(out[0]["type"], "command")
+		self.assertEqual(out[0]["name"], "erpnext.new-invoice")
+		self.assertEqual(out[0]["sourceApp"], "erpnext")
+		# Delivered unscoped — the verb is the same whoever places it (ADR-0007).
+		self.assertNotIn("scope", out[0]["payload"])
+		self.assertEqual(
+			out[0]["payload"],
+			{"id": "erpnext.new-invoice", "sourceApp": "erpnext", "title": "New Invoice", "handler": handler},
+		)
+
+	def test_reads_commands_json_by_that_filename(self):
+		seen = []
+		contributions.manifest.read = lambda app, *segments: seen.append(segments) or None
+		contributions.command_contributions()
+		self.assertEqual(seen, [("commands.json",)])
+
+	def test_command_missing_a_required_key_is_skipped(self):
+		contributions.manifest.read = lambda app, *segments: [{"id": "x", "title": "X"}]  # no handler
+		self.assertEqual(contributions.command_contributions(), [])
+
+	def test_absent_manifest_declares_no_commands(self):
+		contributions.manifest.read = lambda app, *segments: None
+		self.assertEqual(contributions.command_contributions(), [])
+
+
 class TestScopeStamping(unittest.TestCase):
 	"""Delivery-by-scope (ADR-0032): the projector stamps the Scope a manifest tier implies. An
 	app's `os/actions.json` is App scope (boot); a doctype's `os/` manifest is Doctype/View scope

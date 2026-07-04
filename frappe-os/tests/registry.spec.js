@@ -9,7 +9,7 @@ import {
 } from '../src/registry'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
-// alongside applets, so an app's hook-declared Command/Action override (erpnext's New window)
+// alongside applets, so an app's manifest-declared Command/Action override (erpnext's New window)
 // competes against the first-party OS defaults. These pin the client fold of those two new
 // contribution types; the resolver tiebreak itself lives in tests/actions.spec.js.
 describe('server-projected command/action contributions', () => {
@@ -216,7 +216,7 @@ describe('server-projected registry', () => {
     ({ type: 'applet', target: '', name: appletId, sourceApp: appId, payload: { appletId, appId, assetUrl, label }, order: 0 })
 
   it('folds a server applet contribution into the index (ADR-0009 server emission)', () => {
-    // erp-hello is no longer hardcoded — it arrives from erpnext's os_applets hook at boot.
+    // erp-hello is no longer hardcoded — it arrives from erpnext's os/applets/ manifest at boot.
     initRegistry(boot([app('erpnext', 'ERPNext'),
       applet('erp-hello', 'erpnext', '/assets/erpnext/os-applets/hello.js', 'ERPNext Hello')]))
     expect(listApplets()).toContainEqual({ appletId: 'erp-hello', appId: 'erpnext', label: 'ERPNext Hello' })

@@ -6,8 +6,13 @@
 
 An app declares everything it contributes to the OS in a **co-located `os/` folder — the OS
 manifest — discovered by convention**, not through scattered `os_*` hooks in `hooks.py`. Each
-doctype carries its own `os/` manifest the same way. This retires the `os_app`, `os_actions`, and
-`os_applets` hooks and gives every scope one home.
+doctype carries its own `os/` manifest the same way. This retires the `os_app`, `os_actions`,
+`os_commands`, and `os_applets` hooks and gives every scope one home.
+
+> **Amendment (2026-07-04).** App-level Commands now load from `os/commands.json`, the App-tier
+> twin of the doctype-scoped commands already read off a doctype's manifest. This retires the
+> `os_commands` hook — the last `os_*` hook this ADR had left standing — so every scope is now
+> manifest-delivered with no hook survivor.
 
 ## The shape
 
@@ -15,6 +20,7 @@ doctype carries its own `os/` manifest the same way. This retires the `os_app`, 
 erpnext/os/                         ← the APP manifest
   app.json                            identity + default_surface   (was: os_app hook)
   actions.json                        app-level actions            (was: os_actions flat list)
+  commands.json                       app-level commands           (was: os_commands hook)
   applets/                            applet declarations          (was: os_applets)
   …                                   room for more app-level OS config
 
