@@ -14,7 +14,7 @@ import { nextDockOrder } from '@/desktop/dock-model'
 import { nextFreeCell, layoutDesktop } from '@/desktop/grid'
 import type { OsStore, Surface, SurfaceRef, PlacementRegion } from '@/types'
 import type { Action, Command } from './types'
-import { registerRunHandlers } from './contributions'
+import { registerRunHandlers, type RunHandler } from './contributions'
 import { FILE_REGION } from './regions'
 
 // The surface reference (ADR-0021) a pin stores for what a window currently shows. Mirrors the
@@ -78,11 +78,13 @@ function removeFrom(os: OsStore, region: PlacementRegion): void {
 
 // The four verbs as run Handlers, registered into the OPEN RUN_HANDLERS map the same way the File
 // menu's own defaults are (registerRunHandlers) — no privileged core, the general app seam.
-export const PLACEMENT_RUN_HANDLERS = {
-  'add-to-desktop': addToDesktop,
-  'add-to-dock': addToDock,
-  'remove-from-desktop': (os: OsStore) => removeFrom(os, 'desktop'),
-  'remove-from-dock': (os: OsStore) => removeFrom(os, 'dock'),
+// Each verb acts on live pin state + the active window (not a Context coordinate), so it reaches
+// the store through the Invocation's `os` escape hatch (ADR-0037 — chrome-verb territory).
+export const PLACEMENT_RUN_HANDLERS: Record<string, RunHandler> = {
+  'add-to-desktop': ({ os }) => addToDesktop(os),
+  'add-to-dock': ({ os }) => addToDock(os),
+  'remove-from-desktop': ({ os }) => removeFrom(os, 'desktop'),
+  'remove-from-dock': ({ os }) => removeFrom(os, 'dock'),
 }
 
 // Wire the verbs into the open RUN_HANDLERS map on import (the same seam an app uses), so the

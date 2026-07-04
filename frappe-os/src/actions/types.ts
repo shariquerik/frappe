@@ -4,6 +4,11 @@
 // same way an Applet is (ADR-0008/0009). Re-exported via @/types.
 import type { Surface } from '@/surface/types'
 import type { AppKind } from '@/registry/types'
+import type { OsStore } from '@/data/types'
+
+// A pure-data JSON value — what a `run` Handler's static `args` payload may hold (ADR-0037). No
+// functions or class instances: an Action's declaration is data, folded through the registry.
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 
 // The override layers, in increasing precedence (ADR-0007). An Action defaults to 'app'.
 export type Layer = 'app' | 'site' | 'user'
@@ -32,9 +37,9 @@ export interface ScopeBinding {
 // `doctype`/`recordName`/`view`/`appletId`/`selection` are the *surface* tier. `selection` marks
 // that a multi-row selection EXISTS on the front list — the selection/bulk-bar Region gates on its
 // presence (regions.ts), never on its value. A field is `undefined` when the focus offers no such
-// coordinate (e.g. a list has no `recordName`, an empty list no `selection`). NOTE: contextForOS
-// does not populate `selection` yet — the window model carries no selection backing
-// (deferred-hardcoded: .scratch/deferred-hardcoded/issues/11-selection-backing-and-toolbar-wiring).
+// coordinate (e.g. a list has no `recordName`, an empty list no `selection`). `selection` is the
+// PRESENCE marker `'rows'` — set when the front list has selected rows (contextForOS, context.ts);
+// the actual selected ids never live here, they travel in Invocation.selection (ADR-0037).
 export interface Context {
   activeApp?: string
   windowRole?: string
@@ -52,9 +57,23 @@ export type When = Partial<Record<keyof Context, string>>
 
 // What a Command does when invoked — a closed, additive kind set (ADR-0008). `navigate` is
 // pure data (open a Surface); `run` is a reference resolved lazily by id and fire-and-forget.
+// A `run` may carry static `args` (pure data, ADR-0037) so one handler ref serves many placements
+// ("Position on Screen" → one set-position ref with `args:{side}`), instead of one ref per item.
 export type Handler =
   | { kind: 'navigate'; surface: Surface }
-  | { kind: 'run'; ref: string }
+  | { kind: 'run'; ref: string; args?: JsonValue }
+
+// What a `run` Handler receives when fired (ADR-0037): the eligibility `context` snapshot and the
+// `selection` values, both frozen at CLICK time (invoke builds this from the same contextForOS
+// projection that gated the item — the handler acts on what the user saw, never a re-derived state
+// that focus changes could have moved). `args` is the Handler's own static payload; `os` is the
+// escape hatch for OS chrome verbs (minimize/split/logout) — app handlers should rarely touch it.
+export interface Invocation {
+  context: Context
+  selection: string[]
+  args?: JsonValue
+  os: OsStore
+}
 
 // The verb — identity-bearing, placement-agnostic (CONTEXT.md → Command). One Command is
 // surfaced by one or more Actions.

@@ -309,6 +309,57 @@ describe('first-party File commands + invoke', () => {
   })
 })
 
+// ADR-0037 — a run Handler receives an Invocation (context + selection snapshot, args, os), NOT the
+// bare store. invoke SNAPSHOTS the same contextForOS projection that gated the item plus the live
+// selection at click time, so the handler acts on what the user saw and never re-derives focus.
+describe('invoke builds the Invocation (ADR-0037 contract)', () => {
+  const os = useOS()
+  const cmd = (ref, args) => ({ id: `t.${ref}`, sourceApp: 'test', title: ref, handler: { kind: 'run', ref, ...(args !== undefined ? { args } : {}) } })
+  beforeEach(() => {
+    os.state.windows = []
+    os.state.geo = {}
+    os.state.selection = {}
+    os.state.activeId = null
+  })
+
+  it('passes the context + selection snapshot the item was gated on (not the bare store)', () => {
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    let seen
+    registerRunHandlers({ 'capture-inv': (invocation) => { seen = invocation } })
+    invoke(cmd('capture-inv'), os)
+    expect(seen.context).toEqual(contextForOS(os)) // the frozen eligibility snapshot
+    expect(seen.context.selection).toBe('rows')    // presence marker, not the ids
+    expect(seen.selection).toEqual(['TODO-0001', 'TODO-0002']) // the VALUES travel here
+    expect(seen.os).toBe(os) // the chrome escape hatch
+  })
+
+  it('snapshots at click — a selection change AFTER invoke does not mutate the captured snapshot', () => {
+    os.openListGlobal('ToDo')
+    os.setSelection(os.state.activeId, ['TODO-0001'])
+    let seen
+    registerRunHandlers({ 'capture-frozen': (invocation) => { seen = invocation } })
+    invoke(cmd('capture-frozen'), os)
+    os.setSelection(os.state.activeId, ['TODO-0009', 'TODO-0010']) // focus moves after the click
+    expect(seen.selection).toEqual(['TODO-0001']) // still what the user saw, not the later state
+  })
+
+  it('reaches one handler with the args declared on each placement (one ref, two placements)', () => {
+    const sides = []
+    registerRunHandlers({ 'set-position': ({ args }) => { sides.push(args.side) } })
+    invoke(cmd('set-position', { side: 'left' }), os)
+    invoke(cmd('set-position', { side: 'right' }), os)
+    expect(sides).toEqual(['left', 'right']) // the same ref serves many placements via args
+  })
+
+  it('leaves args undefined when the Handler declares none', () => {
+    let seen
+    registerRunHandlers({ 'no-args': (invocation) => { seen = invocation } })
+    invoke(cmd('no-args'), os)
+    expect(seen.args).toBeUndefined()
+  })
+})
+
 // Context = the 6 fields derived from the single focused window (CONTEXT.md → Context). Absent
 // coordinates stay undefined (so a `when` scoping on them is a non-match, never a false always).
 describe('contextForOS (derive Context from the active window)', () => {

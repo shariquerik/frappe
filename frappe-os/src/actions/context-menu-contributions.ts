@@ -19,12 +19,12 @@ export const POSITION_SUBMENU = 'Position on Screen'
 // The desktop's "Change Wallpaper…" reuses the menu bar's `open-wallpaper` ref (same verb), so only
 // the dock's state toggles need fresh Handlers. Each drives the OS API, never touches state directly.
 registerRunHandlers({
-  'dock-hiding-on': (os) => os.setDockAutoHide(true),
-  'dock-hiding-off': (os) => os.setDockAutoHide(false),
-  'dock-position-left': (os) => os.setDockPosition('left'),
-  'dock-position-bottom': (os) => os.setDockPosition('bottom'),
-  'dock-position-right': (os) => os.setDockPosition('right'),
-  'open-dock-settings': (os) => os.openSettings('Dock'),
+  'dock-hiding-on': ({ os }) => os.setDockAutoHide(true),
+  'dock-hiding-off': ({ os }) => os.setDockAutoHide(false),
+  'dock-position-left': ({ os }) => os.setDockPosition('left'),
+  'dock-position-bottom': ({ os }) => os.setDockPosition('bottom'),
+  'dock-position-right': ({ os }) => os.setDockPosition('right'),
+  'open-dock-settings': ({ os }) => os.openSettings('Dock'),
 })
 
 // ── the declarative half: one Command per verb, one Action placing it into its Region ──

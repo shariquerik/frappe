@@ -5,10 +5,11 @@
 // The OS seeds its own handlers the SAME way an app does (registerRunHandlers) — the general
 // seam, no privileged core (CONTEXT.md → App). Menu data lives in menu-contributions.ts;
 // placement/bulk verbs self-register through this map too.
-import type { Command } from './types'
+import { contextForOS } from './context'
+import type { Command, Invocation } from './types'
 import type { OsStore } from '@/types'
 
-export type RunHandler = (os: OsStore) => void
+export type RunHandler = (invocation: Invocation) => void
 
 // The ref→behavior map for run Handlers — OPEN, not a closed first-party constant. Seeded empty;
 // the OS registers its own menu/placement/bulk handlers through registerRunHandlers, the same seam
@@ -23,13 +24,15 @@ export function registerRunHandlers(handlers: Record<string, RunHandler>): void 
   Object.assign(RUN_HANDLERS, handlers)
 }
 
-// Invoke a resolved Command. A navigate Handler is pure data (open its Surface); a run Handler
-// is resolved by ref through RUN_HANDLERS and fired (loud throw if the ref is unregistered —
-// never a silent no-op).
+// Invoke a resolved Command. A navigate Handler is pure data (open its Surface); a run Handler is
+// resolved by ref through RUN_HANDLERS and fired (loud throw if the ref is unregistered — never a
+// silent no-op). The Invocation is SNAPSHOTTED here, at click: the same contextForOS projection
+// that gated the item plus the live selection, frozen once and passed through, so the handler acts
+// on what the user saw and never re-derives focus state a later change could have moved (ADR-0037).
 export function invoke(command: Command, os: OsStore): void {
   const handler = command.handler
   if (handler.kind === 'navigate') { os.openSurface(handler.surface); return }
   const run = RUN_HANDLERS[handler.ref]
   if (!run) throw new Error(`[actions] no run handler registered for ref "${handler.ref}" (command ${command.id})`)
-  run(os)
+  run({ context: contextForOS(os), selection: os.selectedRecords(), args: handler.args, os })
 }

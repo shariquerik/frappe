@@ -11,10 +11,12 @@ import { registerRunHandlers } from './contributions'
 import {
   SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
 } from './regions'
-import type { Action, Command } from './types'
+import type { Action, Command, Invocation } from './types'
 import type { OsStore } from '@/types'
 
 // ── run Handlers (the imperative half; the OS seeds them through the same open seam as an app) ──
+// Each is a RunHandler — it takes the Invocation (ADR-0037) and reaches the store through its `os`
+// escape hatch, the documented territory for OS chrome verbs (these act on windows/split/session).
 
 const activeWindow = (os: OsStore) => os.state.windows.find((w) => w.id === os.state.activeId)
 const activeAppId = (os: OsStore): string | null => {
@@ -24,30 +26,30 @@ const activeAppId = (os: OsStore): string | null => {
 
 // Always mint a FRESH window (even when the app already has one open) so "New window" stacks the
 // way the label promises — openApp would just re-focus the existing one. A bare desktop opens frappe.
-function newWindow(os: OsStore): void {
+function newWindow({ os }: Invocation): void {
   os.newAppWindow(activeAppId(os) ?? 'frappe')
 }
 
-function closeActiveWindow(os: OsStore): void {
+function closeActiveWindow({ os }: Invocation): void {
   if (os.state.activeId) os.requestCloseWin(os.state.activeId)
 }
 
-function minimizeActive(os: OsStore): void {
+function minimizeActive({ os }: Invocation): void {
   if (os.state.activeId) os.minimizeWin(os.state.activeId)
 }
 
-function zoomActive(os: OsStore): void {
+function zoomActive({ os }: Invocation): void {
   if (os.state.activeId) os.toggleZoom(os.state.activeId)
 }
 
-function openActiveAppSettings(os: OsStore): void {
+function openActiveAppSettings({ os }: Invocation): void {
   const appId = activeAppId(os)
   if (appId) os.openAppSettings(appId)
 }
 
 // Quit the front-most app: drop every window that belongs to it and clear focus/split. No-op on a
 // bare desktop (no active app).
-function quitActiveApp(os: OsStore): void {
+function quitActiveApp({ os }: Invocation): void {
   const appId = activeAppId(os)
   if (!appId) return
   os.state.windows = os.state.windows.filter((w) => surfaceAppId(w.surface) !== appId)
@@ -57,13 +59,13 @@ function quitActiveApp(os: OsStore): void {
 
 // Show the front app's dashboard — only for an app window that actually has one (the eligibility
 // `when` already gates on the app role; the dashboard check stays here as the app-data guard).
-function showDashboard(os: OsStore): void {
+function showDashboard({ os }: Invocation): void {
   const win = activeWindow(os)
   if (!win || windowRole(win.id) !== 'app') return
   if (os.DATA.APP[surfaceAppId(win.surface)]?.hasDashboard) os.goHome(win.id)
 }
 
-function showAsList(os: OsStore): void {
+function showAsList({ os }: Invocation): void {
   const win = activeWindow(os)
   if (!win || windowRole(win.id) !== 'app') return
   os.openList(win.id, os.DATA.APP[surfaceAppId(win.surface)].modules[0].doctypes[0])
@@ -74,9 +76,9 @@ function showAsList(os: OsStore): void {
 // per-stub ref — so a stub is genuine data that simply has no behavior yet.
 registerRunHandlers({
   noop: () => {},
-  'open-palette': (os) => os.openPalette(),
-  'open-settings': (os) => os.openSettings(),
-  'open-wallpaper': (os) => os.openSettings('Wallpaper'),
+  'open-palette': ({ os }) => os.openPalette(),
+  'open-settings': ({ os }) => os.openSettings(),
+  'open-wallpaper': ({ os }) => os.openSettings('Wallpaper'),
   'switch-to-desk': () => switchToDesk(),
   logout: () => logout(),
   'new-window': newWindow,
@@ -87,9 +89,9 @@ registerRunHandlers({
   'quit-active-app': quitActiveApp,
   'show-dashboard': showDashboard,
   'show-as-list': showAsList,
-  'toggle-fullscreen': (os) => os.toggleFullscreen(),
-  'enter-split': (os) => os.enterSplit(),
-  'exit-split': (os) => os.exitSplit(),
+  'toggle-fullscreen': ({ os }) => os.toggleFullscreen(),
+  'enter-split': ({ os }) => os.enterSplit(),
+  'exit-split': ({ os }) => os.exitSplit(),
 })
 
 // ── the declarative half: one Command per verb, one Action placing it into its menu Region ──
