@@ -1,19 +1,32 @@
 <script setup lang="ts">
-// macOS-style top menu bar. Menus use frappe-ui Dropdown (grouped options render
-// dividers); the Frappe system logo replaces the apple glyph, and the active
-// app's logo+name show in the app menu. Keyboard-shortcut chips from the original
-// are omitted — frappe-ui Dropdown items render label + onClick only.
+// macOS-style top menu bar. Every menu renders from the actions resolver (menuOptions over a
+// `menubar:<menu>` Region) — no literal option arrays — so any menu is app/site/user customizable
+// the way File always was (ADR-0001/0014/0032). frappe-ui Dropdown renders grouped label + onClick
+// items (dividers between groups); the Frappe system logo and the front app's logo+name are just the
+// two dropdowns' triggers. Keyboard-shortcut chips from the original are omitted.
 import { computed, onMounted } from "vue";
 import { Avatar } from "frappe-ui";
 import OSDropdown from "@/components/OSDropdown.vue";
 import { useOS } from "@/desktop";
-import { fileMenuOptions } from "@/actions";
+import {
+  menuOptions, SYSTEM_REGION, APP_REGION,
+  FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
+} from "@/actions";
 import { useAccount } from "@/data/account";
-import { logout, switchToDesk } from "@/data/session";
 import { windowRole, systemWindowTitle } from "@/surface";
 import type { OsWindow } from "@/types";
 
 const os = useOS();
+
+// The five text menus, left-to-right; system + app carry logo triggers so they stay explicit.
+// `slot` is the region's short tail, used as the stable `data-menu` test hook.
+const textMenus = [
+	{ region: FILE_REGION, label: "File", slot: "file" },
+	{ region: EDIT_REGION, label: "Edit", slot: "edit" },
+	{ region: VIEW_REGION, label: "View", slot: "view" },
+	{ region: WINDOW_REGION, label: "Window", slot: "window" },
+	{ region: HELP_REGION, label: "Help", slot: "help" },
+];
 
 // The menu-bar avatar shares the own-user doc with Settings ▸ Account (useAccount is a
 // singleton, load() no-ops once loaded), so the photo shows here without a second fetch.
@@ -40,143 +53,6 @@ const frappeLogo = os.DATA.APP.frappe.logo;
 // The logged-in user's name from the live boot session (used as the avatar label, which
 // degrades a missing/loading name to a neutral placeholder — no demo data leaks through).
 const userName = computed(() => os.state.userName);
-
-function zoomActive() {
-	if (activeWin.value) os.toggleZoom(activeWin.value.id);
-}
-function minActive() {
-	if (activeWin.value) os.minimizeWin(activeWin.value.id);
-}
-function settingsActive() {
-	if (aid.value) os.openAppSettings(aid.value);
-}
-function homeActive() {
-	if (
-		activeWin.value &&
-		windowRole(activeWin.value.id) === "app" &&
-		os.DATA.APP[aid.value!].hasDashboard
-	)
-		os.goHome(activeWin.value.id);
-}
-function listActive() {
-	if (activeWin.value && windowRole(activeWin.value.id) === "app")
-		os.openList(activeWin.value.id, os.DATA.APP[aid.value!].modules[0].doctypes[0]);
-}
-function quitActive() {
-	if (aid.value) {
-		os.state.windows = os.state.windows.filter((w) => appIdOf(w) !== aid.value);
-		os.state.activeId = null;
-		os.state.split = null;
-	}
-}
-
-const appleMenu = [
-	{ group: "a", hideLabel: true, items: [{ label: "About this workspace", onClick: () => {} }] },
-	{
-		group: "b",
-		hideLabel: true,
-		items: [
-			{ label: "Settings…", onClick: () => os.openSettings() },
-			{ label: "Change wallpaper…", onClick: () => os.openSettings("Wallpaper") },
-		],
-	},
-	{
-		group: "c",
-		hideLabel: true,
-		items: [{ label: "Switch to Desk…", onClick: () => switchToDesk() }],
-	},
-	{
-		group: "d",
-		hideLabel: true,
-		items: [
-			{ label: "Lock screen", onClick: () => {} },
-			{ label: "Log out…", onClick: () => logout() },
-		],
-	},
-];
-const appMenu = computed(() => [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [
-			{ label: aname.value + " settings…", onClick: settingsActive },
-			{ label: "Hide " + aname.value, onClick: minActive },
-		],
-	},
-	{
-		group: "b",
-		hideLabel: true,
-		items: [{ label: "Quit " + aname.value, onClick: quitActive }],
-	},
-]);
-// The File menu is the first migrated Region: rendered from resolved first-party `frappe`
-// Actions (actions/menubar.ts), not a literal array. The other six menus stay hardcoded
-// pending later incremental migration (ADR-0001 dogfooding).
-const fileMenu = computed(() => fileMenuOptions(os));
-const editMenu = [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [
-			{ label: "Undo", onClick: () => {} },
-			{ label: "Redo", onClick: () => {} },
-		],
-	},
-	{
-		group: "b",
-		hideLabel: true,
-		items: [
-			{ label: "Cut", onClick: () => {} },
-			{ label: "Copy", onClick: () => {} },
-			{ label: "Paste", onClick: () => {} },
-		],
-	},
-];
-const viewMenu = computed(() => [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [
-			{ label: "Show dashboard", onClick: homeActive },
-			{ label: "Show as list", onClick: listActive },
-		],
-	},
-	{
-		group: "b",
-		hideLabel: true,
-		items: [
-			{
-				label: os.isFullscreen.value ? "Exit full screen" : "Enter full screen",
-				onClick: () => os.toggleFullscreen(),
-			},
-		],
-	},
-]);
-const windowMenu = [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [
-			{ label: "Minimize", onClick: minActive },
-			{ label: "Zoom", onClick: zoomActive },
-		],
-	},
-	{
-		group: "b",
-		hideLabel: true,
-		items: [
-			{ label: "Enter split view", onClick: () => os.enterSplit() },
-			{ label: "Exit split view", onClick: () => os.exitSplit() },
-		],
-	},
-];
-const helpMenu = [
-	{
-		group: "a",
-		hideLabel: true,
-		items: [{ label: "Frappe help", onClick: () => os.openPalette() }],
-	},
-];
 
 // Chrome over the wallpaper adapts to its darkness: white ink on dark grounds,
 // dark ink on light ones. The menu bar only ever sits over the wallpaper (windows
@@ -209,7 +85,7 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 		:class="barTextClass"
 		:style="barStyle"
 	>
-		<OSDropdown :options="appleMenu" placement="bottom-start">
+		<OSDropdown :options="menuOptions(SYSTEM_REGION, os)" placement="bottom-start">
 			<button :class="btnCls(false)">
 				<img :src="frappeLogo" alt="Frappe" class="block h-4 w-4 object-contain" />
 			</button>
@@ -217,7 +93,7 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 
 		<span class="h-[16px] w-px flex-shrink-0" :class="dividerClass"></span>
 
-		<OSDropdown :options="appMenu" placement="bottom-start">
+		<OSDropdown :options="menuOptions(APP_REGION, os)" placement="bottom-start">
 			<button :class="btnCls(true)">
 				<img
 					v-if="appLogo && aid !== 'frappe'"
@@ -227,20 +103,12 @@ const btnCls = (bold: boolean) => [btn, hoverCls.value, bold ? "font-bold" : "fo
 				/>{{ title }}
 			</button>
 		</OSDropdown>
-		<OSDropdown :options="fileMenu" placement="bottom-start"
-			><button :class="btnCls(false)" data-menu="file">File</button></OSDropdown
-		>
-		<OSDropdown :options="editMenu" placement="bottom-start"
-			><button :class="btnCls(false)">Edit</button></OSDropdown
-		>
-		<OSDropdown :options="viewMenu" placement="bottom-start"
-			><button :class="btnCls(false)">View</button></OSDropdown
-		>
-		<OSDropdown :options="windowMenu" placement="bottom-start"
-			><button :class="btnCls(false)">Window</button></OSDropdown
-		>
-		<OSDropdown :options="helpMenu" placement="bottom-start"
-			><button :class="btnCls(false)">Help</button></OSDropdown
+		<OSDropdown
+			v-for="menu in textMenus"
+			:key="menu.region"
+			:options="menuOptions(menu.region, os)"
+			placement="bottom-start"
+			><button :class="btnCls(false)" :data-menu="menu.slot">{{ menu.label }}</button></OSDropdown
 		>
 		<!-- The empty middle doubles as the window's drag handle: with the title bar gone
 		     (window-controls-overlay), this is what the user grabs to move the window.

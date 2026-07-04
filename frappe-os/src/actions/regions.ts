@@ -16,15 +16,29 @@ export interface Region {
 }
 
 // Region ids follow the `area:slot` convention (`menubar:file`). The OS owns these strings.
+// Every top menu-bar dropdown is one `menubar:<menu>` Region — the whole bar resolves through
+// the same engine, so an app customizes any menu the way it already customizes File (ADR-0001).
+export const SYSTEM_REGION = 'menubar:system'
+export const APP_REGION = 'menubar:app'
 export const FILE_REGION = 'menubar:file'
+export const EDIT_REGION = 'menubar:edit'
+export const VIEW_REGION = 'menubar:view'
+export const WINDOW_REGION = 'menubar:window'
+export const HELP_REGION = 'menubar:help'
 export const LIST_TOOLBAR = 'list:toolbar'
 export const LIST_SELECTION = 'list:selection'
 export const FORM_TOOLBAR = 'form:toolbar'
 
+// The menu-bar Regions in left-to-right render order — the one place the bar's shape is declared.
+// MenuBar.vue draws its dropdowns from this list; nothing else fixes the order.
+export const MENUBAR_REGIONS: readonly string[] = [
+  SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
+]
+
 // The closed set. Surface-embedded Regions join the menu-bar chrome (ADR-0032). Only the
 // selection/bulk bar is gated — it hangs off a live selection that may not exist.
 export const REGIONS: readonly Region[] = [
-  { id: FILE_REGION },
+  ...MENUBAR_REGIONS.map((id) => ({ id })),
   { id: LIST_TOOLBAR },
   { id: LIST_SELECTION, requires: 'selection' },
   { id: FORM_TOOLBAR },

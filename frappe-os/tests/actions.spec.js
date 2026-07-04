@@ -8,11 +8,17 @@ import { isEligible } from '../src/actions/eligibility'
 import { specificity, compareSpecificity } from '../src/actions/specificity'
 import { scopeWhen, effectiveWhen } from '../src/actions/scope'
 import { resolve } from '../src/actions/resolve'
-import { FILE_COMMANDS, invoke, registerRunHandlers } from '../src/actions/contributions'
+import { invoke, registerRunHandlers } from '../src/actions/contributions'
+import { MENUBAR_COMMANDS } from '../src/actions/menu-contributions'
 import { contextForOS } from '../src/actions/context'
-import { fileMenuOptions } from '../src/actions/menubar'
+import { fileMenuOptions, menuOptions } from '../src/actions/menubar'
+import { suppressedToggleCommands } from '../src/actions/menu-contributions'
 import { toolbarItems } from '../src/actions/toolbar'
-import { REGIONS, regionById, regionRenders, LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR } from '../src/actions/regions'
+import {
+  REGIONS, regionById, regionRenders, MENUBAR_REGIONS,
+  SYSTEM_REGION, APP_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
+  LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR,
+} from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
 import { listSurface } from '../src/surface'
 import { initRegistry, useRegistry, registerScopedContributions } from '../src/registry'
@@ -262,7 +268,7 @@ describe('resolve (removal — a winning removed Action is suppressed, attribute
 // own defaults). Run against the real store, reset between cases (module singleton).
 describe('first-party File commands + invoke', () => {
   const os = useOS()
-  const command = (id) => FILE_COMMANDS.find((c) => c.id === id)
+  const command = (id) => MENUBAR_COMMANDS.find((c) => c.id === id)
   beforeEach(() => {
     os.state.windows = []
     os.state.geo = {}
@@ -799,7 +805,10 @@ describe('command-axis collision (an app cannot silently hijack a first-party ve
 describe('regions (closed set + selection gate)', () => {
   it('the surface-embedded Regions join the closed set alongside the menu-bar chrome', () => {
     const ids = REGIONS.map((r) => r.id)
-    expect(ids).toEqual(['menubar:file', 'list:toolbar', 'list:selection', 'form:toolbar'])
+    expect(ids).toEqual([
+      'menubar:system', 'menubar:app', 'menubar:file', 'menubar:edit', 'menubar:view',
+      'menubar:window', 'menubar:help', 'list:toolbar', 'list:selection', 'form:toolbar',
+    ])
   })
 
   it('regionById returns the descriptor; an id outside the set is undefined', () => {
@@ -1061,5 +1070,159 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
     // already shows; that is not a surface swap, so the per-window selection must survive it.
     os.restoreWin(winId, listSurface('ToDo'))
     expect(os.selectedRecords()).toEqual(['TODO-0001', 'TODO-0002'])
+  })
+})
+
+// Issue 06 — ADR-0001 dogfooding completed. The six formerly-literal menus (system, app, edit,
+// view, window, help) are now `menubar:<menu>` Regions fed by first-party frappe Commands/Actions
+// and projected through the SAME menuOptions path as File. These lock the render parity and the two
+// live decisions the menus carry: View eligibility and the fullscreen/`{app}` presentation.
+describe('every menu-bar menu renders from the resolver (no literal arrays)', () => {
+  const os = useOS()
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.activeId = null; os.state.split = null
+    os.isFullscreen.value = false
+  })
+  const labels = (region) => menuOptions(region, os).flatMap((g) => g.items).map((i) => i.label)
+
+  it('MENUBAR_REGIONS lists the seven menus in bar order', () => {
+    expect(MENUBAR_REGIONS).toEqual([
+      'menubar:system', 'menubar:app', 'menubar:file', 'menubar:edit',
+      'menubar:view', 'menubar:window', 'menubar:help',
+    ])
+  })
+
+  it('the system menu resolves its workspace + session verbs across four divider groups', () => {
+    expect(labels(SYSTEM_REGION)).toEqual([
+      'About this workspace', 'Settings…', 'Change wallpaper…', 'Switch to Desk…', 'Lock screen', 'Log out…',
+    ])
+    expect(menuOptions(SYSTEM_REGION, os).map((g) => g.group)).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  it('the edit menu resolves its (still-stubbed) verbs', () => {
+    expect(labels(EDIT_REGION)).toEqual(['Undo', 'Redo', 'Cut', 'Copy', 'Paste'])
+  })
+
+  it('the window menu resolves Minimize/Zoom plus both split verbs', () => {
+    expect(labels(WINDOW_REGION)).toEqual(['Minimize', 'Zoom', 'Enter split view', 'Exit split view'])
+  })
+
+  it('the help menu resolves Frappe help', () => {
+    expect(labels(HELP_REGION)).toEqual(['Frappe help'])
+  })
+
+  it('a stubbed item (Undo) is wired to the shared no-op run Handler — clicking never throws', () => {
+    const undo = menuOptions(EDIT_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Undo')
+    expect(() => undo.onClick()).not.toThrow()
+  })
+})
+
+// The app menu's `{app}` token — presentation interpolated at render time to the front app's name
+// (or "Finder" on a bare desktop), the one dynamic label the literal menu used to hand-build.
+describe('the app menu interpolates {app} to the front app name', () => {
+  const os = useOS()
+  beforeEach(() => { os.state.windows = []; os.state.geo = {}; os.state.activeId = null; os.state.split = null })
+  const labels = () => menuOptions(APP_REGION, os).flatMap((g) => g.items).map((i) => i.label)
+
+  it('names the focused app in every item', () => {
+    os.openApp('crm')
+    const name = os.DATA.APP.crm.name
+    expect(labels()).toEqual([`${name} settings…`, `Hide ${name}`, `Quit ${name}`])
+  })
+
+  it('falls back to Finder on a bare desktop', () => {
+    expect(labels()).toEqual(['Finder settings…', 'Hide Finder', 'Quit Finder'])
+  })
+
+  it('Quit removes every window of the front app and clears focus', () => {
+    os.openApp('crm')
+    const quit = menuOptions(APP_REGION, os).flatMap((g) => g.items).find((i) => i.label.startsWith('Quit'))
+    quit.onClick()
+    expect(os.state.windows).toHaveLength(0)
+    expect(os.state.activeId).toBeNull()
+  })
+})
+
+// View menu decision table: Show dashboard / Show as list are gated to an app window (a real
+// `when`), and the fullscreen item is a live-state toggle — a command PAIR whose dead half
+// suppressedToggleCommands drops, so exactly one correctly-labelled item renders.
+describe('view menu eligibility + fullscreen toggle (decision table)', () => {
+  const os = useOS()
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.activeId = null; os.state.split = null
+    os.isFullscreen.value = false
+  })
+  const labels = () => menuOptions(VIEW_REGION, os).flatMap((g) => g.items).map((i) => i.label)
+
+  it('shows Show dashboard / Show as list only when an app window is front', () => {
+    os.openApp('crm')
+    expect(labels()).toEqual(expect.arrayContaining(['Show dashboard', 'Show as list']))
+  })
+
+  it('hides the dashboard/list verbs on a non-app (system) window', () => {
+    os.openSettings()
+    expect(labels()).not.toContain('Show dashboard')
+    expect(labels()).not.toContain('Show as list')
+  })
+
+  it('hides them on a bare desktop (no window role to satisfy the when)', () => {
+    expect(labels()).not.toContain('Show dashboard')
+  })
+
+  it('shows Enter full screen when windowed and Exit full screen when full-screen — never both', () => {
+    os.isFullscreen.value = false
+    expect(labels()).toContain('Enter full screen')
+    expect(labels()).not.toContain('Exit full screen')
+    os.isFullscreen.value = true
+    expect(labels()).toContain('Exit full screen')
+    expect(labels()).not.toContain('Enter full screen')
+  })
+
+  it('suppressedToggleCommands drops exactly the dead half of the fullscreen pair', () => {
+    os.isFullscreen.value = false
+    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.view.exit-fullscreen'])
+    os.isFullscreen.value = true
+    expect([...suppressedToggleCommands(os)]).toEqual(['frappe.view.enter-fullscreen'])
+  })
+})
+
+// Acceptance #4: an app-layer Action contributed to menubar:window folds through the same server
+// registry → resolver → menuOptions path and renders alongside the OS defaults — proving the six
+// migrated menus are as customizable as File always was (Region ⟂ Scope, ADR-0032).
+describe('an app-layer Action contributed to menubar:window shows up', () => {
+  const os = useOS()
+  const command = {
+    type: 'command', target: '', name: 'crm.window.tile', sourceApp: 'crm',
+    payload: { id: 'crm.window.tile', sourceApp: 'crm', title: 'Tile all windows', handler: { kind: 'run', ref: 'crm-tile' } },
+  }
+  const action = {
+    type: 'action', target: 'menubar:window', name: 'crm.window.tile', sourceApp: 'crm',
+    payload: { command: 'crm.window.tile', region: 'menubar:window', sourceApp: 'crm', group: 'b', order: 9 },
+  }
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = {
+    user: 'a', csrf_token: 't', roles: [], permissions: {},
+    registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), app('crm', 'CRM', 1), command, action] },
+  }
+  let warn
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.activeId = null; os.state.split = null
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    registerRunHandlers({ 'crm-tile': () => {} })
+    initRegistry(boot)
+  })
+  afterEach(() => { warn.mockRestore(); initRegistry(null) })
+
+  it('renders the app-declared Window item alongside the OS defaults', () => {
+    const labels = menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).map((i) => i.label)
+    expect(labels).toContain('Tile all windows')
+    expect(labels).toEqual(expect.arrayContaining(['Minimize', 'Zoom'])) // OS defaults survive
+  })
+
+  it('wires the app item to its run Handler by ref', () => {
+    let tiled = false
+    registerRunHandlers({ 'crm-tile': () => { tiled = true } })
+    menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Tile all windows').onClick()
+    expect(tiled).toBe(true)
   })
 })

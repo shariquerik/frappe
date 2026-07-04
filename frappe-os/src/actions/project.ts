@@ -5,7 +5,7 @@
 // projectRegion, never a re-implementation of the fold.
 import { useRegistry } from '@/registry'
 import { contextForOS } from './context'
-import { FILE_ACTIONS, FILE_COMMANDS } from './contributions'
+import { MENUBAR_ACTIONS, MENUBAR_COMMANDS } from './menu-contributions'
 import { PLACEMENT_ACTIONS, PLACEMENT_COMMANDS } from './placement-verbs'
 import './bulk-verbs' // side-effect: register first-party bulk run Handlers (server delivers the data)
 import { regionById, regionRenders } from './regions'
@@ -41,8 +41,8 @@ export function merged(): Merged {
   const sourceCommands = useRegistry().commands()
   const sourceActions = useRegistry().actions()
   if (!cache || cache.sourceCommands !== sourceCommands || cache.sourceActions !== sourceActions) {
-    const byId = commandsById([...FILE_COMMANDS, ...PLACEMENT_COMMANDS, ...sourceCommands])
-    cache = { sourceCommands, sourceActions, byId, actions: [...FILE_ACTIONS, ...PLACEMENT_ACTIONS, ...sourceActions] }
+    const byId = commandsById([...MENUBAR_COMMANDS, ...PLACEMENT_COMMANDS, ...sourceCommands])
+    cache = { sourceCommands, sourceActions, byId, actions: [...MENUBAR_ACTIONS, ...PLACEMENT_ACTIONS, ...sourceActions] }
   }
   return cache
 }
