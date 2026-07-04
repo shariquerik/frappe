@@ -1,6 +1,7 @@
 // useRegistry(): the client-side Registry seam (docs/design/surface-and-registry.md §2).
 // The seeded RegistryIndex (index-builder) exposes the projections every generic renderer reads
-// (apps / display config / views / cards) — the SINGLE config/* importer, via ./ingest. Boot
+// (apps / display config / views / cards) — the curated-config importer for those, via ./ingest
+// (the icon atlas comes through the sibling ./icons; both keep config/* behind the seam). Boot
 // seeds the index once (initRegistry), mirroring os-api's initOsApi/getOsApi, so useRegistry()
 // stays synchronous for renderers (ADR-0008, additive — surface unchanged).
 import { classifyApp } from './classify'

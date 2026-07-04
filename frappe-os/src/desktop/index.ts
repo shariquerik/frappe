@@ -9,8 +9,7 @@
 // so the store surface is derived from this assembly rather than hand-maintained. Adding
 // a member here automatically widens OsStore for every consumer (route-map, components).
 import { initials, pill } from '@/config/apps'
-import { ICON } from '@/config/icons'
-import { useRegistry, getMeta, appForDoctype, knownApplet } from '@/registry'
+import { useRegistry, getMeta, appForDoctype, knownApplet, ICON } from '@/registry'
 import type { AppDef } from '@/types'
 
 import { state, clockText } from './state'

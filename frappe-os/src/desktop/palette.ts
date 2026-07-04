@@ -9,7 +9,7 @@
 import { computed, watch } from 'vue'
 import fuzzysort from 'fuzzysort'
 import { useRegistry, appForDoctype, listApplets } from '@/registry'
-import { ICON, dtIcon } from '@/config/icons'
+import { ICON, dtIcon } from '@/registry'
 import { SETTINGS_PANES } from '@/surface'
 import { useRecents } from '@/recents'
 import { state } from './state'
