@@ -42,7 +42,9 @@ The clearest "fix it later" stubs — literal demo content.
   because the per-view fetch shape (the resolver's fields, ADR-0028) is only known once a view is
   picked. That entry is the intentional fallback, not a workaround to remove.
 - **`config/icons.ts:40–65`** — `DOCTYPE_ICON`, a hardcoded 26-doctype→icon map that should
-  derive from doctype metadata.
+  derive from doctype metadata. The access path now runs through the registry seam
+  (`registry/icons.ts`, seeded from this config), so the proper fix is a server-driven Display
+  contribution the registry overlays — no consumer changes when it lands.
 - **`data/os-api.ts:75–83`** — `CAPABILITIES` flags hardcoded; component-surface **rendering
   and scripting advertise `false` "for now."**
 
