@@ -1,4 +1,5 @@
 {
 	"title": "Frappe Framework",
-	"logo": "/assets/frappe/images/frappe-framework-logo.svg"
+	"logo": "/assets/frappe/images/frappe-framework-logo.svg",
+	"default_workspace": "Core"
 }

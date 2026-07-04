@@ -325,6 +325,7 @@ after_migrate = [
 	"frappe.search.sqlite_search.build_index_in_background",
 	"frappe.desk.doctype.notification_type.notification_type.install_notification_types",
 	"frappe.os_core.wallpapers.seed_wallpapers",
+	"frappe.os_core.workspaces.seed_workspaces",
 ]
 
 otp_methods = ["OTP App", "Email", "SMS"]

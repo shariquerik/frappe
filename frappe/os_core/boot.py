@@ -12,6 +12,7 @@ from frappe.os_core.placements import get_placements
 from frappe.os_core.recents import get_recents
 from frappe.os_core.registry import get_permissions, get_registry
 from frappe.os_core.wallpapers import get_selection, get_wallpapers
+from frappe.os_core.workspaces import get_workspaces
 
 
 def get_boot():
@@ -24,6 +25,9 @@ def get_boot():
 		"permissions": get_permissions(),
 		"placements": get_placements(),
 		"recents": get_recents(),
+		# The per-app workspace lists (ADR-0042): each OS app's visible workspaces, ordered by
+		# sequence — the workbenches its hub lists and each window opens onto.
+		"workspaces": get_workspaces(),
 		# The wallpaper catalog (global defaults ∪ the caller's own uploads) and their chosen
 		# wallpaper name — the selection roams per-user in frappe.defaults (ADR-0036).
 		"wallpapers": get_wallpapers(),

@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "app",
+  "workspace_id",
+  "label",
+  "module",
+  "sequence",
+  "hidden",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "description": "The OS app this workspace belongs to (its dock package). The window's identity is (app, workspace_id); the app owns the dock, the workspace owns the window (ADR-0042).",
+   "fieldname": "app",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "App",
+   "reqd": 1
+  },
+  {
+   "description": "The immutable slug that identifies this workspace inside its app (ADR-0042). Unique per app, seeded from the module name (Selling → selling). It is the workspace in window ids, URLs, and 'when: { workspace: ... }' menu gates; a rename touches only Label, so open windows and saved URLs survive. Never changed after creation.",
+   "fieldname": "workspace_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Workspace Id",
+   "reqd": 1
+  },
+  {
+   "description": "The workspace name shown in the app hub's sidebar. Editable — renaming touches only this, not the identity slug (ADR-0042).",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1
+  },
+  {
+   "description": "The source module this workspace was seeded from (ADR-0042). The seeder keys insert-if-missing on (App, Module), so this is the anchor that survives migrate. Empty for a user-added workspace, which the seeder never touches.",
+   "fieldname": "module",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Module"
+  },
+  {
+   "default": "0",
+   "description": "The order this workspace appears in the app hub's sidebar (lower first). Seeded from the module's position in the app; the user can re-order, and re-order survives migrate (ADR-0042).",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence"
+  },
+  {
+   "default": "0",
+   "description": "A seeded workspace the user removed. Removal is a flag, not a delete, so the insert-if-missing seeder never resurrects it (ADR-0042). Hidden rows are excluded from the boot payload.",
+   "fieldname": "hidden",
+   "fieldtype": "Check",
+   "label": "Hidden"
+  },
+  {
+   "default": "0",
+   "description": "The workspace the app hub opens by default and whose overview fills the hub's main section (ADR-0042). Exactly one row per app carries this; the manifest's default_workspace declares it, the seeder stamps it, and a site may re-point it.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "OS Core",
+ "name": "OS Workspace",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
