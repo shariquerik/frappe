@@ -355,8 +355,11 @@ treating the Doctypes Location as a separate doctype store (it reprojects the re
 **Handler**:
 What a Command does when invoked — one of a **closed set of kinds**. Currently: **navigate**
 (open a Surface — pure data, subsumes what an app-contributed "command" could do before: go
-somewhere) and **run** (execute behavior through the OS API, the imperative kind the menu-bar
-stubs and the palette's generated `run()` hint at). The kind set is closed and additive
+somewhere), **run** (execute behavior through the OS API, the imperative kind the menu-bar
+stubs and the palette's generated `run()` hint at), and **server** (ADR-0041 — call a
+whitelisted `method` with the Invocation coordinates, then run a declared after-effect
+`open-doc | refresh | notify | none`; the codeless verb most app menus reduce to, no `eval`,
+no shipped script). The kind set is closed and additive
 (ADR-0008); a Handler never carries raw code in its identity, only a reference the runtime
 **resolves by id**, the same way an Applet is resolved — never an imperative `register()`
 call. A `run` Handler is **fire-and-forget**: resolved lazily on first invoke, executed,

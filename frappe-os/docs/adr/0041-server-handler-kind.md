@@ -1,8 +1,10 @@
 # Handler kind `server`: call a whitelisted method, declared after-effect
 
-> **Status:** Accepted (2026-07-04, grilled). Not yet implemented. Grows ADR-0008's closed
+> **Status:** Accepted (2026-07-04, grilled). Implemented (slice 05). Grows ADR-0008's closed
 > Handler kind set by one member. Informed by how crm and raven solved handler delivery today —
-> both dangerously.
+> both dangerously. Implementation note: `AfterEffect` landed as a plain string union
+> (`open-doc | refresh | notify | none`), not the illustrative tagged-union sketch below — the
+> effects carry no payload, and string unions match the codebase's other closed sets (Layer/Scope).
 
 Most app verbs need no client code: they are "call a whitelisted method, then open/refresh/
 toast". The first-party apps prove both the need and the danger of leaving it unsolved: crm
