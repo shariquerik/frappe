@@ -3,7 +3,7 @@
 // (REGISTRY_DOCTYPES). This orchestration lives in the data layer because it bridges the network
 // seam (resolveDoctype) and the registry index (registerDoctype) the pure route-map can't cross.
 import { resolveDoctype } from './api'
-import { getMeta, registerDoctype } from '@/registry'
+import { asServerRegistry, getMeta, registerDoctype } from '@/registry'
 
 // One resolution per doctype, deduped + cached for the session: getMeta short-circuits a doctype
 // already in the index (curated or previously folded), and the in-flight Map both dedupes
@@ -12,9 +12,10 @@ import { getMeta, registerDoctype } from '@/registry'
 const resolving = new Map<string, Promise<boolean>>()
 
 async function resolveAndFold(doctype: string): Promise<boolean> {
-  const contribs = await resolveDoctype(doctype).catch(() => null)
-  if (!contribs || !contribs.length) return false
-  registerDoctype(contribs)
+  const envelope = await resolveDoctype(doctype).catch(() => null)
+  const registry = asServerRegistry(envelope) // same tolerant unwrap the boot path uses (ADR-0008)
+  if (!registry || !registry.contributions.length) return false
+  registerDoctype(registry.contributions)
   return true
 }
 

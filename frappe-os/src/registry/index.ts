@@ -162,9 +162,12 @@ function indexContributions(contribs: Contribution[]): RegistryIndex {
 }
 
 // ── server overlay (ADR-0011): index server payloads, decorate with OS-native bits ──
-// boot.registry only if it is a Registry object (ADR-0008 tolerance): a legacy bare
-// array or junk → null, and the full config seed stands (offline / tests).
-function asServerRegistry(registry: unknown): OsRegistryData | null {
+// The ONE tolerant parser for a server registry envelope (ADR-0008), shared by both entry
+// points: the boot `boot.registry` and the on-demand `resolve_doctype` response. A legacy bare
+// array or junk → null (boot: the full config seed stands offline/tests; resolve: the deep link
+// falls back to the app). An unknown future schemaVersion still parses — the client indexes the
+// contributions it understands and ignores the version number, never a second parser to negotiate.
+export function asServerRegistry(registry: unknown): OsRegistryData | null {
   const r = registry as OsRegistryData
   return r && typeof r.schemaVersion === 'number' && Array.isArray(r.contributions) ? r : null
 }

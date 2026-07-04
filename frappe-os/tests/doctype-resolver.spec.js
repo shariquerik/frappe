@@ -16,6 +16,10 @@ import { getMeta, initRegistry } from '../src/registry'
 const display = (dt, sourceApp = 'crm') =>
   ({ type: 'display-config', target: dt, name: 'display', sourceApp, payload: { label: dt, titleField: 'name' } })
 
+// resolve_doctype returns the same {schemaVersion, contributions} envelope get_registry emits, so
+// the resolver unwraps it through the shared tolerant parser (asServerRegistry, ADR-0008).
+const envelope = (contributions, schemaVersion = 1) => ({ schemaVersion, contributions })
+
 beforeEach(() => { vi.clearAllMocks(); initRegistry(null) }) // offline seed = the curated set
 afterEach(() => initRegistry(null))
 
@@ -25,12 +29,24 @@ describe('ensureDoctype', () => {
     expect(api.resolveDoctype).not.toHaveBeenCalled()
   })
 
-  it('resolves an uncurated doctype, folds it, and reports it known', async () => {
-    api.resolveDoctype.mockResolvedValue([display('Ostrich Thing')])
+  it('unwraps the envelope, folds the contributions, and reports it known', async () => {
+    api.resolveDoctype.mockResolvedValue(envelope([display('Ostrich Thing')]))
     expect(getMeta('Ostrich Thing')).toBeNull()
     expect(await ensureDoctype('Ostrich Thing')).toBe(true)
     expect(api.resolveDoctype).toHaveBeenCalledWith('Ostrich Thing')
     expect(getMeta('Ostrich Thing')?.label).toBe('Ostrich Thing') // now folded into the index
+  })
+
+  it('folds an unknown future schemaVersion tolerantly (ADR-0008 — index what you understand)', async () => {
+    api.resolveDoctype.mockResolvedValue(envelope([display('Future Thing')], 99))
+    expect(await ensureDoctype('Future Thing')).toBe(true)
+    expect(getMeta('Future Thing')?.label).toBe('Future Thing')
+  })
+
+  it('degrades a legacy bare-array (no envelope) to false — same parser as boot', async () => {
+    api.resolveDoctype.mockResolvedValue([display('Legacy Thing')]) // not a {schemaVersion, contributions}
+    expect(await ensureDoctype('Legacy Thing')).toBe(false)
+    expect(getMeta('Legacy Thing')).toBeNull() // route falls back to the app
   })
 
   it('reports false for a missing/forbidden doctype (server returns null)', async () => {

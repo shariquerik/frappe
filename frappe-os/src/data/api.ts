@@ -1,7 +1,7 @@
 // Minimal Frappe data layer for Frappe OS (ported from the /x shell's api.js).
 // Reads go through whitelisted GET calls (no CSRF needed); writes use the REST
 // resource API with the CSRF token from boot.
-import type { ListFilters, FrappeDoc, GetListOptions, Contribution } from '@/types'
+import type { ListFilters, FrappeDoc, GetListOptions, OsRegistryData } from '@/types'
 
 // The server seeds the CSRF token onto the global as a fallback for direct page loads.
 declare global {
@@ -150,10 +150,12 @@ export async function getDoctypeMeta(doctype: string): Promise<any> {
   return call('frappe.os_core.meta.get_doctype_meta', { doctype })
 }
 
-// Registry contributions for ONE uncurated doctype, resolved on demand so a deep link to any
-// DocType opens its list (the boot registry only ships the curated set). Null when the doctype
-// is missing or the user may not read it — the caller then falls back to the app's default window.
-export async function resolveDoctype(doctype: string): Promise<Contribution[] | null> {
+// The `{schemaVersion, contributions}` registry envelope for ONE uncurated doctype, resolved on
+// demand so a deep link to any DocType opens its list (the boot registry only ships the curated
+// set). Same envelope get_registry emits, so the caller unwraps both through one tolerant parser
+// (asServerRegistry, ADR-0008). Null when the doctype is missing or the user may not read it — the
+// caller then falls back to the app's default window.
+export async function resolveDoctype(doctype: string): Promise<OsRegistryData | null> {
   return call('frappe.os_core.registry.resolve_doctype', { doctype })
 }
 

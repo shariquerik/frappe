@@ -179,14 +179,16 @@ def get_registry():
 def resolve_doctype(doctype: str):
 	"""Registry contributions for ONE doctype, resolved on demand — the deep-link path for a
 	real doctype the curated boot registry omits, so /os/<app>/<Any DocType> opens its list.
-	Returns the same display-config + view shapes get_registry emits (the client folds them into
-	its live index), or None when the doctype is missing or the user may not read it — letting
-	the client fall back to the app's default window. Permission-gated like the boot registry
-	(ADR-0010); the owning app rides on each contribution's sourceApp (_app_of)."""
+	Returns the SAME `{schemaVersion, contributions}` envelope get_registry emits (the client
+	unwraps it through the same tolerant parser and folds the contributions into its live index),
+	or None when the doctype is missing or the user may not read it — letting the client fall back
+	to the app's default window. One envelope for one payload keeps the schema-tolerance seam
+	(ADR-0008) negotiable on both entry points. Permission-gated like the boot registry (ADR-0010);
+	the owning app rides on each contribution's sourceApp (_app_of)."""
 	meta = readable_meta(doctype)
 	if not meta:
 		return None
-	return _doctype_contributions(doctype, meta, _property_setters_of(doctype))
+	return {"schemaVersion": 1, "contributions": _doctype_contributions(doctype, meta, _property_setters_of(doctype))}
 
 
 def get_permissions():
