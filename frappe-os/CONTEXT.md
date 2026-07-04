@@ -462,6 +462,20 @@ per-user window is called **Settings**, never "System Settings". A separate surf
 when it arrives — site-wide scope, not per-user.
 _Avoid_: naming the per-user **Settings** window "System" anything — that label belongs here.
 
+**Casing boundary** (wire convention):
+The rule for which case a key on a server response uses — the boundary is **who authored the
+shape**. **OS-authored** data (Registry contribution payloads, the boot registry envelope:
+`sourceApp`, `appletId`, `schemaVersion`) is **camelCase** — it is shapes the OS invented, so it
+follows the frontend's own convention. **Frappe-native passthrough** (live meta and boot fields
+that Frappe itself produces: `title_field`, `can_write`, `csrf_token`) stays **snake_case** —
+re-casing it would be a lossy translation layer that drifts from the framework it mirrors. One
+response straddles the line by design: `get_doctype_meta` returns snake_case Frappe meta wrapping
+a camelCase `contributions` list — the boundary runs *through* the payload, not around it. There
+is deliberately **no conversion layer**; each side keeps its native case and the client types both
+(`DoctypeMetaPayload`, `data/types.ts`) so a typo on the snake_case side fails at typecheck.
+_Avoid_: "normalize the casing" / adding a camelCase shim over Frappe meta — that reintroduces the
+translation layer this rule exists to avoid.
+
 ## Example dialogue
 
 > **Dev:** Does CRM get to register its Kanban view in some special core path?

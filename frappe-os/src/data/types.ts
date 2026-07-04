@@ -7,7 +7,8 @@ import type { Component } from 'vue'
 import type { useOS } from '@/desktop'
 import type { FilterValue, DoctypeMeta, DoctypeViewPayload } from '@/config/types'
 import type { Surface } from '@/surface/types'
-import type { BootData } from '@/registry/types'
+import type { BootData, Contribution } from '@/registry/types'
+import type { IndicatorSpec } from '@/indicators/types'
 import type { CustomizationGroup } from '@/actions/types'
 
 // ── Data layer (api.ts, records.ts) ──────────────────────────────────────────────
@@ -26,6 +27,44 @@ export interface CacheEntry<T> {
   loading: boolean
   data: T
   error: string | null
+}
+
+// ── Live doctype meta (get_doctype_meta) ─────────────────────────────────────────
+// One form field descriptor from the live doctype meta, tagged with the label of the Section
+// Break it falls under. Snake_case by the casing boundary (CONTEXT.md): this is Frappe-native
+// meta (`frappe.get_meta(...).fields`) passed through verbatim, not an OS-authored shape.
+export interface DoctypeField {
+  fieldname: string
+  label: string
+  fieldtype: string
+  options: string | null
+  section: string
+  reqd: boolean
+  read_only: boolean
+  in_list_view: boolean
+}
+
+// The live, permission-checked doctype meta a list/form loads when a doctype opens (ADR-0028) —
+// the return of `frappe.os_core.meta.get_doctype_meta`. This is the one response that carries
+// BOTH sides of the casing boundary (CONTEXT.md): snake_case Frappe-native meta at the top level
+// wrapping the camelCase OS-authored `contributions` list. Typed so a typo on the snake_case side
+// fails at typecheck instead of surfacing at runtime as untyped `any`.
+export interface DoctypeMetaPayload {
+  doctype: string
+  // The doctype's title field, defaulting to "name" server-side when it has none.
+  title_field: string
+  // The normalized Record-indicator spec (ADR-0028); null when the doctype has no status model.
+  indicator: IndicatorSpec | null
+  can_create: boolean
+  can_write: boolean
+  // Lean field descriptors grouped by Section Break — the form-layout raw material.
+  fields: DoctypeField[]
+  // The doctype's co-located `os/` manifest (ADR-0030), carried as data for the view to read;
+  // {} when the doctype ships none. Opaque here — the later folders evaluate what it declares.
+  manifest: Record<string, unknown>
+  // The doctype's Doctype/View-scoped Action + Command contributions (ADR-0032) — the OS-authored,
+  // camelCase half of this payload, folded into the registry the moment the meta arrives.
+  contributions: Contribution[]
 }
 
 // A single Frappe wire filter — the shape the list-view controls emit

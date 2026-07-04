@@ -10,7 +10,7 @@ import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as ap
 import { watchTask, type TaskWatch } from '@/data/realtime'
 import { notify } from '@/data/notify'
 import { registerScopedContributions } from '@/registry'
-import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult } from '@/types'
+import type { CacheEntry, ListFilters, FrappeDoc, GetListOptions, BulkUpdateResult, DoctypeMetaPayload } from '@/types'
 
 // A list entry carries, beside the reactive slot, the doctype and the SHAPE it was last
 // fetched with — so a context-free write can find and replay every open window of that
@@ -28,7 +28,7 @@ interface ListEntry extends CacheEntry<FrappeDoc[]> {
 const lists = reactive<Record<string, ListEntry>>({})
 const docs = reactive<Record<string, CacheEntry<FrappeDoc | null>>>({}) // "doctype/name" -> entry, data is the doc
 const counts = reactive<Record<string, CacheEntry<number | null>>>({}) // cache key -> entry, data is a number
-const fieldMetas = reactive<Record<string, CacheEntry<any>>>({}) // doctype -> entry, data is the live field schema
+const fieldMetas = reactive<Record<string, CacheEntry<DoctypeMetaPayload | null>>>({}) // doctype -> entry, data is the live doctype meta
 
 const entry = <T>(data: T): CacheEntry<T> => ({ loading: false, data, error: null })
 const docKey = (doctype: string, name: string) => `${doctype}/${name}`
@@ -126,12 +126,12 @@ export async function loadCount(doctype: string, filters?: ListFilters, fieldnam
 // ---- live field schema (for the editable form) -------------------------------
 // The doctype's real field descriptors, grouped by section, plus its create/write
 // permissions. Static per doctype, so it is fetched once and cached.
-export function fieldMetaFor(doctype: string): CacheEntry<any> {
-  if (!fieldMetas[doctype]) fieldMetas[doctype] = entry<any>(null)
+export function fieldMetaFor(doctype: string): CacheEntry<DoctypeMetaPayload | null> {
+  if (!fieldMetas[doctype]) fieldMetas[doctype] = entry<DoctypeMetaPayload | null>(null)
   return fieldMetas[doctype]
 }
 
-export async function loadFieldMeta(doctype: string): Promise<CacheEntry<any>> {
+export async function loadFieldMeta(doctype: string): Promise<CacheEntry<DoctypeMetaPayload | null>> {
   const state = fieldMetaFor(doctype)
   if (state.data || state.loading) return state
   state.loading = true

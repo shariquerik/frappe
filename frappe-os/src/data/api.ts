@@ -1,7 +1,7 @@
 // Minimal Frappe data layer for Frappe OS (ported from the /x shell's api.js).
 // Reads go through whitelisted GET calls (no CSRF needed); writes use the REST
 // resource API with the CSRF token from boot.
-import type { ListFilters, FrappeDoc, GetListOptions, OsRegistryData } from '@/types'
+import type { ListFilters, FrappeDoc, GetListOptions, OsRegistryData, DoctypeMetaPayload } from '@/types'
 
 // The server seeds the CSRF token onto the global as a fallback for direct page loads.
 declare global {
@@ -145,8 +145,10 @@ export async function createDoc(
   return (await parse(res)).data
 }
 
-// Lean field descriptors (grouped by Section Break) for building the form layout.
-export async function getDoctypeMeta(doctype: string): Promise<any> {
+// The live, permission-checked doctype meta (ADR-0028): lean field descriptors grouped by Section
+// Break, the indicator spec, create/write permissions, the `os/` manifest, and the doctype's
+// scoped contributions. See DoctypeMetaPayload for the casing boundary this response straddles.
+export async function getDoctypeMeta(doctype: string): Promise<DoctypeMetaPayload> {
   return call('frappe.os_core.meta.get_doctype_meta', { doctype })
 }
 
