@@ -9,7 +9,7 @@ import { Button, Avatar } from "frappe-ui";
 import StatusPill from "@/components/StatusPill.vue";
 import { indicatorFor } from "@/indicators/indicator";
 import { useOS } from "@/desktop";
-import { TOOLBAR_SLOT } from "./toolbar";
+import { TOOLBAR_SLOT } from "@/components/window-chrome";
 // OsWindow feeds defineProps, so import it from the concrete module, not the @/types barrel
 // (its `export *` breaks @vue/compiler-sfc's macro resolver — see summary.md gotcha).
 import type { OsWindow, BuiltinSurface } from "@/surface/types";

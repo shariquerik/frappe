@@ -63,6 +63,21 @@ feature folder or a subsystem? A colocated spec imports its subject with `../<lo
 anything cross-subsystem through the `@/` alias — never a top-level spec reaching down into a
 feature folder's internals, nor a colocated spec reaching up with `../../..`.
 
+**A seam-pure applet keeps only its SFC + barrel — the exception (confirmed 2026-07-04).** The
+feature-folder shape (own `<logic>.ts` + `types.ts` + `tests/`) applies to a folder that OWNS a
+projection. An applet that renders a projection **published by a subsystem through the OS API**
+owns none: its logic belongs to that subsystem, not the folder. `applets/Customizations/` is the
+reference — it is a pure renderer of `os.registry.customizations()`. The projection
+(`cookCustomizations` and friends) operates on `Action[]`, so it lives in the actions subsystem
+(`actions/customizations.ts`, tested top-level in `tests/customizations.spec.js`), and its payload
+types (`CustomizationRow`, `CustomizationGroup`) live in the shared `@/types` barrel because they
+cross the OS-API boundary — they are the seam's contract, not applet-local shapes. Pulling either
+into the applet folder would duplicate the seam and couple a renderer to logic it does not own. So
+a bare `Feature.vue` + `index.ts` folder is CORRECT when the applet does no projection of its own;
+`MyTodos/` colocates `todo-groups.ts`/`types.ts`/`tests/` only because its due-date grouping is
+applet-private presentation logic with no subsystem home. The test is ownership, not folder kind:
+colocate what the folder owns; leave the folder bare when the subsystem owns the logic.
+
 This is recorded because it sets a **uniform shape every future component follows** and a
 **load-bearing test-glob dependency**, both cheap to honor going forward but disruptive to
 reverse once a dozen folders and their barrel imports exist.

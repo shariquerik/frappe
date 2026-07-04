@@ -13,7 +13,7 @@ import { indicatorFor } from "@/indicators/indicator";
 import { useOS } from "@/desktop";
 import { useWorkingState } from "@/desktop/use-working-state";
 import { seedDraft, draftToStore, changedFields } from "./draft";
-import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
+import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/window-chrome";
 // defineProps type comes from the concrete module (the @/types barrel's `export *` breaks
 // @vue/compiler-sfc's macro type resolver — see DoctypeView.vue).
 import type { ViewProps } from "@/config/types";

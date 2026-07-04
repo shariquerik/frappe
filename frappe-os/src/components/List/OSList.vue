@@ -15,7 +15,7 @@ import OSListView from "./OSListView.vue";
 import { listFetchFields, indicatorColumn } from "./list-columns";
 import { useOS } from "@/desktop";
 import { useWorkingState } from "@/desktop/use-working-state";
-import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/Window/toolbar";
+import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/window-chrome";
 import { toolbarItems } from "@/actions/toolbar";
 import { LIST_SELECTION } from "@/actions/regions";
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro

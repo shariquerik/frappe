@@ -14,7 +14,7 @@ import { AppSettings, Settings } from "@/components/Settings";
 import { Finder } from "@/components/Finder";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
-import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "./toolbar";
+import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/window-chrome";
 import { WORKING_STATE_CONTEXT } from "@/desktop/use-working-state";
 import AppSidebar from "./AppSidebar.vue";
 import AppDashboard from "./AppDashboard.vue";

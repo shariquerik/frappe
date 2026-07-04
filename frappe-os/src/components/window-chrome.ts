@@ -1,5 +1,11 @@
 import type { InjectionKey, Ref, ShallowRef } from "vue";
 
+// The injection contract between an OSWindow and the view body it hosts — shared across the
+// Window, Form and List feature folders, so it lives at the components root rather than inside
+// Window/ (a view body reaching past the Window barrel into the folder would break the seam;
+// re-exporting it from that barrel would drag OSWindow.vue into a Window→Views→Form→Window
+// import cycle). A leaf module: it imports only Vue, so any component may inject from it.
+
 // Per-window teleport target for a view's primary actions (list "New", form "Save"/menu).
 // OSWindow provides it — it's the common ancestor of the chrome bar and the view body — and
 // AppToolbar binds it to its right-hand action zone, so one bar carries both the breadcrumb
