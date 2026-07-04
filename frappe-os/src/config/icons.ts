@@ -33,6 +33,9 @@ export const ICON: Record<string, string> = {
   palette: 'lucide-palette',
   calendar: 'lucide-calendar',
   image: 'lucide-image',
+  sun: 'lucide-sun',
+  moon: 'lucide-moon',
+  monitor: 'lucide-monitor',
 }
 
 // Per-doctype icon for the covered apps (frappe, erpnext, crm). Falls back to the

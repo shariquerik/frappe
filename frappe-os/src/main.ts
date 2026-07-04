@@ -12,6 +12,7 @@ import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
 import { initRecents } from '@/recents'
 import { initWallpapers } from '@/wallpapers'
+import { initAppearance } from '@/appearance'
 import { router, pathForFocus, focusSig, applyRoute, parseSegments, INSTANCE_KEY } from '@/routing'
 import { formSurface, listSurface, dashboardSurface, appletSurface, isAspectId, paneForSlug, SETTINGS_PANES, APP_SETTINGS_PANES } from '@/surface'
 import type { RouteParams, Surface } from '@/types'
@@ -157,6 +158,10 @@ async function boot() {
     initRecents(null)
     initWallpapers(null)
   }
+
+  // Boot-independent: seed the Theme submenu's run Handlers + its checkmark provider (the seam that
+  // bridges the OS chrome to frappe-ui's theme engine — kept out of the pure actions graph).
+  initAppearance()
 
   // 1. Hydrate the saved desktop FIRST — a deep-link layers onto the restored
   //    session, never wipes it.

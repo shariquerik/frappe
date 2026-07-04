@@ -3,17 +3,32 @@
 // (ADR-0001 dogfooding; MenuBar.vue was the standing violation). The run Handlers register through
 // the OPEN RUN_HANDLERS map (contributions.ts) exactly as an app's would; the resolver competes
 // this data with the folded app contributions, so an app customizes any menu the way it already
-// customizes File. Every item is BACKED — the `noop` stubs (the Edit menu, Lock, the Help-as-palette
+// customizes File. Every item is BACKED — the `noop` stubs (the Edit menu, the Help-as-palette
 // placeholder) were deleted, not parked on a do-nothing ref (ADR-0039 rule 1). An empty menu earns
 // no title (MenuBar.vue), so the deleted verbs simply return when a real context contributes them.
 import { surfaceAppId, windowRole } from '@/surface'
 import { logout, switchToDesk } from '@/data/session'
+import { ICON } from '@/config/icons'
 import { registerRunHandlers } from './contributions'
 import {
   SYSTEM_REGION, APP_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
 } from './regions'
 import type { Action, Command, Invocation } from './types'
 import type { OsStore } from '@/types'
+
+// The System menu's Theme submenu label — one shared string so the Actions that nest under it and
+// the selected-overlay that checkmarks the live option can never drift apart (like POSITION_SUBMENU).
+export const THEME_SUBMENU = 'Theme'
+
+// The Theme option command per appearance value — the data half of the radio, shared by the
+// placements below and the appearance seam (@/appearance) that both SETS the theme (its run
+// Handlers) and reads the live value to checkmark the matching option. Kept here, frappe-ui-free,
+// so this unit-tested module stays pure; the frappe-ui useTheme wiring lives in the seam (boot-only).
+export const THEME_COMMAND: Record<string, string> = {
+  light: 'frappe.system.theme-light',
+  dark: 'frappe.system.theme-dark',
+  system: 'frappe.system.theme-system',
+}
 
 // ── run Handlers (the imperative half; the OS seeds them through the same open seam as an app) ──
 // Each is a RunHandler — it takes the Invocation (ADR-0037) and reaches the store through its `os`
@@ -105,6 +120,10 @@ registerRunHandlers({
 const run = (id: string, title: string, ref: string, shortcut?: string): Command =>
   ({ id, sourceApp: 'frappe', title, handler: { kind: 'run', ref }, ...(shortcut ? { shortcut } : {}) })
 
+// A `run` Command that also carries a leading icon — the icon-bearing submenu items (Theme options).
+const runIcon = (id: string, title: string, ref: string, icon: string): Command =>
+  ({ id, sourceApp: 'frappe', title, handler: { kind: 'run', ref }, icon })
+
 export const MENUBAR_COMMANDS: Command[] = [
   // The command palette is keyboard-only (⌘K): a Command with a shortcut and NO Action placement —
   // reached by the Spotlight button, never a dropdown item (ADR-0039). Its shortcut still fires
@@ -112,13 +131,19 @@ export const MENUBAR_COMMANDS: Command[] = [
   run('frappe.palette.open', 'Command palette', 'open-palette', 'mod+k'),
   // system (the Frappe-logo menu): workspace + session verbs, plus whole-OS full screen — an
   // OS-wide toggle belongs in the OS menu, not the per-surface View menu (ADR-0039 rule 3). The
-  // fullscreen pair is a live-state toggle (see suppressedToggleCommands). No Lock (deferred issue).
+  // fullscreen pair is a live-state toggle (see suppressedToggleCommands).
   run('frappe.system.about', 'About this workspace', 'open-about'),
   run('frappe.system.settings', 'Settings…', 'open-settings'),
   run('frappe.system.wallpaper', 'Change wallpaper…', 'open-wallpaper'),
   run('frappe.system.enter-fullscreen', 'Enter full screen', 'toggle-fullscreen'),
   run('frappe.system.exit-fullscreen', 'Exit full screen', 'toggle-fullscreen'),
   run('frappe.system.switch-desk', 'Switch to Desk…', 'switch-to-desk'),
+  // The Theme submenu (radio): three appearance options, the active one checkmarked
+  // (selectedThemeCommands). The flyout, the `>` chevron, the leading icons and the checkmark are all
+  // the OSDropdown's native submenu/selected/icon rendering — the same the dock's position menu uses.
+  runIcon('frappe.system.theme-light', 'Light Mode', 'set-theme-light', ICON.sun),
+  runIcon('frappe.system.theme-dark', 'Dark Mode', 'set-theme-dark', ICON.moon),
+  runIcon('frappe.system.theme-system', 'System Default', 'set-theme-system', ICON.monitor),
   run('frappe.system.logout', 'Log out…', 'logout'),
   // app (the front app's own menu; `{app}` interpolates to its name at render time)
   run('frappe.app.settings', '{app} settings…', 'app-settings'),
@@ -158,7 +183,12 @@ export const MENUBAR_ACTIONS: Action[] = [
   place('frappe.system.enter-fullscreen', SYSTEM_REGION, 'c', 3, { scope: OS_SCOPE }),
   place('frappe.system.exit-fullscreen', SYSTEM_REGION, 'c', 3, { scope: OS_SCOPE }),
   place('frappe.system.switch-desk', SYSTEM_REGION, 'd', 4),
-  place('frappe.system.logout', SYSTEM_REGION, 'e', 5),
+  // Theme + session share group 'e' (one divider above the pair, no divider between — matching the
+  // reference). The three Theme options nest under one submenu, above Log out; Log out ends the session.
+  place('frappe.system.theme-light', SYSTEM_REGION, 'e', 5, { submenu: THEME_SUBMENU }),
+  place('frappe.system.theme-dark', SYSTEM_REGION, 'e', 6, { submenu: THEME_SUBMENU }),
+  place('frappe.system.theme-system', SYSTEM_REGION, 'e', 7, { submenu: THEME_SUBMENU }),
+  place('frappe.system.logout', SYSTEM_REGION, 'e', 8),
   place('frappe.app.settings', APP_REGION, 'a', 0),
   place('frappe.app.hide', APP_REGION, 'a', 1),
   place('frappe.app.quit', APP_REGION, 'b', 2),

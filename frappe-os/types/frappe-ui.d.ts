@@ -21,6 +21,7 @@ export const Badge: any
 export const SidebarItem: any
 export const SidebarSection: any
 export const Switch: any
+export const Select: any
 export const FormControl: any
 export const Password: any
 export const FileUploader: any

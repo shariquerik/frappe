@@ -7,7 +7,7 @@
 // active pane rides the singleton window's surface params so a deep-link / dock "Dock Settings…"
 // can open straight to it.
 import { computed } from 'vue'
-import { Switch, ThemeSwitcher } from 'frappe-ui'
+import { Switch, Select, useTheme } from 'frappe-ui'
 import { useOS } from '@/desktop'
 import { AccountSection, WallpaperPicker } from '@/components/Settings'
 import { SETTINGS_PANES } from '@/surface'
@@ -29,6 +29,16 @@ const dockPositions: { label: string; value: DockPosition }[] = [
   { label: 'Left', value: 'left' },
   { label: 'Right', value: 'right' },
 ]
+
+// Appearance as a Select (System / Light / Dark). useTheme owns the <html data-theme> attribute
+// and persists the choice, so the model just reads currentTheme and writes through setTheme.
+const themeOptions = [
+  { label: 'System', value: 'system' },
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' },
+]
+const { currentTheme, setTheme } = useTheme()
+const theme = computed<string>({ get: () => currentTheme.value, set: (value) => setTheme(value) })
 </script>
 
 <template>
@@ -49,11 +59,15 @@ const dockPositions: { label: string; value: DockPosition }[] = [
       </template>
 
       <template v-else-if="pane==='Appearance'">
-        <!-- Global light/dark/system theme. frappe-ui's ThemeSwitcher owns the
-             <html data-theme> attribute and persists the choice itself — a bare
-             switcher drives setTheme on click, so no binding is needed here. -->
         <div class="px-[22px] py-5">
-          <ThemeSwitcher label="" description="" />
+          <!-- Global light/dark/system theme, as a Select (System / Light / Dark). -->
+          <div class="flex items-center gap-3 py-[11px]">
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="text-[13px] text-ink-gray-8">Appearance</span>
+              <span class="text-[11.5px] text-ink-gray-5">Choose a light, dark, or system-matched interface.</span>
+            </div>
+            <Select class="flex-shrink-0" :options="themeOptions" v-model="theme" />
+          </div>
         </div>
       </template>
 

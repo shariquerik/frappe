@@ -123,6 +123,10 @@ export interface Command {
   handler: Handler
   shortcut?: string
   allowInInput?: boolean
+  // An optional leading glyph for the rendered item — a `lucide-*` class string (config/icons.ts),
+  // presentation only. Absent = a text-only item (the norm; most menu verbs carry no icon). Used by
+  // the icon-bearing submenus (the System menu's Theme options), the same channel `shortcut` uses.
+  icon?: string
 }
 
 // A placement of a Command into a Region, carrying the conditions under which it appears

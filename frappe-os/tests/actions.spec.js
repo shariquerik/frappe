@@ -14,8 +14,8 @@ import {
   canonicalBinding, eventBinding, formatShortcut, isTextEntry, shortcutIndex, pickShortcut,
 } from '../src/actions/shortcuts'
 import { contextForOS } from '../src/actions/context'
-import { fileMenuOptions, menuOptions } from '../src/actions/menubar'
-import { suppressedToggleCommands } from '../src/actions/menu-contributions'
+import { fileMenuOptions, menuOptions, registerMenuSelection } from '../src/actions/menubar'
+import { suppressedToggleCommands, THEME_COMMAND, THEME_SUBMENU } from '../src/actions/menu-contributions'
 import { desktopContextItems, dockContextOptions } from '../src/actions/context-menus'
 import { suppressedDockHidingCommands, selectedDockPositionCommands } from '../src/actions/context-menu-contributions'
 import { toolbarItems } from '../src/actions/toolbar'
@@ -1401,10 +1401,29 @@ describe('every menu-bar menu renders from the resolver (no literal arrays)', ()
   })
 
   it('the system menu resolves its workspace + session verbs, plus whole-OS full screen', () => {
+    // The three Theme options nest under the "Theme" parent, so the flat item list shows the parent
+    // (not the options) between Switch to Desk… and Log out… — both group 'e'.
     expect(labels(SYSTEM_REGION)).toEqual([
-      'About this workspace', 'Settings…', 'Change wallpaper…', 'Enter full screen', 'Switch to Desk…', 'Log out…',
+      'About this workspace', 'Settings…', 'Change wallpaper…', 'Enter full screen', 'Switch to Desk…', THEME_SUBMENU, 'Log out…',
     ])
     expect(menuOptions(SYSTEM_REGION, os).map((g) => g.group)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  })
+
+  it('the Theme submenu nests its three appearance options, each with a leading icon', () => {
+    const group = menuOptions(SYSTEM_REGION, os).find((g) => g.group === 'e')
+    const parent = group.items.find((i) => i.label === THEME_SUBMENU)
+    // The parent is a pure submenu holder — no click of its own, just the nested options.
+    expect(parent.onClick).toBeUndefined()
+    expect(parent.submenu.map((i) => i.label)).toEqual(['Light Mode', 'Dark Mode', 'System Default'])
+    expect(parent.submenu.every((i) => typeof i.icon === 'string' && i.icon.startsWith('lucide-'))).toBe(true)
+  })
+
+  it('registerMenuSelection checkmarks the live Theme option (the injected radio selection)', () => {
+    registerMenuSelection(() => new Set([THEME_COMMAND.dark]))
+    const parent = menuOptions(SYSTEM_REGION, os).find((g) => g.group === 'e').items.find((i) => i.label === THEME_SUBMENU)
+    const selected = parent.submenu.filter((i) => i.selected).map((i) => i.label)
+    expect(selected).toEqual(['Dark Mode'])
+    registerMenuSelection(() => new Set()) // restore the frappe-ui-free default for other specs
   })
 
   it('the edit menu resolves nothing — its noop stubs were deleted (ADR-0039 rule 1)', () => {

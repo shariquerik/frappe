@@ -21,7 +21,7 @@ export default {
     'lucide-briefcase', 'lucide-shopping-cart', 'lucide-truck', 'lucide-wallet',
     'lucide-sticky-note', 'lucide-list-checks', 'lucide-bell', 'lucide-cloud',
     'lucide-settings', 'lucide-plug', 'lucide-sliders-horizontal', 'lucide-palette',
-    'lucide-calendar', 'lucide-image',
+    'lucide-calendar', 'lucide-image', 'lucide-sun', 'lucide-moon', 'lucide-monitor',
   ],
   theme: { extend: {} },
   plugins: [],

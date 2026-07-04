@@ -14,11 +14,21 @@ import { surfaceAppId } from '@/surface'
 import type { Action, Command, ResolvedAction } from './types'
 import type { OsStore } from '@/types'
 
-// One rendered menu item (label + click, plus the optional keyboard-shortcut chip) and one divider
-// group — the OSDropdown options shape. `shortcut` is the command's binding as macOS glyphs (⌘N),
-// drawn as trailing presentation by the dropdown (ADR-0037); absent when the command has no key.
-export interface MenuItem { label: string; onClick: () => void; shortcut?: string }
+// One rendered menu item and one divider group — the OSDropdown options shape. `shortcut` is the
+// command's binding as macOS glyphs (⌘N), drawn as a trailing chip (ADR-0037); `icon` is a leading
+// `lucide-*` glyph; `selected` draws a checkmark (a radio option's live state). A `submenu` parent
+// carries no `onClick` of its own — just its nested `items` (the OSDropdown renders the flyout +
+// `>` chevron natively). Every field but `label` is optional: the norm is a bare label + click.
+export interface MenuItem { label: string; onClick?: () => void; shortcut?: string; icon?: string; selected?: boolean; submenu?: MenuItem[] }
 export interface MenuGroup { group: string; hideLabel: boolean; items: MenuItem[] }
+
+// The live radio selection — the set of command ids to checkmark (currently the active Theme option).
+// It rides frappe-ui's useTheme, which this unit-tested projector must not import, so the seam is
+// INJECTED at boot (@/appearance calls registerMenuSelection) exactly like run Handlers are seeded
+// through registerRunHandlers. The default returns none, so the pure test graph stays frappe-ui-free
+// and every menu without a selection is unaffected — it is command-id-keyed, matching only its own.
+let liveSelection: () => Set<string> = () => new Set()
+export function registerMenuSelection(provider: () => Set<string>): void { liveSelection = provider }
 
 // The front app's display name, or "Finder" for the bare desktop — the `{app}` token's value. The
 // same name the app menu shows ("Quit CRM"); presentation only, so it lives in the projector.
@@ -28,7 +38,13 @@ function activeAppName(os: OsStore): string {
   return appId ? os.DATA.APP[appId]?.name ?? appId : 'Finder'
 }
 
-function appendItem(groups: MenuGroup[], action: Action, command: Command, os: OsStore): void {
+// Build one item and file it into its group — nested under a same-`submenu` parent when the Action
+// names one (siblings collapse into one flyout parent, like the dock's Position menu), else flat.
+// `submenus` keys a parent by "group submenuLabel" so two groups can host same-named submenus.
+function appendItem(
+  groups: MenuGroup[], submenus: Map<string, MenuItem>, action: Action, command: Command,
+  os: OsStore, selected: Set<string>,
+): void {
   const key = action.group ?? ''
   let group = groups.find((g) => g.group === key)
   if (!group) { group = { group: key, hideLabel: true, items: [] }; groups.push(group) }
@@ -37,7 +53,19 @@ function appendItem(groups: MenuGroup[], action: Action, command: Command, os: O
   const raw = action.commandPatch?.title ?? command.title
   const label = raw.replace('{app}', activeAppName(os))
   const shortcut = command.shortcut ? formatShortcut(command.shortcut) : undefined
-  group.items.push({ label, onClick: () => invoke(command, os), ...(shortcut ? { shortcut } : {}) })
+  const item: MenuItem = {
+    label, onClick: () => invoke(command, os),
+    ...(shortcut ? { shortcut } : {}), ...(command.icon ? { icon: command.icon } : {}),
+    ...(selected.has(action.command) ? { selected: true } : {}),
+  }
+  if (action.submenu) {
+    const submenuKey = `${key} ${action.submenu}`
+    let parent = submenus.get(submenuKey)
+    if (!parent) { parent = { label: action.submenu, submenu: [] }; submenus.set(submenuKey, parent); group.items.push(parent) }
+    parent.submenu!.push(item)
+  } else {
+    group.items.push(item)
+  }
 }
 
 // Menus that speak for the front app/window/surface, not the OS itself. An `os`-scope command in one
@@ -63,10 +91,14 @@ function warnScopeDishonesty(regionId: string, live: ResolvedAction[]): void {
 // the commands it names, so passing the union to every menu is harmless.
 export function menuOptions(regionId: string, os: OsStore): MenuGroup[] {
   const dead = new Set([...suppressedPlacementCommands(os), ...suppressedToggleCommands(os)])
+  // The live-selected radio options (a checkmark). Command-id-keyed like `dead`, so passing it to
+  // every menu is harmless — only the Theme options' ids ever match (the System menu).
+  const selected = liveSelection()
   const live = projectRegion(regionId, os).filter((r) => !dead.has(r.action.command))
   warnScopeDishonesty(regionId, live)
   const groups: MenuGroup[] = []
-  for (const { action, command } of live) appendItem(groups, action, command, os)
+  const submenus = new Map<string, MenuItem>() // "group submenuLabel" -> the parent item
+  for (const { action, command } of live) appendItem(groups, submenus, action, command, os, selected)
   return groups
 }
 
