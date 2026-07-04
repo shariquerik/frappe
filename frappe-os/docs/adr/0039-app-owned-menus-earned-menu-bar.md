@@ -1,7 +1,9 @@
 # The menu bar is earned: app-declared menus, no unbacked items
 
-> **Status:** Accepted (2026-07-04, grilled). Not yet implemented. Amends ADR-0004 (Region set
-> grows a parameterized form) and the first-party menu contributions of ADR-0001. Grounded in
+> **Status:** Accepted (2026-07-04, grilled). Rule 2 implemented in menubar-actions slice 06;
+> rule 2 amended the same session — menu authorship is OPEN (any app may declare a menu into
+> another real app's band), only the grammar stays closed (see rule 2). Amends ADR-0004 (Region
+> set grows a parameterized form) and the first-party menu contributions of ADR-0001. Grounded in
 > surveys of raven, crm, and erpnext — the installed apps this bench carries precisely to
 > supply real use cases.
 
@@ -24,16 +26,24 @@ issue, not a dead item.
 
 ## Rule 2 — apps declare their own menus
 
-ADR-0004's closed Region set gains one parameterized form: **`menubar:app:<menuId>`**. An app
-declares its menus as manifest data — `{ id, title, order }` — and places Actions into them
-through the identical pipeline (identity, layers, patches, removals all apply; the
-Customizations view catalogs them). The surveys demand plural menus per app: raven needs
-Format / Message / Channel, crm needs Record / Communicate, erpnext's Selling needs Create /
-Reports. An app-declared menu renders only while that app is focused (its Scope binding gives
-this for free) and is still subject to Rule 1.
+ADR-0004's closed Region set gains one parameterized form, **`menubar:app:<appId>:<menuId>`** —
+app-qualified so the id names the OWNING app (whose bar the menu joins, and while focused it
+renders) as well as the menu, and two apps' like-named menus never collide. An app declares a menu
+as manifest data — `{ id, title, order }` in `os/menus.json`, the OS stamps the owning app — and
+Actions place *items* into it through the identical pipeline (identity, layers, patches, removals
+all apply; the Customizations view catalogs them). A menu is the container; its items are Actions —
+add/edit/remove/gate/layer/cross-app all ride the ONE Action pipeline, never a second per-menu one.
+The surveys demand plural menus per app: raven needs Format / Message / Channel, crm needs Record /
+Communicate, erpnext's Selling needs Create / Reports. An app-declared menu renders only while its
+owning app is focused (the app-qualified Region + the items' Scope binding give this for free) and
+is still subject to Rule 1.
 
-What stays closed: the *grammar*. An app declares menus only in its own `menubar:app:` space —
-it cannot invent regions in the OS frame or in another app's chrome.
+**Authorship is open; the grammar is closed** (amended 2026-07-04, grilled). Any app may declare a
+menu into any *real* app's band — a custom app extends erpnext by declaring `menubar:app:erpnext:…`
+and shipping its items as Actions, exactly the no-privileged-core promise of ADR-0001. What stays
+closed is the *grammar*: a menu's target must be a real OS app; an app cannot invent a region in the
+OS frame (`menubar:file`, …) or name a non-existent app. A menu naming a non-app target is dropped
+loudly — the parameterized instances live inside an OS-owned grammar, they do not open the frame.
 
 ## Rule 3 — scope honesty in placement
 
@@ -55,6 +65,18 @@ silently reshuffled.
   are real. The vocabulary problem was honesty, not naming.
 - **One app-owned menu (the App menu only).** raven alone needs three. The Mac contract is the
   app owns the *middle*, not one slot.
+- **Owner-only menu declaration** (a menu is valid only when its author owns the bar). Grilled and
+  rejected: it blocks the core custom-app case — an app adding a *new* menu (not just items) to
+  erpnext's bar. The fragmentation ADR-0004 guards against is inventing new region *types* in shared
+  chrome, not one app declaring inside another's *parameterized* band; app-qualifying the Region and
+  requiring a real-OS-app target keeps the grammar closed while authorship stays open (ADR-0001).
+- **Menu items declared in `os/menus.json` too** (edit/remove items there, not via Actions). Rejected:
+  a menu item *is* an Action; add/edit/remove/gate/layer/cross-app/catalog all already live in the
+  Action pipeline (ADR-0001/0007/0014). Declaring items in `menus.json` forks that one pipeline into a
+  second, weaker one — no `when`, no App<Site<User layering, no attributed removal, absent from the
+  Customizations view — and duplicates a Command's placement per region. `menus.json` stays
+  container-only; one-file authoring convenience, if wanted, is build-time sugar over the same two
+  contribution kinds, never a second runtime model.
 - **erpnext modules as first-class OS apps.** Grilled and rejected: users install, update, and
   say "open ERPNext" — twenty peer launcher entries misrepresent the machine. The intra-app
   axis is the **workspace coordinate** (ADR-0040); app menus gate on it
