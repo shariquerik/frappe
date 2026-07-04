@@ -7,6 +7,7 @@ import { useRegistry } from '@/registry'
 import { contextForOS } from './context'
 import { MENUBAR_ACTIONS, MENUBAR_COMMANDS } from './menu-contributions'
 import { PLACEMENT_ACTIONS, PLACEMENT_COMMANDS } from './placement-verbs'
+import { CONTEXT_MENU_ACTIONS, CONTEXT_MENU_COMMANDS } from './context-menu-contributions'
 import './bulk-verbs' // side-effect: register first-party bulk run Handlers (server delivers the data)
 import { regionById, regionRenders } from './regions'
 import { warnFeatureAppRemovals } from './removals'
@@ -41,8 +42,8 @@ export function merged(): Merged {
   const sourceCommands = useRegistry().commands()
   const sourceActions = useRegistry().actions()
   if (!cache || cache.sourceCommands !== sourceCommands || cache.sourceActions !== sourceActions) {
-    const byId = commandsById([...MENUBAR_COMMANDS, ...PLACEMENT_COMMANDS, ...sourceCommands])
-    cache = { sourceCommands, sourceActions, byId, actions: [...MENUBAR_ACTIONS, ...PLACEMENT_ACTIONS, ...sourceActions] }
+    const byId = commandsById([...MENUBAR_COMMANDS, ...PLACEMENT_COMMANDS, ...CONTEXT_MENU_COMMANDS, ...sourceCommands])
+    cache = { sourceCommands, sourceActions, byId, actions: [...MENUBAR_ACTIONS, ...PLACEMENT_ACTIONS, ...CONTEXT_MENU_ACTIONS, ...sourceActions] }
   }
   return cache
 }

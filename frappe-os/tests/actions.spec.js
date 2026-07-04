@@ -13,11 +13,13 @@ import { MENUBAR_COMMANDS } from '../src/actions/menu-contributions'
 import { contextForOS } from '../src/actions/context'
 import { fileMenuOptions, menuOptions } from '../src/actions/menubar'
 import { suppressedToggleCommands } from '../src/actions/menu-contributions'
+import { desktopContextItems, dockContextOptions } from '../src/actions/context-menus'
+import { suppressedDockHidingCommands, selectedDockPositionCommands } from '../src/actions/context-menu-contributions'
 import { toolbarItems } from '../src/actions/toolbar'
 import {
   REGIONS, regionById, regionRenders, MENUBAR_REGIONS,
   SYSTEM_REGION, APP_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
-  LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR,
+  LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR, DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION,
 } from '../src/actions/regions'
 import { useOS } from '../src/desktop/index'
 import { listSurface } from '../src/surface'
@@ -808,6 +810,7 @@ describe('regions (closed set + selection gate)', () => {
     expect(ids).toEqual([
       'menubar:system', 'menubar:app', 'menubar:file', 'menubar:edit', 'menubar:view',
       'menubar:window', 'menubar:help', 'list:toolbar', 'list:selection', 'form:toolbar',
+      'desktop:context', 'dock:context',
     ])
   })
 
@@ -820,6 +823,8 @@ describe('regions (closed set + selection gate)', () => {
   it('an ungated Region always renders; the selection/bulk bar renders only when a selection exists', () => {
     expect(regionRenders(regionById(LIST_TOOLBAR), {})).toBe(true)
     expect(regionRenders(regionById(FORM_TOOLBAR), {})).toBe(true)
+    expect(regionRenders(regionById(DESKTOP_CONTEXT_REGION), {})).toBe(true) // chrome context menus are ungated
+    expect(regionRenders(regionById(DOCK_CONTEXT_REGION), {})).toBe(true)
     expect(regionRenders(regionById(LIST_SELECTION), {})).toBe(false) // no selection → hidden
     expect(regionRenders(regionById(LIST_SELECTION), { selection: 'rows' })).toBe(true)
     expect(regionRenders(undefined, {})).toBe(true) // an unknown id is ungated
@@ -1224,5 +1229,123 @@ describe('an app-layer Action contributed to menubar:window shows up', () => {
     registerRunHandlers({ 'crm-tile': () => { tiled = true } })
     menuOptions(WINDOW_REGION, os).flatMap((g) => g.items).find((i) => i.label === 'Tile all windows').onClick()
     expect(tiled).toBe(true)
+  })
+})
+
+// Issue 07 — the desktop and dock right-click menus, migrated off literal arrays onto the resolver
+// (desktop:context / dock:context Regions). Pure decision tables for the two new Regions plus the
+// two projectors rendered against the real store: the dock's live auto-hide toggle and position
+// selection are live-state overlays (like the menu bar's fullscreen pair), and any app can
+// contribute into either menu the way it customizes any menu-bar menu (ADR-0001).
+describe('desktop/dock context Regions render through the resolver (no literal arrays)', () => {
+  let warn
+  beforeEach(() => { warn = vi.spyOn(console, 'warn').mockImplementation(() => {}) })
+  afterEach(() => warn.mockRestore())
+
+  const at = (command, region, over = {}) => ({ command, region, sourceApp: 'crm', ...over })
+
+  it('an Action targets desktop:context and renders there, not in another Region', () => {
+    const a = at('c', DESKTOP_CONTEXT_REGION)
+    expect(resolve([a], DESKTOP_CONTEXT_REGION, {}).items).toHaveLength(1)
+    expect(resolve([a], DOCK_CONTEXT_REGION, {}).items).toEqual([]) // wrong region
+    expect(resolve([a], 'menubar:file', {}).items).toEqual([]) // wrong region
+  })
+
+  it('an Action targets dock:context and renders there only', () => {
+    const a = at('c', DOCK_CONTEXT_REGION)
+    expect(resolve([a], DOCK_CONTEXT_REGION, {}).items).toHaveLength(1)
+    expect(resolve([a], DESKTOP_CONTEXT_REGION, {}).items).toEqual([])
+  })
+
+  it('the resolver carries the submenu placement axis through untouched', () => {
+    const a = at('c', DOCK_CONTEXT_REGION, { submenu: 'Position on Screen', order: 1 })
+    expect(resolve([a], DOCK_CONTEXT_REGION, {}).items[0].submenu).toBe('Position on Screen')
+  })
+})
+
+describe('desktopContextItems (the desktop menu rendered from resolved Actions)', () => {
+  const os = useOS()
+  afterEach(() => { initRegistry(null) })
+
+  it('resolves the first-party Change Wallpaper entry', () => {
+    expect(desktopContextItems(os).map((i) => i.label)).toEqual(['Change Wallpaper…'])
+  })
+
+  it('Change Wallpaper opens Settings on the Wallpaper pane', () => {
+    const openSettings = vi.spyOn(os, 'openSettings').mockImplementation(() => {})
+    desktopContextItems(os).find((i) => i.label === 'Change Wallpaper…').onClick()
+    expect(openSettings).toHaveBeenCalledWith('Wallpaper')
+    openSettings.mockRestore()
+  })
+
+  it('a contributed Action targeting desktop:context appears in the menu', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+    const command = { type: 'command', target: '', name: 'tweaks.hello', sourceApp: 'tweaks', payload: { id: 'tweaks.hello', sourceApp: 'tweaks', title: 'Hello', handler: { kind: 'run', ref: 'noop' } } }
+    const action = { type: 'action', target: DESKTOP_CONTEXT_REGION, name: 'tweaks.hello', sourceApp: 'tweaks', payload: { command: 'tweaks.hello', region: DESKTOP_CONTEXT_REGION, sourceApp: 'tweaks', order: 5 } }
+    initRegistry({ user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0), app('tweaks', 'Tweaks', 1), command, action] } })
+    expect(desktopContextItems(os).map((i) => i.label)).toEqual(['Change Wallpaper…', 'Hello'])
+    warn.mockRestore()
+  })
+})
+
+describe('dockContextOptions (the dock menu rendered from resolved Actions)', () => {
+  const os = useOS()
+  const labels = () => dockContextOptions(os).flatMap((g) => g.options).map((i) => i.label)
+
+  it('renders the toggle, the Position submenu, and Dock Settings across two divider groups', () => {
+    os.setDockAutoHide(false)
+    const groups = dockContextOptions(os)
+    expect(groups.map((g) => g.group)).toEqual(['a', 'b'])
+    expect(labels()).toEqual(['Turn Hiding On', 'Position on Screen', 'Dock Settings…'])
+    const position = groups[0].options.find((i) => i.label === 'Position on Screen')
+    expect(position.submenu.map((i) => i.label)).toEqual(['Left', 'Bottom', 'Right'])
+  })
+
+  it('the auto-hide toggle flips its label with live state (one verb renders, not both)', () => {
+    os.setDockAutoHide(false)
+    expect(labels()).toContain('Turn Hiding On')
+    expect(labels()).not.toContain('Turn Hiding Off')
+    os.setDockAutoHide(true)
+    expect(labels()).toContain('Turn Hiding Off')
+    expect(labels()).not.toContain('Turn Hiding On')
+  })
+
+  it('the toggle runs the auto-hide Handler through the OS API', () => {
+    os.setDockAutoHide(false)
+    dockContextOptions(os).flatMap((g) => g.options).find((i) => i.label === 'Turn Hiding On').onClick()
+    expect(os.state.dockAutoHide).toBe(true)
+  })
+
+  it('marks the current dock position selected and runs the position Handler', () => {
+    os.setDockPosition('bottom')
+    const submenu = dockContextOptions(os)[0].options.find((i) => i.label === 'Position on Screen').submenu
+    expect(submenu.find((i) => i.label === 'Bottom').selected).toBe(true)
+    expect(submenu.find((i) => i.label === 'Left').selected).toBeUndefined()
+    submenu.find((i) => i.label === 'Left').onClick()
+    expect(os.state.dockPosition).toBe('left')
+  })
+
+  it('Dock Settings opens Settings on the Dock pane', () => {
+    const openSettings = vi.spyOn(os, 'openSettings').mockImplementation(() => {})
+    dockContextOptions(os).flatMap((g) => g.options).find((i) => i.label === 'Dock Settings…').onClick()
+    expect(openSettings).toHaveBeenCalledWith('Dock')
+    openSettings.mockRestore()
+  })
+})
+
+describe('the dock live-state overlay helpers', () => {
+  const os = useOS()
+
+  it('suppresses the toggle half that matches the live auto-hide state', () => {
+    os.setDockAutoHide(true)
+    expect([...suppressedDockHidingCommands(os)]).toEqual(['frappe.dock.hiding-on'])
+    os.setDockAutoHide(false)
+    expect([...suppressedDockHidingCommands(os)]).toEqual(['frappe.dock.hiding-off'])
+  })
+
+  it('selects exactly the position command matching the live side', () => {
+    os.setDockPosition('right')
+    expect([...selectedDockPositionCommands(os)]).toEqual(['frappe.dock.position-right'])
   })
 })

@@ -8,6 +8,7 @@ import { useOS } from '@/desktop'
 import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-model'
 import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } from '@/surface'
 import { usePlacements, placementView, writePlacementOverride } from '@/placements'
+import { dockContextOptions } from '@/actions'
 import OSDropdown from '../OSDropdown.vue'
 import AppIconTile from '../AppIconTile.vue'
 import type { OsWindow, BuiltinSurface, SurfaceRef } from '@/types'
@@ -240,27 +241,10 @@ function onDockContext(e: MouseEvent) {
   os.state.dockContextOpen = true
 }
 
-// "Dock Settings…" opens the Settings window straight to its Dock pane.
-function openDockSettings() { os.openSettings('Dock') }
-
-const ctxOptions = computed(() => [
-  {
-    hideLabel: true,
-    group: 'dock',
-    options: [
-      { label: os.state.dockAutoHide ? 'Turn Hiding Off' : 'Turn Hiding On', onClick: () => os.setDockAutoHide(!os.state.dockAutoHide) },
-      {
-        label: 'Position on Screen',
-        submenu: [
-          { label: 'Left', selected: pos.value === 'left', onClick: () => os.setDockPosition('left') },
-          { label: 'Bottom', selected: pos.value === 'bottom', onClick: () => os.setDockPosition('bottom') },
-          { label: 'Right', selected: pos.value === 'right', onClick: () => os.setDockPosition('right') },
-        ],
-      },
-    ],
-  },
-  { hideLabel: true, group: 'settings', options: [{ label: 'Dock Settings…', onClick: openDockSettings }] },
-])
+// The dock right-click entries render from the resolver (the `dock:context` Region), not a literal
+// array — the auto-hide toggle, the position submenu (with the live selection), and Dock Settings
+// are all Commands+Actions competed by the same engine, so an app can customize them (ADR-0001).
+const ctxOptions = computed(() => dockContextOptions(os))
 </script>
 
 <template>

@@ -6,6 +6,7 @@
 import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
+import { desktopContextItems } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, writePlacementOverride } from "@/placements";
 import { placementSurface, isAppRef } from "@/surface";
@@ -106,7 +107,9 @@ const desktopLabelStyle =
 // Right-click the wallpaper: a small context menu pinned to the cursor, rather than jumping
 // straight into Settings. The one entry opens the Wallpaper pane — the old direct behaviour.
 const desktopMenu = ref<{ x: number; y: number } | null>(null);
-const desktopMenuItems = [{ label: "Change Wallpaper…", onClick: () => os.openSettings("Wallpaper") }];
+// The desktop right-click entries render from the resolver (the `desktop:context` Region), not a
+// literal array — so any app/site/user can contribute or customize them (ADR-0001).
+const desktopMenuItems = computed(() => desktopContextItems(os));
 function onDesktopContext(e: MouseEvent) {
 	desktopMenu.value = { x: e.clientX, y: e.clientY };
 }

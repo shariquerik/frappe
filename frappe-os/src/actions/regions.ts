@@ -29,6 +29,13 @@ export const LIST_TOOLBAR = 'list:toolbar'
 export const LIST_SELECTION = 'list:selection'
 export const FORM_TOOLBAR = 'form:toolbar'
 
+// The two desktop-chrome context menus (right-click the wallpaper / the dock). CONTEXT.md's Region
+// entry already names them; they join the closed set so an app can contribute or customize their
+// entries exactly as it does any menu-bar menu (ADR-0001). Ungated — they always render whatever
+// the resolver hands them (the opener decides WHEN to pop the menu; the Region decides WHAT it holds).
+export const DESKTOP_CONTEXT_REGION = 'desktop:context'
+export const DOCK_CONTEXT_REGION = 'dock:context'
+
 // The menu-bar Regions in left-to-right render order — the one place the bar's shape is declared.
 // MenuBar.vue draws its dropdowns from this list; nothing else fixes the order.
 export const MENUBAR_REGIONS: readonly string[] = [
@@ -42,6 +49,8 @@ export const REGIONS: readonly Region[] = [
   { id: LIST_TOOLBAR },
   { id: LIST_SELECTION, requires: 'selection' },
   { id: FORM_TOOLBAR },
+  { id: DESKTOP_CONTEXT_REGION },
+  { id: DOCK_CONTEXT_REGION },
 ]
 
 const BY_ID: ReadonlyMap<string, Region> = new Map(REGIONS.map((r) => [r.id, r]))

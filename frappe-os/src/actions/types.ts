@@ -96,6 +96,11 @@ export interface Action {
   order?: number
   priority?: number
   group?: string
+  // The label of a nested submenu this Action's Command renders under, WITHIN its `group` — the
+  // one extra placement axis a context menu needs (the dock's "Position on Screen"). Pure render
+  // metadata like `group`/`order`: the resolver carries it untouched and a Region's projector that
+  // supports nesting collapses same-`submenu` siblings into one parent item. Absent = a flat item.
+  submenu?: string
   layer?: Layer
   commandPatch?: CommandPatch
   removed?: boolean

@@ -94,7 +94,7 @@ function inheritPlacement(winner: Action, competitors: Action[]): Action {
   const placed = competitors.filter((c) => c !== winner && (c.group !== undefined || c.order !== undefined))
   if (!placed.length) return winner
   const base = placed.reduce((best, c) => (compareActions(c, best) > 0 ? c : best))
-  return { ...winner, group: winner.group ?? base.group, order: winner.order ?? base.order }
+  return { ...winner, group: winner.group ?? base.group, order: winner.order ?? base.order, submenu: winner.submenu ?? base.submenu }
 }
 
 function logShadow(s: ShadowEvent): void {
