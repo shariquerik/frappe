@@ -7,7 +7,7 @@ import type { Context, When } from './types'
 // vector (./specificity). Together they are the complete, closed set of Context keys an Action may
 // scope on; anything else is unknown (forward-compat warn below). The focus-tier markers count with
 // the surface coordinates — a selection/focus predicate outranks a window one, same as ADR-0032.
-export const SURFACE_KEYS = ['doctype', 'recordName', 'view', 'appletId', 'selection', 'focusKind'] as const
+export const SURFACE_KEYS = ['doctype', 'recordName', 'view', 'appletId', 'docstatus', 'status', 'selection', 'focusKind'] as const
 export const WINDOW_KEYS = ['activeApp', 'windowRole'] as const
 const CONTEXT_KEYS: ReadonlySet<string> = new Set([...SURFACE_KEYS, ...WINDOW_KEYS])
 

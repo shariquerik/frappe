@@ -478,6 +478,40 @@ describe('contextForOS (derive Context from the active window)', () => {
     os.publishFocus(os.state.activeId, 'composer')
     expect(contextForOS(os).focusKind).toBe('composer')
   })
+
+  it('a form record publishes docstatus + status from the loaded record (slice 04)', () => {
+    os.openRecordGlobal('Sales Order', 'SO-0001')
+    os.docFor('Sales Order', 'SO-0001').data = { name: 'SO-0001', docstatus: 1, status: 'To Deliver' }
+    expect(contextForOS(os)).toMatchObject({ docstatus: '1', status: 'To Deliver' })
+  })
+
+  it('stringifies docstatus so equality when can pin the draft/submitted/cancelled state', () => {
+    os.openRecordGlobal('Sales Order', 'SO-0002')
+    os.docFor('Sales Order', 'SO-0002').data = { name: 'SO-0002', docstatus: 0 }
+    expect(contextForOS(os).docstatus).toBe('0')
+  })
+
+  it('carries no record-state markers until the front record is loaded', () => {
+    os.openRecordGlobal('Sales Order', 'SO-0003') // nothing seeded in the record cache
+    const ctx = contextForOS(os)
+    expect(ctx.docstatus).toBeUndefined()
+    expect(ctx.status).toBeUndefined()
+  })
+
+  it('a list surface leaves both record-state fields absent (slice 04)', () => {
+    os.openListGlobal('Sales Order')
+    const ctx = contextForOS(os)
+    expect(ctx.docstatus).toBeUndefined()
+    expect(ctx.status).toBeUndefined()
+  })
+
+  it('gates a submitted-only verb: {docstatus:1} matches a submitted record, not a draft (slice 04)', () => {
+    os.openRecordGlobal('Sales Order', 'SO-0004')
+    os.docFor('Sales Order', 'SO-0004').data = { name: 'SO-0004', docstatus: 1, status: 'To Deliver' }
+    expect(isEligible({ doctype: 'Sales Order', docstatus: '1' }, contextForOS(os))).toBe(true)
+    os.docFor('Sales Order', 'SO-0004').data = { name: 'SO-0004', docstatus: 0, status: 'Draft' }
+    expect(isEligible({ doctype: 'Sales Order', docstatus: '1' }, contextForOS(os))).toBe(false)
+  })
 })
 
 // The focus tier's keyboard-focus facet (ADR-0038): published through publishFocus, persist-until-

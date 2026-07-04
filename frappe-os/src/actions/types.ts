@@ -58,6 +58,14 @@ export interface Context {
   // names one, so app menus can gate their content with `when: { workspace: 'selling' }`. Absent
   // for a single-space app or any surface with no workspace, a clean non-match for such a `when`.
   workspace?: string
+  // The surface-tier record-state markers (slice 04) — the front FORM record's `docstatus` and
+  // `status`, read from the loaded record cache. They let a doctype-scoped verb gate on record
+  // state as plain equality: `when: { doctype: 'Sales Order', docstatus: '1' }` for submitted-only,
+  // `when: { status: 'To Deliver' }` for a workflow verb. `docstatus` is stringified ('0'|'1'|'2')
+  // to meet equality `when`. Absent on a list, or a form whose record has not loaded yet — a clean
+  // non-match for such a `when`. Rich predicates (comparisons) stay server-side by design (ADR-0032).
+  docstatus?: string
+  status?: string
 }
 
 // Eligibility predicate — evaluated as data, never `eval` (CONTEXT.md → Eligibility). An
