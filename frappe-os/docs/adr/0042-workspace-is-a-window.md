@@ -1,6 +1,7 @@
 # Workspace is a window, not a surface coordinate
 
-> **Status:** Accepted (2026-07-04, grilled). **Supersedes ADR-0040.** Not yet implemented.
+> **Status:** Accepted (2026-07-04, grilled; data model grilled and settled 2026-07-05 — see
+> "Data model" below). **Supersedes ADR-0040.** Not yet implemented.
 > Reworks slice 07 (the coordinate becomes window identity) and reshapes slices 08/11.
 > Reserves `Space` for a future OS-level feature. Extends ADR-0012 (surfaces) and ADR-0032
 > (Context); composes with ADR-0039 (app menus).
@@ -51,6 +52,39 @@ We do **not** ingest desk's `Workspace Sidebar` trees. Copying 60-item hand-cura
 workspace is unreasonable and drifts the day it is written, and it couples the OS to a desk
 doctype the two systems will let diverge during coexistence. Seeding from `module` gives an honest
 zero-authoring base; curation, if ever wanted, is an OS-side layer, never a desk copy.
+
+## Data model (grilled 2026-07-05)
+
+The grill the original acceptance deferred. Five decisions, each following the os_core house
+style where one exists:
+
+- **A real DocType: `OS Workspace`** (module OS Core, hash-named like its siblings) — not a
+  JSON blob and not boot-derived. Rows carry `app`, `workspace_id`, `label`, `module` (source
+  module, empty for user-added), `sequence`, `hidden`, `is_default`. Rename/re-order/user-add
+  need rows anyway; a blob would reinvent identity, ordering, and CRUD.
+- **Identity is an immutable slug.** `workspace_id` — unique per app, seeded from the module
+  name (Selling → `selling`), slugified from the initial label for user-added rows, never
+  changed afterward. It is the `workspace` in window identity, URLs, and
+  `when: { workspace: 'selling' }` gates; rename touches only `label`, so open windows, saved
+  URLs, and menu gates survive. Neither the hash row name (unwritable in `when`) nor the label
+  (breaks on rename) can be the key.
+- **Seeding: `after_migrate`, insert-if-missing.** Same hook as `seed_wallpapers`, keyed by
+  `(app, module)`. The seeder only inserts missing keys — it never updates or deletes existing
+  rows, so user renames and re-orders survive every migrate. A module added later gets its
+  workspace on the next migrate automatically. Removing a seeded workspace sets `hidden`
+  (the row stays, so the seeder cannot resurrect it); user-added rows have no module key and
+  are never touched. Full-sync (upsert + prune) was rejected: it clobbers user edits, which is
+  wrong for user-editable data.
+- **Edits are layered, per the placements/indicators precedent.** Site layer: seeded +
+  System-Manager-curated `OS Workspace` rows. User layer: a per-user, owner-scoped
+  `OS Workspace Override` (rename/hide/re-order/add), folded by a pure merge. **Slice 08
+  ships only the site base and the merge seam**; the override doctype and its edit UI are
+  their own later slice.
+- **Default: manifest declares, seeder stamps.** `os/app.json` gains
+  `default_workspace: "<module>"`; the seeder stamps `is_default` on the matching row
+  (unknown module → skip + warn). Fallback when unset: lowest sequence. Stamping into data
+  (rather than resolving from the manifest at boot) lets a site re-point the default without
+  forking the app's manifest.
 
 ## Naming: `Workspace` here, `Space` reserved
 

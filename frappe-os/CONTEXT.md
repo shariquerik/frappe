@@ -33,6 +33,27 @@ A named grouping of doctypes *within* a single app (e.g. "Selling", "Stock" insi
 ERPNext). A sub-division of an App, not an extension concept.
 _Avoid_: using "module" to mean a JS/ES module or a unit of extension.
 
+**Workspace**:
+A workbench axis inside an App (Selling, Stock in erpnext) — a place you open as its own
+window, not a flavor of one window. The starting set is seeded one per Module, but workspaces
+are user-creatable beyond that, so the two are not 1:1. The same concept Desk calls a
+Workspace (ADR-0042).
+_Avoid_: "module" (the code grouping a workspace is seeded from), "space" (reserved — see below).
+
+**Hub**:
+The app window of a multi-workspace App: its sidebar lists the app's workspaces; its main
+section shows the default workspace's overview. An app with a single workspace has no hub —
+opening it opens the workbench directly.
+
+**Workbench**:
+A workspace's own window: its sidebar is that workspace's doctypes. Two workbenches of the
+same app (Selling, Stock) can be open side by side.
+
+**Space**:
+Reserved for a future OS-level virtual-desktop feature (macOS "Spaces") — a whole desktop of
+windows you switch between. Nothing implements it yet; never use "space" for the app-level
+axis (that is **Workspace**).
+
 **Contribution**:
 A single thing an App plugs into Frappe OS — one app icon, one dashboard card, one doctype
 view, one menu-bar item, etc. Apps extend the OS by making contributions.
