@@ -232,6 +232,15 @@ function newTaskId(): string {
   return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2, 12)
 }
 
+// Reload the front surface's records after a server write — the public seam a `server` Handler's
+// `refresh` after-effect drives (ADR-0041), reusing the exact write-through path saveDoc/bulkUpdate
+// take. A form passes its `name` (reload that doc plus any open list of the doctype); a list passes
+// none (refresh its open windows only). Nothing open of the doctype → the list refresh is a no-op.
+export async function refreshRecords(doctype: string, name?: string): Promise<void> {
+  if (name) await loadDoc(doctype, name)
+  await refreshLists(doctype)
+}
+
 // ---- synchronous getter (compat bridge for components, Phase 4 wires loads) --
 // A pure read — it never creates a cache entry, so calling it during a component render can't
 // mutate reactive state. Returns whatever the load* actions have cached so far, keyed by

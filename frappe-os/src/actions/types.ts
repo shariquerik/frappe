@@ -75,13 +75,25 @@ export interface Context {
 // to no-match plus a loud warn (forward-compat with additive Context fields).
 export type When = Partial<Record<keyof Context, string>>
 
+// What runs after a `server` Handler's method returns (ADR-0041) — part of the DECLARATION, not
+// code. A closed set, additive like Handler itself: `open-doc` opens the returned doc's
+// doctype/name as a form surface; `refresh` reloads the front surface's records; `notify` toasts
+// the response message; `none` is fire-and-forget (the default). A string union, matching the
+// codebase's other closed sets (Layer/Scope) — these effects carry no payload.
+export type AfterEffect = 'open-doc' | 'refresh' | 'notify' | 'none'
+
 // What a Command does when invoked — a closed, additive kind set (ADR-0008). `navigate` is
 // pure data (open a Surface); `run` is a reference resolved lazily by id and fire-and-forget.
 // A `run` may carry static `args` (pure data, ADR-0037) so one handler ref serves many placements
 // ("Position on Screen" → one set-position ref with `args:{side}`), instead of one ref per item.
+// `server` (ADR-0041) is the codeless verb: call a whitelisted `method` with `args` merged with the
+// Invocation coordinates (doctype/recordName/selection values), then run a declared after-effect —
+// no `eval`, no shipped script, no client module. It covers the dominant app verbs (erpnext's
+// Create/Status menus, raven's Create Document actions) as pure data.
 export type Handler =
   | { kind: 'navigate'; surface: Surface }
   | { kind: 'run'; ref: string; args?: JsonValue }
+  | { kind: 'server'; method: string; args?: JsonValue; then?: AfterEffect }
 
 // What a `run` Handler receives when fired (ADR-0037): the eligibility `context` snapshot and the
 // `selection` values, both frozen at CLICK time (invoke builds this from the same contextForOS
