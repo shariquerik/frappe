@@ -94,7 +94,7 @@ const SHADOW_INACTIVE = `${RING}, 0 10px 28px -18px rgba(20,16,50,0.35)`;
 // focus-dependent border/shadow). The static box — absolute/flex/col/bg/overflow —
 // is Tailwind on the root element.
 const styleWin = computed(() => {
-	const dw = os.deskRef.w || 1280;
+	const dw = os.desktopRef.w || 1280;
 	if (inSplit.value) {
 		const isLeft = os.state.split![0] === props.win.id;
 		const half = Math.floor((dw - GAP) / 2);

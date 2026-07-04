@@ -131,7 +131,7 @@ export function useRegistry() {
     listApplets,
     commands: (): Command[] => ix.commandsView,
     actions: (): Action[] => ix.actionsView,
-    // The app's declared landing reference after the layered App<Site<User merge (ADR-0021),
+    // The app's declared surface reference after the layered App<Site<User merge (ADR-0021),
     // or null if it declares none — the resolver (slice 05) then falls through to dashboard →
     // empty-app pane. A stable reference, never a Surface descriptor: the resolver parses it.
     defaultSurface: (appId: string): SurfaceRef | null => ix.defaultSurface[appId] ?? null,

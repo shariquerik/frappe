@@ -25,7 +25,7 @@ const pane = computed(() => surfacePane(props.win.surface))
 
 const generalFields = computed(() => [
   { label: 'Workspace name', value: app.value.name, select: false },
-  { label: 'Default landing', value: app.value.hasDashboard ? 'Dashboard' : 'List view', select: true },
+  { label: 'Default surface', value: app.value.hasDashboard ? 'Dashboard' : 'List view', select: true },
   { label: 'Records per page', value: '20', select: true },
   { label: 'Time zone', value: 'Asia/Kolkata', select: true },
 ])

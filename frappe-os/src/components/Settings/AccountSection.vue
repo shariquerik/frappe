@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Account pane body — the logged-in user's identity at the top of Settings (ADR-0027). A
-// centered profile header: an uploadable avatar (hover → Edit) + full name + email, with the
+// centered account header: an uploadable avatar (hover → Edit) + full name + email, with the
 // name and photo each edited through a small frappe-ui Dialog. Reads/writes ride useAccount(),
 // which persists ONLY the permlevel-0 identity fields via the own-user self-DocShare — no
 // System Manager needed.

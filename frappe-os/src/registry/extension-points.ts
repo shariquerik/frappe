@@ -9,4 +9,4 @@ export const CARD = 'dashboard-card'
 export const APPLET = 'applet'
 export const COMMAND = 'command'   // the Action model's verb (CONTEXT.md → Command)
 export const ACTION = 'action'     // a verb's placement into a Region (CONTEXT.md → Action)
-export const DEFAULT_SURFACE = 'default-surface' // an app's declared landing reference (ADR-0021)
+export const DEFAULT_SURFACE = 'default-surface' // an app's declared surface reference (ADR-0021)

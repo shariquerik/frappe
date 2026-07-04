@@ -18,26 +18,26 @@ export interface Pixel { x: number; y: number }
 
 // How many rows fit before a column wraps, given the usable desktop height. At least one row, so a
 // tiny viewport never divides by zero or yields an empty grid.
-export function rowsPerColumn(deskHeight: number): number {
-  return Math.max(1, Math.floor((deskHeight - INSET_TOP) / CELL_H))
+export function rowsPerColumn(desktopHeight: number): number {
+  return Math.max(1, Math.floor((desktopHeight - INSET_TOP) / CELL_H))
 }
 
 // Project a cell to the top-left pixel of its icon button. Column anchors from the right edge:
-// the rightmost column (0) sits at deskWidth - INSET_RIGHT - CELL_W, each further column one
+// the rightmost column (0) sits at desktopWidth - INSET_RIGHT - CELL_W, each further column one
 // CELL_W left. Row anchors from the top. This is the only place pixels are computed.
-export function cellToPixel(cell: Cell, deskWidth: number): Pixel {
+export function cellToPixel(cell: Cell, desktopWidth: number): Pixel {
   return {
-    x: deskWidth - INSET_RIGHT - CELL_W * (cell.column + 1),
+    x: desktopWidth - INSET_RIGHT - CELL_W * (cell.column + 1),
     y: INSET_TOP + CELL_H * cell.row,
   }
 }
 
 // Snap a pointer drop (top-left of the dragged icon, in desktop-local pixels) to the nearest grid
 // cell. Inverse of cellToPixel; clamped so a drop off the top/right edge lands in the first cell.
-export function snapToCell(px: Pixel, deskWidth: number, deskHeight: number): Cell {
-  const column = Math.round((deskWidth - INSET_RIGHT - CELL_W - px.x) / CELL_W)
+export function snapToCell(px: Pixel, desktopWidth: number, desktopHeight: number): Cell {
+  const column = Math.round((desktopWidth - INSET_RIGHT - CELL_W - px.x) / CELL_W)
   const row = Math.round((px.y - INSET_TOP) / CELL_H)
-  const maxRow = rowsPerColumn(deskHeight) - 1
+  const maxRow = rowsPerColumn(desktopHeight) - 1
   return { column: Math.max(0, column), row: Math.max(0, Math.min(maxRow, row)) }
 }
 
@@ -46,9 +46,9 @@ const cellKey = (c: Cell): string => c.column + ',' + c.row
 
 // Walk the grid in a deterministic order (row by row within a column, then the next column) and
 // return the first cell not in `taken`. Used both to flow a collided drop to a free cell and to
-// auto-place a pin the server delivered without a position. Wraps a full column at deskHeight.
-export function nextFreeCell(taken: Set<string>, deskHeight: number, start: Cell = { column: 0, row: 0 }): Cell {
-  const rows = rowsPerColumn(deskHeight)
+// auto-place a pin the server delivered without a position. Wraps a full column at desktopHeight.
+export function nextFreeCell(taken: Set<string>, desktopHeight: number, start: Cell = { column: 0, row: 0 }): Cell {
+  const rows = rowsPerColumn(desktopHeight)
   for (let column = start.column; column < start.column + 200; column++) {
     const fromRow = column === start.column ? start.row : 0
     for (let row = fromRow; row < rows; row++) {
@@ -61,22 +61,22 @@ export function nextFreeCell(taken: Set<string>, deskHeight: number, start: Cell
 
 // Resolve the dropped icon's target cell: snap the drop, then if that cell is already taken by
 // ANOTHER pin, deterministically flow to the next free cell. `occupied` is every OTHER pin's cell.
-export function resolveDrop(px: Pixel, occupied: Cell[], deskWidth: number, deskHeight: number): Cell {
+export function resolveDrop(px: Pixel, occupied: Cell[], desktopWidth: number, desktopHeight: number): Cell {
   const taken = new Set(occupied.map(cellKey))
-  const snapped = snapToCell(px, deskWidth, deskHeight)
-  return taken.has(cellKey(snapped)) ? nextFreeCell(taken, deskHeight, snapped) : snapped
+  const snapped = snapToCell(px, desktopWidth, desktopHeight)
+  return taken.has(cellKey(snapped)) ? nextFreeCell(taken, desktopHeight, snapped) : snapped
 }
 
 // Assign a concrete cell to every desktop pin, in resolved-list order: a pin with a stored cell
 // keeps it (collisions flow to the next free cell so two overrides never stack); a pin the server
 // delivered without a position is auto-placed into the next free cell. Deterministic, so a desktop
 // reconstitutes identically on reload and across devices. Returns parallel cells for the input list.
-export function layoutDesktop(pins: ResolvedPlacement[], deskHeight: number): Cell[] {
+export function layoutDesktop(pins: ResolvedPlacement[], desktopHeight: number): Cell[] {
   const taken = new Set<string>()
   return pins.map((p) => {
     const pos = p.position as PlacementPosition | null | undefined
     const wanted = pos && pos.column != null && pos.row != null ? { column: pos.column, row: pos.row } : null
-    const cell = wanted && !taken.has(cellKey(wanted)) ? wanted : nextFreeCell(taken, deskHeight, wanted ?? undefined)
+    const cell = wanted && !taken.has(cellKey(wanted)) ? wanted : nextFreeCell(taken, desktopHeight, wanted ?? undefined)
     taken.add(cellKey(cell))
     return cell
   })

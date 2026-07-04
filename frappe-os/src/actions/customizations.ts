@@ -71,7 +71,7 @@ export function customizationGroups(actions: Action[]): GroupDraft[] {
     .map(([appId, rows]) => ({ appId, rows: rows.sort(byRegionThenCommand) }))
 }
 
-// The feature-app removal marker (ADR-0015 §5) — the human-facing twin of removals.ts's console
+// The feature-app removal marker (ADR-0015 §5) — the human-facing counterpart of removals.ts's console
 // warning, from the SAME predicate: a removal by a *feature* app is the surprising case ("review
 // this"); a pure-customization app removing chrome is its job (quiet). `kind` is injected so this
 // stays a pure unit, mirroring warnFeatureAppRemovals.

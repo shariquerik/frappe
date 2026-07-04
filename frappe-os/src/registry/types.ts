@@ -16,13 +16,13 @@ export interface Contribution {
 }
 
 // A `default-surface` contribution's payload (ADR-0021): the stable, app-qualified surface
-// REFERENCE an app/site/user declares as a Window's landing — never the internal Surface
+// REFERENCE an app/site/user declares as a Window's default surface — never the internal Surface
 // descriptor, so the OS can refactor Surfaces beneath it. One of three shapes (an applet, a
 // doctype list/view, or the dashboard), with an optional `app:` qualifier naming the OWNING app
 // (defaults to the opened app). The server validates the shape and carries it through as data;
 // the client resolver (slice 05) parses it into a Surface. It is a Singleton per app, layered
 // App-default < Site < User via the existing shallow patch-merge (ADR-0005/0007) — a per-user
-// default is just a User-layer override of this Singleton, touching only the landing.
+// default is just a User-layer override of this Singleton, touching only the surface reference.
 export interface SurfaceRef {
   applet?: string
   doctype?: string

@@ -76,17 +76,17 @@ describe('pathForFocus', () => {
     expect(pathForFocus(os)).toEqual({ path: '/', query: {} })
   })
 
-  it('the canonical instance carries no instance query; a #n twin carries ?instance=n', () => {
+  it('the canonical instance carries no instance query; a #n instance carries ?instance=n', () => {
     os.newAppWindow('crm') // app:crm (canonical)
     expect(pathForFocus(os)).toEqual({ path: '/crm', query: {} })
     os.newAppWindow('crm') // app:crm#2, now focused
     expect(pathForFocus(os)).toEqual({ path: '/crm', query: { instance: '2' } })
   })
 
-  it('the instance query rides alongside the twin’s own surface path', () => {
+  it('the instance query rides alongside the instance’s own surface path', () => {
     os.newAppWindow('crm')                          // app:crm
     os.newAppWindow('crm')                          // app:crm#2 focused
-    os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the twin to a form
+    os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the instance to a form
     expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: { instance: '2' } })
   })
 
@@ -223,13 +223,13 @@ describe('applyRoute', () => {
     expect(w.surface.kind).toBe('builtin')
   })
 
-  it('?instance=n targets the matching twin, respawning it if closed (reload addressability)', () => {
-    applyRoute(os, { app: 'crm', instance: 2 }) // cold deep-link to a twin that isn't open yet
+  it('?instance=n targets the matching instance, respawning it if closed (reload addressability)', () => {
+    applyRoute(os, { app: 'crm', instance: 2 }) // cold deep-link to an instance that isn't open yet
     expect(os.state.activeId).toBe('app:crm#2')
     expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm#2'])
   })
 
-  it('a form deep-link with ?instance=n opens the form in that twin', () => {
+  it('a form deep-link with ?instance=n opens the form in that instance', () => {
     os.openApp('crm') // canonical already open
     applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-7', instance: 2 })
     expect(os.state.activeId).toBe('app:crm#2')

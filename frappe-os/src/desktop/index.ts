@@ -16,7 +16,7 @@ import type { AppDef } from '@/types'
 import { state, clockText } from './state'
 import {
   geoMap, startDrag, startResize, onPointerMove, onPointerUp,
-  setDeskEl, setDockEl, deskRef, syncDeskSize, startIconDrag, iconDragState,
+  setDesktopEl, setDockEl, desktopRef, syncDesktopSize, startIconDrag, iconDragState,
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
@@ -61,7 +61,7 @@ export function useOS() {
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
     setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette,
-    setDeskEl, setDockEl, deskRef, syncDeskSize,
+    setDesktopEl, setDockEl, desktopRef, syncDesktopSize,
     // browser fullscreen (edge-to-edge, no browser chrome) — the "Enter full screen" action,
     // plus the prompt shown when the green button leaves the bar up
     isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt,

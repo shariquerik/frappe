@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Profile-photo editor for the Account pane — a frappe-ui Dialog showing the current avatar
+// Account-photo editor for the Account pane — a frappe-ui Dialog showing the current avatar
 // with upload / remove affordances. Upload rides frappe-ui FileUploader (→ upload_file gives a
 // file_url); both actions write user_image through useAccount(). Visibility is a v-model the
 // parent owns; stays open so the result is visible, close via the Dialog's own chrome.
@@ -27,7 +27,7 @@ async function setAvatar(fileUrl = ''): Promise<void> {
 </script>
 
 <template>
-  <Dialog v-model="open" :options="{ title: 'Profile photo', size: 'sm' }">
+  <Dialog v-model="open" :options="{ title: 'Account photo', size: 'sm' }">
     <template #body-content>
       <div class="flex flex-col items-center gap-4 py-1">
         <Avatar class="!size-24" :image="state.doc?.user_image" :label="fullName" />

@@ -46,14 +46,14 @@ function isPinned(region: PlacementRegion, ref: SurfaceRef): boolean {
 }
 
 // "Add to Desktop": upsert a User-layer new pin into the next free grid cell (#02), so it never
-// stacks on an existing icon. The desktop's free-cell math needs a height; the live desk size is
-// the store's deskRef.
+// stacks on an existing icon. The desktop's free-cell math needs a height; the live desktop size is
+// the store's desktopRef.
 function addToDesktop(os: OsStore): void {
   const ref = activeRef(os)
   if (!ref) return
-  const deskHeight = os.deskRef.h
-  const taken = new Set(layoutDesktop(usePlacements().desktop(), deskHeight).map((c) => c.column + ',' + c.row))
-  const cell = nextFreeCell(taken, deskHeight)
+  const desktopHeight = os.desktopRef.h
+  const taken = new Set(layoutDesktop(usePlacements().desktop(), desktopHeight).map((c) => c.column + ',' + c.row))
+  const cell = nextFreeCell(taken, desktopHeight)
   void writePlacementOverride({ region: 'desktop', ref, position: cell })
 }
 

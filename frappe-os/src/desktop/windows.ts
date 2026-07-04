@@ -121,7 +121,7 @@ function spawnWindow(id: string, appId: string, surface: Surface | null): OsWind
 // last size/position (including a maximized one the user left it at); a never-opened app
 // falls back to the small by-index default (defAppGeo). When remember is off, the saved size
 // is dropped so it resets to the small default. Extras (#n) always reset to small so a fresh
-// twin reads as visibly distinct from the window already on screen.
+// instance reads as visibly distinct from the window already on screen.
 function applyOpenSize(id: string, isExtra: boolean): void {
   if (!state.rememberWindowSize || isExtra) delete state.geo[id]
   setGeo(id, { z: bumpZ(), min: false })
@@ -129,12 +129,12 @@ function applyOpenSize(id: string, isExtra: boolean): void {
 
 // Focus-or-create a window for an app, giving it `surface` if provided.
 //  - `instance` set (from a `?instance=n` URL): target that EXACT id, respawning it if a
-//    reload/deep-link lands on a closed instance — so a twin stays URL-addressable.
+//    reload/deep-link lands on a closed instance — so an instance stays URL-addressable.
 //  - `instance` omitted (app icon, plain deep-link): the bare path is the CANONICAL
 //    instance's address, so focus the canonical when it exists; else fall back to any
-//    surviving twin (so closing the canonical doesn't spawn a blank one on reload — the
+//    surviving instance (so closing the canonical doesn't spawn a blank one on reload — the
 //    #n scheme's wart); else mint the canonical. Canonical-first keeps `/os/<app>` stable:
-//    a twin only owns the URL via its own `?instance=n`, never the bare path.
+//    an instance only owns the URL via its own `?instance=n`, never the bare path.
 function ensureApp(appId: string, surface: Surface | null, instance?: number | null) {
   const open = appInstances(appId)
   const target = instance != null

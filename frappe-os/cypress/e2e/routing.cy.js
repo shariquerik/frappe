@@ -206,11 +206,11 @@ describe('app-settings panes are addressable in the URL', () => {
 
 describe('multiple instances of one app are individually addressable', () => {
   // A second window of the same app is a distinct INSTANCE: the first owns the bare
-  // `/os/<app>`, extras carry `?instance=n`. The query keeps twins addressable without
+  // `/os/<app>`, extras carry `?instance=n`. The query keeps instances addressable without
   // putting window identity in the content path. Needs a live bench like the specs above.
   beforeEach(() => cy.clearLocalStorage())
 
-  it('?instance=2 opens a distinct twin window and survives a reload', () => {
+  it('?instance=2 opens a distinct instance window and survives a reload', () => {
     cy.visit('/os/frappe?instance=2')
     cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:frappe#2')
     cy.location('search').should('eq', '?instance=2')
@@ -219,10 +219,10 @@ describe('multiple instances of one app are individually addressable', () => {
     cy.location('search').should('eq', '?instance=2')
   })
 
-  it('browser back/forward toggles focus between the canonical window and its twin', () => {
+  it('browser back/forward toggles focus between the canonical window and its instance', () => {
     cy.visit('/os/frappe') // canonical
     cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:frappe')
-    cy.visit('/os/frappe?instance=2') // twin — a distinct timeline entry (same path, +query)
+    cy.visit('/os/frappe?instance=2') // instance — a distinct timeline entry (same path, +query)
     cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:frappe#2')
 
     cy.go('back')

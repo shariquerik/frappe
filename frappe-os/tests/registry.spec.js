@@ -92,7 +92,7 @@ describe('default-surface contributions', () => {
   })
 
   it('is independent of the app identity contribution (separate layering)', () => {
-    // An app may carry identity but no landing; identity is unaffected by the absence.
+    // An app may carry identity but no surface reference; identity is unaffected by the absence.
     initRegistry(boot([app('crm', 'CRM Live')]))
     expect(useRegistry().app('crm')?.name).toBe('CRM Live')
     expect(useRegistry().defaultSurface('crm')).toBeNull()
@@ -100,7 +100,7 @@ describe('default-surface contributions', () => {
 
   it('layers App<Site<User via the existing singleton patch-merge (higher order wins)', () => {
     // App-default applet, then a User-layer override of the SAME singleton (target=app): the
-    // partial higher-layer patch replaces only the landing — the same shallow merge display uses.
+    // partial higher-layer patch replaces only the surface reference — the same shallow merge display uses.
     initRegistry(boot([
       app('raven', 'Raven'),
       surface('raven', { applet: 'chat' }, 'default', 0),       // App-default layer

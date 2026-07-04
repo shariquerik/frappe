@@ -119,15 +119,15 @@ describe('newAppWindow stacks multiple windows of one app', () => {
     expect(os.state.activeId).toBe('app:crm#2') // focused the survivor, minted nothing
   })
 
-  it('a bare openApp focuses the canonical instance, not a more-recent twin', () => {
+  it('a bare openApp focuses the canonical instance, not a more-recent instance', () => {
     os.newAppWindow('crm')           // app:crm (canonical)
     os.newAppWindow('crm')           // app:crm#2, now focused + on top
     os.openApp('crm')                // bare path = canonical's address
-    expect(os.state.activeId).toBe('app:crm') // canonical wins; twin owns the URL only via ?instance
+    expect(os.state.activeId).toBe('app:crm') // canonical wins; instance owns the URL only via ?instance
     expect(os.state.windows.length).toBe(2)   // no new window
   })
 
-  it('openApp(appId, n) targets a specific twin, respawning it if closed', () => {
+  it('openApp(appId, n) targets a specific instance, respawning it if closed', () => {
     os.openApp('crm')                // app:crm
     os.openApp('crm', 2)             // respawn/focus app:crm#2 from a ?instance=2 URL
     expect(os.state.activeId).toBe('app:crm#2')
@@ -167,8 +167,8 @@ describe('openRow follows the row open-target preference (ADR-0018)', () => {
     os.setRowOpenTarget('new-window')
     os.openRow('app:crm', 'CRM Lead', 'L-1')
     expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
-    const twin = os.state.windows.find((x) => x.id === 'app:crm#2')
-    expect(twin.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
+    const instance = os.state.windows.find((x) => x.id === 'app:crm#2')
+    expect(instance.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
     const orig = os.state.windows.find((x) => x.id === 'app:crm')
     expect(orig.surface.view).toBe('list') // the original list window is untouched
   })

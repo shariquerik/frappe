@@ -23,7 +23,7 @@ export interface RegistryIndex {
   liveCommands: Record<string, Command[]>       // doctype → its live-meta scoped Command slice (ADR-0032)
   actionsView: Action[]                         // boot ⊕ all live slices; stable identity between overlay changes
   commandsView: Command[]                       // boot ⊕ all live slices; stable identity between overlay changes
-  defaultSurface: Record<string, SurfaceRef>    // app → merged landing reference (singleton, ADR-0021)
+  defaultSurface: Record<string, SurfaceRef>    // app → merged surface reference (singleton, ADR-0021)
   appKinds: Record<string, Set<string>>         // sourceApp → contributed kinds (ADR-0014 item 4)
 }
 
@@ -70,7 +70,7 @@ export function addToIndex(ix: RegistryIndex, c: Contribution): void {
   else if (c.type === ACTION) ix.actions.push(c.payload as Action)
   // default-surface is a Singleton per app (target=appId), layered App<Site<User: the SAME
   // shallow patch-merge as display-config (ADR-0007), so a higher-layer override (sorted later by
-  // `order`) wins, and a partial User-layer patch touches only the landing — no new merge code.
+  // `order`) wins, and a partial User-layer patch touches only the surface reference — no new merge code.
   else if (c.type === DEFAULT_SURFACE) {
     ix.defaultSurface[c.target] = { ...ix.defaultSurface[c.target], ...(c.payload as SurfaceRef) }
   }
@@ -86,7 +86,7 @@ export function indexContributions(contribs: Contribution[]): RegistryIndex {
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
     liveActions: {}, liveCommands: {}, // per-doctype live-meta slices (ADR-0032), filled by registerScopedContributions
     actionsView: [], commandsView: [], // boot ⊕ live views, set to the boot arrays after the fold
-    defaultSurface: {}, // app → merged landing reference, filled per contribution by addToIndex
+    defaultSurface: {}, // app → merged surface reference, filled per contribution by addToIndex
     appKinds: {}, // sourceApp → contributed kinds, filled per contribution by addToIndex
   }
   for (const c of sorted) addToIndex(ix, c)

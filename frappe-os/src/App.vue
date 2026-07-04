@@ -37,10 +37,10 @@ const wpStyle = computed(() =>
 		: { background: wp.value.bg },
 );
 
-// The desktop size is a single reactive source (os.deskRef), refreshed on mount and on resize via
-// os.syncDeskSize, so the cell→pixel projection, the live drag clamp, AND the drop-snap on release
+// The desktop size is a single reactive source (os.desktopRef), refreshed on mount and on resize via
+// os.syncDesktopSize, so the cell→pixel projection, the live drag clamp, AND the drop-snap on release
 // all read the same up-to-date dimensions — they can't drift after a window resize.
-const desk = os.deskRef;
+const desktop = os.desktopRef;
 
 // The desktop icons are no longer hardcoded — they are the server-resolved `desktop` Placements
 // (ADR-0023). Each pin gets a concrete grid cell (stored override, or auto-placed into the next
@@ -58,12 +58,12 @@ interface DesktopIcon {
 const pins = computed<ResolvedPlacement[]>(() => usePlacements().desktop());
 const desktopIcons = computed<DesktopIcon[]>(() => {
 	const list = pins.value;
-	const cells = layoutDesktop(list, desk.h);
+	const cells = layoutDesktop(list, desktop.h);
 	const drag = os.iconDragState;
 	return list.map((p, i) => {
 		const view = placementView(p);
 		const cell = cells[i];
-		const px = cellToPixel(cell, desk.w);
+		const px = cellToPixel(cell, desktop.w);
 		const dragging = drag.key === view.key;
 		return {
 			...view,
@@ -79,7 +79,7 @@ const desktopIcons = computed<DesktopIcon[]>(() => {
 // User-layer override (the frontend's only write path — never the baseline/Site rows). A press that
 // doesn't move is a click (openPlacement); the small-delta guard in onClick distinguishes them.
 function onIconPointerDown(di: DesktopIcon, e: PointerEvent): void {
-	const px = cellToPixel(di.cell, desk.w);
+	const px = cellToPixel(di.cell, desktop.w);
 	const occupied = desktopIcons.value.filter((o) => o.key !== di.key).map((o) => o.cell);
 	os.startIconDrag(di.key, px.x, px.y, occupied, (cell, moved) => {
 		// A real move persists a User-layer position override; a press that didn't move is a click.
@@ -98,17 +98,17 @@ function openPlacement(ref: SurfaceRef): void {
 // Desktop icon labels sit on top of an arbitrary wallpaper. Following macOS Finder: one treatment
 // for every wallpaper — slightly heavier white text with a soft two-layer dark halo (a tight ring
 // plus a drop shadow), no box. The wide blur is what keeps it legible over busy or light backgrounds.
-const deskLabelStyle =
+const desktopLabelStyle =
 	"font-size:12px;line-height:1.3;text-align:center;font-weight:500;color:#fff;" +
 	"text-shadow:0 0 3px rgba(0,0,0,0.55),0 1px 4px rgba(0,0,0,0.5);";
 
 
 // Right-click the wallpaper: a small context menu pinned to the cursor, rather than jumping
 // straight into Settings. The one entry opens the Wallpaper pane — the old direct behaviour.
-const deskMenu = ref<{ x: number; y: number } | null>(null);
-const deskMenuItems = [{ label: "Change Wallpaper…", onClick: () => os.openSettings("Wallpaper") }];
+const desktopMenu = ref<{ x: number; y: number } | null>(null);
+const desktopMenuItems = [{ label: "Change Wallpaper…", onClick: () => os.openSettings("Wallpaper") }];
 function onDesktopContext(e: MouseEvent) {
-	deskMenu.value = { x: e.clientX, y: e.clientY };
+	desktopMenu.value = { x: e.clientX, y: e.clientY };
 }
 
 function onKey(e: KeyboardEvent) {
@@ -133,18 +133,18 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 	e.returnValue = "";
 }
 onMounted(() => {
-	os.syncDeskSize();
+	os.syncDesktopSize();
 	window.addEventListener("keydown", onKey);
 	window.addEventListener("pointermove", move);
 	window.addEventListener("pointerup", up);
-	window.addEventListener("resize", os.syncDeskSize);
+	window.addEventListener("resize", os.syncDesktopSize);
 	window.addEventListener("beforeunload", onBeforeUnload);
 });
 onBeforeUnmount(() => {
 	window.removeEventListener("keydown", onKey);
 	window.removeEventListener("pointermove", move);
 	window.removeEventListener("pointerup", up);
-	window.removeEventListener("resize", os.syncDeskSize);
+	window.removeEventListener("resize", os.syncDesktopSize);
 	window.removeEventListener("beforeunload", onBeforeUnload);
 });
 </script>
@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
        popovers (frappe-ui Dropdown, …) are portaled into #os-popover-layer
        below, which sits at the top of the desktop's own z-index scale. -->
 	<div
-		:ref="(el) => os.setDeskEl(el as HTMLElement | null)"
+		:ref="(el) => os.setDesktopEl(el as HTMLElement | null)"
 		:data-active-window="os.state.activeId || ''"
 		class="relative h-screen w-full overflow-hidden bg-surface-gray-3 text-ink-gray-8 [font-family:var(--font-sans)] isolate"
 	>
@@ -169,11 +169,11 @@ onBeforeUnmount(() => {
 
 		<!-- desktop context menu (right-click the wallpaper) -->
 		<OSContextMenu
-			v-if="deskMenu"
-			:x="deskMenu.x"
-			:y="deskMenu.y"
-			:items="deskMenuItems"
-			@close="deskMenu = null"
+			v-if="desktopMenu"
+			:x="desktopMenu.x"
+			:y="desktopMenu.y"
+			:items="desktopMenuItems"
+			@close="desktopMenu = null"
 		/>
 
 		<!-- desktop icons: edge-anchored grid cells (ADR-0023), each absolutely positioned at its
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
 			@pointerdown="onIconPointerDown(di, $event)"
 		>
 				<AppIconTile :logo="di.logo" :icon="di.icon" :label="di.label" />
-				<span :style="deskLabelStyle">{{ di.label }}</span>
+				<span :style="desktopLabelStyle">{{ di.label }}</span>
 			</button>
 
 		<!-- windows -->

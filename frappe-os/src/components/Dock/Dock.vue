@@ -46,10 +46,10 @@ const popoverPlace = computed(() => ({
 }[pos.value]))
 const dividerShape = computed(() => (vertical.value ? 'h-px w-[38px] my-0.5' : 'w-px h-[38px] mx-0.5'))
 
-// The dock's extent along its run (pinned + transient icons + launchpad), clamped to the screen.
+// The dock's extent along its run (pinned + transient icons + Finder button), clamped to the screen.
 const dockSpan = computed(() => {
   const along = (dockItems.value.length + 1) * 53 + 40
-  const limit = (vertical.value ? os.deskRef.h || 800 : os.deskRef.w || 1280) - 40
+  const limit = (vertical.value ? os.desktopRef.h || 800 : os.desktopRef.w || 1280) - 40
   return Math.min(limit, along)
 })
 
@@ -64,8 +64,8 @@ function dockBand(dw: number, dh: number) {
 // Is a non-minimized window covering the dock's band? (drives the opaque adapt-behind tray)
 const behind = computed(() => {
   if (os.state.split) return true
-  const dw = os.deskRef.w || 1280,
-    dh = os.deskRef.h || 800
+  const dw = os.desktopRef.w || 1280,
+    dh = os.desktopRef.h || 800
   const band = dockBand(dw, dh)
   return os.state.windows.some((w) => {
     const g = os.geoMap.value[w.id] || {}
@@ -98,7 +98,7 @@ const dividerClass = computed(() =>
 const dotClass = computed(() =>
   !behind.value && dark.value ? 'bg-white/70' : 'bg-[var(--ink-gray-6)]',
 )
-const launchpadClass = computed(() => {
+const finderButtonClass = computed(() => {
   if (behind.value) return 'bg-surface-gray-3 text-ink-gray-7'
   return dark.value
     ? 'bg-white/15 text-white [backdrop-filter:blur(12px)]'
@@ -324,7 +324,7 @@ const ctxOptions = computed(() => [
       </div>
 
       <div class="self-center" :class="[dividerShape, dividerClass]"></div>
-      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[launchpadClass, hoverLift]" title="Finder" @click="os.openFinder()">
+      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[finderButtonClass, hoverLift]" title="Finder" @click="os.openFinder()">
         <span class="lucide-layout-grid size-[20px]"></span>
       </button>
     </div>

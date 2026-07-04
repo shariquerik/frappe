@@ -32,8 +32,8 @@ let iconDrag: IconDragState | null = null
 // The live drag offset, reactive so the rendered icon follows the cursor; null when not dragging.
 export const iconDragState = reactive<{ key: string | null; dx: number; dy: number }>({ key: null, dx: 0, dy: 0 })
 // Reactive so the desktop size is a single source: the cell→pixel projection, the live drag clamp,
-// AND the drop-snap on release all read it, and re-run when the viewport resizes (syncDeskSize).
-const deskRef = reactive<{ el: HTMLElement | null; w: number; h: number }>({ el: null, w: 1280, h: 800 })
+// AND the drop-snap on release all read it, and re-run when the viewport resizes (syncDesktopSize).
+const desktopRef = reactive<{ el: HTMLElement | null; w: number; h: number }>({ el: null, w: 1280, h: 800 })
 const dockRef: { el: HTMLElement | null } = { el: null }
 let dockShown = true // last applied dock visibility; feeds the hysteresis
 
@@ -122,8 +122,8 @@ function resizePatch(r: ResizeState, e: PointerEvent): Partial<Geo> {
 export function onPointerMove(e: PointerEvent): void {
   // auto-hide dock
   if (dockRef.el) {
-    const dw = deskRef.w || (deskRef.el ? deskRef.el.clientWidth : 1280)
-    const dh = deskRef.h || (deskRef.el ? deskRef.el.clientHeight : 800)
+    const dw = desktopRef.w || (desktopRef.el ? desktopRef.el.clientWidth : 1280)
+    const dh = desktopRef.h || (desktopRef.el ? desktopRef.el.clientHeight : 800)
     const pos = state.dockPosition
     // Distance from the dock's own screen edge along its perpendicular axis (ADR-0022).
     const distFromEdge = pos === 'left' ? e.clientX : pos === 'right' ? dw - e.clientX : dh - e.clientY
@@ -154,7 +154,7 @@ export function onPointerUp(): void {
     // flowing off any other pin's cell, then hand the cell to the consumer to persist.
     const dropX = iconDrag.ox + iconDragState.dx
     const dropY = iconDrag.oy + iconDragState.dy
-    const cell = resolveDrop({ x: dropX, y: dropY }, iconDrag.occupied, deskRef.w, deskRef.h)
+    const cell = resolveDrop({ x: dropX, y: dropY }, iconDrag.occupied, desktopRef.w, desktopRef.h)
     // A press that barely moved is a click, not a move — let the consumer open instead of writing.
     const moved = Math.abs(iconDragState.dx) > 4 || Math.abs(iconDragState.dy) > 4
     iconDrag.commit(cell, moved)
@@ -170,12 +170,12 @@ export function onPointerUp(): void {
 // Finder drag-out, ADR-0024) must flow off so two pins never stack. Reuses layoutDesktop, the same
 // resolved-list→cells projection the desktop render uses, against the live desktop height.
 export function occupiedDesktopCells(): Cell[] {
-  return layoutDesktop(usePlacements().desktop(), deskRef.h)
+  return layoutDesktop(usePlacements().desktop(), desktopRef.h)
 }
 
-export const setDeskEl = (el: HTMLElement | null): void => { if (el) { deskRef.el = el; deskRef.w = el.clientWidth; deskRef.h = el.clientHeight } }
+export const setDesktopEl = (el: HTMLElement | null): void => { if (el) { desktopRef.el = el; desktopRef.w = el.clientWidth; desktopRef.h = el.clientHeight } }
 // Refresh the cached desktop size from the live element — called on mount and on window resize so
 // every consumer (render, drag clamp, drop-snap) stays on one up-to-date source.
-export const syncDeskSize = (): void => { if (deskRef.el) { deskRef.w = deskRef.el.clientWidth; deskRef.h = deskRef.el.clientHeight } }
+export const syncDesktopSize = (): void => { if (desktopRef.el) { desktopRef.w = desktopRef.el.clientWidth; desktopRef.h = desktopRef.el.clientHeight } }
 export const setDockEl = (el: HTMLElement | null): void => { if (el) dockRef.el = el }
-export { deskRef }
+export { desktopRef }
