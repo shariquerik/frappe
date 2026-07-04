@@ -14,6 +14,7 @@ import {
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import { clearSelection } from './selection'
+import { clearFocusKind } from './focus-kind'
 import type { DockPosition, OsWindow, RowOpenTarget, Surface, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
@@ -49,6 +50,7 @@ function swapSurface(w: OsWindow, surface: Surface) {
   if (sameSurface(w.surface, surface)) return
   w.surface = surface
   clearSelection(w.id)
+  clearFocusKind(w.id) // the focused widget belonged to the old surface (ADR-0038 lifecycle)
 }
 export function winBack(id: string) {
   const w = state.windows.find((x) => x.id === id)
@@ -281,6 +283,7 @@ export function closeWin(id: string) {
   // and its durable slab), mirroring how the geometry below is deliberately kept.
   dropWindow(id)
   clearSelection(id)
+  clearFocusKind(id) // the focus tier dies with the window (ADR-0038)
   if (state.closeConfirm === id) state.closeConfirm = null
   state.windows = state.windows.filter((w) => w.id !== id)
   if (state.activeId === id) {

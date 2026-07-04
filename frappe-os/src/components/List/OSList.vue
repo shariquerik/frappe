@@ -18,6 +18,7 @@ import { useWorkingState } from "@/desktop/use-working-state";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/window-chrome";
 import { toolbarItems } from "@/actions/toolbar";
 import { LIST_SELECTION } from "@/actions/regions";
+import { ROWS } from "@/actions/kinds";
 // defineProps type from the concrete module (barrel's `export *` breaks the SFC macro
 // resolver — see DoctypeView.vue).
 import type { ViewProps } from "@/config/types";
@@ -197,10 +198,11 @@ const newButtonVariant = computed(() => ((windowFocused?.value ?? true) ? "solid
 // The selection/bulk bar's verbs (ADR-0032). OSListView reports its selection through
 // `update:selections`; feed it into the OS store keyed by the active window — the same key
 // `selectedRecords()`/`contextForOS` read — so the selection Context marker lights up and the
-// bar renders. An empty Set clears the entry (see setSelection).
+// bar renders. The list is the first focus-tier publisher, with kind `ROWS` (ADR-0038); an empty
+// Set clears the entry (see setSelection).
 function onSelectionUpdate(selections: Set<unknown>) {
 	const winId = os.state.activeId;
-	if (winId) os.setSelection(winId, [...selections] as string[]);
+	if (winId) os.setSelection(winId, ROWS, [...selections] as string[]);
 }
 
 // The bulk verbs projected for the selection/bulk bar. It reads `fieldMeta.data` so the effect

@@ -32,14 +32,14 @@ export interface ScopeBinding {
   view?: string
 }
 
-// The OS's current focus situation — a flat, fixed-shape snapshot derived from the single
-// focused window (CONTEXT.md → Context). `activeApp`/`windowRole` are the *window* tier;
-// `doctype`/`recordName`/`view`/`appletId`/`selection` are the *surface* tier. `selection` marks
-// that a multi-row selection EXISTS on the front list — the selection/bulk-bar Region gates on its
-// presence (regions.ts), never on its value. A field is `undefined` when the focus offers no such
-// coordinate (e.g. a list has no `recordName`, an empty list no `selection`). `selection` is the
-// PRESENCE marker `'rows'` — set when the front list has selected rows (contextForOS, context.ts);
-// the actual selected ids never live here, they travel in Invocation.selection (ADR-0037).
+// The OS's current focus situation — a flat, fixed-shape snapshot derived from the single focused
+// window (CONTEXT.md → Context), tiered window / surface / focus (ADR-0038). `activeApp`/
+// `windowRole` are the *window* tier; `doctype`/`recordName`/`view`/`appletId`/`workspace` the
+// *surface* tier; `selection`/`focusKind` the *focus* tier — what is selected inside the front
+// window and which widget holds keyboard focus. A field is `undefined` when the focus offers no such
+// coordinate (a list has no `recordName`, an empty list no `selection`). `selection`/`focusKind` are
+// KIND markers (`'rows'`, `'composer'`, an app-namespaced `<app>.<kind>`; kinds.ts) — the actual
+// selected ids never live here, they travel in Invocation.selection (ADR-0037).
 export interface Context {
   activeApp?: string
   windowRole?: string
@@ -47,16 +47,24 @@ export interface Context {
   recordName?: string
   view?: string
   appletId?: string
+  // The focus-tier selection marker — the KIND of the front list's selection (presence, not the
+  // ids): the selection/bulk-bar Region gates on it (regions.ts). Set only while a selection exists.
   selection?: string
+  // The focus-tier keyboard-focus marker — the KIND of the widget that holds focus (ADR-0038).
+  // Persists until another widget publishes / the surface swaps / the window closes (never cleared
+  // on raw DOM blur), so `when: { focusKind: 'composer' }` stays live while the menu bar steals focus.
+  focusKind?: string
   // The surface-tier workspace coordinate (ADR-0040) — published when the front window's surface
   // names one, so app menus can gate their content with `when: { workspace: 'selling' }`. Absent
   // for a single-space app or any surface with no workspace, a clean non-match for such a `when`.
   workspace?: string
 }
 
-// Eligibility predicate — equality-only, evaluated as data, never `eval` (CONTEXT.md →
-// Eligibility). An empty/absent predicate is *global*. Keys must be Context keys; an unknown
-// key degrades to no-match plus a loud warn (forward-compat with additive Context fields).
+// Eligibility predicate — evaluated as data, never `eval` (CONTEXT.md → Eligibility). An
+// empty/absent predicate is *global*. A value is either an exact match or the presence marker
+// `PRESENT` ('*' = "this key is defined", any value), the one non-equality form (ADR-0038) — it
+// replaces the Region `requires` special case. Keys must be Context keys; an unknown key degrades
+// to no-match plus a loud warn (forward-compat with additive Context fields).
 export type When = Partial<Record<keyof Context, string>>
 
 // What a Command does when invoked — a closed, additive kind set (ADR-0008). `navigate` is

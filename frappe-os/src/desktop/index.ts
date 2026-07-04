@@ -27,7 +27,8 @@ import {
 import { openPalette, closePalette, paletteResults } from './palette'
 import { openAbout, closeAbout } from './about'
 import { isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt } from './fullscreen'
-import { selectedRecords, setSelection } from './selection'
+import { selectedRecords, setSelection, selectionKind } from './selection'
+import { publishFocus, focusedKind } from './focus-kind'
 import { hydrate, startAutosave } from './persistence'
 import {
   recordObj, listFor, docFor, countFor, fieldMetaFor,
@@ -65,7 +66,8 @@ export function useOS() {
     // browser fullscreen (edge-to-edge, no browser chrome) — the "Enter full screen" action,
     // plus the prompt shown when the green button leaves the bar up
     isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt,
-    // list multi-row selection (ADR-0032 slice 04) — read by bulk run Handlers
-    selectedRecords, setSelection,
+    // the focus tier (ADR-0038): the front list's selection (kind + values, read by bulk run
+    // Handlers) and which widget holds keyboard focus (published through publishFocus)
+    selectedRecords, setSelection, selectionKind, publishFocus, focusedKind,
   }
 }

@@ -21,6 +21,7 @@ import {
   SYSTEM_REGION, APP_REGION, FILE_REGION, EDIT_REGION, VIEW_REGION, WINDOW_REGION, HELP_REGION,
   LIST_TOOLBAR, LIST_SELECTION, FORM_TOOLBAR, DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION,
 } from '../src/actions/regions'
+import { isValidKind, kindNamespace, warnForeignKind, ROWS, CORE_KINDS } from '../src/actions/kinds'
 import { useOS } from '../src/desktop/index'
 import { listSurface } from '../src/surface'
 import { initRegistry, useRegistry, registerScopedContributions } from '../src/registry'
@@ -55,6 +56,63 @@ describe('eligibility (when, evaluated as data)', () => {
     expect(isEligible({ selection: 'rows' }, { selection: 'rows', doctype: 'CRM Lead' })).toBe(true)
     expect(isEligible({ selection: 'rows' }, { doctype: 'CRM Lead' })).toBe(false) // no selection
     expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it("the presence marker '*' matches any defined value and non-matches an absent key (ADR-0038)", () => {
+    expect(isEligible({ selection: '*' }, { selection: 'rows' })).toBe(true)
+    expect(isEligible({ selection: '*' }, { selection: 'message' })).toBe(true) // any value, not just rows
+    expect(isEligible({ selection: '*' }, { doctype: 'ToDo' })).toBe(false) // key absent → non-match
+  })
+
+  it('focusKind is a known focus-tier key — gates a composer menu on keyboard focus', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(isEligible({ focusKind: 'composer' }, { focusKind: 'composer', doctype: 'Raven Message' })).toBe(true)
+    expect(isEligible({ focusKind: 'composer' }, { focusKind: 'message' })).toBe(false) // wrong widget
+    expect(isEligible({ focusKind: 'composer' }, { doctype: 'Raven Message' })).toBe(false) // nothing focused
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})
+
+// The KIND vocabulary (ADR-0038): a closed OS core plus an app-namespaced escape, governed like
+// Regions. Publishers validate a kind is well-formed; a gater on ANOTHER app's namespaced kind warns.
+describe('kinds (closed core + namespaced escape + foreign-gate warning)', () => {
+  it('the core is the surveyed set, exported as constants', () => {
+    expect(CORE_KINDS).toEqual(['rows', 'record', 'composer', 'message', 'card'])
+    expect(ROWS).toBe('rows')
+  })
+
+  it('a core kind and a well-formed <app>.<kind> validate; malformed values do not', () => {
+    expect(isValidKind('rows')).toBe(true)
+    expect(isValidKind('raven.voice-note')).toBe(true) // app-namespaced escape passes
+    expect(isValidKind('voice-note')).toBe(false) // unknown bare kind is not core
+    expect(isValidKind('.x')).toBe(false) // no app half
+    expect(isValidKind('raven.')).toBe(false) // no kind half
+    expect(isValidKind('')).toBe(false)
+  })
+
+  it('kindNamespace reads the app prefix, null for a core kind', () => {
+    expect(kindNamespace('raven.voice-note')).toBe('raven')
+    expect(kindNamespace('rows')).toBe(null)
+  })
+
+  it('an Action gating on another app\'s namespaced kind warns loudly; its own does not', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    warnForeignKind({ command: 'c', region: 'r', sourceApp: 'crm', when: { selection: 'raven.voice-note' } })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('raven'))
+    warn.mockClear()
+    warnForeignKind({ command: 'c', region: 'r', sourceApp: 'raven', when: { focusKind: 'raven.voice-note' } })
+    warnForeignKind({ command: 'c', region: 'r', sourceApp: 'crm', when: { selection: 'rows' } }) // core kind
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('resolve fires the foreign-kind warning over the region\'s Actions', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const foreign = { command: 'c', region: 'menubar:file', sourceApp: 'crm', when: { selection: 'raven.message' } }
+    resolve([foreign], 'menubar:file', {})
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('foreign kind'))
     warn.mockRestore()
   })
 })
@@ -314,12 +372,13 @@ describe('invoke builds the Invocation (ADR-0037 contract)', () => {
     os.state.windows = []
     os.state.geo = {}
     os.state.selection = {}
+    os.state.focusKind = {}
     os.state.activeId = null
   })
 
   it('passes the context + selection snapshot the item was gated on (not the bare store)', () => {
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0001', 'TODO-0002'])
     let seen
     registerRunHandlers({ 'capture-inv': (invocation) => { seen = invocation } })
     invoke(cmd('capture-inv'), os)
@@ -331,11 +390,11 @@ describe('invoke builds the Invocation (ADR-0037 contract)', () => {
 
   it('snapshots at click — a selection change AFTER invoke does not mutate the captured snapshot', () => {
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, ['TODO-0001'])
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0001'])
     let seen
     registerRunHandlers({ 'capture-frozen': (invocation) => { seen = invocation } })
     invoke(cmd('capture-frozen'), os)
-    os.setSelection(os.state.activeId, ['TODO-0009', 'TODO-0010']) // focus moves after the click
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0009', 'TODO-0010']) // focus moves after the click
     expect(seen.selection).toEqual(['TODO-0001']) // still what the user saw, not the later state
   })
 
@@ -363,6 +422,7 @@ describe('contextForOS (derive Context from the active window)', () => {
     os.state.windows = []
     os.state.geo = {}
     os.state.selection = {}
+    os.state.focusKind = {}
     os.state.activeId = null
   })
 
@@ -387,14 +447,14 @@ describe('contextForOS (derive Context from the active window)', () => {
 
   it('sets the selection marker (presence, not value) when the front list has selected rows', () => {
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0001', 'TODO-0002'])
     expect(contextForOS(os).selection).toBe('rows')
   })
 
   it('drops the selection marker again once the selection is cleared', () => {
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, ['TODO-0001'])
-    os.setSelection(os.state.activeId, []) // deselect all → sparse entry removed
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0001'])
+    os.setSelection(os.state.activeId, 'rows', []) // deselect all → sparse entry removed
     expect(contextForOS(os).selection).toBeUndefined()
   })
 
@@ -406,6 +466,82 @@ describe('contextForOS (derive Context from the active window)', () => {
   it('carries no workspace for a single-space surface', () => {
     os.openListGlobal('ToDo')
     expect(contextForOS(os).workspace).toBeUndefined()
+  })
+
+  it('carries no focusKind until a widget publishes one', () => {
+    os.openListGlobal('ToDo')
+    expect(contextForOS(os).focusKind).toBeUndefined()
+  })
+
+  it('publishes the focused widget kind into Context.focusKind (ADR-0038)', () => {
+    os.openListGlobal('ToDo')
+    os.publishFocus(os.state.activeId, 'composer')
+    expect(contextForOS(os).focusKind).toBe('composer')
+  })
+})
+
+// The focus tier's keyboard-focus facet (ADR-0038): published through publishFocus, persist-until-
+// replaced (never cleared on raw DOM blur — the menu bar steals focus), cleared only on surface swap
+// and window close. Orthogonal to the selection facet: a message stays selected while the composer
+// gains focus, so BOTH markers can be live at once.
+describe('focus kind (publishFocus — persist-until-replaced, cleared on swap/close)', () => {
+  const os = useOS()
+  const app = (id, name, order) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name }, order })
+  const boot = { user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] } }
+  let fetchMock
+  beforeEach(() => {
+    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.focusKind = {}; os.state.activeId = null
+    fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: [] }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    initRegistry(boot)
+  })
+  afterEach(() => { vi.unstubAllGlobals(); initRegistry(null) })
+
+  it('a later publish replaces the kind; there is no clear-on-blur seam', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.publishFocus(winId, 'composer')
+    expect(os.focusedKind()).toBe('composer')
+    os.publishFocus(winId, 'message') // focus moves to another widget
+    expect(os.focusedKind()).toBe('message')
+  })
+
+  it('selection and focusKind are orthogonal — both stay live together', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.setSelection(winId, 'message', ['MSG-1'])
+    os.publishFocus(winId, 'composer') // focus the composer AFTER selecting a message
+    const ctx = contextForOS(os)
+    expect(ctx.selection).toBe('message') // the selection survives the focus move
+    expect(ctx.focusKind).toBe('composer')
+  })
+
+  it('a surface swap clears the focus kind (it belonged to the old surface)', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.publishFocus(winId, 'composer')
+    os.openListGlobal('User') // same window → navigateWindow swaps the surface
+    expect(os.focusedKind()).toBeUndefined()
+  })
+
+  it('closing a window drops its focus kind so a reused id starts clean', () => {
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.publishFocus(winId, 'composer')
+    os.closeWin(winId)
+    expect(os.state.focusKind[winId]).toBeUndefined()
+  })
+
+  it('refuses a malformed kind with a loud warn — the focus tier stays clean', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    os.openListGlobal('ToDo')
+    const winId = os.state.activeId
+    os.publishFocus(winId, 'gibberish') // not core, not <app>.<kind>
+    expect(os.focusedKind()).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('invalid focus kind'))
+    os.publishFocus(winId, 'raven.voice-note') // the namespaced escape is accepted
+    expect(os.focusedKind()).toBe('raven.voice-note')
+    warn.mockRestore()
   })
 })
 
@@ -873,7 +1009,7 @@ describe('regions (closed set + selection gate)', () => {
 
   it('regionById returns the descriptor; an id outside the set is undefined', () => {
     expect(regionById(LIST_TOOLBAR)).toEqual({ id: 'list:toolbar' })
-    expect(regionById(LIST_SELECTION)).toEqual({ id: 'list:selection', requires: 'selection' })
+    expect(regionById(LIST_SELECTION)).toEqual({ id: 'list:selection', when: { selection: '*' } })
     expect(regionById('nope:nope')).toBeUndefined()
   })
 
@@ -1000,7 +1136,7 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
   const boot = { user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] } }
   let warn, fetchMock
   beforeEach(() => {
-    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.activeId = null
+    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.focusKind = {}; os.state.activeId = null
     warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: [] }) }))
     vi.stubGlobal('fetch', fetchMock)
@@ -1026,7 +1162,7 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
 
   it('invoking over a multi-row selection calls the standard bulk-update method with the selected rows', async () => {
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(os.state.activeId, 'rows', ['TODO-0001', 'TODO-0002'])
     invoke(setOpenVerb(), os) // fires the run Handler; the write POSTs after joining the job room first
     await new Promise((resolve) => setTimeout(resolve)) // drain the pre-write watchTask (subscribe-before-write, review #2)
     const call = bulkCall()
@@ -1053,7 +1189,7 @@ describe('bulk action as data tracer — "Set as Open" (ADR-0032 slice 04)', () 
         ? { ok: true, json: async () => ({ message: null }) }
         : { ok: true, json: async () => ({ message: [] }) })
     os.openListGlobal('ToDo')
-    os.setSelection(os.state.activeId, Array.from({ length: 25 }, (_, i) => `TODO-${i}`))
+    os.setSelection(os.state.activeId, 'rows', Array.from({ length: 25 }, (_, i) => `TODO-${i}`))
     await new Promise((resolve) => setTimeout(resolve)) // let the list-open's own load settle
     fetchMock.mockClear() // watch only the calls the bulk invoke makes
     invoke(setOpenVerb(), os)
@@ -1078,7 +1214,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
   const boot = { user: 'a', csrf_token: 't', roles: [], permissions: {}, registry: { schemaVersion: 1, contributions: [app('frappe', 'Frappe', 0)] } }
   let fetchMock
   beforeEach(() => {
-    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.activeId = null
+    os.state.windows = []; os.state.geo = {}; os.state.selection = {}; os.state.focusKind = {}; os.state.activeId = null
     fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: [] }) }))
     vi.stubGlobal('fetch', fetchMock)
     initRegistry(boot)
@@ -1088,7 +1224,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
   it('in-window navigation to another list clears the stale selection', () => {
     os.openListGlobal('ToDo')
     const winId = os.state.activeId
-    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(winId, 'rows', ['TODO-0001', 'TODO-0002'])
     expect(os.selectedRecords()).toEqual(['TODO-0001', 'TODO-0002'])
     os.openListGlobal('User') // same window → navigateWindow fires (appForDoctype is 'frappe' for both)
     expect(os.selectedRecords()).toEqual([]) // front window's selection is gone
@@ -1099,7 +1235,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
     os.openListGlobal('ToDo')
     const winId = os.state.activeId
     os.openListGlobal('User') // push back-history so there's a prior surface to return to
-    os.setSelection(winId, ['USR-0001']) // seed a selection on the current (User) surface
+    os.setSelection(winId, 'rows', ['USR-0001']) // seed a selection on the current (User) surface
     os.winBack(winId)
     expect(os.state.selection[winId]).toBeUndefined()
     expect(os.selectedRecords()).toEqual([])
@@ -1108,7 +1244,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
   it('closing a window drops its selection so a reused id starts clean', () => {
     os.openListGlobal('ToDo')
     const winId = os.state.activeId
-    os.setSelection(winId, ['TODO-1'])
+    os.setSelection(winId, 'rows', ['TODO-1'])
     os.closeWin(winId)
     expect(os.state.selection[winId]).toBeUndefined()
   })
@@ -1116,7 +1252,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
   it('restoreWin (browser back/forward onto another surface) clears the stale selection too', () => {
     os.openListGlobal('ToDo')
     const winId = os.state.activeId
-    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(winId, 'rows', ['TODO-0001', 'TODO-0002'])
     // The browser-history path swaps the surface WITHOUT touching the per-window stacks; it must
     // still drop the selection, or a bulk verb fires against the newly-shown doctype's rows.
     os.restoreWin(winId, listSurface('User'))
@@ -1127,7 +1263,7 @@ describe('per-window selection is cleared on surface swap (ADR-0032 slice 04)', 
   it('restoreWin onto the SAME surface (pure refocus) keeps the selection', () => {
     os.openListGlobal('ToDo')
     const winId = os.state.activeId
-    os.setSelection(winId, ['TODO-0001', 'TODO-0002'])
+    os.setSelection(winId, 'rows', ['TODO-0001', 'TODO-0002'])
     // Browser back/forward between two same-doctype instances refocuses a window with the surface it
     // already shows; that is not a surface swap, so the per-window selection must survive it.
     os.restoreWin(winId, listSurface('ToDo'))

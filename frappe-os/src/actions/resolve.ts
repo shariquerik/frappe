@@ -19,6 +19,7 @@
 // the slot's RENDER placement (group + order) from the default it shadows when it declares none, so
 // re-presenting a default (a commandPatch re-title) never silently relocates the item across groups.
 import { isEligible } from './eligibility'
+import { warnForeignKind } from './kinds'
 import { effectiveWhen } from './scope'
 import { specificity, compareSpecificity } from './specificity'
 import type { Action, Context, ShadowEvent } from './types'
@@ -110,7 +111,9 @@ export interface ResolveResult {
 // Resolve a region against the Context: the winning Actions (in ascending within-region render
 // order), plus the attributed, logged shadows.
 export function resolve(actions: Action[], region: string, context: Context): ResolveResult {
-  const eligible = actions.filter((a) => a.region === region && isEligible(effectiveWhen(a), context))
+  const forRegion = actions.filter((a) => a.region === region)
+  forRegion.forEach(warnForeignKind) // loud, before gating — a foreign-kind `when` is a static bug
+  const eligible = forRegion.filter((a) => isEligible(effectiveWhen(a), context))
   const shadows: ShadowEvent[] = []
   const items: Action[] = []
   for (const [command, competitors] of groupByCommand(eligible)) {

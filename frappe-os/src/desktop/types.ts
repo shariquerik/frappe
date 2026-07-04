@@ -74,9 +74,13 @@ export type DockPosition = 'bottom' | 'left' | 'right'
 export interface OsState {
   windows: OsWindow[]
   geo: Record<string, Partial<Geo>>
-  // Selected record names per window's list (ADR-0032 slice 04), keyed winId like `geo`. Sparse:
-  // a window gets an entry only while its list has a selection. Read by a bulk run Handler.
-  selection: Record<string, string[]>
+  // The focus tier, keyed winId like `geo`, both sparse (ADR-0038). `selection` is the front-list
+  // selection generalized from bare names to a KIND + values: a window gets an entry only while a
+  // selection exists; the kind marks Context, the values feed a bulk run Handler (Invocation).
+  // `focusKind` is the kind of widget holding keyboard focus — persist-until-replaced, cleared only
+  // on surface swap / window close (never on raw DOM blur, so the menu bar can steal focus safely).
+  selection: Record<string, { kind: string; values: string[] }>
+  focusKind: Record<string, string>
   activeId: string | null
   menu: string | null
   split: [string, string] | null

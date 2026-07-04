@@ -3,16 +3,17 @@
 // toolbar, the selection/bulk bar, the form toolbar) are ONE set, because Region is orthogonal to
 // Scope (ADR-0032): a Doctype-scoped Action can target the global menu bar as readily as its own
 // list toolbar. The OS owns these ids; apps place Actions into them, they don't invent new ones.
-import type { Context } from './types'
+import type { Context, When } from './types'
+import { isEligible, PRESENT } from './eligibility'
 
-// A named render area. `requires` is a Context key that must be PRESENT for the Region to render at
-// all — the selection/bulk bar (`requires: 'selection'`) appears only when rows are selected, a gate
-// the resolver's per-Action `when` cannot express: it needs the *existence* of a selection, not
-// equality on a value, so a bulk Action stays free of a hand-written selection `when` (ADR-0032).
-// An absent `requires` means the Region always renders whatever the resolver hands it.
+// A named render area. `when` is the same eligibility predicate an Action carries (ADR-0038): the
+// Region renders only where it holds. The selection/bulk bar gates on `{ selection: PRESENT }` — it
+// appears only when rows are selected — so a bulk Action stays free of a hand-written selection
+// `when` (ADR-0032). An absent `when` means the Region always renders whatever the resolver hands it.
+// This retires the old `requires` special case in favor of the general presence form.
 export interface Region {
   id: string
-  requires?: keyof Context
+  when?: When
 }
 
 // Region ids follow the `area:slot` convention (`menubar:file`). The OS owns these strings.
@@ -47,7 +48,7 @@ export const MENUBAR_REGIONS: readonly string[] = [
 export const REGIONS: readonly Region[] = [
   ...MENUBAR_REGIONS.map((id) => ({ id })),
   { id: LIST_TOOLBAR },
-  { id: LIST_SELECTION, requires: 'selection' },
+  { id: LIST_SELECTION, when: { selection: PRESENT } },
   { id: FORM_TOOLBAR },
   { id: DESKTOP_CONTEXT_REGION },
   { id: DOCK_CONTEXT_REGION },
@@ -59,11 +60,11 @@ export function regionById(id: string): Region | undefined {
   return BY_ID.get(id)
 }
 
-// Does the Region render in this Context? True unless a gated Region's required Context key is
-// absent (undefined) — the selection/bulk bar stays hidden until a selection exists. An unknown
-// region id (outside the set) is ungated: it renders whatever resolves, which is nothing, since no
-// Action targets an id the set does not name.
+// Does the Region render in this Context? Its `when` is judged by the same eligibility engine as an
+// Action's — an absent `when` is global (always renders), `{ selection: PRESENT }` keeps the bulk bar
+// hidden until a selection exists. An unknown region id (outside the set) is ungated: it renders
+// whatever resolves, which is nothing, since no Action targets an id the set does not name.
 export function regionRenders(region: Region | undefined, context: Context): boolean {
-  if (!region || !region.requires) return true
-  return context[region.requires] !== undefined
+  if (!region) return true
+  return isEligible(region.when, context)
 }

@@ -8,7 +8,8 @@ import type { OsState } from '@/types'
 export const state = reactive<OsState>({
   windows: [], // { id, surface, back?, fwd? } — id prefix encodes role; surface = content
   geo: {}, // id -> { x, y, w, h, z, min, max }
-  selection: {}, // id -> selected record names on that window's list (ADR-0032 slice 04)
+  selection: {}, // id -> { kind, values } — the front list's selection (ADR-0038, was bare names)
+  focusKind: {}, // id -> kind of widget holding keyboard focus (ADR-0038); persist-until-replaced
   activeId: null,
   menu: null,
   split: null, // [rightId, leftId]

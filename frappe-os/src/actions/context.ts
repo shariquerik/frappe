@@ -19,10 +19,14 @@ export function contextForOS(os: OsStore): Context {
     // `when: { workspace: X }` is a clean non-match on a single-space surface.
     if (surface.workspace) context.workspace = surface.workspace
   }
-  // The surface-tier selection marker: PRESENCE (not value) — the selection/bulk-bar Region gates
-  // on it (regions.ts). Set only when the front window's list has selected rows, so the bar mounts
-  // for real once rows are picked and vanishes when cleared. `selectedRecords()` reads state.activeId,
-  // the same window this Context is derived from.
-  if (os.selectedRecords().length) context.selection = 'rows'
+  // The focus-tier markers — KIND, never value (ADR-0038). `selection` is the kind of the front
+  // window's selection (`'rows'`, `'message'`, …); the selection/bulk-bar Region gates on its
+  // presence (regions.ts). `focusKind` is the kind of the widget holding keyboard focus. Both read
+  // state.activeId, the same window this Context is derived from; both absent when the focus offers
+  // none. The selected VALUES never live here — they travel via Invocation.selection (ADR-0037).
+  const selectionKind = os.selectionKind()
+  if (selectionKind) context.selection = selectionKind
+  const focusKind = os.focusedKind()
+  if (focusKind) context.focusKind = focusKind
   return context
 }
