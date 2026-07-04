@@ -6,6 +6,7 @@ import type { LocationQuery, RouteLocationNormalized, RouteParamsGeneric } from 
 import './index.css'
 import App from './App.vue'
 import { useOS } from '@/desktop'
+import { faviconHref, applyFavicon } from '@/desktop/favicon'
 import { getBoot, initOsApi } from '@/data'
 import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
@@ -190,6 +191,9 @@ async function boot() {
   //    except while a pop is being restored).
   os.startAutosave()
   watch(() => focusSig(os), () => { if (!restoring) pushFocus() })
+
+  // 6. store -> browser tab: the favicon follows the focused window's app logo.
+  watch(faviconHref, applyFavicon, { immediate: true })
 
   app.mount('#app')
 
