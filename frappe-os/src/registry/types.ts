@@ -47,14 +47,18 @@ export interface MenuDef {
 }
 
 // One boot-delivered workspace (ADR-0042): the immutable seeded `id` (the `workspace_id` slug the
-// window identity, URL segment, and `when: { workspace }` gates key on), the renamable `label`, and
-// whether it is the app's default (the hub opens onto it). Mirrors os_core/workspaces.py's
-// `workspace_dict`. The source module / sequence / hidden flag stay server-side — the boot list is
-// already ordered and hidden-excluded.
+// window identity, URL segment, and `when: { workspace }` gates key on), the renamable `label`,
+// whether it is the app's default (the hub opens onto it), and the workspace's derived,
+// permission-filtered `doctypes` — delivered at boot so every OS consumer (workbench sidebar,
+// Finder, palette, dashboard, settings) reads the doctype set synchronously, the single source that
+// retires the curated AppDef.modules. Mirrors os_core/workspaces.py's `workspace_dict`. The source
+// module / sequence / hidden flag stay server-side — the boot list is already ordered and
+// hidden-excluded.
 export interface WorkspaceInfo {
   id: string
   label: string
   isDefault: boolean
+  doctypes: string[]
 }
 
 // How the OS classifies a contributing app from its Registry contributions alone (ADR-0014

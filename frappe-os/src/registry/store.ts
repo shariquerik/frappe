@@ -173,6 +173,39 @@ export function defaultWorkspace(appId: string): string | undefined {
   return (rows.find((w) => w.isDefault) ?? rows[0])?.id
 }
 
+// The app's workspaces as doctype-bearing groups (ADR-0042, slice 05): the seeded boot rows, or —
+// for an app the server shipped no data for — the curated `AppDef.modules` shaped as workspaces
+// (slug id, module name label, first is default). THE one place `AppDef.modules` is read for
+// doctype grouping; every consumer (Finder, palette, dashboard, settings, workbench sidebar) reads
+// this or the derived accessors below, so the curated config is consulted only as a fallback.
+export function workspaceGroups(appId: string): WorkspaceInfo[] {
+  const seeded = bootWorkspaces[appId]
+  if (seeded) return seeded
+  return (ensureIndex().appById[appId]?.modules ?? []).map((m, i) => ({
+    id: workspaceSlug(m.name), label: m.name, isDefault: i === 0, doctypes: m.doctypes,
+  }))
+}
+
+// A single workspace's derived doctypes (ADR-0042) — the workbench sidebar's source, now read
+// synchronously off boot. Empty for an unknown workspace id.
+export function workspaceDoctypes(appId: string, workspaceId: string): string[] {
+  return workspaceGroups(appId).find((w) => w.id === workspaceId)?.doctypes ?? []
+}
+
+// The app's whole doctype set — the deduped union across its workspaces, order preserved (ADR-0042).
+// The catalog Finder locations and the command palette project over.
+export function appDoctypes(appId: string): string[] {
+  return [...new Set(workspaceGroups(appId).flatMap((w) => w.doctypes ?? []))]
+}
+
+// The default workspace's doctypes (ADR-0042): the `is_default` group's set, falling back to the
+// first group's when none is flagged. The app dashboard's "Create" list and the menu-bar
+// "show as list" target read this.
+export function defaultWorkspaceDoctypes(appId: string): string[] {
+  const groups = workspaceGroups(appId)
+  return ((groups.find((w) => w.isDefault) ?? groups[0])?.doctypes) ?? []
+}
+
 // Async resolution to the Vue component (the module's default export IS the SFC).
 export async function resolveApplet(appletId: string): Promise<Component> {
   const c = ensureIndex().applets[appletId]

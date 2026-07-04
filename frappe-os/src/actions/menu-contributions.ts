@@ -84,7 +84,8 @@ function showDashboard({ os }: Invocation): void {
 function showAsList({ os }: Invocation): void {
   const win = activeWindow(os)
   if (!win || windowRole(win.id) !== 'app') return
-  os.openList(win.id, os.DATA.APP[surfaceAppId(win.surface)].modules[0].doctypes[0])
+  const doctype = os.defaultWorkspaceDoctypes(surfaceAppId(win.surface))[0]
+  if (doctype) os.openList(win.id, doctype)
 }
 
 // The OS's own menu run Handlers, keyed by the refs the Commands below cite. Every ref does

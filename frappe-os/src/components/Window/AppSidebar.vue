@@ -41,12 +41,12 @@ function itemFor(dt: string) {
 	};
 }
 
-// WORKBENCH rail: the workspace's server-derived doctypes as a flat item list. workbenchItems
-// skips any doctype it can't build a row for (with a console.warn), so one edge doctype never
-// blanks the sidebar.
+// WORKBENCH rail: the workspace's derived doctypes as a flat item list, read synchronously off the
+// boot-delivered workspace data (ADR-0042, slice 05). workbenchItems skips any doctype it can't
+// build a row for (with a console.warn), so one edge doctype never blanks the sidebar.
 const workbenchNav = computed(() => {
 	if (!workspace.value) return [];
-	const names = os.workspaceDoctypesFor(app.value.id, workspace.value).data;
+	const names = os.workspaceDoctypes(app.value.id, workspace.value);
 	return workbenchItems(names, itemFor);
 });
 
@@ -66,29 +66,29 @@ function workspaceRow(w: { id: string; label: string; isDefault: boolean }) {
 }
 const hubItems = computed(() => hubWorkspaces.value.map(workspaceRow));
 
-// PLAIN FALLBACK rail: the curated modules, each a labelled group of doctype rows. Only when the
-// window is neither a workbench nor a hub (an app that ships no seeded workspace data).
+// PLAIN FALLBACK rail: the app's workspace groups (boot data, or curated modules when the app ships
+// none — the fallback lives in the store's workspaceGroups), each a labelled group of doctype rows.
+// Only when the window is neither a workbench nor a hub (an app that ships no seeded workspace data).
 const navGroups = computed(() =>
 	workspace.value || isHub.value
 		? []
-		: (app.value.modules || []).map((mod) => ({
-				label: mod.name,
-				items: mod.doctypes.map(itemFor),
+		: os.workspaceGroups(app.value.id).map((group) => ({
+				label: group.label,
+				items: group.doctypes.map(itemFor),
 			})),
 );
 
-// Live counts. A workbench fetches its derived doctype list first, then a count per doctype; the
-// plain fallback counts every curated module doctype. A hub loads no counts — its rows are
-// workspaces, not doctypes. Re-runs when the window's app or workspace changes (a workbench never
-// changes identity, but the same component instance can be reused).
+// Live counts, read off the boot-delivered doctype sets (ADR-0042, slice 05). A workbench counts
+// its workspace's doctypes; the plain fallback counts every workspace-group doctype. A hub loads no
+// counts — its rows are workspaces, not doctypes. Re-runs when the window's app or workspace changes
+// (a workbench never changes identity, but the same component instance can be reused).
 watch(
 	[() => s.value.appId, workspace],
-	async ([, ws]) => {
+	([, ws]) => {
 		if (ws) {
-			const state = await os.loadWorkspaceDoctypes(app.value.id, ws);
-			state.data.forEach((dt) => os.loadCount(dt));
+			os.workspaceDoctypes(app.value.id, ws).forEach((dt) => os.loadCount(dt));
 		} else if (!isHub.value) {
-			(app.value.modules || []).forEach((mod) => mod.doctypes.forEach((dt) => os.loadCount(dt)));
+			os.workspaceGroups(app.value.id).forEach((group) => group.doctypes.forEach((dt) => os.loadCount(dt)));
 		}
 	},
 	{ immediate: true },

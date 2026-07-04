@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
   appWorkspaces, soleWorkspace, workspaceForSlug, orderedWorkspaces, defaultWorkspace,
+  workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes,
 } from '../src/registry'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
@@ -447,5 +448,40 @@ describe('workspaces (ADR-0042)', () => {
   it('defaultWorkspace is undefined for an app with no workspace data', () => {
     initRegistry(bootWith({}))
     expect(defaultWorkspace('ghost')).toBeUndefined()
+  })
+
+  // Boot delivers each workspace's doctypes (slice 05), the sync source that retires AppDef.modules.
+  // The store is the one place that falls back to curated modules; every consumer reads these.
+  const sell = { id: 'selling', label: 'Selling', isDefault: false, doctypes: ['Quotation', 'Sales Order'] }
+  const stock = { id: 'stock', label: 'Stock', isDefault: true, doctypes: ['Item', 'Sales Order'] }
+
+  it('workspaceGroups returns the boot workspaces with their doctypes', () => {
+    initRegistry(bootWith({ erpnext: [sell, stock] }))
+    expect(workspaceGroups('erpnext')).toEqual([sell, stock])
+  })
+
+  it('workspaceGroups falls back to curated modules (slug id, name label) when no boot data', () => {
+    initRegistry(null) // offline seed → AppDef.modules fallback
+    const groups = workspaceGroups('crm')
+    expect(groups.map((g) => g.id)).toEqual(['sales', 'activity'])
+    groups.forEach((g) => expect(Array.isArray(g.doctypes)).toBe(true))
+  })
+
+  it('workspaceDoctypes returns a single workspace doctype set; empty for an unknown workspace', () => {
+    initRegistry(bootWith({ erpnext: [sell, stock] }))
+    expect(workspaceDoctypes('erpnext', 'selling')).toEqual(['Quotation', 'Sales Order'])
+    expect(workspaceDoctypes('erpnext', 'ghost')).toEqual([])
+  })
+
+  it('appDoctypes is the deduped union across the app workspaces', () => {
+    initRegistry(bootWith({ erpnext: [sell, stock] }))
+    expect(appDoctypes('erpnext')).toEqual(['Quotation', 'Sales Order', 'Item'])
+  })
+
+  it('defaultWorkspaceDoctypes returns the default workspace doctypes (else the first)', () => {
+    initRegistry(bootWith({ erpnext: [sell, stock] }))
+    expect(defaultWorkspaceDoctypes('erpnext')).toEqual(['Item', 'Sales Order']) // stock is is_default
+    initRegistry(bootWith({ crm: [{ id: 'fcrm', label: 'FCRM', isDefault: false, doctypes: ['Lead'] }] }))
+    expect(defaultWorkspaceDoctypes('crm')).toEqual(['Lead']) // no default flagged → first
   })
 })

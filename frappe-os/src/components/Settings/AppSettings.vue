@@ -48,7 +48,7 @@ const integrations = computed(() => [
 ])
 const customizeRows = computed(() => {
   const rows: { label: string; sub: string; key: string; def: boolean }[] = []
-  ;(app.value.modules || []).forEach((mod) => mod.doctypes.forEach((dt) => rows.push({ label: dt, sub: mod.name, key: 'cust_' + dt, def: true })))
+  os.workspaceGroups(appId.value).forEach((group) => group.doctypes.forEach((dt) => rows.push({ label: dt, sub: group.label, key: 'cust_' + dt, def: true })))
   return rows
 })
 const k = (key: string) => appId.value + ':' + key

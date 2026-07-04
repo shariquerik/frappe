@@ -7,7 +7,7 @@
 // store: Doctypes flattens the registry `module → doctype` catalog the per-app nav rail reads, and
 // Favorites mirrors the viewer's resolved desktop + dock Placements. Only Applications is assembled
 // fresh, from the permission-filtered app list.
-import { useRegistry } from '@/registry'
+import { useRegistry, appDoctypes } from '@/registry'
 import { placementView, usePlacements, type PlacementView } from '@/placements'
 import { useRecents } from '@/recents'
 import type { ResolvedPlacement, SurfaceRef } from '@/types'
@@ -35,20 +35,19 @@ export function applicationItems(): FinderItem[] {
   return useRegistry().apps().map((app) => itemFor({ app: app.id }))
 }
 
-// Doctypes — a flattened cross-app catalog REPROJECTED from the registry `module → doctype` data the
-// per-app nav rail already reads (NOT a second store). Each doctype becomes a list reference; the
-// catalog is de-duped (a doctype listed in several apps' modules appears once) and stably ordered by
-// registry app order. Drag one out → a list Placement.
+// Doctypes — a flattened cross-app catalog REPROJECTED from each app's boot workspace doctypes
+// (ADR-0042, slice 05: appDoctypes is the deduped union across an app's workspaces, curated
+// AppDef.modules only as the fallback). Each doctype becomes a list reference; the catalog is
+// de-duped cross-app (a doctype in several apps appears once) and stably ordered by registry app
+// order. Drag one out → a list Placement.
 export function doctypeItems(): FinderItem[] {
   const seen = new Set<string>()
   const out: FinderItem[] = []
   for (const app of useRegistry().apps()) {
-    for (const mod of app.modules || []) {
-      for (const doctype of mod.doctypes) {
-        if (seen.has(doctype)) continue
-        seen.add(doctype)
-        out.push(itemFor({ doctype, view: 'list' }))
-      }
+    for (const doctype of appDoctypes(app.id)) {
+      if (seen.has(doctype)) continue
+      seen.add(doctype)
+      out.push(itemFor({ doctype, view: 'list' }))
     }
   }
   return out

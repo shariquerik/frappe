@@ -8,7 +8,7 @@
 // the overlay flag and the result projection.
 import { computed, watch } from 'vue'
 import fuzzysort from 'fuzzysort'
-import { useRegistry, appForDoctype, listApplets } from '@/registry'
+import { useRegistry, appForDoctype, listApplets, appDoctypes } from '@/registry'
 import { ICON, dtIcon } from '@/registry'
 import { SETTINGS_PANES } from '@/surface'
 import { useRecents } from '@/recents'
@@ -33,9 +33,9 @@ const EMPTY_QUERY_RECENTS = 5
 
 function ownedDoctypes(): string[] {
   const owned: string[] = []
-  useRegistry().apps().forEach((a) => (a.modules || []).forEach((mod) => mod.doctypes.forEach((dt) => {
+  useRegistry().apps().forEach((a) => appDoctypes(a.id).forEach((dt) => {
     if (owned.indexOf(dt) < 0) owned.push(dt)
-  })))
+  }))
   return owned
 }
 

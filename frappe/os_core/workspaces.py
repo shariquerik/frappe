@@ -18,33 +18,40 @@ from frappe.os_core.common import layer_rows
 WORKSPACE_FIELDS = ["app", "workspace_id", "label", "module", "sequence", "hidden", "is_default"]
 
 
-def workspace_dict(row):
-	"""One stored row → the client workspace shape (identity + label + default flag). `id` is the
-	immutable `workspace_id` the window identity, URLs, and `when` gates key on; `label` is the
-	renamable display name."""
+def workspace_dict(row, doctypes):
+	"""One stored row → the client workspace shape (identity + label + default flag + derived
+	doctypes). `id` is the immutable `workspace_id` the window identity, URLs, and `when` gates key
+	on; `label` is the renamable display name; `doctypes` is the workspace's sidebar doctype set,
+	delivered at boot so every OS consumer (workbench sidebar, Finder, palette, dashboard) reads it
+	synchronously (ADR-0042) — the single source that retires the curated AppDef.modules."""
 	return {
 		"id": row.get("workspace_id"),
 		"label": row.get("label"),
 		"isDefault": bool(row.get("is_default")),
+		"doctypes": doctypes,
 	}
 
 
-def workspaces_view(rows):
+def workspaces_view(rows, doctypes_for=None):
 	"""Pure: stored rows → the resolved boot payload — visible workspaces grouped per app, each
-	group ordered by sequence (ADR-0042). Hidden rows are dropped. Pure so it is testable with no
-	site, and the seam the per-user override layer will fold into (placements precedent)."""
+	group ordered by sequence (ADR-0042). Hidden rows are dropped. The doctype set per workspace is
+	supplied by the injected `doctypes_for(module) → [names]` resolver (None → empty, so pure tests
+	need no site); `get_workspaces` passes the DB-backed `module_doctypes`. Pure so it is testable
+	with no site, and the seam the per-user override layer will fold into (placements precedent)."""
+	doctypes_for = doctypes_for or (lambda module: [])
 	grouped = {}
 	for row in sorted(rows, key=lambda r: (r.get("app") or "", r.get("sequence") or 0)):
 		if row.get("hidden"):
 			continue
-		grouped.setdefault(row.get("app"), []).append(workspace_dict(row))
+		grouped.setdefault(row.get("app"), []).append(workspace_dict(row, doctypes_for(row.get("module"))))
 	return grouped
 
 
 def get_workspaces():
-	"""The per-app visible workspace lists for the boot payload (ADR-0042). Tolerant like
-	get_placements — before the DocType is migrated `layer_rows` returns [], so boot never crashes."""
-	return workspaces_view(layer_rows("OS Workspace", WORKSPACE_FIELDS))
+	"""The per-app visible workspace lists for the boot payload (ADR-0042), each workspace carrying
+	its derived, permission-filtered doctypes. Tolerant like get_placements — before the DocType is
+	migrated `layer_rows` returns [], so boot never crashes."""
+	return workspaces_view(layer_rows("OS Workspace", WORKSPACE_FIELDS), module_doctypes)
 
 
 def workbench_doctypes(rows):
@@ -54,13 +61,11 @@ def workbench_doctypes(rows):
 	return [row["name"] for row in rows if not row.get("istable") and not row.get("issingle")]
 
 
-@frappe.whitelist()
-def get_workspace_doctypes(app: str, workspace: str):
-	"""The workbench sidebar's doctypes for the `(app, workspace_id)` window (ADR-0042): the
-	workspace's source module's doctypes, child tables and settings singles excluded, then
-	permission-filtered to those the viewer may read. Empty for a user-added workspace (no source
-	module) or an unrecognised key — the sidebar renders nothing rather than crashing."""
-	module = frappe.db.get_value("OS Workspace", {"app": app, "workspace_id": workspace}, "module")
+def module_doctypes(module):
+	"""A module's workbench doctypes, permission-filtered to those the viewer may read (ADR-0042):
+	child tables and settings singles excluded (`workbench_doctypes`), then a read-permission gate.
+	Empty for a falsy module (a user-added workspace with no source module). The one derivation both
+	the boot payload (`get_workspaces`) and the workspace-doctype endpoint share."""
 	if not module:
 		return []
 	rows = frappe.get_all(

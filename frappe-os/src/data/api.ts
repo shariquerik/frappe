@@ -161,13 +161,6 @@ export async function resolveDoctype(doctype: string): Promise<OsRegistryData | 
   return call('frappe.os_core.registry.resolve_doctype', { doctype })
 }
 
-// The workbench sidebar's doctypes for a `(app, workspace_id)` window (ADR-0042): the workspace's
-// source module's doctypes, child tables and settings singles excluded, permission-filtered
-// server-side. An unknown key or a user-added workspace (no source module) returns [].
-export async function workspaceDoctypes(app: string, workspace: string): Promise<string[]> {
-  return call('frappe.os_core.workspaces.get_workspace_doctypes', { app, workspace })
-}
-
 // Live dashboard card value: a count, or a sum of `fieldname` when given.
 export async function cardValue(
   doctype: string,

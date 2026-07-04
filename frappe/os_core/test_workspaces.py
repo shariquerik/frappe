@@ -41,7 +41,15 @@ class TestWorkspacesView(unittest.TestCase):
 	def test_maps_id_label_and_default_flag(self):
 		rows = [{"app": "crm", "workspace_id": "fcrm", "label": "Sales", "is_default": 1}]
 		out = workspaces.workspaces_view(rows)
-		self.assertEqual(out["crm"][0], {"id": "fcrm", "label": "Sales", "isDefault": True})
+		self.assertEqual(out["crm"][0], {"id": "fcrm", "label": "Sales", "isDefault": True, "doctypes": []})
+
+	def test_enriches_each_workspace_with_resolver_doctypes(self):
+		rows = [
+			{"app": "erpnext", "workspace_id": "selling", "label": "Selling", "module": "Selling", "sequence": 0},
+			{"app": "erpnext", "workspace_id": "stock", "label": "Stock", "module": "Stock", "sequence": 1},
+		]
+		out = workspaces.workspaces_view(rows, lambda module: [f"{module} Doc"])
+		self.assertEqual([w["doctypes"] for w in out["erpnext"]], [["Selling Doc"], ["Stock Doc"]])
 
 
 class TestAppModules(unittest.TestCase):
@@ -156,26 +164,22 @@ class TestWorkbenchDoctypes(unittest.TestCase):
 		self.assertEqual(workspaces.workbench_doctypes(rows), [])
 
 
-class TestGetWorkspaceDoctypes(unittest.TestCase):
-	"""The whitelisted workbench endpoint (ADR-0042): resolve the workspace's source module, derive
-	its doctypes, permission-filter. A user-added workspace (no module) or an unknown key is empty."""
+class TestModuleDoctypes(unittest.TestCase):
+	"""A module's workbench doctypes, permission-filtered (ADR-0042) — the one derivation the boot
+	payload and the seeder-era endpoint shared. A falsy module (user-added workspace) is empty."""
 
 	def test_empty_when_no_source_module(self):
-		db = mock.Mock(get_value=mock.Mock(return_value=None))
-		with mock.patch.object(workspaces.frappe, "db", db):
-			self.assertEqual(workspaces.get_workspace_doctypes("crm", "user-added"), [])
+		self.assertEqual(workspaces.module_doctypes(None), [])
 
 	def test_derives_and_permission_filters(self):
-		db = mock.Mock(get_value=mock.Mock(return_value="Selling"))
 		rows = [
 			{"name": "Sales Order", "istable": 0, "issingle": 0},
 			{"name": "Sales Order Item", "istable": 1, "issingle": 0},
 			{"name": "Quotation", "istable": 0, "issingle": 0},
 		]
-		with mock.patch.object(workspaces.frappe, "db", db), \
-			mock.patch.object(workspaces.frappe, "get_all", return_value=rows), \
+		with mock.patch.object(workspaces.frappe, "get_all", return_value=rows), \
 			mock.patch.object(workspaces.frappe, "has_permission", side_effect=lambda dt, p: dt != "Quotation"):
-			out = workspaces.get_workspace_doctypes("erpnext", "selling")
+			out = workspaces.module_doctypes("Selling")
 		self.assertEqual(out, ["Sales Order"])
 
 
