@@ -6,7 +6,7 @@
 // the curated getMeta — the records here carry no display knowledge.
 
 import { reactive } from 'vue'
-import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue } from '@/data/api'
+import { getList, getDoc, getDoctypeMeta, saveDoc as apiSaveDoc, createDoc as apiCreateDoc, bulkUpdate as apiBulkUpdate, cardValue, workspaceDoctypes } from '@/data/api'
 import { watchTask, type TaskWatch } from '@/data/realtime'
 import { notify } from '@/data/notify'
 import { registerScopedContributions } from '@/registry'
@@ -29,6 +29,7 @@ const lists = reactive<Record<string, ListEntry>>({})
 const docs = reactive<Record<string, CacheEntry<FrappeDoc | null>>>({}) // "doctype/name" -> entry, data is the doc
 const counts = reactive<Record<string, CacheEntry<number | null>>>({}) // cache key -> entry, data is a number
 const fieldMetas = reactive<Record<string, CacheEntry<DoctypeMetaPayload | null>>>({}) // doctype -> entry, data is the live doctype meta
+const workspaceDocs = reactive<Record<string, CacheEntry<string[]>>>({}) // "app/workspace" -> entry, data is the derived doctype names
 
 const entry = <T>(data: T): CacheEntry<T> => ({ loading: false, data, error: null })
 const docKey = (doctype: string, name: string) => `${doctype}/${name}`
@@ -142,6 +143,33 @@ export async function loadFieldMeta(doctype: string): Promise<CacheEntry<Doctype
     // live-meta half of delivery-by-scope, folded in the moment its meta arrives (the App/OS half
     // rides boot). The projector then composes them with the front stack, gated by Eligibility.
     registerScopedContributions(doctype, state.data.contributions || [])
+  } catch (e) {
+    state.error = (e as Error).message
+  } finally {
+    state.loading = false
+  }
+  return state
+}
+
+// ---- workbench doctypes (ADR-0042) -------------------------------------------
+// The workspace's derived doctype names, cached by (app, workspace) — the workbench sidebar's
+// source. Fetched once per workspace window; the derivation (module → doctypes, exclusions,
+// permission filter) lives server-side, so the client caches only the resolved names.
+const workspaceDocsKey = (app: string, workspace: string) => `${app}/${workspace}`
+
+export function workspaceDoctypesFor(app: string, workspace: string): CacheEntry<string[]> {
+  const key = workspaceDocsKey(app, workspace)
+  if (!workspaceDocs[key]) workspaceDocs[key] = { loading: false, data: [], error: null }
+  return workspaceDocs[key]
+}
+
+export async function loadWorkspaceDoctypes(app: string, workspace: string): Promise<CacheEntry<string[]>> {
+  const state = workspaceDoctypesFor(app, workspace)
+  if (state.data.length || state.loading) return state
+  state.loading = true
+  state.error = null
+  try {
+    state.data = await workspaceDoctypes(app, workspace)
   } catch (e) {
     state.error = (e as Error).message
   } finally {

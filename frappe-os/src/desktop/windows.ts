@@ -3,7 +3,7 @@
 // wallpaper, toggles). All geometry is delegated to geometry.js; all display config
 // comes from config/*. This slice owns "what windows exist and what they show".
 import { computed } from 'vue'
-import { appForDoctype } from '@/registry'
+import { appForDoctype, soleWorkspace } from '@/registry'
 import { recordRecent } from '@/recents'
 import { useWallpapers, wallpaperSelection, setSelection } from '@/wallpapers'
 import { bumpZ, geoMap, setGeo } from './geometry'
@@ -155,7 +155,14 @@ function ensureApp(appId: string, surface: Surface | null, instance?: number | n
   state.menu = null
   state.paletteOpen = false
 }
-export const openApp = (appId: string, instance?: number | null) => ensureApp(appId, null, instance)
+// Opening an app (dock click, palette, a bare `/<app>` deep link). A single-workspace app skips
+// the hub and opens its one workbench directly (ADR-0042 "the app is the window"); a multi-
+// workspace app opens the plain app window (the hub, slice 04). The workspace lands on the window
+// identity, so the URL/Context project it — the surface stays plain content.
+export const openApp = (appId: string, instance?: number | null) => {
+  const sole = soleWorkspace(appId)
+  return sole ? openWorkspace(appId, sole) : ensureApp(appId, null, instance)
+}
 
 // The next free window id for an app: the canonical `app:<id>` if unused, else the lowest
 // `app:<id>#n` (n ≥ 2) not already taken.
@@ -184,11 +191,13 @@ export const openRecordGlobal = (dt: string, name: string, instance?: number | n
   return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance, workspace)
 }
 // Open an app's workspace window (ADR-0042): the `(app, workspace)` window a `/erpnext/selling` URL
-// lands on. Its content is the app dashboard for now; the workbench sidebar derivation lands in a
-// later slice. Focus-or-create per identity — reopening the same workspace focuses its window, a
-// different workspace opens another window alongside.
+// lands on. Its SIDEBAR is the workspace's derived doctypes (AppSidebar reads the workspace off the
+// window id); its BODY opens on the app's resolved initial surface — the dashboard for an app that
+// has one, else the empty pane, so a dashboard-less single-workspace app (demoday) never lands on a
+// dashboard it can't fill. Focus-or-create per identity — reopening the same workspace focuses its
+// window, a different workspace opens another window alongside.
 export const openWorkspace = (appId: string, workspace: string) =>
-  ensureApp(appId, dashboardSurface(appId), undefined, workspace)
+  ensureApp(appId, initialSurface(appId), undefined, workspace)
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)

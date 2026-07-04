@@ -1,7 +1,8 @@
 // Store focus state machine: the invariants the URL bridge relies on. The store is
 // a module singleton, so reset its reactive state before each test.
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
+import { initRegistry } from '../src/registry'
 
 const os = useOS()
 
@@ -192,6 +193,25 @@ describe('workspace is window identity (ADR-0042)', () => {
   it('a global (Spotlight/Finder) open with no workspace yields the plain app window', () => {
     os.openListGlobal('CRM Lead') // no workspace passed
     expect(os.state.activeId).toBe('app:crm')
+  })
+})
+
+describe('single-workspace apps skip the hub (ADR-0042)', () => {
+  const bootWith = (workspaces) =>
+    ({ user: 'a', csrf_token: 't', roles: [], registry: { schemaVersion: 1, contributions: [] }, permissions: {}, workspaces })
+  afterEach(() => initRegistry(null))
+
+  it('opening a single-workspace app opens its workbench directly — no plain app window', () => {
+    initRegistry(bootWith({ demoday: [{ id: 'demo_day', label: 'Demo Day', isDefault: true }] }))
+    os.openApp('demoday')
+    expect(os.state.activeId).toBe('app:demoday/demo_day')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:demoday/demo_day'])
+  })
+
+  it('a multi-workspace app opens the plain app window (the hub earns its place)', () => {
+    initRegistry(bootWith({ suite: [{ id: 'a', label: 'A', isDefault: true }, { id: 'b', label: 'B', isDefault: false }] }))
+    os.openApp('suite')
+    expect(os.state.activeId).toBe('app:suite')
   })
 })
 

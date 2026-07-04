@@ -31,8 +31,8 @@ import { selectedRecords, setSelection, selectionKind } from './selection'
 import { publishFocus, focusedKind } from './focus-kind'
 import { hydrate, startAutosave } from './persistence'
 import {
-  recordObj, listFor, docFor, countFor, fieldMetaFor,
-  loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate, refreshRecords,
+  recordObj, listFor, docFor, countFor, fieldMetaFor, workspaceDoctypesFor,
+  loadList, loadMore, loadDoc, loadCount, loadFieldMeta, loadWorkspaceDoctypes, saveDoc, createDoc, bulkUpdate, refreshRecords,
 } from '@/data/records'
 import { ensureDoctype } from '@/data/doctype-resolver'
 
@@ -53,8 +53,8 @@ export function useOS() {
     geoMap, clockText, currentWp, paletteResults,
     initials, pill, getMeta, appForDoctype, knownApplet, workspaceForSlug, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
-    recordObj, listFor, docFor, countFor, fieldMetaFor,
-    loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate, refreshRecords,
+    recordObj, listFor, docFor, countFor, fieldMetaFor, workspaceDoctypesFor,
+    loadList, loadMore, loadDoc, loadCount, loadFieldMeta, loadWorkspaceDoctypes, saveDoc, createDoc, bulkUpdate, refreshRecords,
     // window lifecycle + navigation
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,

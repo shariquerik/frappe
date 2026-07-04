@@ -131,5 +131,53 @@ class TestStampDefault(unittest.TestCase):
 		db.set_value.assert_not_called()
 
 
+class TestWorkbenchDoctypes(unittest.TestCase):
+	"""The workbench sidebar's derived doctypes (ADR-0042): a module's doctypes with child tables
+	and settings singles excluded, order preserved. Pure — no site."""
+
+	def test_excludes_child_tables_and_settings_singles(self):
+		rows = [
+			{"name": "Sales Order", "istable": 0, "issingle": 0},
+			{"name": "Sales Order Item", "istable": 1, "issingle": 0},
+			{"name": "Selling Settings", "istable": 0, "issingle": 1},
+			{"name": "Quotation", "istable": 0, "issingle": 0},
+		]
+		self.assertEqual(workspaces.workbench_doctypes(rows), ["Sales Order", "Quotation"])
+
+	def test_preserves_input_order(self):
+		rows = [
+			{"name": "Quotation", "istable": 0, "issingle": 0},
+			{"name": "Customer", "istable": 0, "issingle": 0},
+		]
+		self.assertEqual(workspaces.workbench_doctypes(rows), ["Quotation", "Customer"])
+
+	def test_empty_when_all_excluded(self):
+		rows = [{"name": "Sales Order Item", "istable": 1, "issingle": 0}]
+		self.assertEqual(workspaces.workbench_doctypes(rows), [])
+
+
+class TestGetWorkspaceDoctypes(unittest.TestCase):
+	"""The whitelisted workbench endpoint (ADR-0042): resolve the workspace's source module, derive
+	its doctypes, permission-filter. A user-added workspace (no module) or an unknown key is empty."""
+
+	def test_empty_when_no_source_module(self):
+		db = mock.Mock(get_value=mock.Mock(return_value=None))
+		with mock.patch.object(workspaces.frappe, "db", db):
+			self.assertEqual(workspaces.get_workspace_doctypes("crm", "user-added"), [])
+
+	def test_derives_and_permission_filters(self):
+		db = mock.Mock(get_value=mock.Mock(return_value="Selling"))
+		rows = [
+			{"name": "Sales Order", "istable": 0, "issingle": 0},
+			{"name": "Sales Order Item", "istable": 1, "issingle": 0},
+			{"name": "Quotation", "istable": 0, "issingle": 0},
+		]
+		with mock.patch.object(workspaces.frappe, "db", db), \
+			mock.patch.object(workspaces.frappe, "get_all", return_value=rows), \
+			mock.patch.object(workspaces.frappe, "has_permission", side_effect=lambda dt, p: dt != "Quotation"):
+			out = workspaces.get_workspace_doctypes("erpnext", "selling")
+		self.assertEqual(out, ["Sales Order"])
+
+
 if __name__ == "__main__":
 	unittest.main()

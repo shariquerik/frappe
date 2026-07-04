@@ -65,7 +65,7 @@ const recents = computed(() => {
 	}));
 });
 const actions = computed(() =>
-	(app.value.modules[0].doctypes || []).slice(0, 4).map((dt) => ({ label: "New " + dt, dt })),
+	(app.value.modules?.[0]?.doctypes || []).slice(0, 4).map((dt) => ({ label: "New " + dt, dt })),
 );
 // Live site users, excluding the framework's built-in accounts. No presence dot yet —
 // presenceFor() is still a stub (see deferred-hardcoded inventory), so we show none

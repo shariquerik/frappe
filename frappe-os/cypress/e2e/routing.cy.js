@@ -161,11 +161,31 @@ describe('a workspace window is addressable in the URL (ADR-0042)', () => {
   })
 
   it('two workspaces of one app are two windows, both reachable', () => {
-    cy.visit('/os/erpnext/selling')
-    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
-    cy.visit('/os/erpnext/stock') // a second workspace opens a distinct window alongside
+    // Two workbenches side by side is the point of ADR-0042. A fresh `cy.visit` cold-boots ONE
+    // window from the URL, so the SECOND is restored from a saved desktop that already holds both;
+    // visiting Stock's URL then focuses Stock while Selling stays open alongside (unfocused).
+    cy.visit('/os/erpnext/stock', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          BLOB_KEY,
+          JSON.stringify({
+            version: 2,
+            windows: [
+              { id: 'app:erpnext/selling', surface: { kind: 'builtin', view: 'dashboard', appId: 'erpnext' } },
+              { id: 'app:erpnext/stock', surface: { kind: 'builtin', view: 'dashboard', appId: 'erpnext' } },
+            ],
+            geo: {
+              'app:erpnext/selling': { z: 1, x: 60, y: 60, w: 640, h: 520 },
+              'app:erpnext/stock': { z: 2, x: 720, y: 60, w: 640, h: 520 },
+            },
+            activeId: 'app:erpnext/stock',
+          }),
+        )
+      },
+    })
     cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext/stock')
-    cy.get('[data-win-id="app:erpnext/selling"]').should('exist') // the first stays open
+    cy.get('[data-win-id="app:erpnext/stock"]').should('be.visible') // the focused workbench
+    cy.get('[data-win-id="app:erpnext/selling"]').should('exist') // the second is restored alongside
   })
 
   it('an ordinary form URL is unaffected — the second segment stays the doctype', () => {
@@ -174,6 +194,36 @@ describe('a workspace window is addressable in the URL (ADR-0042)', () => {
     cy.visit('/os/erpnext/Customer/CUST-CY-1')
     cy.location('pathname').should('eq', '/os/erpnext/Customer/CUST-CY-1')
     cy.get('[data-win-id="app:erpnext"]').should('be.visible')
+  })
+})
+
+describe('the workbench sidebar lists the workspace doctypes (ADR-0042, slice 03)', () => {
+  // A workbench window's sidebar is its workspace's DERIVED doctypes (source module's doctypes,
+  // child tables + settings singles excluded), fetched server-side. 'selling' and 'stock' are real
+  // seeded erpnext workspaces; 'demoday' is a genuine single-workspace app. Needs a live bench.
+  beforeEach(() => cy.clearLocalStorage())
+
+  it('shows the workspace-scoped doctypes, not the whole app', () => {
+    cy.visit('/os/erpnext/selling')
+    // Selling's module holds Quotation + Sales Order; Stock's Item does NOT belong to it.
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible').within(() => {
+      cy.contains('Quotation').should('be.visible')
+      cy.contains('Sales Order').should('be.visible')
+    })
+  })
+
+  it('a different workspace of the same app shows a different doctype set', () => {
+    cy.visit('/os/erpnext/stock')
+    cy.get('[data-win-id="app:erpnext/stock"]').should('be.visible').within(() => {
+      cy.contains('Item').should('be.visible') // Stock module doctype
+    })
+  })
+
+  it('a single-workspace app opens its workbench directly — no hub (the app is the window)', () => {
+    cy.visit('/os/demoday')
+    // openApp resolves demoday to its one workspace and opens the workbench window.
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:demoday/demo_day')
+    cy.get('[data-win-id="app:demoday/demo_day"]').should('be.visible').contains('Demo Feedback')
   })
 })
 

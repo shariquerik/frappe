@@ -47,6 +47,28 @@ def get_workspaces():
 	return workspaces_view(layer_rows("OS Workspace", WORKSPACE_FIELDS))
 
 
+def workbench_doctypes(rows):
+	"""Pure: a module's DocType rows → the workbench sidebar's doctype names (ADR-0042). Child
+	tables (`istable`) and settings singles (`issingle`) are dropped — neither has a list to open,
+	so neither belongs in a doctype sidebar. Input order is preserved (the caller orders)."""
+	return [row["name"] for row in rows if not row.get("istable") and not row.get("issingle")]
+
+
+@frappe.whitelist()
+def get_workspace_doctypes(app: str, workspace: str):
+	"""The workbench sidebar's doctypes for the `(app, workspace_id)` window (ADR-0042): the
+	workspace's source module's doctypes, child tables and settings singles excluded, then
+	permission-filtered to those the viewer may read. Empty for a user-added workspace (no source
+	module) or an unrecognised key — the sidebar renders nothing rather than crashing."""
+	module = frappe.db.get_value("OS Workspace", {"app": app, "workspace_id": workspace}, "module")
+	if not module:
+		return []
+	rows = frappe.get_all(
+		"DocType", filters={"module": module}, fields=["name", "istable", "issingle"], order_by="name"
+	)
+	return [doctype for doctype in workbench_doctypes(rows) if frappe.has_permission(doctype, "read")]
+
+
 def _app_modules(app):
 	"""The app's modules that actually hold doctypes, in the app's declared (modules.txt) order —
 	the seed base per ADR-0042 ('one workspace per DocType.module'). A module with no doctypes gets

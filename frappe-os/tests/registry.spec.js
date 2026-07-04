@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
+  appWorkspaces, soleWorkspace, workspaceForSlug,
 } from '../src/registry'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
@@ -377,5 +378,46 @@ describe('registerDoctype (on-demand resolution)', () => {
     registerDoctype([display('HD Ticket', { label: 'HD Ticket', titleField: 'subject' }, 'helpdesk')])
     expect(getMeta('HD Ticket')?.label).toBe('HD Ticket') // the list still resolves
     expect(appForDoctype('HD Ticket')).toBe('frappe') // unknown owner → opens under frappe
+  })
+})
+
+// Workspaces (ADR-0042): the seeded slugs delivered by boot are the app's workspace ids; when the
+// server ships none, the curated AppDef.modules slugs stand in (the fallback issue 06 retires).
+// soleWorkspace drives the single-workspace hub-skip.
+describe('workspaces (ADR-0042)', () => {
+  afterEach(() => initRegistry(null))
+
+  const bootWith = (workspaces) =>
+    ({ user: 'a', csrf_token: 't', roles: [], registry: { schemaVersion: 1, contributions: [] }, permissions: {}, workspaces })
+
+  it('appWorkspaces returns the seeded boot slugs, in order', () => {
+    initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling' }, { id: 'stock', label: 'Stock' }] }))
+    expect(appWorkspaces('erpnext')).toEqual(['selling', 'stock'])
+  })
+
+  it('falls back to the curated module slugs when the server ships no workspace data', () => {
+    initRegistry(null) // offline seed → AppDef.modules fallback
+    expect(appWorkspaces('crm')).toEqual(['sales', 'activity'])
+  })
+
+  it('soleWorkspace resolves a single-workspace app to its one slug', () => {
+    initRegistry(bootWith({ demoday: [{ id: 'demo_day', label: 'Demo Day' }] }))
+    expect(soleWorkspace('demoday')).toBe('demo_day')
+  })
+
+  it('soleWorkspace is undefined for a multi-workspace app (the hub earns its place)', () => {
+    initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling' }, { id: 'stock', label: 'Stock' }] }))
+    expect(soleWorkspace('erpnext')).toBeUndefined()
+  })
+
+  it('soleWorkspace is undefined for an app with no workspace data at all', () => {
+    initRegistry(bootWith({}))
+    expect(soleWorkspace('ghost')).toBeUndefined()
+  })
+
+  it('workspaceForSlug validates membership against the seeded set', () => {
+    initRegistry(bootWith({ erpnext: [{ id: 'selling', label: 'Selling' }] }))
+    expect(workspaceForSlug('erpnext', 'selling')).toBe('selling')
+    expect(workspaceForSlug('erpnext', 'ghost')).toBeUndefined()
   })
 })

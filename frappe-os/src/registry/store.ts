@@ -140,6 +140,16 @@ export function appMenus(appId: string): MenuDef[] {
   return [...unique].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
+// The app's sole workspace id when it has exactly one, else undefined (ADR-0042). A single-
+// workspace app has nothing to choose, so opening it skips the hub and opens that workbench
+// directly — the "the app is the window" case. More than one (or none) yields undefined, so the
+// caller opens the plain app window (the hub, once slice 04 lands). Same backward-compatible-
+// absence pattern the ADR names: one implicit workspace means the app itself is the window.
+export function soleWorkspace(appId: string): string | undefined {
+  const ids = appWorkspaces(appId)
+  return ids.length === 1 ? ids[0] : undefined
+}
+
 // Resolve a URL workspace segment to a canonical workspace id for `app`, or undefined when it
 // names none — the membership guard route-map uses to tell a workspace segment from a doctype
 // (ADR-0040). Honest absence: an unrecognised segment is NOT a workspace, never a guess.
