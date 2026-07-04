@@ -1,8 +1,10 @@
 # Workspace is a surface coordinate, not an identity
 
-> **Status:** Accepted (2026-07-04, grilled). Not yet implemented. Extends ADR-0012 (surfaces)
-> and ADR-0032 (Context); sources the in-window sidebar from Workspace Sidebar data, retiring
-> the curated `AppDef.modules`/`cards` config as primary source.
+> **Status:** Accepted (2026-07-04, grilled). Coordinate implemented (slice 07, commit
+> `bf3120f`): the surface/Context `workspace`, the `navFocus` carry-over, and the URL segment.
+> The workspace SET is still sourced from the curated `AppDef.modules` fallback, and the
+> sidebar/Overview sourcing from real Workspace Sidebar data is pending (slice 08) — see the
+> deferred-hardcoded issue. Extends ADR-0012 (surfaces) and ADR-0032 (Context).
 
 erpnext is one app to the user but twenty workspaces inside — and its verb/report/navigation
 vocabulary is per-workspace (Selling's Create menu is not Stock's). The shell needs the
