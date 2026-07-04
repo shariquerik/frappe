@@ -54,7 +54,7 @@ The clearest "fix it later" stubs — literal demo content.
   registry; **Edit/View/Window/Help stay hardcoded** (comment: _"pending later incremental
   migration, ADR-0001"_), and several items are **no-op handlers** — _About this workspace_,
   _Lock screen_, _Log out…_ (lines 52–67) and Edit's Undo/Redo/Cut/Copy/Paste do nothing.
-- **`registry/index.ts:301–304`** — `FIRST_PARTY` applets are a hardcoded list of exactly two
+- **`registry/applets.ts:46–49`** — `FIRST_PARTY` applets are a hardcoded list of exactly two
   (`my-todos`, `customizations`); a new first-party applet needs a source edit.
 - **`components/Finder/locations.ts:21`** — `LOCATIONS = ['Applications','Doctypes','Recents','Favorites']`
   fixed.
