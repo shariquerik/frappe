@@ -1,8 +1,9 @@
 # Invocation: a Command's handler receives the context that made it eligible
 
-> **Status:** Accepted (2026-07-04, grilled). Not yet implemented. Extends ADR-0008 (Handler
-> kinds) and ADR-0032 (Scope/Eligibility). Fixes the render-vs-click context gap in
-> `actions/contributions.ts`.
+> **Status:** Accepted (2026-07-04, grilled). Implemented — Invocation contract in
+> `actions/contributions.ts`; the keyboard-shortcut half (a Command `shortcut` field, the one
+> `shortcuts.ts` dispatcher, menu chips) in slice 09. Extends ADR-0008 (Handler kinds) and ADR-0032
+> (Scope/Eligibility). Fixes the render-vs-click context gap in `actions/contributions.ts`.
 
 A `run` Handler today is `(os: OsStore) => void`: it receives the whole store and must re-derive
 "what am I acting on" from live focus state. The `Context` snapshot that decided the item was

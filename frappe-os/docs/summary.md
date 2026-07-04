@@ -66,7 +66,14 @@ the thin `src/types.ts` barrel so `@/types` stays one stable import path. What e
   when a real Action resolves into it, so the OS owns no File menu (apps earn it), whole-OS verbs
   like full screen live in System not View, and the pin verbs live in Window. `contributions.ts`
   is the run-Handler mechanism only — a run Handler receives an **Invocation** (context + selection
-  snapshot frozen at click, ADR-0037), never the bare store. Context is tiered window / surface /
+  snapshot frozen at click, ADR-0037), never the bare store. A keyboard shortcut is a Command field
+  (`shortcut: "mod+n"`, not an Action — one verb, one key everywhere it is placed); `shortcuts.ts`
+  is the one OS dispatcher (`dispatchShortcut`, installed on App.vue's global keydown) — it resolves
+  the binding against the merged Commands through the SAME eligibility as menus and fires the
+  identical `invoke`. First-seen-wins with a loud shadow warn on a binding collision; a text-entry
+  guard blocks a non-global key while typing (opt out with `allowInInput`); a placement-less verb
+  (the ⌘K palette) is globally eligible. `OSDropdown` draws each item's binding as a trailing ⌘-glyph
+  chip. Context is tiered window / surface /
   **focus** (ADR-0038): the focus tier is two flat markers — `selection` (the KIND of the front
   list's selection; `desktop/selection.ts` holds `{ kind, values }`) and `focusKind` (the widget
   holding keyboard focus; `desktop/focus-kind.ts` + `publishFocus`, persist-until-replaced). Their
@@ -140,7 +147,6 @@ kind (ADR-0013): a feature folder under `components/`/`applets/` colocates its s
   `optimizeDeps.include`. `yarn build` is unaffected.
 
 ## Known gaps vs original
-- Menu-bar keyboard-shortcut chips omitted (frappe-ui Dropdown is label + action only).
 - FormLayout Link fields render as disabled inputs; long Text fields don't span both columns.
 - The command palette is a custom blurred overlay (frappe-ui Dialog doesn't match the macOS sheet
   look). Per-user **Settings** (ADR-0027) is a singleton desktop window with the desktop-wide prefs
