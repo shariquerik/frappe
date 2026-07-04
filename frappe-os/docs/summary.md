@@ -66,7 +66,13 @@ the thin `src/types.ts` barrel so `@/types` stays one stable import path. What e
   when a real Action resolves into it, so the OS owns no File menu (apps earn it), whole-OS verbs
   like full screen live in System not View, and the pin verbs live in Window. `contributions.ts`
   is the run-Handler mechanism only — a run Handler receives an **Invocation** (context + selection
-  snapshot frozen at click, ADR-0037), never the bare store.
+  snapshot frozen at click, ADR-0037), never the bare store. Context is tiered window / surface /
+  **focus** (ADR-0038): the focus tier is two flat markers — `selection` (the KIND of the front
+  list's selection; `desktop/selection.ts` holds `{ kind, values }`) and `focusKind` (the widget
+  holding keyboard focus; `desktop/focus-kind.ts` + `publishFocus`, persist-until-replaced). Their
+  KIND vocabulary is a closed OS core plus an `<app>.<kind>` escape (`actions/kinds.ts`); values
+  never enter Context — they travel via `Invocation.selection`. `When` carries one non-equality
+  form, the presence marker `'*'` (ADR-0038), which retired the Region `requires` gate.
 - `indicators/`, `placements/`, `recents/`, `wallpapers/` — the live-meta indicator model
   (ADR-0028), the user-arrangeable desktop/dock Placements (App<Site<User, ADR-0023), the per-user
   Recents record-open log (ADR-0024), and the wallpaper catalog/selection (ADR-0036). Each is a

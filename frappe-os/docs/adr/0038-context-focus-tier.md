@@ -1,8 +1,10 @@
 # Context gains a focus tier: focusKind + generalized selection, as data
 
-> **Status:** Accepted (2026-07-04, grilled). Not yet implemented. Extends the `Context`
+> **Status:** Accepted (2026-07-04, grilled). Implemented (slice 03). Extends the `Context`
 > snapshot (ADR-0032) with a third tier below window and surface. Generalizes
-> `desktop/selection.ts`; supersedes the single-purpose `selection: 'rows'` marker.
+> `desktop/selection.ts` to `{ kind, values }` and adds `desktop/focus-kind.ts` (`publishFocus`);
+> the kind vocabulary lives in `actions/kinds.ts`; `When` gained the `PRESENT` ('*') marker, which
+> retired the Region `requires` special case. Supersedes the single-purpose `selection: 'rows'` marker.
 
 Menu verbs from the real apps act on things *inside* a window: raven's Format menu needs "the
 composer holds keyboard focus", its Message menu needs "a message is selected", crm's Record
