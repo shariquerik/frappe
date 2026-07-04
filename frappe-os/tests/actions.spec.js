@@ -462,12 +462,12 @@ describe('contextForOS (derive Context from the active window)', () => {
     expect(contextForOS(os).selection).toBeUndefined()
   })
 
-  it('publishes the workspace coordinate when the surface names one (ADR-0040)', () => {
-    os.openListGlobal('CRM Lead', undefined, 'sales')
+  it("publishes the window's workspace when the window is scoped to one (ADR-0042)", () => {
+    os.openListGlobal('CRM Lead', undefined, 'sales') // opens the app:crm/sales window
     expect(contextForOS(os).workspace).toBe('sales')
   })
 
-  it('carries no workspace for a single-space surface', () => {
+  it('carries no workspace for a plain app window', () => {
     os.openListGlobal('ToDo')
     expect(contextForOS(os).workspace).toBeUndefined()
   })

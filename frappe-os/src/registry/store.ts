@@ -13,7 +13,7 @@ import type { AppletInfo, AppletKind } from './applets'
 import { ACTION, APPLET, COMMAND, DISPLAY } from './extension-points'
 import type { Component } from 'vue'
 import type {
-  Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef,
+  Action, AppDef, AppKind, BootData, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef, WorkspaceInfo,
 } from '@/types'
 
 function buildIndex(boot?: BootData | null): RegistryIndex {
@@ -28,6 +28,7 @@ let index: RegistryIndex | null = null
 // this every useRegistry()/getMeta call is a synchronous index lookup for renderers.
 export function initRegistry(boot?: BootData | null): void {
   index = buildIndex(boot)
+  bootWorkspaces = boot?.workspaces ?? {}
 }
 
 // Lazily seed from config when initRegistry hasn't run (unit tests, pre-boot reads),
@@ -107,16 +108,24 @@ export function knownApplet(appId: string, appletId: string): boolean {
   return !!c && c.appId === appId
 }
 
-// ── workspaces (ADR-0040) ───────────────────────────────────────────────────────
-// The intra-app coordinate. DEFERRED (issue 08): until Workspace Sidebar ingestion lands, an
-// app's workspaces are sourced from the curated AppDef.modules — the fallback nav source ADR-0040
-// names. The id is the module name slugified; the URL segment and the surface coordinate both
-// carry this id. See .scratch/deferred-hardcoded/issues for the end-state source.
+// ── workspaces (ADR-0042) ───────────────────────────────────────────────────────
+// The app-level axis (Selling, Stock). A window is identified by `(app, workspace_id)`, and the
+// `workspace_id` is the immutable seeded slug the boot payload delivers (os_core/workspaces.py).
+// The map is stashed at initRegistry; `appWorkspaces`/`workspaceForSlug` read it. An app the server
+// shipped no workspace data for (offline boot, unit tests, an app without module data) falls back to
+// the curated AppDef.modules — the fallback issue 06 retires once every first-party app ships data.
+let bootWorkspaces: Record<string, WorkspaceInfo[]> = {}
+
+// Fallback slug for an app with no seeded workspace data: the curated module name, slugified. Lossy
+// (dash-style, collision-prone for multi-word names) — real ids ride the boot data above.
 export const workspaceSlug = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-')
 
-// The workspace ids an app declares (slugified module names) — the whitelist a URL parser and the
-// switcher validate against.
+// The workspace ids an app declares — the seeded slugs from boot, or the curated-module slug
+// fallback when the server shipped none. The whitelist a URL parser and window identity validate
+// against.
 export function appWorkspaces(appId: string): string[] {
+  const seeded = bootWorkspaces[appId]
+  if (seeded) return seeded.map((w) => w.id)
   return (ensureIndex().appById[appId]?.modules ?? []).map((m) => workspaceSlug(m.name))
 }
 

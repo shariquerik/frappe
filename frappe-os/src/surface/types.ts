@@ -21,11 +21,6 @@ export interface BuiltinSurface {
   // restored on reload and stepped by browser back/forward. Absent = the default ('details'),
   // which projects to the bare form path. Only meaningful when view === 'form'.
   aspect?: string
-  // The workspace the surface is scoped to (ADR-0040) — the intra-app coordinate (erpnext's
-  // Selling vs Stock). Serializable, URL-addressable (a path segment between app and doctype),
-  // and carried across in-window navigation by navFocus. Absent = the app's one implicit space;
-  // never guessed on cold/global entry (Spotlight/Finder/cross-app), only inherited or explicit.
-  workspace?: string
   params?: Record<string, unknown>
 }
 
@@ -43,9 +38,12 @@ export interface AppletSurface {
 // Must stay serializable (persistence + history + URL) — no functions/closures.
 export type Surface = BuiltinSurface | AppletSurface
 
-// A desktop window. Its `id` prefix encodes the window role (app/record/settings — see
-// surface/index.ts `windowRole`); its `surface` describes the content. The two were the old
-// `type`/`view`/`doctype`/`recordName` fields, now unified (ADR-0012).
+// A desktop window. Its `id` encodes the window IDENTITY: the role prefix (app/settings/system —
+// see surface/index.ts `windowRole`) and, for an app window scoped to a workspace, the `(app,
+// workspace)` pair (`app:<app>/<workspace>`, ADR-0042 — `windowWorkspace` reads it back). The
+// `surface` describes only the CONTENT; the workspace is identity, not content, so it lives on the
+// id and never on the surface. The two content fields were the old `type`/`view`/`doctype`/
+// `recordName`, now unified (ADR-0012).
 export interface OsWindow {
   id: string
   surface: Surface

@@ -94,7 +94,7 @@ function pushFocus() {
 function restoreFromHistory(to: RouteLocationNormalized) {
   const st = window.history.state || {}
   const winId: string | null = st.osWin || null
-  const { app, workspace, doctype, name, instance, aspect } = routeParams(to)
+  const { app, doctype, name, instance, aspect } = routeParams(to)
 
   // App-settings windows: path is /<app>/settings/<pane>, state id is app-settings:<app>.
   // openAppSettings refocuses if still open (re-targeting the pane), else respawns it — the pane
@@ -127,10 +127,12 @@ function restoreFromHistory(to: RouteLocationNormalized) {
 
   let surface: Surface
   // A known trailing Aspect rides the restored form surface; an unknown tail is ignored (default).
-  // The workspace coordinate (ADR-0040) rides every restored builtin so a reload keeps the flavor.
-  if (doctype && name) surface = formSurface(doctype, name, isAspectId(aspect) ? aspect : undefined, workspace)
-  else if (doctype) surface = listSurface(doctype, workspace)
-  else surface = dashboardSurface(app, workspace)
+  // The workspace is NOT rebuilt onto the surface (ADR-0042): it is window identity, restored via the
+  // history-state window id below (`app:<app>/<workspace>`) when the window is still open, or by
+  // applyRoute (which routes the parsed workspace into the right window) when it was closed.
+  if (doctype && name) surface = formSurface(doctype, name, isAspectId(aspect) ? aspect : undefined)
+  else if (doctype) surface = listSurface(doctype)
+  else surface = dashboardSurface(app)
 
   if (winId && os.restoreWin(winId, surface)) return
   applyRoute(os, routeParams(to))

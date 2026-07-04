@@ -6,11 +6,11 @@
 // overlay flags (palette / menu) and the transient settings window are
 // excluded — a refresh never restores an open overlay or a system pane.
 import { watch } from 'vue'
-import { useRegistry, getMeta, knownApplet } from '@/registry'
+import { useRegistry, getMeta, knownApplet, workspaceForSlug } from '@/registry'
 import { state } from './state'
 import { syncTopZ } from './geometry'
 import { HIST_CAP } from './windows'
-import { initialSurface, isBuiltin, windowRole } from '@/surface'
+import { initialSurface, isBuiltin, windowRole, windowWorkspace } from '@/surface'
 import type { OsWindow, Surface, WorkingEntry } from '@/types'
 
 const BLOB_KEY = 'frappe-os:desktop'
@@ -89,6 +89,11 @@ export function hydrate(): boolean {
     if (w.id?.startsWith('rec:')) continue // legacy pop-out window (ADR-0017) -> drop
     const appId = w.surface?.appId
     if (!reg.app(appId)) continue
+    // A workbench window's workspace (ADR-0042) is part of its id; drop the window if that workspace
+    // no longer resolves (unseeded, or renamed away), the same "dead coordinate -> drop" rule as a
+    // dead doctype below. A plain app window (no workspace segment) is unaffected.
+    const workspace = windowWorkspace(w.id)
+    if (workspace && !workspaceForSlug(appId, workspace)) continue
     const surface = validSurface(w.surface) ? w.surface : initialSurface(appId) // dead -> dashboard
     windows.push({
       id: w.id, surface,

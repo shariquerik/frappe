@@ -10,7 +10,7 @@ import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
-  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey, carryWorkspace,
+  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import { clearSelection } from './selection'
@@ -88,19 +88,25 @@ function navigateWindow(w: OsWindow, surface: Surface) {
 }
 
 // ---- opening apps / lists / records ------------------------------------------
-// App window ids: the first ("canonical") instance owns the bare `app:<id>`; extras get
-// `app:<id>#n` (n ≥ 2). Keeping the first on the plain id leaves its URL/deep-link/
-// persistence behaviour unchanged; the suffix is still role 'app' and still groups under
-// the app in the dock. `instance` ≥ 2 maps to a suffixed id; anything else is canonical.
-const canonicalId = (appId: string) => 'app:' + appId
-const instanceId = (appId: string, n?: number | null) =>
-  n && n >= 2 ? canonicalId(appId) + '#' + n : canonicalId(appId)
+// App window ids encode the `(app, workspace)` IDENTITY (ADR-0042). The base id is `app:<app>` for
+// a plain app window (the hub / single-workspace case) or `app:<app>/<workspace>` for a workbench
+// scoped to a workspace — so opening Selling then Stock in erpnext yields two distinct windows
+// (`app:erpnext/selling`, `app:erpnext/stock`) side by side. The first ("canonical") instance of an
+// identity owns its bare base id; extras get `#n` (n ≥ 2). The suffix is still role 'app' and still
+// groups under the app in the dock (which reads surface.appId, not the id). `instance` ≥ 2 maps to a
+// suffixed id; anything else is canonical.
+const baseId = (appId: string, workspace?: string) => 'app:' + appId + (workspace ? '/' + workspace : '')
+const instanceId = (appId: string, workspace: string | undefined, n?: number | null) =>
+  n && n >= 2 ? baseId(appId, workspace) + '#' + n : baseId(appId, workspace)
 
-// Open windows that are instances of an app, identified by id — NOT by current surface,
-// since an instance navigated onto another app's doctype is still this app's window. The
-// `#` guard stops `crm` matching `crm2`.
-const appInstances = (appId: string) =>
-  state.windows.filter((w) => w.id === canonicalId(appId) || w.id.startsWith(canonicalId(appId) + '#'))
+// Open windows that are instances of one `(app, workspace)` identity, matched by id — NOT by current
+// surface, since an instance navigated onto another app's doctype is still this identity's window.
+// The `#` guard stops `app:crm` matching `app:crm2`, and the base-id equality keeps a plain app
+// window (`app:erpnext`) distinct from a workbench of the same app (`app:erpnext/selling`).
+const identityInstances = (appId: string, workspace?: string) => {
+  const base = baseId(appId, workspace)
+  return state.windows.filter((w) => w.id === base || w.id.startsWith(base + '#'))
+}
 // The instance to bring forward when re-opening an app: the focused one if it's already
 // this app, else the top of the z-order.
 const topInstance = (wins: OsWindow[]): OsWindow | undefined =>
@@ -110,7 +116,7 @@ const topInstance = (wins: OsWindow[]): OsWindow | undefined =>
 function spawnWindow(id: string, appId: string, surface: Surface | null): OsWindow {
   const win: OsWindow = { id, surface: surface || initialSurface(appId), back: [], fwd: [] }
   state.windows.push(win)
-  applyOpenSize(id, id !== canonicalId(appId))
+  applyOpenSize(id, /#\d+$/.test(id))
   state.activeId = id
   state.menu = null
   state.paletteOpen = false
@@ -137,12 +143,13 @@ function applyOpenSize(id: string, isExtra: boolean): void {
 //    surviving instance (so closing the canonical doesn't spawn a blank one on reload — the
 //    #n scheme's wart); else mint the canonical. Canonical-first keeps `/os/<app>` stable:
 //    an instance only owns the URL via its own `?instance=n`, never the bare path.
-function ensureApp(appId: string, surface: Surface | null, instance?: number | null) {
-  const open = appInstances(appId)
+function ensureApp(appId: string, surface: Surface | null, instance?: number | null, workspace?: string) {
+  const open = identityInstances(appId, workspace)
+  const base = baseId(appId, workspace)
   const target = instance != null
-    ? open.find((w) => w.id === instanceId(appId, instance))
-    : open.find((w) => w.id === canonicalId(appId)) || topInstance(open)
-  if (!target) return void spawnWindow(instance != null ? instanceId(appId, instance) : canonicalId(appId), appId, surface)
+    ? open.find((w) => w.id === instanceId(appId, workspace, instance))
+    : open.find((w) => w.id === base) || topInstance(open)
+  if (!target) return void spawnWindow(instance != null ? instanceId(appId, workspace, instance) : base, appId, surface)
   if (surface) navigateWindow(target, surface)
   const z = bumpZ(); setGeo(target.id, { z, min: false }); state.activeId = target.id
   state.menu = null
@@ -153,10 +160,10 @@ export const openApp = (appId: string, instance?: number | null) => ensureApp(ap
 // The next free window id for an app: the canonical `app:<id>` if unused, else the lowest
 // `app:<id>#n` (n ≥ 2) not already taken.
 function freshAppWindowId(appId: string): string {
-  if (!state.windows.some((w) => w.id === canonicalId(appId))) return canonicalId(appId)
+  if (!state.windows.some((w) => w.id === baseId(appId))) return baseId(appId)
   let n = 2
-  while (state.windows.some((w) => w.id === instanceId(appId, n))) n += 1
-  return instanceId(appId, n)
+  while (state.windows.some((w) => w.id === instanceId(appId, undefined, n))) n += 1
+  return instanceId(appId, undefined, n)
 }
 
 // Open a BRAND-NEW window for an app even when one is already open (File ▸ New window).
@@ -164,22 +171,24 @@ function freshAppWindowId(appId: string): string {
 export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
   spawnWindow(freshAppWindowId(appId), appId, surface ?? null)
 
-// `workspace` seeds the intra-app coordinate (ADR-0040) from a cold deep-link / reload; omitted on
-// Spotlight/Finder/cross-app entry, which never guess a workspace. Global openers do NOT carry it
-// over (that is navFocus's in-window rule) — they only take one when the URL explicitly named it.
+// `workspace` selects the target WINDOW identity (ADR-0042) from a cold deep-link / reload: the list
+// opens in the `(app, workspace)` window, not a plain one. Omitted on Spotlight/Finder/cross-app
+// entry, which never guess a workspace — they open the plain app window.
 export const openListGlobal = (dt: string, instance?: number | null, workspace?: string) =>
-  ensureApp(appForDoctype(dt), listSurface(dt, workspace), instance)
+  ensureApp(appForDoctype(dt), listSurface(dt), instance, workspace)
 // `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.
 // A real record open is the one event that feeds Recents (ADR-0024) — both global and inline form
 // openers note it (debounced server-side); list/app/dashboard opens deliberately do not.
 export const openRecordGlobal = (dt: string, name: string, instance?: number | null, aspect?: string, workspace?: string) => {
   recordRecent(dt, name)
-  return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect, workspace), instance)
+  return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance, workspace)
 }
-// Open an app's workspace Overview (ADR-0040) — the dashboard surface scoped to a workspace, the
-// `{ view: 'dashboard', workspace }` surface a `/erpnext/selling` URL lands on.
+// Open an app's workspace window (ADR-0042): the `(app, workspace)` window a `/erpnext/selling` URL
+// lands on. Its content is the app dashboard for now; the workbench sidebar derivation lands in a
+// later slice. Focus-or-create per identity — reopening the same workspace focuses its window, a
+// different workspace opens another window alongside.
 export const openWorkspace = (appId: string, workspace: string) =>
-  ensureApp(appId, dashboardSurface(appId, workspace))
+  ensureApp(appId, dashboardSurface(appId), undefined, workspace)
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)
@@ -189,14 +198,15 @@ export const openApplet = (appId: string, appletId: string, props?: Record<strin
 // the same `ensureApp`). Component surfaces resolve to their declared `appId`.
 export const openSurface = (surface: Surface) => ensureApp(surfaceAppId(surface), surface)
 
-// In-window navigation (sidebar click, Aspect switch, goHome, new form). The single place the
-// workspace coordinate is carried forward (ADR-0040): a nav that stays in the same app inherits
-// the current surface's workspace, so a Selling sidebar click keeps Selling's flavor without every
-// opener threading it. Global openers (ensureApp) bypass this, so cross-app/Spotlight entry drops it.
+// In-window navigation (sidebar click, Aspect switch, goHome, new form): swap the window's content
+// while keeping its identity. No workspace threading (ADR-0042 retired the ADR-0040 carry-over rule):
+// the workspace is the window's identity, fixed on its id, so a Selling sidebar click stays in the
+// Selling window inherently — its URL keeps projecting `/erpnext/selling` because pathForFocus reads
+// the workspace off the window id, not the surface.
 function navFocus(winId: string, surface: Surface) {
   const z = bumpZ()
   const w = state.windows.find((x) => x.id === winId)
-  if (w) navigateWindow(w, carryWorkspace(w.surface, surface))
+  if (w) navigateWindow(w, surface)
   setGeo(winId, { z, min: false })
   state.activeId = winId
 }
@@ -238,10 +248,12 @@ export function openAspect(winId: string, aspect: string) {
 export const openNew = (winId: string, dt: string) => navFocus(winId, formSurface(dt, 'new'))
 export const goHome = (winId: string) => navFocus(winId, dashboardSurface(windowAppId(winId)))
 
-// The app a window belongs to (read off its current surface; falls back to the id).
+// The app a window belongs to (read off its current surface; falls back to parsing the id). The id
+// fallback strips the role prefix, the `#n` instance suffix, and the `/<workspace>` identity segment
+// (ADR-0042) so a workbench id `app:erpnext/selling` still resolves to `erpnext`.
 function windowAppId(winId: string): string {
   const w = state.windows.find((x) => x.id === winId)
-  return (w && isBuiltin(w.surface) && w.surface.appId) || winId.replace(/^app:/, '').replace(/#\d+$/, '')
+  return (w && isBuiltin(w.surface) && w.surface.appId) || winId.replace(/^app:/, '').replace(/#\d+$/, '').replace(/\/.*$/, '')
 }
 
 // ---- focus / minimize / close ------------------------------------------------

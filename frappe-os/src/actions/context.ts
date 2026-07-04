@@ -2,7 +2,7 @@
 // depth-3 fact (global → active window → surface) the resolver judges Eligibility against.
 // An absent coordinate stays undefined (a `when` scoping on it is then a clean non-match);
 // null/'' record names are coerced away for the same reason.
-import { surfaceAppId, windowRole } from '@/surface'
+import { surfaceAppId, windowRole, windowWorkspace } from '@/surface'
 import type { BuiltinSurface, Context, OsStore } from '@/types'
 
 // The surface-tier record-state markers (slice 04): `docstatus` + `status` of the front FORM
@@ -25,14 +25,16 @@ export function contextForOS(os: OsStore): Context {
   if (!win) return {}
   const surface = win.surface
   const context: Context = { activeApp: surfaceAppId(surface), windowRole: windowRole(win.id) }
+  // The window's workspace (ADR-0042) — read from window identity, not the surface, and published
+  // only when the window is scoped to one, so a `when: { workspace: X }` menu item gates per window
+  // (Selling's menu differs from Stock's) and is a clean non-match on a plain app window.
+  const workspace = windowWorkspace(win.id)
+  if (workspace) context.workspace = workspace
   if (surface.kind === 'applet') context.appletId = surface.appletId
   else {
     if (surface.view) context.view = surface.view
     if (surface.doctype) context.doctype = surface.doctype
     if (surface.recordName) context.recordName = surface.recordName
-    // The surface-tier workspace coordinate (ADR-0040) — published only when present, so a
-    // `when: { workspace: X }` is a clean non-match on a single-space surface.
-    if (surface.workspace) context.workspace = surface.workspace
     Object.assign(context, recordState(os, surface))
   }
   // The focus-tier markers — KIND, never value (ADR-0038). `selection` is the kind of the front

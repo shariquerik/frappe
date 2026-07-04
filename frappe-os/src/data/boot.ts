@@ -22,6 +22,9 @@ function fromWindow(): BootData {
     permissions: w.permissions || {},
     placements: Array.isArray(w.placements) ? w.placements : [],
     recents: Array.isArray(w.recents) ? w.recents : [],
+    // The per-app workspace lists (ADR-0042). Tolerated defensively — an older server / offline
+    // boot omits it, so workspace resolution degrades to the curated AppDef.modules fallback.
+    workspaces: w.workspaces && typeof w.workspaces === 'object' ? w.workspaces : {},
     // Wallpaper catalog + the chosen wallpaper name (ADR-0036); tolerated defensively so an older
     // server / offline boot degrades to the built-in default rather than throwing.
     wallpapers: Array.isArray(w.wallpapers) ? w.wallpapers : [],

@@ -2,6 +2,7 @@
 // decision tables (focus -> path, route -> store action) are unit-testable in
 // isolation: every function takes the `os` store explicitly and touches no router,
 // history, or window globals. main.js owns the wiring (guards, boot, watchers).
+import { windowWorkspace } from '@/surface'
 import { DEFAULT_ASPECT, isAspectId } from '@/surface/aspects'
 import { DEFAULT_SETTINGS_PANE, DEFAULT_APP_SETTINGS_PANE, SETTINGS_PANES, APP_SETTINGS_PANES, paneForSlug, slugForPane } from '@/surface/panes'
 import type { FocusLocation, OsStore, RouteParams, Surface } from '@/types'
@@ -25,7 +26,9 @@ export function pathForFocus(os: OsStore): FocusLocation {
   // A minimized window isn't on screen, so it shouldn't own the URL — treat it as
   // a bare desktop. (activeId shouldn't point at a minimized window, but guard anyway.)
   if ((os.geoMap?.value?.[id] || {}).min) return bare()
-  return { path: pathForSurface(os, w.surface), query: instanceQuery(id) }
+  // The workspace segment comes from window identity (ADR-0042), not the surface — read it off the
+  // window id so `/erpnext/selling/Customer` projects from the Selling window regardless of content.
+  return { path: pathForSurface(os, w.surface, windowWorkspace(id)), query: instanceQuery(id) }
 }
 
 // The `?instance=n` discriminator for a non-canonical app instance id `app:<id>#n`; empty
@@ -40,12 +43,12 @@ export function instanceQuery(id: string): Record<string, string> {
 // The canonical path for one surface. An applet surface projects to
 // /<appId>/<appletId> (mirrors Frappe overloading /app/<x> — resolve, not tag);
 // applet ids are kebab-case so they never shadow a TitleCase doctype name.
-function pathForSurface(os: OsStore, s: Surface): string {
+function pathForSurface(os: OsStore, s: Surface, workspace?: string): string {
   const seg = encodeURIComponent
   if (s.kind === 'applet') return `/${s.appId}/${seg(s.appletId)}`
-  // The workspace coordinate (ADR-0040) projects to a segment between app and doctype
-  // (/erpnext/selling/Customer); absent = no segment, so a single-space URL is unchanged.
-  const ws = s.workspace ? `/${seg(s.workspace)}` : ''
+  // The window's workspace (ADR-0042) projects to a segment between app and doctype
+  // (/erpnext/selling/Customer); absent = no segment, so a plain app window's URL is unchanged.
+  const ws = workspace ? `/${seg(workspace)}` : ''
   if (s.view === 'app-settings') {
     // Per-app settings; the URL segment stays `settings`. The selected pane projects to a
     // trailing segment; General is the default and stays on the bare /<app>/settings path.
@@ -84,10 +87,11 @@ export function focusSig(os: OsStore): string {
   // entry — browser back/forward then steps between panes (ADR-0027), mirroring Aspects.
   if (s.view === 'settings') return `${w.id}|settings|${(s.params?.pane as string) || DEFAULT_SETTINGS_PANE}`
   if (s.view === 'app-settings') return `${w.id}|app-settings|${s.appId}|${(s.params?.pane as string) || DEFAULT_APP_SETTINGS_PANE}`
-  // Include the Aspect and the workspace so switching either changes the signature and pushes a
-  // timeline entry — browser back/forward then steps between Aspects (ADR-0018) and between
-  // workspaces (ADR-0040), mirroring the trailing/leading URL segments.
-  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}|${s.workspace || ''}`
+  // Include the Aspect so switching it changes the signature and pushes a timeline entry — browser
+  // back/forward then steps between Aspects (ADR-0018), mirroring the trailing URL segment. The
+  // workspace needs no term: it is window identity (ADR-0042), already in `w.id`, so switching
+  // workspaces is switching windows — the leading `w.id` changes the signature on its own.
+  return `${w.id}|${s.view}|${s.doctype || ''}|${s.recordName || ''}|${s.aspect || ''}`
 }
 
 // Reshape the raw path segments (the router's `:segments*` capture) into RouteParams, resolving

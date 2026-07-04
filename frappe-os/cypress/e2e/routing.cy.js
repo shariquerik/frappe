@@ -139,29 +139,38 @@ describe('form Aspects are addressable in the URL (ADR-0018)', () => {
   })
 })
 
-describe('the workspace coordinate is addressable in the URL (ADR-0040)', () => {
-  // The workspace is a segment between app and doctype (/erpnext/selling/Customer). It is
-  // disambiguated from a doctype by a known-workspace lookup, survives a reload, and a workspace
-  // with no doctype opens that workspace's Overview. Needs a live bench behind `yarn dev`.
+describe('a workspace window is addressable in the URL (ADR-0042)', () => {
+  // The workspace is part of window IDENTITY, projected as a segment between app and doctype
+  // (/erpnext/selling/Customer). The window id carries it (`app:erpnext/selling`), so the deep link
+  // round-trips through a reload to the SAME window, and two workspaces of one app are two windows.
+  // 'selling' is a real seeded erpnext workspace (frappe.scrub('Selling')). Needs a live bench.
   beforeEach(() => cy.clearLocalStorage())
 
-  it('a workspace-scoped list deep-link opens under the app and survives a reload', () => {
+  it('a workspace-scoped list deep-link opens the (app, workspace) window and survives a reload', () => {
     cy.visit('/os/erpnext/selling/Customer')
-    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext/selling')
     cy.reload()
     cy.location('pathname').should('eq', '/os/erpnext/selling/Customer')
-    cy.get('[data-win-id="app:erpnext"]').should('be.visible')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
   })
 
-  it('a workspace with no doctype opens that workspace Overview', () => {
+  it('a workspace with no doctype opens that workspace window', () => {
     cy.visit('/os/erpnext/selling')
     cy.location('pathname').should('eq', '/os/erpnext/selling')
-    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext')
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext/selling')
+  })
+
+  it('two workspaces of one app are two windows, both reachable', () => {
+    cy.visit('/os/erpnext/selling')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
+    cy.visit('/os/erpnext/stock') // a second workspace opens a distinct window alongside
+    cy.get('[data-active-window]').should('have.attr', 'data-active-window', 'app:erpnext/stock')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('exist') // the first stays open
   })
 
   it('an ordinary form URL is unaffected — the second segment stays the doctype', () => {
     // /erpnext/Customer/<name>: 'Customer' is not a workspace, so it parses as the doctype and the
-    // pre-workspace scheme is byte-for-byte unchanged.
+    // plain app window (no workspace segment in the id) is byte-for-byte unchanged.
     cy.visit('/os/erpnext/Customer/CUST-CY-1')
     cy.location('pathname').should('eq', '/os/erpnext/Customer/CUST-CY-1')
     cy.get('[data-win-id="app:erpnext"]').should('be.visible')

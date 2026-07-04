@@ -46,6 +46,17 @@ export interface MenuDef {
   order?: number
 }
 
+// One boot-delivered workspace (ADR-0042): the immutable seeded `id` (the `workspace_id` slug the
+// window identity, URL segment, and `when: { workspace }` gates key on), the renamable `label`, and
+// whether it is the app's default (the hub opens onto it). Mirrors os_core/workspaces.py's
+// `workspace_dict`. The source module / sequence / hidden flag stay server-side — the boot list is
+// already ordered and hidden-excluded.
+export interface WorkspaceInfo {
+  id: string
+  label: string
+  isDefault: boolean
+}
+
 // How the OS classifies a contributing app from its Registry contributions alone (ADR-0014
 // item 4): a `feature` app ships a doctype/view/applet/card surface; a `pure-customization`
 // app contributes only chrome (command/action/patch). Used to decide whether a chrome removal
@@ -81,6 +92,12 @@ export interface BootData {
   // The server-resolved per-user Recents log (ADR-0024): record opens, newest-first, deduped +
   // permission-gated + capped. Tolerant like `placements` — an older server omits it (→ empty Recents).
   recents?: unknown[]
+  // The per-app visible workspace lists (ADR-0042), keyed by app id, each ordered by sequence with
+  // hidden rows excluded — the client's source of truth for window identity `(app, workspace)`, the
+  // URL workspace segment, and `when: { workspace }` gates. Tolerant like `placements` — an older
+  // server omits it, so workspace resolution falls back to the curated AppDef.modules (a fallback
+  // retired once every first-party app ships workspace data).
+  workspaces?: Record<string, WorkspaceInfo[]>
   // The server-resolved wallpaper catalog (ADR-0036): global defaults ∪ the caller's own uploads,
   // and their chosen wallpaper name (`wallpaper`, the selection roams per-user in frappe.defaults).
   // Tolerant like `placements` — an older server omits them, so the wallpaper seam falls back to
