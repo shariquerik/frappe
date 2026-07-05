@@ -22,7 +22,17 @@ export function startFinderDrag(item: FinderItem, tileRect: DOMRect, e: PointerE
   const ox = tileRect.left - (desktop?.left ?? 0)
   const oy = tileRect.top - (desktop?.top ?? 0)
   const occupied = occupiedDesktopCells()
-  startIconDrag(`finder:${JSON.stringify(item.ref)}`, ox, oy, occupied, (cell, moved) => {
-    if (moved) writePlacementOverride({ region: 'desktop', ref: item.ref, position: cell })
+  startIconDrag(`finder:${JSON.stringify(item.ref)}`, ox, oy, occupied, (cell, moved, drop) => {
+    // Pin only when the tile was actually dragged AND released over the free wallpaper — a release
+    // back over a window (the Finder itself, or any other) is not a desktop drop, so it creates no pin.
+    if (moved && droppedOnDesktop(drop)) writePlacementOverride({ region: 'desktop', ref: item.ref, position: cell })
   }, e, { label: item.label, logo: item.logo, icon: item.icon })
+}
+
+// Did the drag release over the bare desktop? The floating ghost is click-through (pointer-events:none),
+// so the element under the release point is the real drop target: every OS window carries `data-win-id`,
+// so a point inside one (dropped back into the Finder) is NOT a desktop drop.
+function droppedOnDesktop(drop: { x: number; y: number }): boolean {
+  const el = document.elementFromPoint(drop.x, drop.y)
+  return !(el as HTMLElement | null)?.closest('[data-win-id]')
 }

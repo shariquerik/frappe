@@ -27,7 +27,11 @@ let resize: ResizeState | null = null
 // moving (so the icon follows the cursor without yet committing a cell), and on release a snap to
 // a grid cell that the consumer persists as a User-layer override. `key` is the pin's placementKey;
 // `occupied` is every OTHER pin's current cell, so the drop can flow off a collision deterministically.
-interface IconDragState { key: string; sx: number; sy: number; ox: number; oy: number; occupied: Cell[]; commit: (cell: Cell, moved: boolean) => void }
+// `commit` also receives the release point in CLIENT coords, so a create-drag consumer (a Finder
+// drag-out) can hit-test the drop target — releasing back over a window (the Finder itself) is not a
+// desktop drop and must not pin. A desktop-icon move ignores the point (it always snaps to a cell).
+export interface DropClient { x: number; y: number }
+interface IconDragState { key: string; sx: number; sy: number; ox: number; oy: number; occupied: Cell[]; commit: (cell: Cell, moved: boolean, drop: DropClient) => void }
 let iconDrag: IconDragState | null = null
 // The live drag offset, reactive so the rendered icon follows the cursor; null when not dragging.
 export const iconDragState = reactive<{ key: string | null; dx: number; dy: number }>({ key: null, dx: 0, dy: 0 })
@@ -99,7 +103,7 @@ export function startResize(id: string, dir: ResizeDir, e: PointerEvent): void {
 // desktop, so it needs a floating ghost to follow the cursor; a desktop-icon move omits it and lifts
 // its own tile instead.
 export function startIconDrag(
-  key: string, ox: number, oy: number, occupied: Cell[], commit: (cell: Cell, moved: boolean) => void, e: PointerEvent,
+  key: string, ox: number, oy: number, occupied: Cell[], commit: (cell: Cell, moved: boolean, drop: DropClient) => void, e: PointerEvent,
   ghost?: DragGhostView,
 ): void {
   if (e.button != null && e.button !== 0) return
@@ -173,7 +177,10 @@ export function onPointerUp(): void {
     const cell = resolveDrop({ x: dropX, y: dropY }, iconDrag.occupied, desktopRef.w, desktopRef.h)
     // A press that barely moved is a click, not a move — let the consumer open instead of writing.
     const moved = Math.abs(iconDragState.dx) > 4 || Math.abs(iconDragState.dy) > 4
-    iconDrag.commit(cell, moved)
+    // The release point in client coords (last-moved cursor), so a Finder drag-out can reject a drop
+    // that landed back over a window rather than the free wallpaper.
+    const drop: DropClient = { x: iconDrag.sx + iconDragState.dx, y: iconDrag.sy + iconDragState.dy }
+    iconDrag.commit(cell, moved, drop)
     iconDrag = null
     iconDragState.key = null
     iconDragState.dx = 0
