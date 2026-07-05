@@ -20,7 +20,7 @@ const emit = defineEmits<{ select: [string] }>()
       :label="a.label"
       :icon="a.icon"
       :data-aspect="a.id"
-      :isActive="selected === a.id"
+      :active="selected === a.id"
       :onClick="() => emit('select', a.id)"
     />
   </div>

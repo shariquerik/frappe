@@ -36,7 +36,7 @@ function itemFor(dt: string) {
 		label: dt,
 		icon: m ? m.icon : ICON.table,
 		suffix: count == null ? "" : String(count),
-		isActive: (mode.value === "list" || mode.value === "form") && s.value.doctype === dt,
+		active: (mode.value === "list" || mode.value === "form") && s.value.doctype === dt,
 		onClick: () => os.openList(props.win.id, dt),
 	};
 }
@@ -101,9 +101,10 @@ watch(
 	>
 		<SidebarItem
 			v-if="app.hasDashboard"
+			class="shrink-0"
 			:label="app.dashTitle || 'Home'"
 			icon="lucide-layout-grid"
-			:isActive="mode === 'dashboard'"
+			:active="mode === 'dashboard'"
 			:onClick="() => os.goHome(win.id)"
 		/>
 		<!-- workbench: the workspace's doctypes, flat (ADR-0042) -->
@@ -111,10 +112,11 @@ watch(
 			<SidebarItem
 				v-for="it in workbenchNav"
 				:key="it.label"
+				class="shrink-0"
 				:label="it.label"
 				:icon="it.icon"
 				:suffix="it.suffix"
-				:isActive="it.isActive"
+				:active="it.active"
 				:onClick="it.onClick"
 			/>
 		</template>
@@ -123,6 +125,7 @@ watch(
 			<SidebarItem
 				v-for="it in hubItems"
 				:key="it.label"
+				class="shrink-0"
 				:label="it.label"
 				:icon="it.icon"
 				:suffix="it.suffix"
@@ -130,15 +133,16 @@ watch(
 			/>
 		</template>
 		<!-- plain fallback: curated modules, grouped (retired by issue 06) -->
-		<div v-for="grp in navGroups" v-else :key="grp.label" class="flex flex-col gap-1">
+		<div v-for="grp in navGroups" v-else :key="grp.label" class="flex shrink-0 flex-col gap-1">
 			<div class="px-2 pt-4 pb-0.5 text-sm text-ink-gray-5">{{ grp.label }}</div>
 			<SidebarItem
 				v-for="it in grp.items"
 				:key="it.label"
+				class="shrink-0"
 				:label="it.label"
 				:icon="it.icon"
 				:suffix="it.suffix"
-				:isActive="it.isActive"
+				:active="it.active"
 				:onClick="it.onClick"
 			/>
 		</div>
