@@ -10,6 +10,7 @@ import { useOS } from "@/desktop";
 import { desktopContextItems, dispatchShortcut } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, writePlacementOverride } from "@/placements";
+import { tileMenuOptions } from "@/placements/tile-menu";
 import { placementSurface, isAppRef } from "@/surface";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
 import { dirtyWindows } from "@/desktop/working-state";
@@ -18,6 +19,7 @@ import { MenuBar } from "./components/MenuBar";
 import { Dock } from "./components/Dock";
 import { OSWindow, CloseConfirmDialog } from "./components/Window";
 import { CommandPalette } from "./components/CommandPalette";
+import OSCursorMenu from "./components/OSCursorMenu.vue";
 import OSContextMenu from "./components/OSContextMenu.vue";
 import FullscreenPrompt from "./components/FullscreenPrompt.vue";
 import AboutDialog from "./components/AboutDialog.vue";
@@ -57,6 +59,7 @@ interface DesktopIcon {
 	cell: { column: number; row: number };
 	x: number;
 	y: number;
+	pin: ResolvedPlacement; // the resolved placement this tile renders — the target of its Remove menu
 }
 const pins = computed<ResolvedPlacement[]>(() => usePlacements().desktop());
 const desktopIcons = computed<DesktopIcon[]>(() => {
@@ -73,6 +76,7 @@ const desktopIcons = computed<DesktopIcon[]>(() => {
 			cell,
 			x: px.x + (dragging ? drag.dx : 0),
 			y: px.y + (dragging ? drag.dy : 0),
+			pin: p,
 		};
 	});
 });
@@ -82,6 +86,9 @@ const desktopIcons = computed<DesktopIcon[]>(() => {
 // User-layer override (the frontend's only write path — never the baseline/Site rows). A press that
 // doesn't move is a click (openPlacement); the small-delta guard in onClick distinguishes them.
 function onIconPointerDown(di: DesktopIcon, e: PointerEvent): void {
+	// Only a primary-button press starts a drag; a right-click is a context menu (reka opens it),
+	// never a move — and never the press-without-move that would otherwise open the app.
+	if (e.button !== 0) return;
 	const px = cellToPixel(di.cell, desktop.w);
 	const occupied = desktopIcons.value.filter((o) => o.key !== di.key).map((o) => o.cell);
 	os.startIconDrag(di.key, px.x, px.y, occupied, (cell, moved) => {
@@ -174,7 +181,7 @@ onBeforeUnmount(() => {
 		></div>
 
 		<!-- desktop context menu (right-click the wallpaper) -->
-		<OSContextMenu
+		<OSCursorMenu
 			v-if="desktopMenu"
 			:x="desktopMenu.x"
 			:y="desktopMenu.y"
@@ -184,17 +191,17 @@ onBeforeUnmount(() => {
 
 		<!-- desktop icons: edge-anchored grid cells (ADR-0023), each absolutely positioned at its
 		     cell's projected pixel; drag snaps to a cell and writes a User-layer override. -->
-		<button
-			v-for="di in desktopIcons"
-			:key="di.key"
-			class="absolute z-[1] flex cursor-grab flex-col items-center gap-[5px] rounded-lg border-none bg-transparent px-0.5 py-1.5 hover:bg-[var(--surface-alpha-white-3)] active:cursor-grabbing"
-			:class="{ 'z-[2] opacity-90': os.iconDragState.key === di.key }"
-			:style="{ left: di.x + 'px', top: di.y + 'px', width: CELL_W - 14 + 'px' }"
-			@pointerdown="onIconPointerDown(di, $event)"
-		>
+		<OSContextMenu v-for="di in desktopIcons" :key="di.key" :options="tileMenuOptions(di.pin)">
+			<button
+				class="absolute z-[1] flex flex-col items-center gap-[5px] rounded-lg border-none bg-transparent px-0.5 py-1.5 hover:bg-[var(--surface-alpha-white-3)]"
+				:class="os.iconDragState.key === di.key ? 'z-[2] cursor-grabbing opacity-90' : ''"
+				:style="{ left: di.x + 'px', top: di.y + 'px', width: CELL_W - 14 + 'px' }"
+				@pointerdown="onIconPointerDown(di, $event)"
+			>
 				<AppIconTile :logo="di.logo" :icon="di.icon" :label="di.label" />
 				<span :style="desktopLabelStyle">{{ di.label }}</span>
 			</button>
+		</OSContextMenu>
 
 		<!-- windows -->
 		<OSWindow v-for="w in os.state.windows" :key="w.id" :win="w" />

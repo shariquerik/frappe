@@ -11,7 +11,7 @@
 import { computed, ref } from 'vue'
 import { Button, ListView, ListHeader, ListRows, ListSelectBanner, Avatar } from 'frappe-ui'
 import StatusPill from '../StatusPill.vue'
-import OSContextMenu from '../OSContextMenu.vue'
+import OSCursorMenu from '../OSCursorMenu.vue'
 import { cellKind } from './list-columns'
 // These feed defineProps, so import from concrete modules, not the @/types barrel (its
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
@@ -192,6 +192,6 @@ const options = computed(() => ({
         </span>
       </template>
     </ListView>
-    <OSContextMenu v-if="rowMenu" :x="rowMenu.x" :y="rowMenu.y" :items="rowMenuItems" @close="rowMenu = null" />
+    <OSCursorMenu v-if="rowMenu" :x="rowMenu.x" :y="rowMenu.y" :items="rowMenuItems" @close="rowMenu = null" />
   </div>
 </template>

@@ -29,7 +29,7 @@ export interface ContextMenuGroup {
 // without mutating the global Command Singleton.
 const labelOf = (action: Action, command: Command): string => action.commandPatch?.title ?? command.title
 
-// The desktop menu: a flat, cursor-pinned list (OSContextMenu). No dividers or submenus today — the
+// The desktop menu: a flat, cursor-pinned list (OSCursorMenu). No dividers or submenus today — the
 // lone entry and any app contribution render as one ordered list of buttons.
 export function desktopContextItems(os: OsStore): { label: string; onClick: () => void }[] {
   return projectRegion(DESKTOP_CONTEXT_REGION, os).map(({ action, command }) => ({

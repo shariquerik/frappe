@@ -8,10 +8,12 @@ import { useOS } from '@/desktop'
 import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-model'
 import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } from '@/surface'
 import { usePlacements, placementView, writePlacementOverride } from '@/placements'
+import { tileMenuOptions } from '@/placements/tile-menu'
 import { dockContextOptions } from '@/actions'
 import OSDropdown from '../OSDropdown.vue'
+import OSContextMenu from '../OSContextMenu.vue'
 import AppIconTile from '../AppIconTile.vue'
-import type { OsWindow, BuiltinSurface, SurfaceRef } from '@/types'
+import type { OsWindow, BuiltinSurface, SurfaceRef, ResolvedPlacement } from '@/types'
 const os = useOS()
 
 // Adaptive backing: the dock floats trayless on the wallpaper, but grows an opaque tray
@@ -171,6 +173,7 @@ interface DockItem {
   logo?: string
   icon?: string
   ref?: SurfaceRef // present on a pinned item (drives open); absent on a transient app item
+  pin?: ResolvedPlacement // present on a pinned item — the target of its Remove-from-Dock menu
   appId: string
   windows: ReturnType<typeof winsFor>
 }
@@ -179,7 +182,7 @@ const pinnedItems = computed<DockItem[]>(() =>
   dockPins.value.map((p) => {
     const view = placementView(p)
     const appId = refAppId(p.ref)
-    return { key: view.key, name: view.label, logo: view.logo, icon: view.icon, ref: p.ref, appId, windows: winsFor(appId) }
+    return { key: view.key, name: view.label, logo: view.logo, icon: view.icon, ref: p.ref, pin: p, appId, windows: winsFor(appId) }
   }),
 )
 
@@ -258,14 +261,18 @@ const ctxOptions = computed(() => dockContextOptions(os))
       <div v-for="(d, i) in pinnedItems" :key="d.key" class="relative flex items-end" draggable="true"
         @dragstart="draggingKey = d.key" @dragend="draggingKey = null"
         @dragover.prevent @drop.prevent="onPinDrop(i)">
-        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
-          <AppIconTile :logo="d.logo" :icon="d.icon" :label="d.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
-          <!-- running indicator: a second dot hints at multiple windows -->
-          <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
-            <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
-            <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
-          </span>
-        </button>
+        <!-- Right-click a pinned tile → Remove from Dock. `.stop` keeps it from bubbling to the
+             tray's own right-click (dock settings), so the tile menu wins over its own icon. -->
+        <OSContextMenu :options="tileMenuOptions(d.pin!)">
+          <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)" @contextmenu.stop>
+            <AppIconTile :logo="d.logo" :icon="d.icon" :label="d.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
+            <!-- running indicator: a second dot hints at multiple windows -->
+            <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
+              <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
+              <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
+            </span>
+          </button>
+        </OSContextMenu>
 
         <!-- window chooser popover -->
         <div v-if="os.state.dockMenu===d.key" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
