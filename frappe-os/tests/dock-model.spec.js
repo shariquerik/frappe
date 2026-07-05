@@ -5,7 +5,7 @@
 // transient item; (3) a reorder yields the per-pin `order` deltas the User-layer write persists;
 // (4) a fresh user's dock reproduces the App-default dock baseline (whatever the server ships).
 import { afterEach, describe, expect, it } from 'vitest'
-import { orderedDockPins, transientAppIds, reorderDeltas, nextDockOrder } from '../src/desktop/dock-model'
+import { orderedDockPins, transientAppIds, reorderDeltas, nextDockOrder, isPointOutside } from '../src/desktop/dock-model'
 import { placementKey, initPlacements, usePlacements } from '../src/placements'
 
 const dock = (ref, order) => ({ region: 'dock', ref, position: order === undefined ? null : { order } })
@@ -62,6 +62,24 @@ describe('reorderDeltas — moving a pin writes per-pin order deltas', () => {
   it('nextDockOrder appends past the current max order', () => {
     expect(nextDockOrder(pins)).toBe(3)
     expect(nextDockOrder([])).toBe(0)
+  })
+})
+
+describe('isPointOutside — the drag-off-the-dock hit-test (drives drag-out-to-remove)', () => {
+  const rect = { left: 100, top: 700, right: 400, bottom: 760 }
+
+  it('is false for a point inside the rect (a release still over the dock → no remove)', () => {
+    expect(isPointOutside(rect, 250, 730)).toBe(false)
+  })
+
+  it('is true for a point clearly outside the rect (dragged off → remove)', () => {
+    expect(isPointOutside(rect, 250, 500)).toBe(true) // well above the dock
+    expect(isPointOutside(rect, 50, 730)).toBe(true) // left of the dock
+  })
+
+  it('pad keeps a near-edge release from counting as off (accidental-remove guard)', () => {
+    expect(isPointOutside(rect, 250, 780, 30)).toBe(false) // 20px below, within the 30px pad
+    expect(isPointOutside(rect, 250, 800, 30)).toBe(true) // 40px below, beyond the pad
   })
 })
 

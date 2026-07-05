@@ -52,6 +52,16 @@ export function nextDockOrder(dock: ResolvedPlacement[]): number {
   return max + 1
 }
 
+// Is a client-space point clear of a rectangle by more than `pad` px on any side? The dock uses it
+// to tell a pin dragged OFF the dock (→ remove it) from one released over it (→ reorder / no-op).
+// Pure and DOM-free (the rect is read from the live tray in the component), so it is unit-testable.
+export function isPointOutside(
+  rect: { left: number; top: number; right: number; bottom: number },
+  x: number, y: number, pad = 0,
+): boolean {
+  return x < rect.left - pad || x > rect.right + pad || y < rect.top - pad || y > rect.bottom + pad
+}
+
 // Recompute every pin's `order` for a reordered list (the dragged pin moved to `toIndex`): the
 // resolved row's new positional order. Returns the (ref → order) deltas a reorder persists — one
 // override per pin whose order changed — so the User layer captures the whole new arrangement.

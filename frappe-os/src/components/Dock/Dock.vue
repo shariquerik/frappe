@@ -5,9 +5,9 @@
 // so any one window can be brought to the front; 0 or 1 window focuses directly.
 import { computed, ref } from 'vue'
 import { useOS } from '@/desktop'
-import { orderedDockPins, transientAppIds, reorderDeltas } from '@/desktop/dock-model'
-import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } from '@/surface'
-import { usePlacements, placementView, writePlacementOverride } from '@/placements'
+import { orderedDockPins, transientAppIds, reorderDeltas, isPointOutside } from '@/desktop/dock-model'
+import { windowRole, systemWindowTitle, isBuiltin, isAppRef, isFinderWindow, placementSurface } from '@/surface'
+import { usePlacements, placementView, writePlacementOverride, removeResolvedPlacement } from '@/placements'
 import { tileMenuOptions } from '@/placements/tile-menu'
 import { dockContextOptions } from '@/actions'
 import OSContextMenu from '../OSContextMenu.vue'
@@ -145,7 +145,7 @@ const dockPins = computed(() => orderedDockPins(usePlacements().dock()))
 // name, no logo), so it yields no transient item rather than a blank one.
 const openAppIds = computed(() =>
   os.state.windows
-    .filter((w) => isBuiltin(w.surface))
+    .filter((w) => isBuiltin(w.surface) && windowRole(w.id) !== 'system')
     .map((w) => (w.surface as BuiltinSurface).appId)
     .filter((id): id is string => !!id && !!os.DATA.APP[id]),
 )
@@ -158,13 +158,22 @@ function refAppId(ref: SurfaceRef): string {
   return (surface && isBuiltin(surface) && surface.appId) || ref.app || ''
 }
 
+// An app tile owns its app windows AND its per-app settings pane, but never a desktop-wide SYSTEM
+// singleton (the Finder / the per-user Settings): those borrow the frappe app id only for chrome
+// scoping, so gating on `windowRole !== 'system'` keeps their dot off the frappe tile.
 function winsFor(appId: string) {
-  const wins = os.state.windows.filter((w) => isBuiltin(w.surface) && (w.surface as BuiltinSurface).appId === appId)
+  const wins = os.state.windows.filter(
+    (w) => isBuiltin(w.surface) && (w.surface as BuiltinSurface).appId === appId && windowRole(w.id) !== 'system',
+  )
   return wins.map((w) => ({
     id: w.id, title: winTitle(w), sub: winSub(w),
     min: !!(os.geoMap.value[w.id] || {}).min, active: os.state.activeId === w.id,
   }))
 }
+
+// The Finder is a desktop-wide singleton, not an app tile, so its running/minimized dot rides its
+// own launcher button — present iff the Finder window is open (minimized or not, like an app dot).
+const finderWindow = computed(() => os.state.windows.find((w) => isFinderWindow(w)))
 
 interface DockItem {
   key: string
@@ -232,6 +241,21 @@ function onPinDrop(targetIndex: number) {
   draggingKey.value = null
 }
 
+// The dock tray element (also handed to the store for auto-hide), read live to hit-test a drag-end.
+let trayEl: HTMLElement | null = null
+const setTrayEl = (el: HTMLElement | null) => { trayEl = el; os.setDockEl(el) }
+
+// Drag a pin clear of the dock to remove it. A drop onto another tile reorders (onPinDrop already
+// cleared draggingKey), a release still over the dock is a no-op; only a pin whose drag ends more
+// than DROP_OFF_PAD px OFF the tray is removed — the same primitive as the right-click "Remove".
+const DROP_OFF_PAD = 30
+function onPinDragEnd(d: DockItem, e: DragEvent) {
+  const rect = trayEl?.getBoundingClientRect()
+  const off = !!rect && isPointOutside(rect, e.clientX, e.clientY, DROP_OFF_PAD)
+  if (draggingKey.value === d.key && d.pin && off) void removeResolvedPlacement(d.pin)
+  draggingKey.value = null
+}
+
 // The dock right-click (tray) menu renders through OSContextMenu — the shell's one context-menu
 // primitive — wrapping the dock tray as its trigger, so reka opens it at the cursor natively (no
 // hand-anchored popover). Its entries render from the resolver (the `dock:context` Region), not a
@@ -251,10 +275,10 @@ const ctxOptions = computed(() => dockContextOptions(os))
          event first so it wins over its icon. Keeps the dock revealed while open (update:open). -->
     <OSContextMenu :options="ctxOptions" @update:open="os.state.dockContextOpen = $event">
     <!-- Trayless by default; an opaque tray fades in when a window sits behind the dock. -->
-    <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]">
+    <div :ref="(el) => setTrayEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]">
       <!-- pinned dock placements (ADR-0023), draggable to reorder → a User-layer order override -->
       <div v-for="(d, i) in pinnedItems" :key="d.key" class="relative flex items-end" draggable="true"
-        @dragstart="draggingKey = d.key" @dragend="draggingKey = null"
+        @dragstart="draggingKey = d.key" @dragend="onPinDragEnd(d, $event)"
         @dragover.prevent @drop.prevent="onPinDrop(i)">
         <!-- Right-click a pinned tile → Remove from Dock. `.stop` keeps it from bubbling to the
              tray's own right-click (dock settings), so the tile menu wins over its own icon. -->
@@ -310,8 +334,12 @@ const ctxOptions = computed(() => dockContextOptions(os))
       </div>
 
       <div class="self-center" :class="[dividerShape, dividerClass]"></div>
-      <button class="inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[finderButtonClass, hoverLift]" title="Finder" @click="os.openFinder()">
+      <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[finderButtonClass, hoverLift]" title="Finder" @click="os.openFinder()">
         <span class="lucide-layout-grid size-[20px]"></span>
+        <!-- the Finder's own running dot (it borrows no app tile's) -->
+        <span v-if="finderWindow" class="absolute flex items-center" :class="dotsPlace">
+          <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
+        </span>
       </button>
     </div>
     </OSContextMenu>
