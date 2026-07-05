@@ -17,8 +17,10 @@ import type { ResolvedPlacement, SurfaceRef } from '@/types'
 // Finder tile and the pin it creates look identical.
 export interface FinderItem extends PlacementView {}
 
-// The Locations (ADR-0024). Open list, not a closed union — additive.
-export const LOCATIONS = ['Applications', 'Doctypes', 'Recents', 'Favorites'] as const
+// The Locations (ADR-0024). Open list, not a closed union — additive. Recents leads the rail (the
+// macOS Finder shape: what you touched last is the fastest thing to reach); Applications stays the
+// default open Location so a deep-link / dock launcher lands on the launcher.
+export const LOCATIONS = ['Recents', 'Applications', 'Doctypes', 'Favorites'] as const
 export type Location = (typeof LOCATIONS)[number]
 
 // Project a surface reference to a Finder tile, reusing the desktop/dock presentation deriver so a

@@ -5,9 +5,10 @@
 // (window behavior — list-row open target ADR-0018, remember window size ADR-0019), Appearance
 // (light/dark theme), Wallpaper (the gallery) and Dock (placement + reveal, ADR-0022). The
 // active pane rides the singleton window's surface params so a deep-link / dock "Dock Settings…"
-// can open straight to it.
+// can open straight to it. The nav rows are frappe-ui SidebarItem (like AppSidebar), so Settings,
+// the Finder rail, and the app window's sidebar all share one row treatment.
 import { computed } from 'vue'
-import { Switch, Select, useTheme } from 'frappe-ui'
+import { Switch, Select, SidebarItem, useTheme } from 'frappe-ui'
 import { useOS } from '@/desktop'
 import { AccountSection, WallpaperPicker } from '@/components/Settings'
 import { SETTINGS_PANES } from '@/surface'
@@ -43,13 +44,17 @@ const theme = computed<string>({ get: () => currentTheme.value, set: (value) => 
 
 <template>
   <div class="flex min-h-0 flex-1">
-    <!-- pane nav -->
-    <div class="w-[182px] flex-shrink-0 overflow-auto border-r border-outline-gray-1 bg-surface-sidebar px-2 py-2.5">
-      <div v-for="s in panes" :key="s" class="my-px flex h-8 cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-[12.5px]" @click="os.setSettingsPane(s)"
-        :style="{ color: pane===s ? 'var(--ink-gray-9)' : 'var(--ink-gray-6)', fontWeight: pane===s ? 600 : 400,
-          background: pane===s ? 'var(--surface-gray-3)' : 'transparent' }">
-        <span :class="paneIcon[s]" class="size-[15px] flex-shrink-0"></span>{{ s }}
-      </div>
+    <!-- pane nav — rows are frappe-ui SidebarItem, so they match the app window's AppSidebar -->
+    <div class="flex w-[182px] flex-shrink-0 flex-col gap-1 overflow-auto border-r border-outline-gray-1 bg-surface-sidebar p-2">
+      <SidebarItem
+        v-for="s in panes"
+        :key="s"
+        class="shrink-0"
+        :label="s"
+        :icon="paneIcon[s]"
+        :active="pane === s"
+        :onClick="() => os.setSettingsPane(s)"
+      />
     </div>
     <!-- body -->
     <div class="flex min-w-0 flex-1 flex-col overflow-auto">
