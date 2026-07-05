@@ -13,7 +13,7 @@ import { initRegistry } from '@/registry'
 import { initPlacements, usePlacements, applyLocalOverride } from '@/placements'
 import { initRecents } from '@/recents'
 import { bootWith } from '../../../../tests/fixtures/os-boot'
-import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../locations'
+import { applicationItems, doctypeItems, workspaceItems, favoritePlacements, itemsFor } from '../locations'
 
 const os = useOS()
 
@@ -97,6 +97,31 @@ describe('Doctypes Location — reprojects the boot workspace doctype catalog', 
     expect(items.every((i) => i.ref.view === 'list')).toBe(true)
     // De-duped: no doctype appears twice even if several workspaces list it.
     expect(new Set(doctypes).size).toBe(doctypes.length)
+  })
+})
+
+describe('Workspaces Location — reprojects each app\'s boot workspace catalog', () => {
+  it('lists every app\'s workspaces as {app, workspace} references, app order then workspace order', () => {
+    const items = workspaceItems()
+    // Drawn from boot workspace data (ADR-0042), flattened across apps in registry order.
+    expect(items.map((i) => i.ref)).toEqual([
+      { app: 'frappe', workspace: 'core' }, { app: 'frappe', workspace: 'website' },
+      { app: 'crm', workspace: 'fcrm' }, { app: 'crm', workspace: 'fcrm_activity' },
+      { app: 'erpnext', workspace: 'selling' }, { app: 'erpnext', workspace: 'stock' },
+    ])
+    // A workspace tile labels by its workspace label (reused placementView, issue #02).
+    expect(items[0].label).toBe('Core')
+    expect(items.find((i) => i.ref.workspace === 'fcrm').label).toBe('CRM')
+  })
+
+  it('itemsFor returns the same set as workspaceItems', () => {
+    expect(itemsFor('Workspaces').map((i) => i.ref)).toEqual(workspaceItems().map((i) => i.ref))
+  })
+
+  it('a dragged workspace reference reads back as a new desktop workspace Placement', () => {
+    initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
+    applyLocalOverride({ region: 'desktop', ref: { app: 'erpnext', workspace: 'selling' }, position: { column: 0, row: 0 } })
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'erpnext', workspace: 'selling' }])
   })
 })
 

@@ -25,6 +25,7 @@ const ICON = os.DATA.ICON
 
 const locationIcon: Record<Location, string> = {
   Applications: ICON.grid,
+  Workspaces: 'lucide-layers',
   Doctypes: ICON.table,
   Recents: 'lucide-clock',
   Favorites: 'lucide-star',
