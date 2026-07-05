@@ -437,9 +437,9 @@ describe('contextForOS (derive Context from the active window)', () => {
     expect(contextForOS(os)).toEqual({})
   })
 
-  it('a list window carries activeApp, windowRole, view and doctype — but no recordName', () => {
-    os.openListGlobal('ToDo')
-    expect(contextForOS(os)).toEqual({ activeApp: 'frappe', windowRole: 'app', view: 'list', doctype: 'ToDo' })
+  it('a list window carries activeApp, windowRole, view, doctype and the derived workspace — but no recordName', () => {
+    os.openListGlobal('ToDo') // ToDo lives in frappe's `core` workspace → the window is scoped to it
+    expect(contextForOS(os)).toEqual({ activeApp: 'frappe', windowRole: 'app', view: 'list', doctype: 'ToDo', workspace: 'core' })
   })
 
   it('a form window adds the recordName coordinate', () => {
@@ -471,7 +471,7 @@ describe('contextForOS (derive Context from the active window)', () => {
   })
 
   it('carries no workspace for a plain app window', () => {
-    os.openListGlobal('ToDo')
+    os.openApp('frappe') // the multi-workspace hub opens the plain app:frappe window (no workspace on its id)
     expect(contextForOS(os).workspace).toBeUndefined()
   })
 

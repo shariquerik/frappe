@@ -102,6 +102,14 @@ export function focusSig(os: OsStore): string {
 export function parseSegments(os: OsStore, segments: string[]): RouteParams {
   const [app, ...rest] = segments
   if (!app) return {}
+  // A bare doctype URL (`/os/Contact`) omits the app segment. When segment 0 is not a known app but
+  // IS a known doctype, read the whole path as a workspace-less doctype deep-link under the doctype's
+  // own app (appForDoctype); applyRoute then canonicalises it onto the doctype's workbench. App ids are
+  // lowercase and doctypes TitleCase, so the two segment kinds never collide — known-app wins first.
+  if (!os.DATA.APP[app] && os.getMeta(app)) {
+    const [doctype, name, aspect] = segments
+    return { app: os.appForDoctype(doctype), doctype, name, aspect }
+  }
   const workspace = os.workspaceForSlug(app, rest[0])
   const [doctype, name, aspect] = workspace ? rest.slice(1) : rest
   return { app, workspace, doctype, name, aspect }
@@ -149,15 +157,14 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // the form for a known doctype + name and let the form view show a not-found state
   // on a 404 (Phase 4). A doctype with no name opens its list. `instance` targets a
   // specific app window when the URL carried `?instance=n` (else the canonical one).
-  // A URL that named a doctype but no workspace (`/frappe/Access Log`) canonicalises to the
-  // doctype's own workspace (ADR-0042), so it lands on the workbench — with the doctype rail and
-  // active row — not the hub; pathForFocus then reprojects the module segment. A doctype in no
-  // seeded workspace yields undefined and opens the plain app window (unchanged).
-  const ws = doctype ? workspace ?? os.workspaceForDoctype(doctype) : workspace
+  // Only the EXPLICIT URL workspace is threaded through: a workspace-less doctype URL
+  // (`/frappe/Access Log`) canonicalises to the doctype's own workbench in the window layer
+  // (ensureApp/surfaceWorkspace, ADR-0042), the one seam every entry point shares — so the route
+  // just passes what the URL named and never guesses a workspace itself.
   if (doctype && name) {
-    os.openRecordGlobal(doctype, name, instance, aspect, ws)
+    os.openRecordGlobal(doctype, name, instance, aspect, workspace)
   } else if (doctype) {
-    os.openListGlobal(doctype, instance, ws)
+    os.openListGlobal(doctype, instance, workspace)
   } else if (knownApp) {
     openHome()
   }

@@ -142,9 +142,9 @@ describe('newAppWindow stacks multiple windows of one app', () => {
 
 describe('openAspect selects a form Aspect on the same window', () => {
   it('re-navigates the record form to the chosen Aspect and records history', () => {
-    os.openRecordGlobal('CRM Lead', 'L-1') // app:crm on the bare (details) form
-    os.openAspect('app:crm', 'activities')
-    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    os.openRecordGlobal('CRM Lead', 'L-1') // app:crm/fcrm on the bare (details) form (workspace derived)
+    os.openAspect('app:crm/fcrm', 'activities')
+    const w = os.state.windows.find((x) => x.id === 'app:crm/fcrm')
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', aspect: 'activities' })
     expect(w.back.length).toBe(1) // the details form is now back-navigable
   })
@@ -194,9 +194,9 @@ describe('workspace is window identity (ADR-0042)', () => {
     expect(os.state.windows.map((w) => w.id).sort()).toEqual(['app:erpnext/selling', 'app:erpnext/stock'])
   })
 
-  it('a global (Spotlight/Finder) open with no workspace yields the plain app window', () => {
-    os.openListGlobal('CRM Lead') // no workspace passed
-    expect(os.state.activeId).toBe('app:crm')
+  it('a global (Spotlight/Finder) open canonicalises the doctype onto its workbench (ADR-0042)', () => {
+    os.openListGlobal('CRM Lead') // no explicit workspace → derives the doctype's canonical workspace
+    expect(os.state.activeId).toBe('app:crm/fcrm')
   })
 })
 
@@ -221,22 +221,22 @@ describe('single-workspace apps skip the hub (ADR-0042)', () => {
 
 describe('openRow follows the row open-target preference (ADR-0018)', () => {
   it("defaults to 'inline' — left-click opens the record in the same window", () => {
-    os.openListGlobal('CRM Lead') // app:crm on a list
+    os.openListGlobal('CRM Lead') // app:crm/fcrm on a list (workspace derived)
     expect(os.state.rowOpenTarget).toBe('inline')
-    os.openRow('app:crm', 'CRM Lead', 'L-1')
-    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm']) // no new window
-    const w = os.state.windows.find((x) => x.id === 'app:crm')
+    os.openRow('app:crm/fcrm', 'CRM Lead', 'L-1')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm/fcrm']) // no new window
+    const w = os.state.windows.find((x) => x.id === 'app:crm/fcrm')
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
   })
 
   it("with 'new-window', left-click mints a fresh app instance on the record's form", () => {
-    os.openListGlobal('CRM Lead') // app:crm on a list
+    os.openListGlobal('CRM Lead') // app:crm/fcrm on a list (workspace derived)
     os.setRowOpenTarget('new-window')
-    os.openRow('app:crm', 'CRM Lead', 'L-1')
-    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm', 'app:crm#2'])
-    const instance = os.state.windows.find((x) => x.id === 'app:crm#2')
+    os.openRow('app:crm/fcrm', 'CRM Lead', 'L-1')
+    expect(os.state.windows.map((w) => w.id)).toEqual(['app:crm/fcrm', 'app:crm/fcrm#2'])
+    const instance = os.state.windows.find((x) => x.id === 'app:crm/fcrm#2')
     expect(instance.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
-    const orig = os.state.windows.find((x) => x.id === 'app:crm')
+    const orig = os.state.windows.find((x) => x.id === 'app:crm/fcrm')
     expect(orig.surface.view).toBe('list') // the original list window is untouched
   })
 

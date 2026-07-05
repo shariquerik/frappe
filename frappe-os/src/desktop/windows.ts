@@ -3,7 +3,7 @@
 // wallpaper, toggles). All geometry is delegated to geometry.js; all display config
 // comes from config/*. This slice owns "what windows exist and what they show".
 import { computed } from 'vue'
-import { appForDoctype, soleWorkspace } from '@/registry'
+import { appForDoctype, soleWorkspace, workspaceForDoctype } from '@/registry'
 import { recordRecent } from '@/recents'
 import { useWallpapers, wallpaperSelection, setSelection } from '@/wallpapers'
 import { bumpZ, geoMap, setGeo } from './geometry'
@@ -99,6 +99,18 @@ const baseId = (appId: string, workspace?: string) => 'app:' + appId + (workspac
 const instanceId = (appId: string, workspace: string | undefined, n?: number | null) =>
   n && n >= 2 ? baseId(appId, workspace) + '#' + n : baseId(appId, workspace)
 
+// The workspace a to-be-opened window is scoped to (ADR-0042) — the single canonicalisation seam every
+// focus-or-create open funnels through. An EXPLICIT workspace (a URL that named one, openWorkspace)
+// always wins. Otherwise a doctype-bound surface (list/form) derives its doctype's canonical workspace,
+// so a doctype lands on its workbench no matter the entry point — URL, desktop icon, Finder, palette,
+// Dock (ADR-0042 retired the old URL-only asymmetry). A non-doctype surface (dashboard/applet/settings)
+// or a doctype in no seeded workspace has none, so it opens the plain app window (unchanged).
+function surfaceWorkspace(surface: Surface | null, explicit?: string): string | undefined {
+  if (explicit) return explicit
+  if (isBuiltin(surface) && (surface.view === 'list' || surface.view === 'form')) return workspaceForDoctype(surface.doctype!)
+  return undefined
+}
+
 // Open windows that are instances of one `(app, workspace)` identity, matched by id — NOT by current
 // surface, since an instance navigated onto another app's doctype is still this identity's window.
 // The `#` guard stops `app:crm` matching `app:crm2`, and the base-id equality keeps a plain app
@@ -144,6 +156,9 @@ function applyOpenSize(id: string, isExtra: boolean): void {
 //    #n scheme's wart); else mint the canonical. Canonical-first keeps `/os/<app>` stable:
 //    an instance only owns the URL via its own `?instance=n`, never the bare path.
 function ensureApp(appId: string, surface: Surface | null, instance?: number | null, workspace?: string) {
+  // Canonicalise the workspace once, up front (surfaceWorkspace): a doctype-bound surface with no
+  // explicit workspace resolves to its workbench identity, so all the openers below key on the same id.
+  workspace = surfaceWorkspace(surface, workspace)
   const open = identityInstances(appId, workspace)
   const base = baseId(appId, workspace)
   const target = instance != null
@@ -164,24 +179,26 @@ export const openApp = (appId: string, instance?: number | null) => {
   return sole ? openWorkspace(appId, sole) : ensureApp(appId, null, instance)
 }
 
-// The next free window id for an app: the canonical `app:<id>` if unused, else the lowest
-// `app:<id>#n` (n ≥ 2) not already taken.
-function freshAppWindowId(appId: string): string {
-  if (!state.windows.some((w) => w.id === baseId(appId))) return baseId(appId)
+// The next free window id for an `(app, workspace)` identity: the canonical `app:<id>[/<ws>]` if
+// unused, else the lowest `…#n` (n ≥ 2) not already taken.
+function freshAppWindowId(appId: string, workspace?: string): string {
+  if (!state.windows.some((w) => w.id === baseId(appId, workspace))) return baseId(appId, workspace)
   let n = 2
-  while (state.windows.some((w) => w.id === instanceId(appId, undefined, n))) n += 1
-  return instanceId(appId, undefined, n)
+  while (state.windows.some((w) => w.id === instanceId(appId, workspace, n))) n += 1
+  return instanceId(appId, workspace, n)
 }
 
-// Open a BRAND-NEW window for an app even when one is already open (File ▸ New window).
-// Unlike openApp (focus-or-create), this always mints a fresh instance.
+// Open a BRAND-NEW window for an app even when one is already open (File ▸ New window, "Open in New
+// Window"). Unlike openApp (focus-or-create), this always mints a fresh instance — scoped to the
+// surface's canonical workspace (surfaceWorkspace) so a record opens in a workbench instance, matching
+// the focus-or-create openers; a bare app new-window (no surface) has none and stays a plain instance.
 export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
-  spawnWindow(freshAppWindowId(appId), appId, surface ?? null)
+  spawnWindow(freshAppWindowId(appId, surfaceWorkspace(surface ?? null)), appId, surface ?? null)
 
-// `workspace` selects the target WINDOW identity (ADR-0042) from a cold deep-link / reload: the list
-// opens in the `(app, workspace)` window, not a plain one. Omitted on Spotlight/Finder/cross-app
-// entry, which never guess a workspace — they open the plain app window. A workspace-less doctype URL
-// canonicalises to its workbench earlier, in applyRoute (route-map), so the URL path stays the seam.
+// `workspace` OVERRIDES the target WINDOW identity (ADR-0042) — a URL that named one, else undefined.
+// When omitted, ensureApp derives the doctype's canonical workspace (surfaceWorkspace), so every entry
+// point (URL, desktop icon, Finder, palette, Dock) lands the doctype on its workbench — one seam, no
+// URL-only asymmetry. A doctype in no seeded workspace still opens the plain app window (unchanged).
 export const openListGlobal = (dt: string, instance?: number | null, workspace?: string) =>
   ensureApp(appForDoctype(dt), listSurface(dt), instance, workspace)
 // `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.

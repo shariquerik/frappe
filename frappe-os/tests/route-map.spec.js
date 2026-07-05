@@ -28,14 +28,14 @@ describe('pathForFocus', () => {
     expect(pathForFocus(os)).toEqual({ path: '/frappe', query: {} })
   })
 
-  it('a list view projects to /<app>/<doctype>', () => {
-    os.openListGlobal('ToDo')
-    expect(pathForFocus(os)).toEqual({ path: '/frappe/ToDo', query: {} })
+  it('a list view derives the doctype workspace: /<app>/<workspace>/<doctype>', () => {
+    os.openListGlobal('ToDo') // ToDo lives in frappe's `core` workspace → derived, not passed
+    expect(pathForFocus(os)).toEqual({ path: '/frappe/core/ToDo', query: {} })
   })
 
-  it('a form view projects to /<app>/<doctype>/<name> (encoded)', () => {
+  it('a form view projects to /<app>/<workspace>/<doctype>/<name> (encoded)', () => {
     os.openRecordGlobal('CRM Lead', 'CRM-LEAD-2024-0042')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/CRM-LEAD-2024-0042', query: {} })
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/CRM-LEAD-2024-0042', query: {} })
   })
 
   it('an app-settings window projects to /<app>/settings', () => {
@@ -91,25 +91,25 @@ describe('pathForFocus', () => {
   it('the instance query rides alongside the instance’s own surface path', () => {
     os.newAppWindow('crm')                          // app:crm
     os.newAppWindow('crm')                          // app:crm#2 focused
-    os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the instance to a form
-    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: { instance: '2' } })
+    os.openRecordGlobal('CRM Lead', 'L-1', 2)       // navigate the instance to a form (workspace derived)
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1', query: { instance: '2' } })
   })
 
   it('the default Aspect (details) projects to the bare record path (URL unchanged)', () => {
     os.openRecordGlobal('CRM Lead', 'L-1', null, 'details')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1', query: {} })
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1', query: {} })
   })
 
   it('a non-default Aspect projects to a trailing path segment', () => {
     os.openRecordGlobal('CRM Lead', 'L-1', null, 'activities')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1/activities', query: {} })
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1/activities', query: {} })
   })
 
   it('the Aspect segment composes with the ?instance=n query', () => {
     os.newAppWindow('crm')                          // app:crm
     os.newAppWindow('crm')                          // app:crm#2 focused
     os.openRecordGlobal('CRM Lead', 'L-1', 2, 'email')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/CRM%20Lead/L-1/email', query: { instance: '2' } })
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1/email', query: { instance: '2' } })
   })
 
   // ── workspace window (ADR-0042): identity projects a segment between app and doctype ──
@@ -154,6 +154,23 @@ describe('parseSegments (raw path → coordinate, workspace vs doctype)', () => 
   it('reads a workspace with no doctype (the Overview path)', () => {
     expect(parseSegments(os, ['erpnext', 'selling'])).toMatchObject({ app: 'erpnext', workspace: 'selling', doctype: undefined })
   })
+
+  it('reads a bare doctype URL (no app segment) as a doctype deep-link under the doctype app', () => {
+    // `/os/CRM Lead` — segment 0 is a known doctype, not a known app: read it as the doctype.
+    expect(parseSegments(os, ['CRM Lead'])).toEqual({ app: 'crm', doctype: 'CRM Lead', name: undefined, aspect: undefined })
+  })
+
+  it('a bare doctype URL carries a trailing record + aspect', () => {
+    expect(parseSegments(os, ['CRM Lead', 'L-1', 'activities'])).toEqual({ app: 'crm', doctype: 'CRM Lead', name: 'L-1', aspect: 'activities' })
+  })
+
+  it('a known app segment still wins over the bare-doctype reading', () => {
+    expect(parseSegments(os, ['crm', 'CRM Lead'])).toMatchObject({ app: 'crm', doctype: 'CRM Lead' })
+  })
+
+  it('a lone segment that is neither app nor doctype stays an (empty) app coordinate — a dead route', () => {
+    expect(parseSegments(os, ['Nonexistent'])).toEqual({ app: 'Nonexistent', workspace: undefined, doctype: undefined, name: undefined, aspect: undefined })
+  })
 })
 
 describe('applyRoute', () => {
@@ -196,6 +213,13 @@ describe('applyRoute', () => {
   it('a workspace-less list deep-link canonicalises onto the doctype workbench', () => {
     applyRoute(os, { app: 'crm', doctype: 'CRM Lead' })
     expect(os.state.activeId).toBe('app:crm/fcrm')
+  })
+
+  it('a bare doctype URL (/os/CRM Lead) resolves through parseSegments to the doctype workbench', () => {
+    applyRoute(os, parseSegments(os, ['CRM Lead']))
+    expect(os.state.activeId).toBe('app:crm/fcrm')
+    const w = os.state.windows.find((x) => x.id === os.state.activeId)
+    expect(w.surface).toMatchObject({ view: 'list', doctype: 'CRM Lead' })
   })
 
   it('clears focus for an unknown app with no valid doctype', () => {

@@ -41,6 +41,16 @@ earns a hub. An app is single-workspace only when it genuinely ships one module 
   coordinate on one surface cannot express it.
 - **App menus (ADR-0039) gate on the window's workspace**, not a surface coordinate. `when:
   { workspace: 'selling' }` still works; it reads the window's workspace from Context.
+- **Every entry point canonicalises a doctype onto its workbench.** Opening a doctype with no
+  *explicit* workspace — a bare `/os/<Doctype>` or `/os/<app>/<Doctype>` URL, a desktop icon, a
+  Finder tile, a palette hit, a Dock item — derives the doctype's canonical workspace
+  (`workspaceForDoctype`) so it lands on that `(app, workspace)` window, never the plain app hub.
+  The single seam is `surfaceWorkspace` inside `ensureApp` (`desktop/windows.ts`): an explicit
+  workspace always wins, a doctype-bound surface otherwise derives one, everything else opens plain.
+  This **retires the earlier URL-only asymmetry** (where deep-links canonicalised but Spotlight/Finder
+  opened the plain window) — same doctype, same destination, regardless of how you got there.
+  In-window navigation (a list row → its form, a sidebar click) is unaffected: it keeps the current
+  window's identity via `navFocus`, so a workbench never jumps workspaces mid-session.
 
 ## Workspaces are data, seeded from modules, not ingested from desk
 

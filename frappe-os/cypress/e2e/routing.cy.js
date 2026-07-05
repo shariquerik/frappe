@@ -102,40 +102,42 @@ describe('form Aspects are addressable in the URL (ADR-0018)', () => {
   // is the default (bare path). The record need not exist — the form Surface (and its Aspect
   // rail) render regardless; records load live and the body shows its own not-found state.
   // Needs a live bench behind `yarn dev`, like the specs above.
-  const FORM = '/os/frappe/ToDo/ASPECT-TEST-1'
+  // ToDo lives in frappe's `desk` workspace, so opening the record canonicalises onto that workbench
+  // (ADR-0042): the URL carries the `/desk` segment and the window id is `app:frappe/desk`.
+  const FORM = '/os/frappe/desk/ToDo/ASPECT-TEST-1'
   beforeEach(() => cy.clearLocalStorage())
 
   it('selecting a non-default Aspect updates the URL to the trailing segment', () => {
     cy.visit(FORM)
-    cy.get('[data-win-id="app:frappe"]').should('be.visible')
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1') // Details = bare path
+    cy.get('[data-win-id="app:frappe/desk"]').should('be.visible')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1') // Details = bare path
     cy.get('[data-aspect="activities"]').click()
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/activities')
-    cy.get('[data-win-id="app:frappe"]').contains('Coming soon')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1/activities')
+    cy.get('[data-win-id="app:frappe/desk"]').contains('Coming soon')
   })
 
   it('a reload on a non-default Aspect restores that Aspect', () => {
     cy.visit(FORM + '/activities')
-    cy.get('[data-win-id="app:frappe"]').should('be.visible').contains('Coming soon')
+    cy.get('[data-win-id="app:frappe/desk"]').should('be.visible').contains('Coming soon')
     cy.reload()
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/activities')
-    cy.get('[data-win-id="app:frappe"]').contains('Coming soon')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1/activities')
+    cy.get('[data-win-id="app:frappe/desk"]').contains('Coming soon')
   })
 
   it('browser back/forward steps between Aspects of the same record', () => {
     cy.visit(FORM) // Details
     cy.get('[data-aspect="email"]').click()
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/email')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1/email')
     cy.go('back')
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1') // back to Details
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1') // back to Details
     cy.go('forward')
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1/email')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1/email')
   })
 
   it('an unknown trailing segment produces no phantom Aspect (settles on the bare form)', () => {
     cy.visit(FORM + '/not-an-aspect')
-    cy.get('[data-win-id="app:frappe"]').should('be.visible')
-    cy.location('pathname').should('eq', '/os/frappe/ToDo/ASPECT-TEST-1')
+    cy.get('[data-win-id="app:frappe/desk"]').should('be.visible')
+    cy.location('pathname').should('eq', '/os/frappe/desk/ToDo/ASPECT-TEST-1')
   })
 })
 
@@ -188,12 +190,22 @@ describe('a workspace window is addressable in the URL (ADR-0042)', () => {
     cy.get('[data-win-id="app:erpnext/selling"]').should('exist') // the second is restored alongside
   })
 
-  it('an ordinary form URL is unaffected — the second segment stays the doctype', () => {
-    // /erpnext/Customer/<name>: 'Customer' is not a workspace, so it parses as the doctype and the
-    // plain app window (no workspace segment in the id) is byte-for-byte unchanged.
+  it('a workspace-less form URL canonicalises onto the doctype workbench (ADR-0042)', () => {
+    // /erpnext/Customer/<name>: 'Customer' is not a workspace segment, so it parses as the doctype;
+    // opening it derives Customer's canonical workspace (`selling`), so the URL gains that segment and
+    // the window is the `(erpnext, selling)` workbench — every entry point lands the doctype there.
     cy.visit('/os/erpnext/Customer/CUST-CY-1')
-    cy.location('pathname').should('eq', '/os/erpnext/Customer/CUST-CY-1')
-    cy.get('[data-win-id="app:erpnext"]').should('be.visible')
+    cy.location('pathname').should('eq', '/os/erpnext/selling/Customer/CUST-CY-1')
+    cy.get('[data-win-id="app:erpnext/selling"]').should('be.visible')
+  })
+
+  it('a bare doctype URL (/os/Contact) canonicalises onto the doctype workbench', () => {
+    // No app segment at all: 'Contact' is read as the doctype (parseSegments fallback), resolved under
+    // its own app (frappe) and its canonical workspace (`contacts`) — so a hand-typed /os/<Doctype>
+    // lands on the workbench instead of bouncing back to the bare desktop.
+    cy.visit('/os/Contact')
+    cy.location('pathname').should('eq', '/os/frappe/contacts/Contact')
+    cy.get('[data-win-id="app:frappe/contacts"]').should('be.visible')
   })
 })
 
