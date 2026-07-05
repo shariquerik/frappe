@@ -29,6 +29,7 @@ import { isValidKind, kindNamespace, warnForeignKind, ROWS, CORE_KINDS } from '.
 import { useOS } from '../src/desktop/index'
 import { listSurface } from '../src/surface'
 import { initRegistry, useRegistry, registerScopedContributions } from '../src/registry'
+import { bootWith as osBoot } from './fixtures/os-boot'
 
 describe('eligibility (when, evaluated as data)', () => {
   it('an empty when (global) matches any context', () => {
@@ -423,12 +424,14 @@ describe('invoke builds the Invocation (ADR-0037 contract)', () => {
 describe('contextForOS (derive Context from the active window)', () => {
   const os = useOS()
   beforeEach(() => {
+    initRegistry(osBoot()) // ownership rides boot workspaces now (CRM Lead→crm; AppDef.modules retired)
     os.state.windows = []
     os.state.geo = {}
     os.state.selection = {}
     os.state.focusKind = {}
     os.state.activeId = null
   })
+  afterEach(() => initRegistry(null))
 
   it('a bare desktop yields an empty Context', () => {
     expect(contextForOS(os)).toEqual({})

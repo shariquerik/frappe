@@ -36,8 +36,8 @@ export function applicationItems(): FinderItem[] {
 }
 
 // Doctypes — a flattened cross-app catalog REPROJECTED from each app's boot workspace doctypes
-// (ADR-0042, slice 05: appDoctypes is the deduped union across an app's workspaces, curated
-// AppDef.modules only as the fallback). Each doctype becomes a list reference; the catalog is
+// (ADR-0042: appDoctypes is the deduped union across an app's boot-delivered workspaces). Each
+// doctype becomes a list reference; the catalog is
 // de-duped cross-app (a doctype in several apps appears once) and stably ordered by registry app
 // order. Drag one out → a list Placement.
 export function doctypeItems(): FinderItem[] {

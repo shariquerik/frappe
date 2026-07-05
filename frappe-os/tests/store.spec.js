@@ -3,10 +3,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
 import { initRegistry } from '../src/registry'
+import { bootWith as osBoot } from './fixtures/os-boot'
 
 const os = useOS()
 
 function reset() {
+  // Seed the fixture so doctype→app ownership resolves (CRM Lead→crm) — the retired AppDef.modules
+  // used to supply this offline (ADR-0042). The single-workspace describe below re-seeds its own boot.
+  initRegistry(osBoot())
   os.state.windows = []
   os.state.geo = {}
   os.state.activeId = null

@@ -18,7 +18,9 @@ import type {
 
 function buildIndex(boot?: BootData | null): RegistryIndex {
   const server = boot ? asServerRegistry(boot.registry) : null
-  return indexContributions(server ? overlayServer(server) : seedContributions())
+  // Boot workspace data is the doctype→app ownership + grouping source (ADR-0042), folded into the
+  // index in one pass. Offline (no boot) it's empty, so ownership then comes only from DISPLAY sourceApp.
+  return indexContributions(server ? overlayServer(server) : seedContributions(), boot?.workspaces ?? {})
 }
 
 // ── boot seeding + the synchronous seam ──────────────────────────────────────────
@@ -27,8 +29,8 @@ let index: RegistryIndex | null = null
 // Seed the effective registry once boot resolves (mirrors os-api's initOsApi). After
 // this every useRegistry()/getMeta call is a synchronous index lookup for renderers.
 export function initRegistry(boot?: BootData | null): void {
-  index = buildIndex(boot)
   bootWorkspaces = boot?.workspaces ?? {}
+  index = buildIndex(boot)
 }
 
 // Lazily seed from config when initRegistry hasn't run (unit tests, pre-boot reads),
@@ -110,23 +112,16 @@ export function knownApplet(appId: string, appletId: string): boolean {
 
 // ── workspaces (ADR-0042) ───────────────────────────────────────────────────────
 // The app-level axis (Selling, Stock). A window is identified by `(app, workspace_id)`, and the
-// `workspace_id` is the immutable seeded slug the boot payload delivers (os_core/workspaces.py).
-// The map is stashed at initRegistry; `appWorkspaces`/`workspaceForSlug` read it. An app the server
-// shipped no workspace data for (offline boot, unit tests, an app without module data) falls back to
-// the curated AppDef.modules — the fallback issue 06 retires once every first-party app ships data.
+// `workspace_id` is the immutable seeded slug the boot payload delivers (os_core/workspaces.py). The
+// map is stashed at initRegistry; every workspace accessor reads it. It is the SOLE source now — an
+// app the server shipped no workspace data for (offline boot, unit tests, a data-less app) has no
+// workspaces at all (the curated AppDef.modules fallback is retired). Tests seed it via boot.
 let bootWorkspaces: Record<string, WorkspaceInfo[]> = {}
 
-// Fallback slug for an app with no seeded workspace data: the curated module name, slugified. Lossy
-// (dash-style, collision-prone for multi-word names) — real ids ride the boot data above.
-export const workspaceSlug = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-')
-
-// The workspace ids an app declares — the seeded slugs from boot, or the curated-module slug
-// fallback when the server shipped none. The whitelist a URL parser and window identity validate
-// against.
+// The workspace ids an app declares — the seeded slugs the boot payload delivers. The whitelist a
+// URL parser and window identity validate against; empty for an app that ships no workspace data.
 export function appWorkspaces(appId: string): string[] {
-  const seeded = bootWorkspaces[appId]
-  if (seeded) return seeded.map((w) => w.id)
-  return (ensureIndex().appById[appId]?.modules ?? []).map((m) => workspaceSlug(m.name))
+  return (bootWorkspaces[appId] ?? []).map((w) => w.id)
 }
 
 // The menu-bar menus declared into an app's own bar (ADR-0039 rule 2), in render order. Each
@@ -159,9 +154,7 @@ export function workspaceForSlug(appId: string, slug?: string | null): string | 
 
 // The app's seeded workspaces as full rows (id + label + isDefault), already sequence-ordered by
 // the server. The hub (ADR-0042) reads these to render its workspace rail — it needs the labels the
-// id-only appWorkspaces throws away. Empty for an app the server shipped no data for (the hub then
-// falls back to the curated module rail, retired by issue 06). Never touches the module fallback:
-// the labels only exist in seeded data.
+// id-only appWorkspaces throws away. Empty for an app the server shipped no workspace data for.
 export function orderedWorkspaces(appId: string): WorkspaceInfo[] {
   return bootWorkspaces[appId] ?? []
 }
@@ -173,17 +166,11 @@ export function defaultWorkspace(appId: string): string | undefined {
   return (rows.find((w) => w.isDefault) ?? rows[0])?.id
 }
 
-// The app's workspaces as doctype-bearing groups (ADR-0042, slice 05): the seeded boot rows, or —
-// for an app the server shipped no data for — the curated `AppDef.modules` shaped as workspaces
-// (slug id, module name label, first is default). THE one place `AppDef.modules` is read for
-// doctype grouping; every consumer (Finder, palette, dashboard, settings, workbench sidebar) reads
-// this or the derived accessors below, so the curated config is consulted only as a fallback.
+// The app's workspaces as doctype-bearing groups (ADR-0042): the boot-delivered rows, empty for an
+// app that ships no workspace data. THE single doctype-grouping source every consumer (Finder,
+// palette, dashboard, settings, workbench sidebar) reads through this or the derived accessors below.
 export function workspaceGroups(appId: string): WorkspaceInfo[] {
-  const seeded = bootWorkspaces[appId]
-  if (seeded) return seeded
-  return (ensureIndex().appById[appId]?.modules ?? []).map((m, i) => ({
-    id: workspaceSlug(m.name), label: m.name, isDefault: i === 0, doctypes: m.doctypes,
-  }))
+  return bootWorkspaces[appId] ?? []
 }
 
 // A single workspace's derived doctypes (ADR-0042) — the workbench sidebar's source, now read

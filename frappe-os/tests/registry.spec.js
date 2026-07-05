@@ -3,12 +3,13 @@
 // renderer + os-api read: the ordered app collection, doctype→app ownership, the merged
 // display-config singleton, the views collection, and the per-app dashboard-card
 // collection. Backed by the real curated config (frappe/crm/erpnext) — no mocks.
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   useRegistry, appForDoctype, getMeta, initRegistry, registerDoctype, knownApplet, listApplets, loadApplet,
   appWorkspaces, soleWorkspace, workspaceForSlug, orderedWorkspaces, defaultWorkspace,
   workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes,
 } from '../src/registry'
+import { bootWith as osBoot } from './fixtures/os-boot'
 
 // Slice 2 (action model): the server folds command/action contributions into the registry
 // alongside applets, so an app's manifest-declared Command/Action override (erpnext's New window)
@@ -169,7 +170,12 @@ describe('apps', () => {
 })
 
 describe('appForDoctype', () => {
-  it('resolves a doctype to the first app whose modules list it', () => {
+  // Ownership rides boot workspace data now (ADR-0042) — seed the fixture (crm→[CRM Lead…],
+  // erpnext→[Sales Invoice…], frappe→[User…]); the retired AppDef.modules used to supply it.
+  beforeEach(() => initRegistry(osBoot()))
+  afterEach(() => initRegistry(null))
+
+  it('resolves a doctype to the app whose workspace lists it', () => {
     expect(appForDoctype('CRM Lead')).toBe('crm')
     expect(appForDoctype('Sales Invoice')).toBe('erpnext')
     expect(appForDoctype('User')).toBe('frappe')
@@ -177,6 +183,18 @@ describe('appForDoctype', () => {
 
   it('falls back to frappe for an unowned doctype', () => {
     expect(appForDoctype('No Such Doctype')).toBe('frappe')
+  })
+
+  it('owns an uncurated workspace doctype (no display config) via boot workspace data', () => {
+    // The bug this fixed: a doctype delivered only by a workspace (no DISPLAY contribution) must
+    // still resolve to its app, else its list URL projects under frappe. Build the boot by hand so
+    // 'CRM Call Log' has NO display contribution — ownership can only come from the workspace fold.
+    initRegistry({
+      user: 'a', csrf_token: 't', roles: [], permissions: {},
+      registry: { schemaVersion: 1, contributions: [{ type: 'app', target: '', name: 'crm', sourceApp: 'crm', order: 0, payload: { id: 'crm', name: 'CRM' } }] },
+      workspaces: { crm: [{ id: 'fcrm', label: 'CRM', isDefault: true, doctypes: ['CRM Call Log'] }] },
+    })
+    expect(appForDoctype('CRM Call Log')).toBe('crm')
   })
 })
 
@@ -315,7 +333,6 @@ describe('server-projected registry', () => {
     const crm = useRegistry().app('crm')
     expect(crm?.name).toBe('CRM Live') // server identity wins
     expect(crm?.hex).toBe('#0a9a8d') // curated branding overlaid
-    expect((crm?.modules || []).length).toBeGreaterThan(0)
   })
 
   it('injects curated cards filtered to readable doctypes', () => {
@@ -340,7 +357,7 @@ describe('server-projected registry', () => {
   it('falls back to the full config seed for a legacy bare-array registry', () => {
     initRegistry({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {} })
     expect(useRegistry().apps().length).toBe(3)
-    expect(appForDoctype('Sales Invoice')).toBe('erpnext')
+    expect(getMeta('CRM Lead')).not.toBeNull() // the config display seed still loads offline
   })
 
   it('treats a non-Registry object as offline — full seed', () => {
@@ -382,8 +399,8 @@ describe('registerDoctype (on-demand resolution)', () => {
   })
 })
 
-// Workspaces (ADR-0042): the seeded slugs delivered by boot are the app's workspace ids; when the
-// server ships none, the curated AppDef.modules slugs stand in (the fallback issue 06 retires).
+// Workspaces (ADR-0042): the seeded slugs delivered by boot are the app's workspace ids — the sole
+// source now that AppDef.modules is retired (an app with no boot data has no workspaces).
 // soleWorkspace drives the single-workspace hub-skip.
 describe('workspaces (ADR-0042)', () => {
   afterEach(() => initRegistry(null))
@@ -396,9 +413,9 @@ describe('workspaces (ADR-0042)', () => {
     expect(appWorkspaces('erpnext')).toEqual(['selling', 'stock'])
   })
 
-  it('falls back to the curated module slugs when the server ships no workspace data', () => {
-    initRegistry(null) // offline seed → AppDef.modules fallback
-    expect(appWorkspaces('crm')).toEqual(['sales', 'activity'])
+  it('appWorkspaces is empty for an app the server shipped no workspace data for', () => {
+    initRegistry(bootWith({}))
+    expect(appWorkspaces('crm')).toEqual([])
   })
 
   it('soleWorkspace resolves a single-workspace app to its one slug', () => {
@@ -450,8 +467,7 @@ describe('workspaces (ADR-0042)', () => {
     expect(defaultWorkspace('ghost')).toBeUndefined()
   })
 
-  // Boot delivers each workspace's doctypes (slice 05), the sync source that retires AppDef.modules.
-  // The store is the one place that falls back to curated modules; every consumer reads these.
+  // Boot delivers each workspace's doctypes (ADR-0042), the sync source every consumer reads.
   const sell = { id: 'selling', label: 'Selling', isDefault: false, doctypes: ['Quotation', 'Sales Order'] }
   const stock = { id: 'stock', label: 'Stock', isDefault: true, doctypes: ['Item', 'Sales Order'] }
 
@@ -460,11 +476,9 @@ describe('workspaces (ADR-0042)', () => {
     expect(workspaceGroups('erpnext')).toEqual([sell, stock])
   })
 
-  it('workspaceGroups falls back to curated modules (slug id, name label) when no boot data', () => {
-    initRegistry(null) // offline seed → AppDef.modules fallback
-    const groups = workspaceGroups('crm')
-    expect(groups.map((g) => g.id)).toEqual(['sales', 'activity'])
-    groups.forEach((g) => expect(Array.isArray(g.doctypes)).toBe(true))
+  it('workspaceGroups is empty for an app the server shipped no workspace data for', () => {
+    initRegistry(bootWith({}))
+    expect(workspaceGroups('crm')).toEqual([])
   })
 
   it('workspaceDoctypes returns a single workspace doctype set; empty for an unknown workspace', () => {

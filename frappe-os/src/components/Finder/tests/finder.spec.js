@@ -12,6 +12,7 @@ import { serialize } from '@/desktop/persistence'
 import { initRegistry } from '@/registry'
 import { initPlacements, usePlacements, applyLocalOverride } from '@/placements'
 import { initRecents } from '@/recents'
+import { bootWith } from '../../../../tests/fixtures/os-boot'
 import { applicationItems, doctypeItems, favoritePlacements, itemsFor } from '../locations'
 
 const os = useOS()
@@ -22,7 +23,7 @@ function reset() {
   os.state.activeId = null
   os.state.split = null
   localStorage.clear()
-  initRegistry(null) // config seed → apps frappe/crm/erpnext with modules + doctypes
+  initRegistry(bootWith()) // fixture seeds apps + workspace doctypes (ADR-0042; AppDef.modules retired)
   initPlacements(null)
   initRecents(null)
 }
@@ -84,17 +85,17 @@ describe('Applications Location', () => {
   })
 })
 
-describe('Doctypes Location — reprojects the registry module→doctype catalog', () => {
-  it('flattens every app module doctype into a de-duped list of list references', () => {
+describe('Doctypes Location — reprojects the boot workspace doctype catalog', () => {
+  it('flattens every workspace doctype into a de-duped list of list references', () => {
     const items = doctypeItems()
     const doctypes = items.map((i) => i.ref.doctype)
-    // Drawn straight from the seed modules (config/apps.ts), cross-app and flattened.
-    expect(doctypes).toContain('ToDo') // frappe/Core
-    expect(doctypes).toContain('CRM Lead') // crm/Sales
-    expect(doctypes).toContain('Sales Invoice') // erpnext/Selling
+    // Drawn from boot workspace data (ADR-0042), cross-app and flattened.
+    expect(doctypes).toContain('ToDo') // frappe/core
+    expect(doctypes).toContain('CRM Lead') // crm/fcrm
+    expect(doctypes).toContain('Sales Invoice') // erpnext/selling
     // Every tile is a list reference (drag one out → a list Placement).
     expect(items.every((i) => i.ref.view === 'list')).toBe(true)
-    // De-duped: no doctype appears twice even if several modules list it.
+    // De-duped: no doctype appears twice even if several workspaces list it.
     expect(new Set(doctypes).size).toBe(doctypes.length)
   })
 })

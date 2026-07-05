@@ -1,7 +1,7 @@
-// Curated app registry for the installed apps (frappe, erpnext, crm). Display +
-// structure only: branding, module→doctype grouping, and dashboard card
-// DEFINITIONS. Card values are NOT stored here — they come live from card_value
-// (count, or sum of `fieldname`).
+// Curated app registry for the installed apps (frappe, erpnext, crm). Display only:
+// branding and dashboard card DEFINITIONS. Card values are NOT stored here — they come
+// live from card_value (count, or sum of `fieldname`). Doctype→app ownership and workspace
+// grouping are NOT here either — they ride boot workspace data (ADR-0042).
 //
 // On a card: { label, sub, doctype, filters?, fieldname? }. `filters`/`fieldname`
 // marked `verify` are curated guesses to reconcile against live meta in Phase 4;
@@ -28,10 +28,6 @@ export const APP: Record<string, AppDef> = {
       { label: 'Files', sub: 'uploaded', doctype: 'File' },
       { label: 'Roles', sub: 'across apps', doctype: 'Role' },
     ],
-    modules: [
-      { name: 'Core', doctypes: ['User', 'Role', 'ToDo', 'File', 'Notification Log', 'Comment'] },
-      { name: 'Website', doctypes: ['Web Page', 'Blog Post'] },
-    ],
   },
   crm: {
     id: 'crm',
@@ -48,10 +44,6 @@ export const APP: Record<string, AppDef> = {
       { label: 'Deals', sub: 'in progress', doctype: 'CRM Deal' },
       { label: 'Tasks', sub: 'to follow up', doctype: 'CRM Task' },
     ],
-    modules: [
-      { name: 'Sales', doctypes: ['CRM Lead', 'CRM Deal', 'Contact', 'CRM Organization'] },
-      { name: 'Activity', doctypes: ['CRM Task', 'Note'] },
-    ],
   },
   erpnext: {
     id: 'erpnext',
@@ -67,11 +59,6 @@ export const APP: Record<string, AppDef> = {
       { label: 'Open orders', sub: 'to fulfil', doctype: 'Sales Order' },
       { label: 'Items', sub: 'in catalog', doctype: 'Item' },
       { label: 'Overdue', sub: 'past due date', doctype: 'Sales Invoice', filters: { status: 'Overdue' } },
-    ],
-    modules: [
-      { name: 'Selling', doctypes: ['Sales Invoice', 'Sales Order', 'Quotation', 'Customer'] },
-      { name: 'Stock', doctypes: ['Item', 'Warehouse', 'Stock Entry', 'Delivery Note'] },
-      { name: 'Accounts', doctypes: ['Payment Entry', 'Journal Entry'] },
     ],
   },
 }

@@ -86,8 +86,9 @@ describe('sidebarKind for an applet (ADR-0026 nav capability)', () => {
 describe('initialSurface — the default-surface resolver', () => {
   afterEach(() => initRegistry(null))
 
-  // Seed a server registry of `app` identities + optional `default-surface` references.
-  const boot = (apps, defaults = []) => ({
+  // Seed a server registry of `app` identities + optional `default-surface` references, plus the
+  // per-app workspace data that now carries doctype→app ownership (ADR-0042; AppDef.modules retired).
+  const boot = (apps, defaults = [], workspaces = {}) => ({
     user: 'a', csrf_token: 't', roles: [], permissions: {},
     registry: {
       schemaVersion: 1,
@@ -98,6 +99,7 @@ describe('initialSurface — the default-surface resolver', () => {
         })),
       ],
     },
+    workspaces,
   })
 
   it('rung 1: a declared own-app applet reference opens that applet', () => {
@@ -111,9 +113,10 @@ describe('initialSurface — the default-surface resolver', () => {
   })
 
   it('rung 1: a declared own-app doctype-list reference opens that list', () => {
-    // demo owns ToDo (via its modules), so the list surface is own-app and resolves ungated.
-    initRegistry(boot([{ id: 'demo', name: 'Demo', hasDashboard: false, modules: [{ name: 'Demo', doctypes: ['ToDo'] }] }],
-      [{ app: 'demo', ref: { doctype: 'ToDo', view: 'list' } }]))
+    // demo owns ToDo (via its workspace), so the list surface is own-app and resolves ungated.
+    initRegistry(boot([{ id: 'demo', name: 'Demo', hasDashboard: false }],
+      [{ app: 'demo', ref: { doctype: 'ToDo', view: 'list' } }],
+      { demo: [{ id: 'demo', label: 'Demo', isDefault: true, doctypes: ['ToDo'] }] }))
     expect(initialSurface('demo')).toMatchObject({ kind: 'builtin', view: 'list', doctype: 'ToDo', appId: 'demo' })
   })
 
@@ -138,7 +141,7 @@ describe('initialSurface — cross-app references (slice 07)', () => {
 
   // A server registry where each named app is visible (ships an `app` contribution); `applets`
   // are projected applet contributions, and `defaults` are layered default-surface references.
-  const boot = (apps, applets = [], defaults = []) => ({
+  const boot = (apps, applets = [], defaults = [], workspaces = {}) => ({
     user: 'a', csrf_token: 't', roles: [], permissions: {},
     registry: {
       schemaVersion: 1,
@@ -148,6 +151,7 @@ describe('initialSurface — cross-app references (slice 07)', () => {
         ...defaults.map((d, i) => ({ type: 'default-surface', target: d.app, name: 'default', sourceApp: d.app, payload: d.ref, order: i })),
       ],
     },
+    workspaces,
   })
   const ravenChat = { appletId: 'chat', appId: 'raven', assetUrl: '/chat.js', label: 'Chat', kind: 'framed' }
 
@@ -172,9 +176,10 @@ describe('initialSurface — cross-app references (slice 07)', () => {
 
   it('a cross-app doctype-list ref resolves to a Surface owned by the doctype’s app', () => {
     initRegistry(boot(
-      [{ id: 'demo', name: 'Demo', hasDashboard: false }, { id: 'crm', name: 'CRM', modules: [{ name: 'CRM', doctypes: ['CRM Lead'] }] }],
+      [{ id: 'demo', name: 'Demo', hasDashboard: false }, { id: 'crm', name: 'CRM' }],
       [],
       [{ app: 'demo', ref: { doctype: 'CRM Lead', view: 'list' } }],
+      { crm: [{ id: 'fcrm', label: 'CRM', isDefault: true, doctypes: ['CRM Lead'] }] },
     ))
     // The doctype names its owning app, so the list surface is owned by crm even though demo opened.
     expect(initialSurface('demo')).toMatchObject({ kind: 'builtin', view: 'list', doctype: 'CRM Lead', appId: 'crm' })

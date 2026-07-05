@@ -15,14 +15,14 @@ export const ACME = 'acme'
 export const ACME_REPORTS = 'menubar:app:acme:reports'
 export const ACME_TOOLS = 'menubar:app:acme:tools'
 
-// Two doctypes Acme owns (its module lists them, so appForDoctype resolves them to Acme and a form
+// Two doctypes Acme owns (its workspace lists them, so appForDoctype resolves them to Acme and a form
 // context carries activeApp:'acme'). TASK gets a live-meta slice; NOTE never does — the pair proves
 // scope carry-forward (a doctype override on TASK vs Acme's broad app-scoped default on NOTE).
 export const ACME_TASK = 'Acme Task'
 export const ACME_NOTE = 'Acme Note'
 
-// Acme's one module → its one workspace (slugified name, ADR-0040), the coordinate a workspace-gated
-// placement gates on.
+// Acme's one module → its one workspace (ADR-0042): the boot workspace carries the doctype set (the
+// ownership source) and its id is the coordinate a workspace-gated placement gates on.
 export const ACME_MODULE = 'Selling'
 export const ACME_WORKSPACE = 'selling'
 
@@ -33,7 +33,7 @@ export const RUN_NOOP = 'acme-noop'
 export const RUN_CLOSE = 'acme-close'
 
 // ── contribution factories (the manifest shapes, ADR-0007 identity tuple) ──────────────────
-const app = (id, name, modules = []) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name, modules } })
+const app = (id, name) => ({ type: 'app', target: '', name: id, sourceApp: id, payload: { id, name } })
 const command = (id, title, handler, sourceApp = ACME) => ({ type: 'command', target: '', name: id, sourceApp, payload: { id, sourceApp, title, handler } })
 const action = (payload) => ({ type: 'action', target: payload.region, name: payload.command, sourceApp: payload.sourceApp, payload })
 const menu = (id, title, target, order) => ({ type: 'app-menu', target, name: id, sourceApp: ACME, payload: { id, title, order } })
@@ -80,9 +80,15 @@ const menus = [
 export function fixtureContributions() {
   return [
     app('frappe', 'Frappe'),
-    app('acme', 'Acme', [{ name: ACME_MODULE, doctypes: [ACME_TASK, ACME_NOTE] }]),
+    app('acme', 'Acme'),
     ...commands, ...actions, ...menus,
   ]
+}
+
+// Acme's boot workspace (ADR-0042): the one module's doctype set, the source that makes
+// appForDoctype resolve ACME_TASK/ACME_NOTE to Acme (a form then carries activeApp:'acme').
+export function fixtureWorkspaces() {
+  return { [ACME]: [{ id: ACME_WORKSPACE, label: ACME_MODULE, isDefault: true, doctypes: [ACME_TASK, ACME_NOTE] }] }
 }
 
 // A boot payload seeded from the base set (⊕ any extra contributions a case composes in, e.g. the
@@ -91,6 +97,7 @@ export function fixtureBoot(extra = []) {
   return {
     user: 'acme-user', csrf_token: 't', roles: [], permissions: {},
     registry: { schemaVersion: 1, contributions: [...fixtureContributions(), ...extra] },
+    workspaces: fixtureWorkspaces(),
   }
 }
 

@@ -14,13 +14,12 @@ import { APP_T, DISPLAY, VIEW, CARD } from './extension-points'
 import type { AppDef, Contribution, DoctypeMeta, OsRegistryData } from '@/types'
 
 // ── seed: config/* → the App-default Contribution[] (§2 shapes) ──────────────────
-// First app whose modules list a doctype owns it (registry order); else frappe.
-function seedOwner(doctype: string): string {
-  for (const id of APP_ORDER) {
-    if ((APP[id].modules || []).some((m) => m.doctypes.includes(doctype))) return id
-  }
-  return 'frappe'
-}
+// The offline seed carries no doctype→app ownership: config/* is decoration (icons/colors), not the
+// source of "who owns what". Curated DISPLAY/view contributions are attributed to `frappe`; real
+// ownership rides boot workspace data (ADR-0042), and the server path carries `_app_of` per
+// contribution. So an offline seed (unit tests, failed boot) owns every doctype under frappe until a
+// test seeds workspaces.
+const SEED_OWNER = 'frappe'
 
 function viewContribution(doctype: string, name: string, label: string, app: string, order: number): Contribution {
   return { type: VIEW, target: doctype, name, sourceApp: app, payload: { view: name, label, builtin: true }, order }
@@ -41,10 +40,9 @@ function cardContributions(out: Contribution[]): void {
 
 function doctypeContributions(out: Contribution[]): void {
   for (const doctype of Object.keys(doctypes)) {
-    const app = seedOwner(doctype)
-    out.push({ type: DISPLAY, target: doctype, name: 'display', sourceApp: app, payload: doctypes[doctype] })
-    out.push(viewContribution(doctype, 'list', 'List', app, 0))
-    out.push(viewContribution(doctype, 'form', 'Form', app, 1))
+    out.push({ type: DISPLAY, target: doctype, name: 'display', sourceApp: SEED_OWNER, payload: doctypes[doctype] })
+    out.push(viewContribution(doctype, 'list', 'List', SEED_OWNER, 0))
+    out.push(viewContribution(doctype, 'form', 'Form', SEED_OWNER, 1))
   }
 }
 

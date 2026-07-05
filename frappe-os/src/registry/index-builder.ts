@@ -6,7 +6,7 @@ import { APP_T, DISPLAY, VIEW, CARD, APPLET, COMMAND, ACTION, DEFAULT_SURFACE, M
 import { FIRST_PARTY } from './applets'
 import type { AppletEntry, AppletPayload } from './applets'
 import type {
-  Action, AppDef, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef,
+  Action, AppDef, Card, Command, Contribution, DoctypeMeta, DoctypeViewPayload, MenuDef, SurfaceRef, WorkspaceInfo,
 } from '@/types'
 
 export interface RegistryIndex {
@@ -36,10 +36,17 @@ export function rebuildScopedViews(ix: RegistryIndex): void {
   ix.commandsView = [...ix.commands, ...Object.values(ix.liveCommands).flat()]
 }
 
-function ownerMap(apps: AppDef[]): Record<string, string> {
-  const owner: Record<string, string> = {}
-  for (const a of apps) for (const m of a.modules || []) for (const dt of m.doctypes) owner[dt] ??= a.id
-  return owner
+// Boot workspace data is the authoritative ownership source (ADR-0042): the server delivers each
+// app's workspaces with their doctype sets, so a doctype listed under an app's workspace is owned by
+// that app — even when it ships no curated display config. Fold it into the owner index with a
+// first-wins `??=`, so a server DISPLAY `sourceApp` (`_app_of`, folded earlier in addToIndex) always
+// wins and workspace data only fills the uncurated gaps. This is the sole doctype→app ownership
+// source now that the curated AppDef.modules seed is retired.
+function foldWorkspaceOwnership(ix: RegistryIndex, workspaces: Record<string, WorkspaceInfo[]>): void {
+  for (const [appId, groups] of Object.entries(workspaces)) {
+    if (!ix.appById[appId]) continue
+    for (const group of groups) for (const doctype of group.doctypes ?? []) ix.owner[doctype] ??= appId
+  }
 }
 
 // Fold one contribution into the index: singletons shallow patch-merge (ADR-0007, so a
@@ -88,12 +95,12 @@ export function addToIndex(ix: RegistryIndex, c: Contribution): void {
   }
 }
 
-export function indexContributions(contribs: Contribution[]): RegistryIndex {
+export function indexContributions(contribs: Contribution[], workspaces: Record<string, WorkspaceInfo[]> = {}): RegistryIndex {
   const sorted = [...contribs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   const apps = sorted.filter((c) => c.type === APP_T).map((c) => c.payload as AppDef)
   const ix: RegistryIndex = {
     apps, appById: Object.fromEntries(apps.map((a) => [a.id, a])),
-    display: {}, views: {}, cards: {}, menus: {}, owner: ownerMap(apps),
+    display: {}, views: {}, cards: {}, menus: {}, owner: {}, // owner filled from DISPLAY sourceApp then workspace data
     applets: { ...FIRST_PARTY }, // bundled first-party; server applet contributions fold in below
     commands: [], actions: [], // first-party File Commands/Actions live in @/actions; these fold the server's
     liveActions: {}, liveCommands: {}, // per-doctype live-meta slices (ADR-0032), filled by registerScopedContributions
@@ -102,6 +109,9 @@ export function indexContributions(contribs: Contribution[]): RegistryIndex {
     appKinds: {}, // sourceApp → contributed kinds, filled per contribution by addToIndex
   }
   for (const c of sorted) addToIndex(ix, c)
+  // Ownership: a curated/server DISPLAY sourceApp (folded above) wins; boot workspace data fills the
+  // rest (ADR-0042). This is the single doctype→app source — the curated AppDef.modules seed is gone.
+  foldWorkspaceOwnership(ix, workspaces)
   ix.actionsView = ix.actions
   ix.commandsView = ix.commands
   return ix

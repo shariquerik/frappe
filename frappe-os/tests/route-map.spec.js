@@ -1,11 +1,16 @@
 // route-map projection: focus -> URL path, and route params -> store action.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useOS } from '../src/desktop/index'
+import { initRegistry } from '../src/registry'
 import { pathForFocus, applyRoute, focusSig, parseSegments } from '../src/routing/route-map'
+import { bootWith } from './fixtures/os-boot'
 
 const os = useOS()
 
 beforeEach(() => {
+  // Ownership + workspaces now ride boot data (ADR-0042) — seed the fixture so CRM Lead→crm,
+  // ToDo→frappe, and the `fcrm` workspace resolve (the retired AppDef.modules used to supply these).
+  initRegistry(bootWith())
   os.state.windows = []
   os.state.geo = {}
   os.state.activeId = null
@@ -109,18 +114,18 @@ describe('pathForFocus', () => {
 
   // ── workspace window (ADR-0042): identity projects a segment between app and doctype ──
   it('a workspace-scoped list projects to /<app>/<workspace>/<doctype>', () => {
-    os.openListGlobal('CRM Lead', undefined, 'sales')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead', query: {} })
+    os.openListGlobal('CRM Lead', undefined, 'fcrm')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead', query: {} })
   })
 
   it('a workspace-scoped form inserts the workspace before the doctype', () => {
-    os.openRecordGlobal('CRM Lead', 'L-1', undefined, undefined, 'sales')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead/L-1', query: {} })
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, undefined, 'fcrm')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1', query: {} })
   })
 
   it('the workspace segment composes with a trailing Aspect', () => {
-    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'sales')
-    expect(pathForFocus(os)).toEqual({ path: '/crm/sales/CRM%20Lead/L-1/activities', query: {} })
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'fcrm')
+    expect(pathForFocus(os)).toEqual({ path: '/crm/fcrm/CRM%20Lead/L-1/activities', query: {} })
   })
 
   it('a workspace Overview projects to /<app>/<workspace> (the scoped dashboard)', () => {
@@ -135,8 +140,8 @@ describe('parseSegments (raw path → coordinate, workspace vs doctype)', () => 
   })
 
   it('reads a known workspace segment between app and doctype', () => {
-    expect(parseSegments(os, ['crm', 'sales', 'CRM Lead'])).toEqual({
-      app: 'crm', workspace: 'sales', doctype: 'CRM Lead', name: undefined, aspect: undefined,
+    expect(parseSegments(os, ['crm', 'fcrm', 'CRM Lead'])).toEqual({
+      app: 'crm', workspace: 'fcrm', doctype: 'CRM Lead', name: undefined, aspect: undefined,
     })
   })
 
@@ -185,12 +190,12 @@ describe('applyRoute', () => {
     // The doctype derives its app (crm) AND — with no workspace in the URL — canonicalises to its
     // own workspace (ADR-0042), so the deep-link lands on the workbench window, not the hub.
     applyRoute(os, { app: 'frappe', doctype: 'CRM Lead' })
-    expect(os.state.activeId).toBe('app:crm/sales')
+    expect(os.state.activeId).toBe('app:crm/fcrm')
   })
 
   it('a workspace-less list deep-link canonicalises onto the doctype workbench', () => {
     applyRoute(os, { app: 'crm', doctype: 'CRM Lead' })
-    expect(os.state.activeId).toBe('app:crm/sales')
+    expect(os.state.activeId).toBe('app:crm/fcrm')
   })
 
   it('clears focus for an unknown app with no valid doctype', () => {
@@ -283,9 +288,9 @@ describe('applyRoute', () => {
     os.openApp('crm') // canonical already open
     applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-7', instance: 2 })
     // The workspace-less URL canonicalises to the doctype's workspace, so the instance rides the
-    // `(crm, sales)` workbench identity: `app:crm/sales#2`.
-    expect(os.state.activeId).toBe('app:crm/sales#2')
-    const w = os.state.windows.find((x) => x.id === 'app:crm/sales#2')
+    // `(crm, sales)` workbench identity: `app:crm/fcrm#2`.
+    expect(os.state.activeId).toBe('app:crm/fcrm#2')
+    const w = os.state.windows.find((x) => x.id === 'app:crm/fcrm#2')
     expect(w.surface).toMatchObject({ view: 'form', doctype: 'CRM Lead', recordName: 'L-7' })
   })
 
@@ -316,16 +321,16 @@ describe('applyRoute', () => {
 
   // ── workspace as window identity (ADR-0042): reload restores the (app, workspace) window ──
   it('a workspace-scoped list opens in the (app, workspace) window; the surface is plain content', () => {
-    applyRoute(os, { app: 'crm', workspace: 'sales', doctype: 'CRM Lead' })
-    expect(os.state.activeId).toBe('app:crm/sales')
+    applyRoute(os, { app: 'crm', workspace: 'fcrm', doctype: 'CRM Lead' })
+    expect(os.state.activeId).toBe('app:crm/fcrm')
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface).toMatchObject({ view: 'list', doctype: 'CRM Lead' })
     expect(w.surface.workspace).toBeUndefined() // workspace is identity (the id), never on the surface
   })
 
   it('a workspace-scoped form opens the record in the (app, workspace) window', () => {
-    applyRoute(os, { app: 'crm', workspace: 'sales', doctype: 'CRM Lead', name: 'L-1' })
-    expect(os.state.activeId).toBe('app:crm/sales')
+    applyRoute(os, { app: 'crm', workspace: 'fcrm', doctype: 'CRM Lead', name: 'L-1' })
+    expect(os.state.activeId).toBe('app:crm/fcrm')
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1' })
   })
@@ -345,14 +350,14 @@ describe('applyRoute', () => {
   })
 
   it('round-trips identity: pathForFocus → parseSegments → applyRoute restores the same window', () => {
-    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'sales')
-    expect(os.state.activeId).toBe('app:crm/sales')
-    const { path } = pathForFocus(os) // '/crm/sales/CRM%20Lead/L-1/activities'
+    os.openRecordGlobal('CRM Lead', 'L-1', undefined, 'activities', 'fcrm')
+    expect(os.state.activeId).toBe('app:crm/fcrm')
+    const { path } = pathForFocus(os) // '/crm/fcrm/CRM%20Lead/L-1/activities'
     const segments = path.split('/').filter(Boolean).map(decodeURIComponent)
     os.state.windows = []
     os.state.activeId = null
     applyRoute(os, parseSegments(os, segments))
-    expect(os.state.activeId).toBe('app:crm/sales') // same (app, workspace) window restored
+    expect(os.state.activeId).toBe('app:crm/fcrm') // same (app, workspace) window restored
     const w = os.state.windows.find((x) => x.id === os.state.activeId)
     expect(w.surface).toMatchObject({ view: 'form', recordName: 'L-1', aspect: 'activities' })
   })

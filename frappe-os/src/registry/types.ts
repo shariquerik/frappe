@@ -98,9 +98,8 @@ export interface BootData {
   recents?: unknown[]
   // The per-app visible workspace lists (ADR-0042), keyed by app id, each ordered by sequence with
   // hidden rows excluded — the client's source of truth for window identity `(app, workspace)`, the
-  // URL workspace segment, and `when: { workspace }` gates. Tolerant like `placements` — an older
-  // server omits it, so workspace resolution falls back to the curated AppDef.modules (a fallback
-  // retired once every first-party app ships workspace data).
+  // URL workspace segment, `when: { workspace }` gates, AND doctype→app ownership. Tolerant like
+  // `placements` — an older server omits it, so an app then has no workspaces (no curated fallback).
   workspaces?: Record<string, WorkspaceInfo[]>
   // The server-resolved wallpaper catalog (ADR-0036): global defaults ∪ the caller's own uploads,
   // and their chosen wallpaper name (`wallpaper`, the selection roams per-user in frappe.defaults).

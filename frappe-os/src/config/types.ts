@@ -16,12 +16,6 @@ export interface Card {
   fieldname?: string
 }
 
-// A module groups doctypes under an app; the first module to list a doctype owns it.
-export interface AppModule {
-  name: string
-  doctypes: string[]
-}
-
 export interface AppDef {
   id: string
   name: string
@@ -32,7 +26,6 @@ export interface AppDef {
   dashTitle: string
   recentDoctype: string
   cards: Card[]
-  modules: AppModule[]
 }
 
 // A desktop wallpaper option (ADR-0036). `id` is the OS Wallpaper row name the selection stores;

@@ -20,6 +20,7 @@ import { WINDOW_REGION } from '../src/actions/regions'
 import { initPlacements, usePlacements } from '../src/placements'
 import { listSurface, dashboardSurface, appletSurface, formSurface, appSettingsSurface } from '../src/surface'
 import { initRegistry } from '../src/registry'
+import { bootWith } from './fixtures/os-boot'
 import { useOS } from '../src/desktop/index'
 
 const os = useOS()
@@ -31,7 +32,7 @@ beforeEach(() => {
   os.state.activeId = null
   os.state.paletteOpen = false
   initPlacements(boot([]))
-  initRegistry(null) // config seed → apps frappe/crm present
+  initRegistry(bootWith()) // fixture seeds apps + ownership (CRM Lead→crm) — AppDef.modules retired
   callPost.mockClear()
 })
 afterEach(() => { initPlacements(null); initRegistry(null) })
