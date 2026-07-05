@@ -26,17 +26,23 @@ import {
   ContextMenuPortal,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuSeparator,
 } from 'reka-ui'
 
 defineProps<{ options: ContextMenuOption[] }>()
 
-// A destructive item inks red and highlights on a red wash; everything else is neutral gray —
-// mirroring frappe-ui's own menu themes so the two menu families read the same.
-function itemInk(option: ContextMenuOption): string {
+// The item's text + highlight wash, mirroring frappe-ui's Menu (getMenuTextColor /
+// getMenuBackgroundColor) so this menu is pixel-identical to the dock and menu-bar dropdowns —
+// gray by default, red for a destructive item.
+function itemClass(option: ContextMenuOption): string {
   return option.theme === 'red'
-    ? 'text-ink-red-6 data-[highlighted]:bg-surface-red-3'
-    : 'text-ink-gray-8 data-[highlighted]:bg-surface-gray-2'
+    ? 'text-ink-red-6 focus:bg-surface-red-3 data-[highlighted]:bg-surface-red-3'
+    : 'text-ink-gray-7 focus:bg-surface-gray-2 data-[highlighted]:bg-surface-alpha-gray-2'
+}
+
+// The leading icon's ink — one notch softer than the label, red on a destructive item (matches
+// frappe-ui's getMenuIconColor).
+function iconClass(option: ContextMenuOption): string {
+  return option.theme === 'red' ? 'text-ink-red-6' : 'text-ink-gray-6'
 }
 </script>
 
@@ -47,21 +53,23 @@ function itemInk(option: ContextMenuOption): string {
     </ContextMenuTrigger>
     <ContextMenuPortal to="#os-popover-layer">
       <ContextMenuContent
-        class="z-[95001] flex min-w-[180px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)] focus:outline-none"
+        class="min-w-40 divide-y divide-outline-elevation-2 rounded-lg bg-surface-elevation-2 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
-        <template v-for="(option, i) in options" :key="i">
-          <ContextMenuSeparator v-if="option.separator" class="my-[5px] h-px bg-outline-gray-2" />
-          <ContextMenuItem
-            v-else
-            :disabled="option.disabled"
-            class="flex cursor-pointer items-center gap-2 rounded-lg px-[10px] py-[7px] text-[12.5px] outline-none data-[disabled]:cursor-default data-[disabled]:opacity-40"
-            :class="itemInk(option)"
-            @select="option.onClick?.()"
-          >
-            <span v-if="option.icon" :class="[option.icon, 'size-[15px]']"></span>
-            {{ option.label }}
-          </ContextMenuItem>
-        </template>
+        <div class="p-1.5">
+          <template v-for="(option, i) in options" :key="i">
+            <div v-if="option.separator" class="-mx-1.5 my-1.5 h-px bg-outline-elevation-2"></div>
+            <ContextMenuItem
+              v-else
+              :disabled="option.disabled"
+              class="flex min-h-7 w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-base outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:text-ink-gray-4"
+              :class="itemClass(option)"
+              @select="option.onClick?.()"
+            >
+              <span v-if="option.icon" :class="[option.icon, 'size-4 shrink-0', iconClass(option)]"></span>
+              <span class="min-w-0 flex-1">{{ option.label }}</span>
+            </ContextMenuItem>
+          </template>
+        </div>
       </ContextMenuContent>
     </ContextMenuPortal>
   </ContextMenuRoot>
