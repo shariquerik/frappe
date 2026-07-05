@@ -182,6 +182,11 @@ function startRenameSelected(target: EventTarget | null): boolean {
 const desktopLabelStyle =
 	"font-size:12px;line-height:1.3;text-align:center;font-weight:500;color:#fff;" +
 	"text-shadow:0 0 3px rgba(0,0,0,0.55),0 1px 4px rgba(0,0,0,0.5);";
+// A tile label caps at two lines and ellipsizes the overflow (long doctype/record names never push
+// the grid around). Applied only to the STATIC label span — the rename input keeps its single-line,
+// content-sized shape (it appends its own sizing to desktopLabelStyle below, not this clamp).
+const desktopLabelClamp =
+	"display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;word-break:break-word;";
 // Rename edits in place: the input keeps the label's exact white-halo typography so the text never
 // jumps to a dark-on-white box. A soft dark pill (same visual language as the halo) plus a white
 // caret are the only "you're editing" cues — legible over any wallpaper, no harsh mode switch.
@@ -303,7 +308,7 @@ onBeforeUnmount(() => {
 					@keydown.esc.prevent="cancelRename()"
 					@blur="commitRename(di)"
 				/>
-				<span v-else data-icon-label :style="desktopLabelStyle">{{ di.label }}</span>
+				<span v-else data-icon-label :style="desktopLabelStyle + desktopLabelClamp">{{ di.label }}</span>
 			</div>
 		</OSContextMenu>
 

@@ -64,7 +64,7 @@ const keyOf = placementKey
         <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
           <span :class="item.icon" class="size-[21px]"></span>
         </span>
-        <span class="max-w-[88px] truncate text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
+        <span class="line-clamp-2 max-w-[88px] break-words text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
       </button>
     </div>
 
