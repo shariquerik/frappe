@@ -132,12 +132,12 @@ function onIconDblClick(di: DesktopIcon): void {
 // back to the reference-derived label. Escape cancels. Only one icon renames at a time.
 const renamingKey = ref<string | null>(null);
 const renameDraft = ref("");
-const renameInput = ref<HTMLInputElement | null>(null);
-// The rename input lives inside the icon v-for, where a STRING ref collects an array — autofocus
-// would miss it, and an unfocused input never fires its Enter/Esc/blur handlers, trapping edit mode.
-// A function ref binds the single mounted input (only one matches renamingKey) directly.
+const renameInput = ref<HTMLTextAreaElement | null>(null);
+// The rename editor lives inside the icon v-for, where a STRING ref collects an array — autofocus
+// would miss it, and an unfocused field never fires its Enter/Esc/blur handlers, trapping edit mode.
+// A function ref binds the single mounted textarea (only one matches renamingKey) directly.
 function setRenameInput(el: Element | ComponentPublicInstance | null): void {
-	renameInput.value = el as HTMLInputElement | null;
+	renameInput.value = el as HTMLTextAreaElement | null;
 }
 async function startRename(di: DesktopIcon): Promise<void> {
 	renamingKey.value = di.key;
@@ -187,14 +187,17 @@ const desktopLabelStyle =
 // content-sized shape (it appends its own sizing to desktopLabelStyle below, not this clamp).
 const desktopLabelClamp =
 	"display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;word-break:break-word;";
-// Rename edits in place: the input keeps the label's exact white-halo typography so the text never
+// Rename edits in place: the editor keeps the label's exact white-halo typography so the text never
 // jumps to a dark-on-white box. A soft dark pill (same visual language as the halo) plus a white
 // caret are the only "you're editing" cues — legible over any wallpaper, no harsh mode switch.
-// field-sizing:content makes the input hug its text (like the label span it replaces) instead of
-// spanning the whole cell; min-width keeps an empty field clickable, max-width caps it at the tile.
+// It's a <textarea> so a long name WRAPS like the two-line label instead of scrolling on one line:
+// field-sizing:content hugs the text (growing down as it wraps), capped at three rows (max-height ≈
+// 3 line-heights) after which it scrolls; min-width keeps an empty field clickable, max-width caps
+// the width at the tile so text wraps within it. resize:none hides the drag handle.
 const renameInputStyle =
 	desktopLabelStyle +
 	"field-sizing:content;min-width:2.5ch;max-width:100%;box-sizing:content-box;" +
+	"max-height:3.9em;overflow-y:auto;resize:none;white-space:pre-wrap;overflow-wrap:break-word;" +
 	"background:rgba(0,0,0,0.5);border-radius:5px;caret-color:#fff;outline:none;padding:0 4px;";
 // A selected icon's highlight must clearly OUTRANK the faint hover wash (so selected ≠ hovered) and
 // stay legible over ANY wallpaper. Same two-layer trick as the label halo: a translucent white fill
@@ -295,19 +298,20 @@ onBeforeUnmount(() => {
 				@dblclick="onIconDblClick(di)"
 			>
 				<AppIconTile :logo="di.logo" :icon="di.icon" :label="di.label" />
-				<input
+				<textarea
 					v-if="renamingKey === di.key"
 					:ref="setRenameInput"
 					v-model="renameDraft"
 					:placeholder="defaultLabel(di.pin)"
 					:style="renameInputStyle"
+					rows="1"
 					@pointerdown.stop
 					@mousedown.stop
 					@click.stop
 					@keydown.enter.prevent="commitRename(di)"
 					@keydown.esc.prevent="cancelRename()"
 					@blur="commitRename(di)"
-				/>
+				></textarea>
 				<span v-else data-icon-label :style="desktopLabelStyle + desktopLabelClamp">{{ di.label }}</span>
 			</div>
 		</OSContextMenu>
