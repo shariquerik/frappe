@@ -208,6 +208,15 @@ export function systemWindowTitle(role: ReturnType<typeof windowRole>, view: str
   return null
 }
 
+// Is this window the Finder — the OS's desktop-shell navigator (ADR-0024)? True for the singleton
+// `finder` system window. The Finder carries its host app's id ('frappe') only for chrome/asset
+// scoping; the menu bar and its verbs name and route it by THIS, never by that id, so "Quit Finder"
+// acts on the Finder and not the framework app. The bare desktop is the Finder shell too, but that
+// (no-window) case is the caller's to handle — this takes a real window.
+export function isFinderWindow(win: { id: string; surface: Surface }): boolean {
+  return windowRole(win.id) === 'system' && isBuiltin(win.surface) && win.surface.view === 'finder'
+}
+
 // The Working-state SUBJECT of a surface (ADR-0029): a coarsened surface identity — not the full
 // addressable coordinate `sameSurface` keys on — that scopes a window's work-in-progress within
 // that window (`state.workingState[winId][subjectKey]`). Total: every surface has a subject.

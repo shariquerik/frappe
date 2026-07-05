@@ -226,7 +226,7 @@ const viewProps = computed<ViewProps>(() => {
 
 			<!-- ===== FINDER WINDOW (singleton system pane, ADR-0024) ===== -->
 			<template v-else-if="role === 'system' && s.view === 'finder'">
-				<WindowChrome :win="win" title="Finder" :logo="app.logo" />
+				<WindowChrome :win="win" title="Finder" />
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 					<Finder :win="win" />
 				</div>

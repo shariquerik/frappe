@@ -341,10 +341,10 @@ describe('first-party File commands + invoke', () => {
     os.state.paletteOpen = false
   })
 
-  it('New window runs a real handler — it no longer no-ops', () => {
+  it('New window on the bare desktop opens the Finder, not the frappe hub', () => {
     invoke(command('frappe.window.new'), os)
     expect(os.state.windows).toHaveLength(1)
-    expect(os.state.activeId).toBe('app:frappe')
+    expect(os.state.activeId).toBe('finder')
   })
 
   it('Close window closes the active window through its run handler', () => {
@@ -1459,12 +1459,46 @@ describe('the app menu interpolates {app} to the front app name', () => {
     expect(labels()).toEqual(['Finder settings…', 'Hide Finder', 'Quit Finder'])
   })
 
+  it('names the Finder — not its host app — when the Finder window is front', () => {
+    os.openFinder()
+    expect(labels()).toEqual(['Finder settings…', 'Hide Finder', 'Quit Finder'])
+  })
+
   it('Quit removes every window of the front app and clears focus', () => {
     os.openApp('crm')
     const quit = menuOptions(APP_REGION, os).flatMap((g) => g.items).find((i) => i.label.startsWith('Quit'))
     quit.onClick()
     expect(os.state.windows).toHaveLength(0)
     expect(os.state.activeId).toBeNull()
+  })
+})
+
+// The Finder is the OS's desktop shell, not the framework app: its app-menu / Window verbs route to
+// the Finder (open/close/settings), never to a frappe app window.
+describe('menu verbs route the Finder to itself, not the frappe app', () => {
+  const os = useOS()
+  const command = (id) => MENUBAR_COMMANDS.find((c) => c.id === id)
+  beforeEach(() => { os.state.windows = []; os.state.geo = {}; os.state.activeId = null; os.state.split = null })
+
+  it('New window opens the Finder when the Finder is front', () => {
+    os.openFinder()
+    invoke(command('frappe.window.new'), os)
+    expect(os.state.windows.map((w) => w.id)).toContain('finder')
+    expect(os.state.activeId).toBe('finder')
+  })
+
+  it('Quit closes only the Finder window, leaving app windows open', () => {
+    os.openApp('crm')
+    os.openFinder()
+    invoke(command('frappe.app.quit'), os)
+    expect(os.state.windows.some((w) => w.id === 'finder')).toBe(false)
+    expect(os.state.windows.some((w) => w.id === 'app:crm')).toBe(true)
+  })
+
+  it('Finder settings opens the desktop Settings window', () => {
+    os.openFinder()
+    invoke(command('frappe.app.settings'), os)
+    expect(os.state.windows.some((w) => w.id === 'settings')).toBe(true)
   })
 })
 

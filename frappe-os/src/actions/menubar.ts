@@ -10,7 +10,7 @@ import { suppressedToggleCommands } from './menu-contributions'
 import { suppressedPlacementCommands } from './placement-verbs'
 import { projectRegion } from './project'
 import { FILE_REGION, APP_REGION, VIEW_REGION, WINDOW_REGION } from './regions'
-import { surfaceAppId } from '@/surface'
+import { surfaceAppId, isFinderWindow } from '@/surface'
 import type { Action, Command, ResolvedAction } from './types'
 import type { OsStore } from '@/types'
 
@@ -34,8 +34,10 @@ export function registerMenuSelection(provider: () => Set<string>): void { liveS
 // same name the app menu shows ("Quit CRM"); presentation only, so it lives in the projector.
 function activeAppName(os: OsStore): string {
   const win = os.state.windows.find((w) => w.id === os.state.activeId)
-  const appId = win ? surfaceAppId(win.surface) : null
-  return appId ? os.DATA.APP[appId]?.name ?? appId : 'Finder'
+  if (!win) return 'Finder'            // the bare desktop is the Finder shell
+  if (isFinderWindow(win)) return 'Finder'  // the Finder names itself, not its host app ('frappe')
+  const appId = surfaceAppId(win.surface)
+  return os.DATA.APP[appId]?.name ?? appId
 }
 
 // Build one item and file it into its group — nested under a same-`submenu` parent when the Action

@@ -6,7 +6,7 @@
 // customizes File. Every item is BACKED — the `noop` stubs (the Edit menu, the Help-as-palette
 // placeholder) were deleted, not parked on a do-nothing ref (ADR-0039 rule 1). An empty menu earns
 // no title (MenuBar.vue), so the deleted verbs simply return when a real context contributes them.
-import { surfaceAppId, windowRole } from '@/surface'
+import { surfaceAppId, windowRole, isFinderWindow } from '@/surface'
 import { logout, switchToDesk } from '@/data/session'
 import { ICON } from '@/config/icons'
 import { registerRunHandlers } from './contributions'
@@ -40,9 +40,18 @@ const activeAppId = (os: OsStore): string | null => {
   return win ? surfaceAppId(win.surface) : null
 }
 
-// Always mint a FRESH window (even when the app already has one open) so "New window" stacks the
-// way the label promises — openApp would just re-focus the existing one. A bare desktop opens frappe.
+// Is the front-most context the Finder shell — the Finder window, or the bare desktop (which IS the
+// Finder)? Its app-menu / Window verbs act on the Finder, never on the host framework app.
+const frontIsFinder = (os: OsStore): boolean => {
+  const win = activeWindow(os)
+  return !win || isFinderWindow(win)
+}
+
+// The Finder shell (the Finder window or the bare desktop) opens a Finder window — never the frappe
+// hub. Otherwise mint a FRESH window (even when the app already has one open) so "New window" stacks
+// the way the label promises — openApp would just re-focus the existing one.
 function newWindow({ os }: Invocation): void {
+  if (frontIsFinder(os)) { os.openFinder(); return }
   os.newAppWindow(activeAppId(os) ?? 'frappe')
 }
 
@@ -59,15 +68,21 @@ function zoomActive({ os }: Invocation): void {
 }
 
 function openActiveAppSettings({ os }: Invocation): void {
+  // The Finder's preferences are the desktop-wide Settings (wallpaper/dock/general); it has no
+  // app-scoped settings pane of its own yet (deferred-hardcoded: 07-finder-settings-pane).
+  if (frontIsFinder(os)) { os.openSettings(); return }
   const appId = activeAppId(os)
   if (appId) os.openAppSettings(appId)
 }
 
-// Quit the front-most app: drop every window that belongs to it and clear focus/split. No-op on a
-// bare desktop (no active app).
+// Quit the front-most subject. A system window (the Finder, the per-user Settings) closes just
+// itself — it owns no fleet of app windows to drop. An app quits by dropping every window that
+// belongs to it and clearing focus/split. No-op on a bare desktop (nothing to quit).
 function quitActiveApp({ os }: Invocation): void {
-  const appId = activeAppId(os)
-  if (!appId) return
+  const win = activeWindow(os)
+  if (!win) return
+  if (windowRole(win.id) !== 'app') { os.requestCloseWin(win.id); return }
+  const appId = surfaceAppId(win.surface)
   os.state.windows = os.state.windows.filter((w) => surfaceAppId(w.surface) !== appId)
   os.state.activeId = null
   os.state.split = null
