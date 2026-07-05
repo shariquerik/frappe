@@ -11,7 +11,7 @@
 import { computed, ref } from 'vue'
 import { Button, ListView, ListHeader, ListRows, ListSelectBanner, Avatar } from 'frappe-ui'
 import StatusPill from '../StatusPill.vue'
-import OSCursorMenu from '../OSCursorMenu.vue'
+import OSContextMenu from '../OSContextMenu.vue'
 import { cellKind } from './list-columns'
 // These feed defineProps, so import from concrete modules, not the @/types barrel (its
 // `export *` breaks @vue/compiler-sfc's macro resolver — see DoctypeView.vue).
@@ -87,7 +87,10 @@ const cellContext = computed(() => ({
 // regardless of the left-click open-target preference (ADR-0018) — the context menu is the
 // per-row escape hatch. Direct core row behaviour, deliberately NOT routed through the Command/
 // Action model — Context has no selection and Handlers can't carry the clicked row (see ADR-0017).
-const rowMenu = ref<{ x: number; y: number; name: string } | null>(null)
+// The record under the last right-click, resolved from the event (rowNameFromEvent) so the
+// container-level menu can name it. Set in the capture-phase handler BEFORE OSContextMenu (reka,
+// bubble phase) opens, so its options are ready; a right-click that hits no row blocks the menu.
+const rowName = ref<string | null>(null)
 
 // Resolve the record under a right-click anywhere in the list — cell text, an empty "—"
 // cell, or the gaps/padding between cells — without coupling to ListView's internal markup.
@@ -108,16 +111,20 @@ function rowNameFromEvent(e: MouseEvent): string | null {
   }
   return null
 }
+// Capture phase (fires before reka's bubble-phase open): resolve the row and stash its name. A
+// right-click that resolves no row prevents the native menu AND stops propagation, so reka never
+// opens an empty menu below the rows.
 function onRowContextMenu(e: MouseEvent) {
   const name = rowNameFromEvent(e)
-  if (name) rowMenu.value = { x: e.clientX, y: e.clientY, name }
+  if (!name) { e.preventDefault(); e.stopPropagation(); rowName.value = null; return }
+  rowName.value = name
 }
 const rowMenuItems = computed(() => {
-  const name = rowMenu.value?.name
+  const name = rowName.value
   if (!name) return []
   return [
-    { label: 'Open', onClick: () => (props.onOpenInline || props.onOpen)?.(props.doctype, name) },
-    { label: 'Open in New Window', onClick: () => props.onOpenNewWindow?.(props.doctype, name) },
+    { label: 'Open', icon: 'lucide-square-arrow-out-up-right', onClick: () => (props.onOpenInline || props.onOpen)?.(props.doctype, name) },
+    { label: 'Open in New Window', icon: 'lucide-app-window', onClick: () => props.onOpenNewWindow?.(props.doctype, name) },
   ]
 })
 
@@ -137,8 +144,9 @@ const options = computed(() => ({
   <!-- Bounded flex column so only the rows scroll (CRM-parity, matches ListViewShell): the
        table region takes the remaining height and clips, and the list's own `ListRows`
        (`overflow-y-auto`) is the sole scroller — the `ListHeader` above it stays fixed. -->
+  <OSContextMenu :options="rowMenuItems">
   <div ref="container" class="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-1"
-       @contextmenu.prevent="onRowContextMenu" @scroll.capture.passive="onScroll">
+       @contextmenu.capture="onRowContextMenu" @scroll.capture.passive="onScroll">
     <div v-if="error" class="px-[14px] py-[34px] text-center text-[13px] text-ink-red-6">{{ error }}</div>
     <div v-else-if="!rows.length && loading" class="px-[14px] py-[34px] text-center text-[13px] text-ink-gray-4">Loading…</div>
     <ListView
@@ -192,6 +200,6 @@ const options = computed(() => ({
         </span>
       </template>
     </ListView>
-    <OSCursorMenu v-if="rowMenu" :x="rowMenu.x" :y="rowMenu.y" :items="rowMenuItems" @close="rowMenu = null" />
   </div>
+  </OSContextMenu>
 </template>

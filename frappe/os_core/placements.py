@@ -49,10 +49,16 @@ def merge_placements(baseline, site, overrides, can_see):
 		elif key in by_key:
 			if override.get("position") is not None:
 				by_key[key]["position"] = override["position"]
+			# A personal rename overlays the reference-derived label on the user's own resolved pin,
+			# leaving the shared baseline/Site row (and every other user) untouched (ADR-0023).
+			if override.get("label"):
+				by_key[key]["label"] = override["label"]
 		else:
 			# A reference not in any base layer is the user's OWN new pin (no `inherited`): Remove
 			# deletes its row outright.
 			by_key[key] = {"region": override["region"], "ref": override["ref"], "position": override.get("position")}
+			if override.get("label"):
+				by_key[key]["label"] = override["label"]
 			order.append(key)
 	return [by_key[key] for key in order if key in by_key and can_see(by_key[key]["ref"])]
 
@@ -63,6 +69,8 @@ def _parse_placement(row, hidden=False):
 	placement["position"] = frappe.parse_json(row.position) if row.position else None
 	if hidden:
 		placement["hidden"] = bool(row.hidden)
+	if row.get("label"):
+		placement["label"] = row.get("label")
 	return placement
 
 
@@ -79,7 +87,7 @@ def _user_overrides():
 	"""The User layer: this user's own OS Placement Override deltas (move / hide / new pin)."""
 	rows = layer_rows(
 		"OS Placement Override",
-		["region", "surface_ref", "position", "hidden"],
+		["region", "surface_ref", "position", "hidden", "label"],
 		filters={"owner": frappe.session.user},
 	)
 	return [_parse_placement(row, hidden=True) for row in rows]
@@ -101,19 +109,24 @@ def _own_override(region, ref):
 
 
 @frappe.whitelist(methods=["POST"])
-def save_placement_override(region: str, surface_ref: str, position: str | None = None, hidden: int = 0):
+def save_placement_override(
+	region: str, surface_ref: str, position: str | None = None, hidden: int = 0, label: str | None = None
+):
 	"""Upsert the current user's User-layer OS Placement Override for one (region, surface-reference)
 	identity — the frontend's ONLY placement write path (ADR-0023). A move carries `position`, a
-	personal hide sets `hidden`, a brand-new pin carries both a fresh reference and a position. Only
-	the caller's own row is ever created/updated; baseline and Site rows are untouched. `surface_ref`
-	and `position` arrive as JSON strings and are stored canonically so the identity match holds."""
+	personal hide sets `hidden`, a rename carries `label`, a brand-new pin carries a fresh reference and
+	a position. Each facet is written only when supplied, so a rename never clears a prior move and a
+	move never clears a prior rename (they share one row per identity). Only the caller's own row is
+	ever touched; baseline and Site rows are untouched. `surface_ref`/`position` arrive as JSON strings
+	and are stored canonically so the identity match holds."""
 	ref = canonical_json(surface_ref)
 	existing = _own_override(region, ref)
-	doc = upsert(
-		"OS Placement Override",
-		existing,
-		{"region": region, "surface_ref": ref, "position": canonical_json(position), "hidden": int(hidden)},
-	)
+	values = {"region": region, "surface_ref": ref, "hidden": int(hidden)}
+	if position is not None:
+		values["position"] = canonical_json(position)
+	if label is not None:
+		values["label"] = label
+	doc = upsert("OS Placement Override", existing, values)
 	return {"name": doc.name}
 
 

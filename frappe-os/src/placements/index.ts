@@ -58,7 +58,21 @@ export function placementKey(p: ResolvedPlacement): string {
   return p.region + ':' + JSON.stringify(p.ref, Object.keys(p.ref).sort())
 }
 
+// A pin's presentation: its derived view, with the user's personal rename (p.label) overlaid on the
+// label when set. Icon/logo stay reference-derived — a rename changes only the display name.
 export function placementView(p: ResolvedPlacement): PlacementView {
+  const view = derivePlacementView(p)
+  return p.label ? { ...view, label: p.label } : view
+}
+
+// The reference-derived label with any personal rename ignored — what a pin falls back to when its
+// label override is cleared. The rename UI shows this as the input placeholder so emptying the field
+// visibly resets to the default name (ADR-0023).
+export function defaultLabel(p: ResolvedPlacement): string {
+  return derivePlacementView(p).label
+}
+
+function derivePlacementView(p: ResolvedPlacement): PlacementView {
   const key = placementKey(p)
   const ref = p.ref
   if (ref.doctype) {
@@ -88,6 +102,8 @@ export interface OverrideDelta {
   ref: SurfaceRef
   position?: PlacementPosition | null
   hidden?: boolean
+  // A personal rename (label override). Undefined leaves any prior label untouched; a value sets it.
+  label?: string | null
 }
 
 function sameIdentity(p: ResolvedPlacement, region: PlacementRegion, ref: SurfaceRef): boolean {
@@ -103,9 +119,18 @@ export function applyLocalOverride(delta: OverrideDelta): void {
   if (delta.hidden) {
     if (i >= 0) store.list.splice(i, 1)
   } else if (i >= 0) {
-    store.list[i] = { ...store.list[i], ...(delta.position !== undefined ? { position: delta.position } : {}) }
+    store.list[i] = {
+      ...store.list[i],
+      ...(delta.position !== undefined ? { position: delta.position } : {}),
+      ...(delta.label !== undefined ? { label: delta.label } : {}),
+    }
   } else {
-    store.list.push({ region: delta.region, ref: delta.ref, position: delta.position ?? null })
+    store.list.push({
+      region: delta.region,
+      ref: delta.ref,
+      position: delta.position ?? null,
+      ...(delta.label !== undefined ? { label: delta.label } : {}),
+    })
   }
 }
 
@@ -119,6 +144,7 @@ export async function writePlacementOverride(delta: OverrideDelta): Promise<void
     surface_ref: JSON.stringify(delta.ref),
     position: delta.position != null ? JSON.stringify(delta.position) : undefined,
     hidden: delta.hidden ? 1 : 0,
+    label: delta.label ?? undefined,
   }).catch((error) => console.error('save_placement_override failed', error))
 }
 

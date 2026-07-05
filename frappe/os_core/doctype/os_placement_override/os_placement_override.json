@@ -9,7 +9,8 @@
   "region",
   "surface_ref",
   "position",
-  "hidden"
+  "hidden",
+  "label"
  ],
  "fields": [
   {
@@ -41,6 +42,12 @@
    "fieldname": "hidden",
    "fieldtype": "Check",
    "label": "Hidden"
+  },
+  {
+   "description": "A personal display name for this pin (ADR-0023): overrides the reference-derived label on this user's own tile only, leaving the app/doctype name and every other user untouched. Empty falls back to the derived label.",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label"
   }
  ],
  "index_web_pages_for_search": 1,

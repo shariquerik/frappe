@@ -28,6 +28,7 @@ import { openPalette, closePalette, paletteResults } from './palette'
 import { openAbout, closeAbout } from './about'
 import { isFullscreen, toggleFullscreen, fullscreenPromptOpen, dismissFullscreenPrompt } from './fullscreen'
 import { selectedRecords, setSelection, selectionKind } from './selection'
+import { selectIcon, clearIconSelection, isIconSelected, selectedIcons, soleSelectedIcon } from './icon-selection'
 import { publishFocus, focusedKind } from './focus-kind'
 import { hydrate, startAutosave } from './persistence'
 import {
@@ -69,5 +70,8 @@ export function useOS() {
     // the focus tier (ADR-0038): the front list's selection (kind + values, read by bulk run
     // Handlers) and which widget holds keyboard focus (published through publishFocus)
     selectedRecords, setSelection, selectionKind, publishFocus, focusedKind,
+    // the desktop-icon selection (Finder-style): single-click selects, modified click multi-selects,
+    // empty-wallpaper click clears; the tile paints its highlight off isIconSelected
+    selectIcon, clearIconSelection, isIconSelected, selectedIcons, soleSelectedIcon,
   }
 }

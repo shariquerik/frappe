@@ -2,6 +2,7 @@
 // data/projector split (the data + Handlers live in context-menu-contributions.ts). Each projects
 // its `*:context` Region through the shared projectRegion (like menubar.ts / toolbar.ts), so the
 // two context menus dogfood contribution data → resolver → rendered Region → run Handler (ADR-0001).
+// Both emit the shared `ContextMenuOption[]` shape (OSContextMenu), the single context-menu primitive.
 import { invoke } from './contributions'
 import {
   suppressedDockHidingCommands, selectedDockPositionCommands,
@@ -10,48 +11,36 @@ import { projectRegion } from './project'
 import { DESKTOP_CONTEXT_REGION, DOCK_CONTEXT_REGION } from './regions'
 import type { Action, Command } from './types'
 import type { OsStore } from '@/types'
-
-// One rendered menu item — a label + click, optionally selected (a checkmark) or a submenu parent
-// (no click of its own, just a nested list). The OSDropdown option shape the dock renders.
-export interface ContextMenuItem {
-  label: string
-  onClick?: () => void
-  selected?: boolean
-  submenu?: ContextMenuItem[]
-}
-export interface ContextMenuGroup {
-  hideLabel: true
-  group: string
-  options: ContextMenuItem[]
-}
+import type { ContextMenuOption } from '@/components/OSContextMenu.vue'
 
 // The winning Action's commandPatch overrides the Command's presentation for this context (ADR-0007),
 // without mutating the global Command Singleton.
 const labelOf = (action: Action, command: Command): string => action.commandPatch?.title ?? command.title
 
-// The desktop menu: a flat, cursor-pinned list (OSCursorMenu). No dividers or submenus today — the
-// lone entry and any app contribution render as one ordered list of buttons.
-export function desktopContextItems(os: OsStore): { label: string; onClick: () => void }[] {
+// The desktop (wallpaper) menu: a flat list. No dividers or submenus today — the lone entry and any
+// app contribution render as one ordered list.
+export function desktopContextItems(os: OsStore): ContextMenuOption[] {
   return projectRegion(DESKTOP_CONTEXT_REGION, os).map(({ action, command }) => ({
     label: labelOf(action, command),
     onClick: () => invoke(command, os),
   }))
 }
 
-// The dock menu: OSDropdown groups, with the live auto-hide toggle's dead half suppressed, the
-// current position marked selected, and same-`submenu` siblings nested into one parent item. The
-// resolved winners already arrive in ascending `order`, so groups and submenu items keep their order.
-export function dockContextOptions(os: OsStore): ContextMenuGroup[] {
+// The dock tray menu: one flat option list with a divider between Action groups, the live auto-hide
+// toggle's dead half suppressed, the current position marked selected, and same-`submenu` siblings
+// nested into one parent. The resolved winners arrive in ascending `order`, so groups and submenu
+// items keep their order. `group` boundaries become `{ separator: true }` between the two sections.
+export function dockContextOptions(os: OsStore): ContextMenuOption[] {
   const dead = suppressedDockHidingCommands(os)
   const selected = selectedDockPositionCommands(os)
   const live = projectRegion(DOCK_CONTEXT_REGION, os).filter((r) => !dead.has(r.action.command))
-  const groups: ContextMenuGroup[] = []
-  const submenus = new Map<string, ContextMenuItem>() // "group submenuLabel" -> the parent item
+  const groups: { key: string; options: ContextMenuOption[] }[] = []
+  const submenus = new Map<string, ContextMenuOption>() // "group submenuLabel" -> the parent item
   for (const { action, command } of live) {
     const key = action.group ?? ''
-    let group = groups.find((g) => g.group === key)
-    if (!group) { group = { hideLabel: true, group: key, options: [] }; groups.push(group) }
-    const item: ContextMenuItem = { label: labelOf(action, command), onClick: () => invoke(command, os) }
+    let group = groups.find((g) => g.key === key)
+    if (!group) { group = { key, options: [] }; groups.push(group) }
+    const item: ContextMenuOption = { label: labelOf(action, command), onClick: () => invoke(command, os) }
     if (selected.has(action.command)) item.selected = true
     if (action.submenu) {
       const submenuKey = `${key} ${action.submenu}`
@@ -62,5 +51,7 @@ export function dockContextOptions(os: OsStore): ContextMenuGroup[] {
       group.options.push(item)
     }
   }
-  return groups
+  // Flatten the groups into one list, a divider between each — the dock's two sections
+  // (position/hiding, then Settings) read as grouped without the OSDropdown group wrapper.
+  return groups.flatMap((g, i) => (i === 0 ? g.options : [{ separator: true } as ContextMenuOption, ...g.options]))
 }

@@ -5,7 +5,7 @@
 // presentation, and (4) resolves a reference to the Surface a click opens. The layered merge
 // itself is the server's job (tested in the Python resolver suite) — never re-tested here.
 import { afterEach, describe, expect, it } from 'vitest'
-import { initPlacements, usePlacements, placementView, placementKey, applyLocalOverride } from '../src/placements'
+import { initPlacements, usePlacements, placementView, placementKey, defaultLabel, applyLocalOverride } from '../src/placements'
 import { initRegistry } from '../src/registry'
 import { placementSurface, isAppRef } from '../src/surface'
 
@@ -53,6 +53,31 @@ describe('applyLocalOverride — the optimistic local patch of the write seam', 
     expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'frappe' }, { doctype: 'ToDo', view: 'list' }])
   })
 
+  it('sets a personal label on a matching pin (a rename) without disturbing its position', () => {
+    initPlacements(boot([desktop({ app: 'frappe' }, { column: 0, row: 0 })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' })
+    expect(usePlacements().desktop()[0]).toEqual({
+      region: 'desktop', ref: { app: 'frappe' }, position: { column: 0, row: 0 }, label: 'My Framework',
+    })
+  })
+
+  it('leaves a prior rename untouched when a later delta omits the label (a move after a rename)', () => {
+    initPlacements(boot([desktop({ app: 'frappe' }, { column: 0, row: 0 })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' })
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, position: { column: 2, row: 1 } })
+    const pin = usePlacements().desktop()[0]
+    expect(pin.label).toBe('My Framework')
+    expect(pin.position).toEqual({ column: 2, row: 1 })
+  })
+
+  it('clears a rename back to the derived name when the label is emptied', () => {
+    initRegistry(null)
+    initPlacements(boot([desktop({ app: 'frappe' }, { column: 0, row: 0 })]))
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' })
+    applyLocalOverride({ region: 'desktop', ref: { app: 'frappe' }, label: '' })
+    expect(placementView(usePlacements().desktop()[0]).label).toBe('Frappe')
+  })
+
   // A drag (#02) is a position OverrideDelta funnelled through the same local-patch path. This pins
   // the write→read-back: a moved icon's new cell is visible through the resolver immediately (and so
   // survives a reload, since the server re-folds the persisted override into the next boot list).
@@ -85,6 +110,19 @@ describe('placementView — a reference projected to its presentation', () => {
   it('keys a pin by its (region, reference) identity', () => {
     expect(placementKey(desktop({ app: 'frappe' })))
       .not.toBe(placementKey({ region: 'dock', ref: { app: 'frappe' } }))
+  })
+
+  it('overlays a personal rename on the label, keeping the reference-derived logo/icon', () => {
+    initRegistry(null)
+    const view = placementView({ region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' })
+    expect(view.label).toBe('My Framework')
+    expect(view.logo).toContain('frappe') // icon/logo stay derived — a rename changes only the name
+  })
+
+  it('defaultLabel ignores a personal rename — the reset target the rename input placeholders', () => {
+    initRegistry(null)
+    const renamed = { region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' }
+    expect(defaultLabel(renamed)).toBe('Frappe') // the derived name, not the override
   })
 })
 

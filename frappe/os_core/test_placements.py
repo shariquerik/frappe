@@ -62,6 +62,21 @@ class TestMergePlacements(unittest.TestCase):
 		self.assertNotIn("inherited", out[0])
 		self.assertEqual(out[0]["ref"], {"app": "crm"})
 
+	def test_user_label_override_renames_a_baseline_pin_keeping_inherited_and_position(self):
+		base = [{"region": "dock", "ref": {"app": "frappe"}, "position": {"order": 0}}]
+		overrides = [{"region": "dock", "ref": {"app": "frappe"}, "label": "My Framework"}]
+		out = placements.merge_placements(base, [], overrides, always)
+		self.assertEqual(out[0]["label"], "My Framework")
+		self.assertTrue(out[0]["inherited"])  # a rename overlays the label, not the layer
+		self.assertEqual(out[0]["position"], {"order": 0})
+
+	def test_user_new_pin_carries_its_own_label(self):
+		overrides = [
+			{"region": "desktop", "ref": {"app": "crm"}, "position": {"column": 1, "row": 0}, "label": "Sales"}
+		]
+		out = placements.merge_placements([], [], overrides, always)
+		self.assertEqual(out[0]["label"], "Sales")
+
 	def test_invisible_reference_is_dropped(self):
 		base = [{"region": "dock", "ref": {"app": "frappe"}, "position": {"order": 0}}]
 		self.assertEqual(placements.merge_placements(base, [], [], never), [])
@@ -84,6 +99,26 @@ class TestSavePlacementOverride(unittest.TestCase):
 		self.assertEqual(values["surface_ref"], '{"app": "frappe"}')
 		self.assertEqual(values["hidden"], 0)
 		self.assertEqual(result, {"name": "ovr-1"})
+
+	def test_rename_writes_the_label_and_omits_position_to_preserve_a_prior_move(self):
+		doc = mock.Mock()
+		doc.name = "ovr-1"
+		with mock.patch.object(placements, "_own_override", return_value="ovr-1"), \
+			mock.patch.object(placements, "upsert", return_value=doc) as upsert:
+			placements.save_placement_override("desktop", '{"app":"frappe"}', label="My Framework")
+		values = upsert.call_args.args[2]
+		self.assertEqual(values["label"], "My Framework")
+		self.assertNotIn("position", values)  # a rename never clears a prior move on the shared row
+
+	def test_move_omits_the_label_to_preserve_a_prior_rename(self):
+		doc = mock.Mock()
+		doc.name = "ovr-1"
+		with mock.patch.object(placements, "_own_override", return_value="ovr-1"), \
+			mock.patch.object(placements, "upsert", return_value=doc) as upsert:
+			placements.save_placement_override("desktop", '{"app":"frappe"}', position='{"column":2,"row":1}')
+		values = upsert.call_args.args[2]
+		self.assertIn("position", values)
+		self.assertNotIn("label", values)  # a move never clears a prior rename
 
 	def test_own_override_lookup_is_owner_scoped(self):
 		db = mock.Mock()

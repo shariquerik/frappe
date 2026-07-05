@@ -10,7 +10,6 @@ import { windowRole, systemWindowTitle, isBuiltin, isAppRef, placementSurface } 
 import { usePlacements, placementView, writePlacementOverride } from '@/placements'
 import { tileMenuOptions } from '@/placements/tile-menu'
 import { dockContextOptions } from '@/actions'
-import OSDropdown from '../OSDropdown.vue'
 import OSContextMenu from '../OSContextMenu.vue'
 import AppIconTile from '../AppIconTile.vue'
 import type { OsWindow, BuiltinSurface, SurfaceRef, ResolvedPlacement } from '@/types'
@@ -233,20 +232,13 @@ function onPinDrop(targetIndex: number) {
   draggingKey.value = null
 }
 
-// Right-click dock settings (macOS-style). A Dropdown opens on a click, so to anchor it at the
-// cursor we drive it in controlled mode against a 1px trigger parked where the user right-clicked
-// — reusing OSDropdown (frappe-ui) for its submenu + #os-popover-layer portaling, rather than
-// hand-rolling a menu. The "Position on Screen" submenu mirrors the Settings ▸ Dock control.
-const ctxAt = ref({ x: 0, y: 0 })
-function onDockContext(e: MouseEvent) {
-  e.preventDefault()
-  ctxAt.value = { x: e.clientX, y: e.clientY }
-  os.state.dockContextOpen = true
-}
-
-// The dock right-click entries render from the resolver (the `dock:context` Region), not a literal
-// array — the auto-hide toggle, the position submenu (with the live selection), and Dock Settings
-// are all Commands+Actions competed by the same engine, so an app can customize them (ADR-0001).
+// The dock right-click (tray) menu renders through OSContextMenu — the shell's one context-menu
+// primitive — wrapping the dock tray as its trigger, so reka opens it at the cursor natively (no
+// hand-anchored popover). Its entries render from the resolver (the `dock:context` Region), not a
+// literal array — the auto-hide toggle, the position submenu (with the live selection), and Dock
+// Settings are all Commands+Actions competed by the same engine, so an app can customize them
+// (ADR-0001). While ANY dock menu is open (this tray menu or a tile menu) the dock keeps itself
+// revealed via `dockContextOpen` — both wire it from OSContextMenu's `update:open`.
 const ctxOptions = computed(() => dockContextOptions(os))
 </script>
 
@@ -255,15 +247,18 @@ const ctxOptions = computed(() => dockContextOptions(os))
   <div v-if="os.state.dockMenu" class="fixed inset-0 z-[89999]" @pointerdown="closeMenu"></div>
 
   <div class="absolute z-[90000]" :class="wrapClass">
+    <!-- Right-click the tray (empty area) → the dock settings menu; a tile's own menu stops the
+         event first so it wins over its icon. Keeps the dock revealed while open (update:open). -->
+    <OSContextMenu :options="ctxOptions" @update:open="os.state.dockContextOpen = $event">
     <!-- Trayless by default; an opaque tray fades in when a window sits behind the dock. -->
-    <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]" @contextmenu="onDockContext">
+    <div :ref="(el) => os.setDockEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]">
       <!-- pinned dock placements (ADR-0023), draggable to reorder → a User-layer order override -->
       <div v-for="(d, i) in pinnedItems" :key="d.key" class="relative flex items-end" draggable="true"
         @dragstart="draggingKey = d.key" @dragend="draggingKey = null"
         @dragover.prevent @drop.prevent="onPinDrop(i)">
         <!-- Right-click a pinned tile → Remove from Dock. `.stop` keeps it from bubbling to the
              tray's own right-click (dock settings), so the tile menu wins over its own icon. -->
-        <OSContextMenu :options="tileMenuOptions(d.pin!)">
+        <OSContextMenu :options="tileMenuOptions(d.pin!)" @update:open="os.state.dockContextOpen = $event">
           <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)" @contextmenu.stop>
             <AppIconTile :logo="d.logo" :icon="d.icon" :label="d.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
             <!-- running indicator: a second dot hints at multiple windows -->
@@ -319,10 +314,6 @@ const ctxOptions = computed(() => dockContextOptions(os))
         <span class="lucide-layout-grid size-[20px]"></span>
       </button>
     </div>
+    </OSContextMenu>
   </div>
-
-  <!-- Right-click dock menu: a Dropdown driven open against a 1px anchor parked at the cursor. -->
-  <OSDropdown :options="ctxOptions" :open="os.state.dockContextOpen" side="top" align="start" @update:open="os.state.dockContextOpen = $event">
-    <div class="fixed h-px w-px" :style="{ left: ctxAt.x + 'px', top: ctxAt.y + 'px' }"></div>
-  </OSDropdown>
 </template>

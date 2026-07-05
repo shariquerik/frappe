@@ -10,7 +10,7 @@ import { bumpZ, geoMap, setGeo } from './geometry'
 import { state } from './state'
 import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
-  initialSurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
+  initialSurface, workspaceBodySurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import { clearSelection } from './selection'
@@ -170,14 +170,16 @@ function ensureApp(appId: string, surface: Surface | null, instance?: number | n
   state.menu = null
   state.paletteOpen = false
 }
-// Opening an app (dock click, palette, a bare `/<app>` deep link). A single-workspace app skips
-// the hub and opens its one workbench directly (ADR-0042 "the app is the window"); a multi-
-// workspace app opens the plain app window (the hub, slice 04). The workspace lands on the window
-// identity, so the URL/Context project it — the surface stays plain content.
-export const openApp = (appId: string, instance?: number | null) => {
-  const sole = soleWorkspace(appId)
-  return sole ? openWorkspace(appId, sole) : ensureApp(appId, null, instance)
-}
+// Opening an app (dock click, palette, a bare `/<app>` deep link). The body is the app's default
+// surface — applet/dashboard/empty via initialSurface, resolved on spawn from the null surface so a
+// re-open focuses without resetting content. A single-workspace app skips the hub and lands that
+// surface on its one workbench identity (ADR-0042 "the app is the window"); a multi-workspace app
+// opens the plain app window (the hub). The workspace lands on the window identity, so the
+// URL/Context project it — the surface stays plain content. The workspace-level counterpart is
+// openWorkspace, which opens a workbench BODY (never the app default), so an applet-default app's
+// individual workspaces stay reachable as workbenches (tile menu, `/os/<app>/<workspace>` URL).
+export const openApp = (appId: string, instance?: number | null) =>
+  ensureApp(appId, null, instance, soleWorkspace(appId))
 
 // The next free window id for an `(app, workspace)` identity: the canonical `app:<id>[/<ws>]` if
 // unused, else the lowest `…#n` (n ≥ 2) not already taken.
@@ -209,13 +211,21 @@ export const openRecordGlobal = (dt: string, name: string, instance?: number | n
   return ensureApp(appForDoctype(dt), formSurface(dt, name, aspect), instance, workspace)
 }
 // Open an app's workspace window (ADR-0042): the `(app, workspace)` window a `/erpnext/selling` URL
-// lands on. Its SIDEBAR is the workspace's derived doctypes (AppSidebar reads the workspace off the
-// window id); its BODY opens on the app's resolved initial surface — the dashboard for an app that
-// has one, else the empty pane, so a dashboard-less single-workspace app (demoday) never lands on a
-// dashboard it can't fill. Focus-or-create per identity — reopening the same workspace focuses its
-// window, a different workspace opens another window alongside.
+// or a tile-menu "Open <workspace>" entry lands on. Its SIDEBAR is the workspace's derived doctypes
+// (AppSidebar reads the workspace off the window id); its BODY opens on workspaceBodySurface — the
+// dashboard for an app that has one, else the empty pane, so a dashboard-less workspace never lands
+// on a dashboard it can't fill. The app's default-surface (e.g. raven's chat applet) is deliberately
+// excluded there, so a workspace always shows a workbench, not a full-window applet. Focus-or-create
+// per identity — reopening the same workspace focuses its window, a different one opens alongside.
 export const openWorkspace = (appId: string, workspace: string) =>
-  ensureApp(appId, initialSurface(appId), undefined, workspace)
+  ensureApp(appId, workspaceBodySurface(appId), undefined, workspace)
+// Open an applet-default app's WORKBENCH from its tile (ADR-0042) — the workspace hub (or its sole
+// workbench) a normal app opens on click, for an app whose tile click opens a full-window applet
+// instead (raven's chat). Same window identity as openApp (sole workspace, else the plain hub), but
+// the BODY is workspaceBodySurface, so the applet default is skipped and the window is always a
+// workbench/hub. The tile-menu "Open Workspaces" entry lands here.
+export const openAppWorkbench = (appId: string) =>
+  ensureApp(appId, workspaceBodySurface(appId), undefined, soleWorkspace(appId))
 // Open an applet contribution in its owning app window (ADR-0012 polymorphic host).
 export const openApplet = (appId: string, appletId: string, props?: Record<string, unknown>, instance?: number | null) =>
   ensureApp(appId, appletSurface(appId, appletId, props), instance)

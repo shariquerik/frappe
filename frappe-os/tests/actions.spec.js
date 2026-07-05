@@ -1671,15 +1671,18 @@ describe('desktopContextItems (the desktop menu rendered from resolved Actions)'
 
 describe('dockContextOptions (the dock menu rendered from resolved Actions)', () => {
   const os = useOS()
-  const labels = () => dockContextOptions(os).flatMap((g) => g.options).map((i) => i.label)
+  const items = () => dockContextOptions(os).filter((o) => !o.separator)
+  const labels = () => items().map((i) => i.label)
+  const find = (label) => items().find((i) => i.label === label)
 
-  it('renders the toggle, the Position submenu, and Dock Settings across two divider groups', () => {
+  it('renders the toggle, the Position submenu, and Dock Settings as one list with a group divider', () => {
     os.setDockAutoHide(false)
-    const groups = dockContextOptions(os)
-    expect(groups.map((g) => g.group)).toEqual(['a', 'b'])
+    const opts = dockContextOptions(os)
     expect(labels()).toEqual(['Turn Hiding On', 'Position on Screen', 'Dock Settings…'])
-    const position = groups[0].options.find((i) => i.label === 'Position on Screen')
-    expect(position.submenu.map((i) => i.label)).toEqual(['Left', 'Bottom', 'Right'])
+    // The two Action groups are flattened into one list, separated by a divider (not a group wrapper).
+    expect(opts.filter((o) => o.separator)).toHaveLength(1)
+    expect(opts.findIndex((o) => o.separator)).toBe(2) // after the position section, before Settings
+    expect(find('Position on Screen').submenu.map((i) => i.label)).toEqual(['Left', 'Bottom', 'Right'])
   })
 
   it('the auto-hide toggle flips its label with live state (one verb renders, not both)', () => {
@@ -1693,13 +1696,13 @@ describe('dockContextOptions (the dock menu rendered from resolved Actions)', ()
 
   it('the toggle runs the auto-hide Handler through the OS API', () => {
     os.setDockAutoHide(false)
-    dockContextOptions(os).flatMap((g) => g.options).find((i) => i.label === 'Turn Hiding On').onClick()
+    find('Turn Hiding On').onClick()
     expect(os.state.dockAutoHide).toBe(true)
   })
 
   it('marks the current dock position selected and runs the position Handler', () => {
     os.setDockPosition('bottom')
-    const submenu = dockContextOptions(os)[0].options.find((i) => i.label === 'Position on Screen').submenu
+    const submenu = find('Position on Screen').submenu
     expect(submenu.find((i) => i.label === 'Bottom').selected).toBe(true)
     expect(submenu.find((i) => i.label === 'Left').selected).toBeUndefined()
     submenu.find((i) => i.label === 'Left').onClick()
@@ -1708,7 +1711,7 @@ describe('dockContextOptions (the dock menu rendered from resolved Actions)', ()
 
   it('Dock Settings opens Settings on the Dock pane', () => {
     const openSettings = vi.spyOn(os, 'openSettings').mockImplementation(() => {})
-    dockContextOptions(os).flatMap((g) => g.options).find((i) => i.label === 'Dock Settings…').onClick()
+    find('Dock Settings…').onClick()
     expect(openSettings).toHaveBeenCalledWith('Dock')
     openSettings.mockRestore()
   })

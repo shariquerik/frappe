@@ -89,17 +89,26 @@ function resolveRef(openedApp: string, ref: SurfaceRef | null): Surface | null {
   return null
 }
 
-// The Surface a Window opens on (ADR-0021), resolved top-down, first match wins — the resolver
-// that replaces the old hardcoded dashboard→modules→applet inference. Geometry/focus/URL stay
+// The Surface a Window opens on when the APP is opened — dock click, palette, a bare `/os/<app>`
+// deep link (ADR-0021), resolved top-down, first match wins. It layers the app's declared
+// default-surface (rung 1) on top of the workspace body (rungs 2-4). Geometry/focus/URL stay
 // surface-agnostic (ADR-0012); this only chooses WHICH Surface a Window opens on.
 export function initialSurface(appId: string): Surface {
-  const reg = useRegistry()
   // Rung 1 — declared custom default: the layered (App<Site<User) default-surface reference,
   // resolved (own- or cross-app, permission-gated) into a Surface; a cross-app ref the viewer
-  // can't see returns null here and falls through to the next rung.
-  const declared = resolveRef(appId, reg.defaultSurface(appId))
-  if (declared) return declared
-  // Rung 2 — the app's dashboard, if any (how frappe/crm/erpnext land — now via the resolver).
+  // can't see returns null and falls through to the workspace body below.
+  return resolveRef(appId, useRegistry().defaultSurface(appId)) ?? workspaceBodySurface(appId)
+}
+
+// The Surface a WORKSPACE window opens its BODY on (ADR-0042) — the app's default-surface (rung 1)
+// is deliberately EXCLUDED. A directly-opened workspace is a workbench: its sidebar is the
+// workspace's doctypes, its body the app's dashboard if it has one, else the empty pane. It must
+// NOT inherit an app whose default surface is a full-window applet (e.g. raven's chat), which would
+// hide the workbench. `initialSurface` layers rung 1 back on for app-level opens; `openWorkspace`
+// (a tile-menu entry, a `/os/<app>/<workspace>` URL) opens on this so a workspace is always a workbench.
+export function workspaceBodySurface(appId: string): Surface {
+  const reg = useRegistry()
+  // Rung 2 — the app's dashboard, if any (how frappe/crm/erpnext land).
   if (reg.app(appId)?.hasDashboard) return dashboardSurface(appId)
   // Rung 3 — first doctype list: DORMANT. It needs the app's exposed-doctype / nav source, a
   // deferred decision (ADR-0021 open question), so it is intentionally a no-op here and slots in
@@ -108,6 +117,12 @@ export function initialSurface(appId: string): Surface {
   // openable rather than blank.
   return emptyAppSurface(appId)
 }
+
+// Does opening the APP (a tile click) land on a full-window applet instead of a workbench? True only
+// when the app's default surface is an applet (raven's chat) — the case where the workbench can't be
+// reached by clicking, so a tile's context menu needs its own "Open Workspaces" entry. A normal app
+// already opens its workbench on click, so it gets no such entry.
+export const opensAppletOnClick = (appId: string): boolean => initialSurface(appId).kind === 'applet'
 
 // Resolve a Placement's surface reference (ADR-0023) into the Surface to open. Unlike resolveRef
 // (the default-surface rung-1 resolver) this does NO permission gating: a resolved placement is

@@ -9,6 +9,7 @@ export const state = reactive<OsState>({
   windows: [], // { id, surface, back?, fwd? } — id prefix encodes role; surface = content
   geo: {}, // id -> { x, y, w, h, z, min, max }
   selection: {}, // id -> { kind, values } — the front list's selection (ADR-0038, was bare names)
+  iconSelection: [], // pin keys of the highlighted desktop icons (Finder-style); distinct from `selection`
   focusKind: {}, // id -> kind of widget holding keyboard focus (ADR-0038); persist-until-replaced
   activeId: null,
   menu: null,
@@ -23,7 +24,7 @@ export const state = reactive<OsState>({
   dockPosition: 'left', // which screen edge the dock sits on (ADR-0022)
   dockAutoHide: true, // dock slides away when a window nears it; off keeps it pinned
   dockMenu: null, // appId whose dock window-chooser popover is open
-  dockContextOpen: false, // dock right-click menu open (keeps the dock revealed)
+  dockContextOpen: false, // any dock context menu open (tray settings OR a tile menu) — keeps the dock revealed
   closeConfirm: null, // winId awaiting an unsaved-changes close confirm (ADR-0029), else null
   aboutOpen: false, // the About-this-workspace dialog (ADR-0039), else closed
 })

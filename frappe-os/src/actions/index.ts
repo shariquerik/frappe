@@ -22,7 +22,6 @@ export {
 export type { Region } from './regions'
 export { MENUBAR_COMMANDS, MENUBAR_ACTIONS, suppressedToggleCommands, THEME_COMMAND, THEME_SUBMENU } from './menu-contributions'
 export { desktopContextItems, dockContextOptions } from './context-menus'
-export type { ContextMenuItem, ContextMenuGroup } from './context-menus'
 export { invoke, registerRunHandlers } from './contributions'
 export {
   dispatchShortcut, pickShortcut, shortcutIndex, canonicalBinding, eventBinding,

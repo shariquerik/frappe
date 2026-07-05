@@ -19,12 +19,15 @@ export interface PlacementPosition {
 }
 
 // One resolved Placement as the server delivers it: a region, the surface reference it pins, and
-// its position. Presentation (label / icon) is NOT carried — the client derives it from the
-// reference (placementView), keeping presentation client-side like the rest of the Registry.
+// its position. Presentation is derived from the reference client-side (placementView), NOT carried —
+// with ONE exception: `label`, an optional personal rename the user set on this pin (ADR-0023). It
+// overrides the derived label on this user's own tile only; icon/logo stay reference-derived.
 export interface ResolvedPlacement {
   region: PlacementRegion
   ref: SurfaceRef
   position?: PlacementPosition | null
+  // A personal display name for this pin (a User-layer rename), or absent to use the derived label.
+  label?: string | null
   // Server-stamped: true when an App-default/Site layer backs this pin (a pure User-created pin has
   // none). Removing it is a personal hide (tombstone), never a row delete on a shared layer — the
   // authoritative own-vs-inherited signal, since a baseline pin carries a position too (ADR-0023).

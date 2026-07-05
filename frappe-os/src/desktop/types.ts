@@ -80,6 +80,10 @@ export interface OsState {
   // `focusKind` is the kind of widget holding keyboard focus — persist-until-replaced, cleared only
   // on surface swap / window close (never on raw DOM blur, so the menu bar can steal focus safely).
   selection: Record<string, { kind: string; values: string[] }>
+  // The desktop-icon selection (Finder-style): pin keys of the highlighted icons on the wallpaper.
+  // A flat array so a modified click can multi-select and a later move/delete layer acts on the set —
+  // distinct from `selection` above, which is the front LIST's row selection (desktop/icon-selection.ts).
+  iconSelection: string[]
   focusKind: Record<string, string>
   activeId: string | null
   menu: string | null
@@ -103,7 +107,8 @@ export interface OsState {
   dockPosition: DockPosition
   dockAutoHide: boolean
   dockMenu: string | null
-  // True while the dock's right-click menu is open; keeps the dock revealed like dockMenu does.
+  // True while ANY dock context menu is open — the tray settings menu OR a tile's right-click menu
+  // (both wired from OSContextMenu's update:open); keeps the dock revealed like dockMenu does.
   // Transient (never persisted), like the menu/palette overlay flags.
   dockContextOpen: boolean
   // The window id awaiting an unsaved-changes close confirm (ADR-0029), or null when no confirm is

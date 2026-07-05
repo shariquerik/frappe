@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   sidebarKind, dashboardSurface, listSurface, formSurface, appSettingsSurface, appletSurface,
-  initialSurface, surfaceAppId, isAspectId, DEFAULT_ASPECT, FORM_ASPECTS, systemWindowTitle,
+  initialSurface, workspaceBodySurface, surfaceAppId, isAspectId, DEFAULT_ASPECT, FORM_ASPECTS, systemWindowTitle,
 } from '../src/surface/index'
 import { initRegistry } from '../src/registry'
 import { useOS } from '../src/desktop/index'
@@ -128,6 +128,21 @@ describe('initialSurface — the default-surface resolver', () => {
   it('rung 4: no declared default + no dashboard → the empty-app pane', () => {
     initRegistry(boot([{ id: 'demo', name: 'Demo', hasDashboard: false }]))
     expect(initialSurface('demo')).toEqual({ kind: 'builtin', view: 'empty', appId: 'demo' })
+  })
+
+  // The workbench body (ADR-0042): opening a WORKSPACE must show a workbench, so it skips the app's
+  // default-surface (rung 1) — the crux that keeps raven's chat applet from hijacking its workspaces.
+  describe('workspaceBodySurface — the workbench body skips the app default-surface', () => {
+    it('an applet-default app: initialSurface opens the applet, the workspace body is the empty pane', () => {
+      initRegistry(boot([{ id: 'demo', name: 'Demo', hasDashboard: false }], [{ app: 'demo', ref: { applet: 'chat' } }]))
+      expect(initialSurface('demo')).toEqual({ kind: 'applet', appletId: 'chat', appId: 'demo' })
+      expect(workspaceBodySurface('demo')).toEqual({ kind: 'builtin', view: 'empty', appId: 'demo' })
+    })
+
+    it('falls to the dashboard when the app has one, ignoring the applet default', () => {
+      initRegistry(boot([{ id: 'demo', name: 'Demo', hasDashboard: true }], [{ app: 'demo', ref: { applet: 'chat' } }]))
+      expect(workspaceBodySurface('demo')).toEqual({ kind: 'builtin', view: 'dashboard', appId: 'demo' })
+    })
   })
 })
 
