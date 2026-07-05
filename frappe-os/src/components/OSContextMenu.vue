@@ -80,7 +80,7 @@ function onCloseAutoFocus(event: Event): void {
     <ContextMenuPortal to="#os-popover-layer">
       <ContextMenuContent :class="MENU" @close-auto-focus="onCloseAutoFocus">
         <template v-for="(option, i) in options" :key="i">
-          <div v-if="option.separator" class="-mx-1.5 my-1.5 h-px bg-outline-gray-3"></div>
+          <div v-if="option.separator" class="-mx-1.5 my-1.5 border-t border-outline-elevation-2"></div>
 
           <!-- submenu parent: opens a nested menu, no click of its own -->
           <ContextMenuSub v-else-if="option.submenu">
