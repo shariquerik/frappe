@@ -88,10 +88,11 @@ function derivePlacementView(p: ResolvedPlacement): PlacementView {
   // shows no app logo (issue #02).
   if (ref.view === 'settings') return { key, ref, label: 'Settings', icon: 'lucide-settings' }
   // A workspace pin ({app, workspace}) labels by the workspace's name (falling back to its slug) under
-  // the app's branded logo — the same presentation the app hub's workspace rows use (issue #02).
+  // the layers glyph — the same icon the app hub's workspace rows use. NOT the app logo: every
+  // workspace of an app would then look identical to the app and to each other (issue #02).
   if (ref.workspace && ref.app) {
     const label = orderedWorkspaces(ref.app).find((w) => w.id === ref.workspace)?.label || ref.workspace
-    return { key, ref, label, logo: app?.logo, icon: 'lucide-layers' }
+    return { key, ref, label, icon: 'lucide-layers' }
   }
   if (ref.applet) {
     const info = listApplets().find((a) => a.appletId === ref.applet)

@@ -127,7 +127,8 @@ describe('placementView — a reference projected to its presentation', () => {
   })
 
   // issue #02 — new pinnable shapes. Settings shows a fixed label/glyph with no app logo (it's a
-  // desktop-wide window, not an app surface); a workspace labels by its workspace name under the app logo.
+  // desktop-wide window, not an app surface); a workspace labels by its workspace name under the
+  // layers glyph (NOT the app logo — every workspace of an app would otherwise look identical).
   it('renders a settings reference as "Settings" with the settings glyph and no logo', () => {
     initRegistry(null)
     const view = placementView(desktop({ app: 'frappe', view: 'settings' }))
@@ -136,12 +137,12 @@ describe('placementView — a reference projected to its presentation', () => {
     expect(view.logo).toBeUndefined()
   })
 
-  it('renders a workspace reference by its workspace label under the app logo', () => {
+  it('renders a workspace reference by its workspace label under the layers glyph, no app logo', () => {
     initRegistry(bootWith()) // seeds crm's fcrm/fcrm_activity workspaces
     const view = placementView(desktop({ app: 'crm', workspace: 'fcrm_activity' }))
     expect(view.label).toBe('Activity') // the workspace's label, not the slug or the app name
     expect(view.icon).toBe('lucide-layers')
-    expect(view.logo).toContain('crm')
+    expect(view.logo).toBeUndefined() // a workspace glyph, not the app logo — else all look identical
     initRegistry(null)
   })
 
