@@ -11,7 +11,7 @@ import { OS_KEY, tryGetOsApi } from "@/data/os-api";
 import { resolveApplet as resolveOsApplet } from "@/registry";
 import { DoctypeView } from "@/components/Views";
 import { AppSettings, Settings } from "@/components/Settings";
-import { Finder } from "@/components/Finder";
+import { Finder, FinderToolbar } from "@/components/Finder";
 import WindowChrome from "./WindowChrome.vue";
 import AppToolbar from "./AppToolbar.vue";
 import { TOOLBAR_SLOT, WINDOW_FOCUSED } from "@/components/window-chrome";
@@ -226,7 +226,9 @@ const viewProps = computed<ViewProps>(() => {
 
 			<!-- ===== FINDER WINDOW (singleton system pane, ADR-0024) ===== -->
 			<template v-else-if="role === 'system' && s.view === 'finder'">
-				<WindowChrome :win="win" title="Finder" />
+				<WindowChrome :win="win">
+					<FinderToolbar :win="win" />
+				</WindowChrome>
 				<div class="flex min-h-0 flex-1 flex-col bg-surface-base">
 					<Finder :win="win" />
 				</div>

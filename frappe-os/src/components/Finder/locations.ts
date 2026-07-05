@@ -112,3 +112,15 @@ export function sectionsFor(location: Location): FinderSection[] {
 export function itemsFor(location: Location): FinderItem[] {
   return sectionsFor(location).flatMap((section) => section.items)
 }
+
+// Narrow a Location's sections to the tiles whose label matches the search query (case-insensitive
+// substring), dropping any section left with no tiles so an empty workspace heading disappears. A
+// blank query returns the sections untouched. Pure (no store read) so the Finder search is covered
+// without a DOM, and the same narrowing serves every tile Location.
+export function filterSections(sections: FinderSection[], query: string): FinderSection[] {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return sections
+  return sections
+    .map((section) => ({ ...section, items: section.items.filter((item) => item.label.toLowerCase().includes(needle)) }))
+    .filter((section) => section.items.length > 0)
+}

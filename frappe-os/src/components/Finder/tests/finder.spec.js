@@ -13,7 +13,7 @@ import { initRegistry } from '@/registry'
 import { initPlacements, usePlacements, applyLocalOverride } from '@/placements'
 import { initRecents } from '@/recents'
 import { bootWith } from '../../../../tests/fixtures/os-boot'
-import { applicationItems, doctypeSections, workspaceSections, favoritePlacements, itemsFor } from '../locations'
+import { applicationItems, doctypeSections, workspaceSections, favoritePlacements, itemsFor, filterSections } from '../locations'
 
 const os = useOS()
 
@@ -168,6 +168,41 @@ describe('a Location drag-out → a desktop Placement (the User-layer write path
     initPlacements({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements: [] })
     applyLocalOverride({ region: 'desktop', ref: { app: 'crm' }, position: { column: 0, row: 0 } })
     expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'crm' }])
+  })
+})
+
+describe('filterSections — the chrome search box narrows a Location by tile label', () => {
+  const sections = () => [
+    { label: 'Core', items: [{ key: 'a', label: 'ToDo' }, { key: 'b', label: 'DocType' }] },
+    { label: 'CRM', items: [{ key: 'c', label: 'CRM Lead' }] },
+  ]
+
+  it('a blank query returns the sections untouched', () => {
+    expect(filterSections(sections(), '')).toEqual(sections())
+    expect(filterSections(sections(), '   ')).toEqual(sections())
+  })
+
+  it('keeps only tiles whose label matches, case-insensitively (substring)', () => {
+    const out = filterSections(sections(), 'do')
+    // 'ToDo' and 'DocType' match 'do'; 'CRM Lead' does not, so its now-empty section is dropped.
+    expect(out.map((s) => s.label)).toEqual(['Core'])
+    expect(out[0].items.map((i) => i.label)).toEqual(['ToDo', 'DocType'])
+  })
+
+  it('drops a section left with no matching tiles', () => {
+    const out = filterSections(sections(), 'lead')
+    expect(out.map((s) => s.label)).toEqual(['CRM'])
+    expect(out[0].items.map((i) => i.label)).toEqual(['CRM Lead'])
+  })
+
+  it('trims the query and returns an empty list when nothing matches', () => {
+    expect(filterSections(sections(), '  zzz  ')).toEqual([])
+  })
+
+  it('does not mutate the input sections', () => {
+    const input = sections()
+    filterSections(input, 'do')
+    expect(input[1].items).toHaveLength(1) // CRM section untouched in the original
   })
 })
 

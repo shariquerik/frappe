@@ -9,10 +9,11 @@
 // writePlacementOverride). Favorites' remove clears the user's OWN pin.
 import { computed, watch } from 'vue'
 import { useOS } from '@/desktop'
-import { sectionsFor, favoritePlacements, type Location, type FinderItem, type FinderSection } from './locations'
+import { sectionsFor, filterSections, favoritePlacements, type Location, type FinderItem, type FinderSection } from './locations'
 import { startFinderDrag } from './drag'
 import { finderTileMenuOptions } from './tile-menu'
 import { selectFinderTile, clearFinderSelection, isFinderTileSelected, selectedFinderTile } from './selection'
+import { finderQuery, clearFinderQuery } from './search'
 import { placementView, placementKey, removeResolvedPlacement } from '@/placements'
 import OSContextMenu, { type ContextMenuOption } from '@/components/OSContextMenu.vue'
 import type { ResolvedPlacement } from '@/placements/types'
@@ -29,19 +30,49 @@ const SETTINGS_TILE: FinderItem =
   { key: 'finder:settings', ref: { app: 'frappe', view: 'settings' }, label: 'Settings', icon: 'lucide-settings' }
 
 // The Location's tiles as titled sections (Workspaces group by app, Doctypes by workspace; the flat
-// Locations are one heading-less section). Applications is a single section, so the Settings shortcut
-// is appended to it. The tile behavior is per-tile, so grouping changes only the layout.
+// Locations are one heading-less section), narrowed by the chrome search box (search.ts) to the
+// tiles whose label matches. Applications is a single section, so the Settings shortcut is appended
+// before filtering (it filters like any other tile). Grouping/filtering change only the layout.
 const sections = computed<FinderSection[]>(() => {
   const secs = sectionsFor(props.location)
-  if (props.location !== 'Applications') return secs
-  return secs.map((section) => ({ ...section, items: [...section.items, SETTINGS_TILE] }))
+  const withSettings =
+    props.location === 'Applications'
+      ? secs.map((section) => ({ ...section, items: [...section.items, SETTINGS_TILE] }))
+      : secs
+  return filterSections(withSettings, finderQuery())
 })
 // Every tile flat — the keyboard handler resolves the selected key against this, unaware of sections.
 const allTiles = computed<FinderItem[]>(() => sections.value.flatMap((section) => section.items))
-const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
+// Favorites renders from placements, not sections, so it filters here by the same query.
+const favorites = computed<ResolvedPlacement[]>(() => {
+  const needle = finderQuery().trim().toLowerCase()
+  const all = favoritePlacements()
+  return needle ? all.filter((p) => placementView(p).label.toLowerCase().includes(needle)) : all
+})
 
-// Switching Location drops any tile selection (like clicking away) — the highlighted tile is gone.
-watch(() => props.location, () => clearFinderSelection())
+// The message when a tile Location has nothing to show: a no-match line while searching, else the
+// Recents hint before any record is opened. Favorites shows its own empty/no-match line below.
+const emptyMessage = computed<string | null>(() => {
+  if (props.location === 'Favorites' || allTiles.value.length) return null
+  const needle = finderQuery().trim()
+  if (needle) return `No matches for “${needle}”.`
+  if (props.location === 'Recents') return 'No recent records yet. Open a record and it shows up here.'
+  return null
+})
+// Favorites' empty line: a no-match while searching, else the "nothing pinned" hint.
+const favoritesEmpty = computed<string>(() => {
+  const needle = finderQuery().trim()
+  return needle
+    ? `No matches for “${needle}”.`
+    : 'Nothing pinned yet. Drag an app or doctype onto the desktop to add it.'
+})
+
+// Switching Location drops any tile selection (like clicking away) and clears the search — the
+// highlighted tile is gone and each Location opens on a clean, unfiltered view.
+watch(() => props.location, () => {
+  clearFinderSelection()
+  clearFinderQuery()
+})
 
 // Open a tile (double-click): every tile opens through the one shared reference-open path (os.openRef)
 // the desktop and tile menu also use — a settings ref lands on the Settings window, the rest on a surface.
@@ -89,9 +120,9 @@ const keyOf = placementKey
 
 <template>
   <div class="flex min-w-0 flex-1 flex-col overflow-auto px-[22px] py-5">
-    <!-- Recents starts empty until a record is opened; the other tile Locations are never empty. -->
-    <div v-if="location === 'Recents' && !allTiles.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
-      No recent records yet. Open a record and it shows up here.
+    <!-- Empty tile Location: no search matches, or Recents before any record is opened. -->
+    <div v-if="emptyMessage" class="py-8 text-center text-[12.5px] text-ink-gray-5">
+      {{ emptyMessage }}
     </div>
 
     <!-- Applications / Workspaces / Doctypes / Recents — titled sections of a draggable tile grid.
@@ -129,7 +160,7 @@ const keyOf = placementKey
     <!-- Favorites — read-only mirror of the viewer's desktop + dock Placements, with a remove affordance -->
     <template v-else>
       <div v-if="!favorites.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
-        Nothing pinned yet. Drag an app or doctype onto the desktop to add it.
+        {{ favoritesEmpty }}
       </div>
       <div v-for="p in favorites" :key="keyOf(p)" class="group flex items-center gap-2.5 rounded-lg px-2 py-[7px] hover:bg-surface-gray-2">
         <img v-if="view(p).logo" :src="view(p).logo" :alt="view(p).label" class="h-[26px] w-[26px] flex-shrink-0 rounded-md object-contain" />
