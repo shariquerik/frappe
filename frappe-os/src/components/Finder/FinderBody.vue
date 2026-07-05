@@ -1,14 +1,18 @@
 <script setup lang="ts">
-// The Finder body (ADR-0024): renders the active Location's draggable tiles. Applications and
-// Doctypes are tile grids reprojected from the Registry (locations.ts); Favorites is a read-only
-// mirror/manager of the viewer's resolved desktop + dock Placements. A left-click launches a tile
-// (opens its surface); a drag-out onto the desktop creates a Placement via the one User-layer write
-// path (drag.ts → writePlacementOverride). Favorites' remove clears the user's OWN pin.
-import { computed } from 'vue'
+// The Finder body (ADR-0024): renders the active Location's tiles. Applications and Doctypes are tile
+// grids reprojected from the Registry (locations.ts); Recents mirrors the recents log; Favorites is a
+// read-only mirror/manager of the viewer's resolved desktop + dock Placements. A tile behaves like a
+// desktop icon (issues #3/#5): a single click SELECTS it, a double-click OPENS it, a right-click opens
+// a context menu (Open + Add to Desktop/Dock), and a drag-out onto the wallpaper creates a Placement
+// (drag.ts → writePlacementOverride). Favorites' remove clears the user's OWN pin.
+import { computed, watch } from 'vue'
 import { useOS } from '@/desktop'
 import { itemsFor, favoritePlacements, type Location, type FinderItem } from './locations'
 import { startFinderDrag } from './drag'
+import { finderTileMenuOptions } from './tile-menu'
+import { selectFinderTile, clearFinderSelection, isFinderTileSelected } from './selection'
 import { placementView, placementKey, removeResolvedPlacement } from '@/placements'
+import OSContextMenu, { type ContextMenuOption } from '@/components/OSContextMenu.vue'
 import type { ResolvedPlacement } from '@/placements/types'
 
 const props = defineProps<{ location: Location }>()
@@ -18,6 +22,7 @@ const os = useOS()
 // the per-user Settings window rather than a Surface (ADR-0024's open question, resolved to Settings).
 const SETTINGS_TILE: FinderItem & { settings: true } =
   { key: 'finder:settings', ref: { app: 'frappe' }, label: 'Settings', icon: 'lucide-settings', settings: true }
+const isSettings = (item: FinderItem): boolean => !!(item as { settings?: boolean }).settings
 
 const tiles = computed<FinderItem[]>(() => {
   const items = itemsFor(props.location)
@@ -25,18 +30,28 @@ const tiles = computed<FinderItem[]>(() => {
 })
 const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
 
-// Launch a tile: the Settings entry opens the per-user Settings window; every other tile opens
-// through the one shared reference-open path (os.openRef) the desktop and tile menu also use.
+// Switching Location drops any tile selection (like clicking away) — the highlighted tile is gone.
+watch(() => props.location, () => clearFinderSelection())
+
+// Open a tile (double-click): the Settings entry opens the per-user Settings window; every other tile
+// opens through the one shared reference-open path (os.openRef) the desktop and tile menu also use.
 function launch(item: FinderItem): void {
-  if ((item as { settings?: boolean }).settings) return os.openSettings()
+  if (isSettings(item)) return os.openSettings()
   os.openRef(item.ref)
+}
+
+// The tile's right-click menu. Settings isn't a pinnable surface reference yet (a later slice makes it
+// one), so it offers only Open (→ its window); every other tile gets the full Add-to-Desktop/Dock menu.
+function menuFor(item: FinderItem): ContextMenuOption[] {
+  if (isSettings(item)) return [{ label: 'Open', icon: 'lucide-settings', onClick: () => os.openSettings() }]
+  return finderTileMenuOptions(item, os)
 }
 
 // Start a drag-out from a tile: hand its on-screen rect to the shared pointer loop, which on release
 // snaps to a desktop grid cell and persists a new desktop Placement. The Settings entry isn't a
 // pinnable surface reference, so it doesn't drag out.
 function onTilePointerDown(item: FinderItem, e: PointerEvent): void {
-  if ((item as { settings?: boolean }).settings) return
+  if (isSettings(item)) return
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   startFinderDrag(item, rect, e)
 }
@@ -55,17 +70,26 @@ const keyOf = placementKey
       No recent records yet. Open a record and it shows up here.
     </div>
 
-    <!-- Applications / Doctypes / Recents — draggable tile grid -->
-    <div v-else-if="location !== 'Favorites'" class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1">
-      <button v-for="item in tiles" :key="item.key"
-        class="flex cursor-grab flex-col items-center gap-[7px] rounded-lg border-none bg-transparent px-1 py-2.5 hover:bg-surface-gray-2 active:cursor-grabbing"
-        @pointerdown="onTilePointerDown(item, $event)" @click="launch(item)">
-        <img v-if="item.logo" :src="item.logo" :alt="item.label" class="h-[44px] w-[44px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]" />
-        <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
-          <span :class="item.icon" class="size-[21px]"></span>
-        </span>
-        <span class="line-clamp-2 max-w-[88px] break-words text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
-      </button>
+    <!-- Applications / Doctypes / Recents — draggable tile grid. A click on empty grid space clears the
+         selection (like clicking the Finder background); .self so a click on a tile doesn't. -->
+    <div v-else-if="location !== 'Favorites'" class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1"
+      @click.self="clearFinderSelection()">
+      <OSContextMenu v-for="item in tiles" :key="item.key" :options="menuFor(item)">
+        <button
+          :class="[
+            'flex cursor-grab flex-col items-center gap-[7px] rounded-lg border-none px-1 py-2.5 active:cursor-grabbing',
+            isFinderTileSelected(item.key) ? 'bg-surface-gray-3' : 'bg-transparent hover:bg-surface-gray-2',
+          ]"
+          @pointerdown="onTilePointerDown(item, $event)"
+          @click="selectFinderTile(item.key)"
+          @dblclick="launch(item)">
+          <img v-if="item.logo" :src="item.logo" :alt="item.label" class="h-[44px] w-[44px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]" />
+          <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
+            <span :class="item.icon" class="size-[21px]"></span>
+          </span>
+          <span class="line-clamp-2 max-w-[88px] break-words text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
+        </button>
+      </OSContextMenu>
     </div>
 
     <!-- Favorites — read-only mirror of the viewer's desktop + dock Placements, with a remove affordance -->

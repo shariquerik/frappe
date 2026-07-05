@@ -39,41 +39,58 @@ function activeRef(os: OsStore): SurfaceRef | null {
 
 // Is `ref` already pinned in `region`? Identity match on (region, surface-reference) — the same
 // key the override seam dedups on — so the inverse "Remove…" verb appears only when it applies.
-function isPinned(region: PlacementRegion, ref: SurfaceRef): boolean {
+// Exported so a ref-targeted caller (the Finder tile menu) can toggle Add ↔ Remove per region.
+export function isPinned(region: PlacementRegion, ref: SurfaceRef): boolean {
   const key = placementKey({ region, ref })
   const list = region === 'desktop' ? usePlacements().desktop() : usePlacements().dock()
   return list.some((p) => placementKey(p) === key)
 }
 
-// "Add to Desktop": upsert a User-layer new pin into the next free grid cell (#02), so it never
-// stacks on an existing icon. The desktop's free-cell math needs a height; the live desktop size is
-// the store's desktopRef.
-function addToDesktop(os: OsStore): void {
-  const ref = activeRef(os)
-  if (!ref) return
-  const desktopHeight = os.desktopRef.h
+// ── ref-targeted pin/unpin — the shared core (issue #03/#05) ─────────────────────
+// These act on a GIVEN surface reference, so both the Window verbs (the active surface, below) and
+// the Finder tile menu (a tile's ref) pin/unpin through ONE path — the free-cell / dock-order / own-
+// vs-inherited logic lives here once, never copied per caller.
+
+// Pin a reference to the desktop's next free grid cell (#02), so it never stacks on an existing icon.
+// The free-cell math needs the live desktop height — the caller passes it (the store's desktopRef.h).
+export function pinToDesktop(ref: SurfaceRef, desktopHeight: number): void {
   const taken = new Set(layoutDesktop(usePlacements().desktop(), desktopHeight).map((c) => c.column + ',' + c.row))
   const cell = nextFreeCell(taken, desktopHeight)
   void writePlacementOverride({ region: 'desktop', ref, position: cell })
 }
 
-// "Add to Dock": upsert a User-layer new pin appended past the current max order (#03), so a fresh
-// pin lands at the end of the dock rather than colliding with an existing one.
-function addToDock(os: OsStore): void {
-  const ref = activeRef(os)
-  if (!ref) return
+// Pin a reference to the dock, appended past the current max order (#03), so it lands at the end
+// rather than colliding with an existing pin.
+export function pinToDock(ref: SurfaceRef): void {
   void writePlacementOverride({ region: 'dock', ref, position: { order: nextDockOrder(usePlacements().dock()) } })
 }
 
-// "Remove from Desktop/Dock": a non-destructive personal removal. Find the resolved pin for the
-// active surface and hand it to the shared remove path, which clears an OWN row or tombstones an
-// INHERITED pin off the server's `inherited` flag — never a row delete on a shared layer (ADR-0023).
-function removeFrom(os: OsStore, region: PlacementRegion): void {
-  const ref = activeRef(os)
-  if (!ref) return
+// Unpin a reference from a region: find its resolved pin and hand it to the shared remove path, which
+// clears an OWN row or tombstones an INHERITED pin off the server's `inherited` flag — never a row
+// delete on a shared layer (ADR-0023). A no-op when the reference isn't pinned there.
+export function unpinRef(region: PlacementRegion, ref: SurfaceRef): void {
   const list = region === 'desktop' ? usePlacements().desktop() : usePlacements().dock()
   const pin = list.find((p) => placementKey(p) === placementKey({ region, ref }))
   if (pin) void removeResolvedPlacement(pin)
+}
+
+// "Add to Desktop": pin the ACTIVE window's surface into the next free cell. The live desktop size is
+// the store's desktopRef.
+function addToDesktop(os: OsStore): void {
+  const ref = activeRef(os)
+  if (ref) pinToDesktop(ref, os.desktopRef.h)
+}
+
+// "Add to Dock": pin the ACTIVE window's surface, appended at the end of the dock.
+function addToDock(os: OsStore): void {
+  const ref = activeRef(os)
+  if (ref) pinToDock(ref)
+}
+
+// "Remove from Desktop/Dock": a non-destructive personal removal of the ACTIVE surface's pin.
+function removeFrom(os: OsStore, region: PlacementRegion): void {
+  const ref = activeRef(os)
+  if (ref) unpinRef(region, ref)
 }
 
 // The four verbs as run Handlers, registered into the OPEN RUN_HANDLERS map the same way the menu
