@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { initPlacements, usePlacements, placementView, placementKey, defaultLabel, applyLocalOverride } from '../src/placements'
 import { initRegistry } from '../src/registry'
 import { placementSurface, isAppRef } from '../src/surface'
+import { bootWith } from './fixtures/os-boot'
 
 const boot = (placements) =>
   ({ user: 'a', csrf_token: 't', roles: [], registry: [], permissions: {}, placements })
@@ -123,6 +124,31 @@ describe('placementView — a reference projected to its presentation', () => {
     initRegistry(null)
     const renamed = { region: 'desktop', ref: { app: 'frappe' }, label: 'My Framework' }
     expect(defaultLabel(renamed)).toBe('Frappe') // the derived name, not the override
+  })
+
+  // issue #02 — new pinnable shapes. Settings shows a fixed label/glyph with no app logo (it's a
+  // desktop-wide window, not an app surface); a workspace labels by its workspace name under the app logo.
+  it('renders a settings reference as "Settings" with the settings glyph and no logo', () => {
+    initRegistry(null)
+    const view = placementView(desktop({ app: 'frappe', view: 'settings' }))
+    expect(view.label).toBe('Settings')
+    expect(view.icon).toBe('lucide-settings')
+    expect(view.logo).toBeUndefined()
+  })
+
+  it('renders a workspace reference by its workspace label under the app logo', () => {
+    initRegistry(bootWith()) // seeds crm's fcrm/fcrm_activity workspaces
+    const view = placementView(desktop({ app: 'crm', workspace: 'fcrm_activity' }))
+    expect(view.label).toBe('Activity') // the workspace's label, not the slug or the app name
+    expect(view.icon).toBe('lucide-layers')
+    expect(view.logo).toContain('crm')
+    initRegistry(null)
+  })
+
+  it('falls back to the workspace slug when the workspace is unknown', () => {
+    initRegistry(bootWith())
+    expect(placementView(desktop({ app: 'crm', workspace: 'ghost' })).label).toBe('ghost')
+    initRegistry(null)
   })
 })
 

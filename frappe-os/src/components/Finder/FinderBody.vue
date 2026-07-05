@@ -19,11 +19,13 @@ import type { ResolvedPlacement } from '@/placements/types'
 const props = defineProps<{ location: Location }>()
 const os = useOS()
 
-// The framework "Settings" entry pinned to the Applications Location: it isn't an app, so it opens
-// the per-user Settings window rather than a Surface (ADR-0024's open question, resolved to Settings).
-const SETTINGS_TILE: FinderItem & { settings: true } =
-  { key: 'finder:settings', ref: { app: 'frappe' }, label: 'Settings', icon: 'lucide-settings', settings: true }
-const isSettings = (item: FinderItem): boolean => !!(item as { settings?: boolean }).settings
+// The framework "Settings" entry pinned to the Applications Location. Its {app:'frappe', view:'settings'}
+// reference is a first-class pinnable shortcut (issue #02): openRef routes it to the Settings window, so
+// it flows through the SAME open/menu/drag paths as every other tile — click selects, double-click
+// opens Settings, its menu offers Add to Desktop/Dock, and it drags out to a pin (label/icon are still
+// hardcoded here since Settings has no Registry app entry of its own).
+const SETTINGS_TILE: FinderItem =
+  { key: 'finder:settings', ref: { app: 'frappe', view: 'settings' }, label: 'Settings', icon: 'lucide-settings' }
 
 const tiles = computed<FinderItem[]>(() => {
   const items = itemsFor(props.location)
@@ -34,17 +36,15 @@ const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
 // Switching Location drops any tile selection (like clicking away) — the highlighted tile is gone.
 watch(() => props.location, () => clearFinderSelection())
 
-// Open a tile (double-click): the Settings entry opens the per-user Settings window; every other tile
-// opens through the one shared reference-open path (os.openRef) the desktop and tile menu also use.
+// Open a tile (double-click): every tile opens through the one shared reference-open path (os.openRef)
+// the desktop and tile menu also use — a settings ref lands on the Settings window, the rest on a surface.
 function launch(item: FinderItem): void {
-  if (isSettings(item)) return os.openSettings()
   os.openRef(item.ref)
 }
 
-// The tile's right-click menu. Settings isn't a pinnable surface reference yet (a later slice makes it
-// one), so it offers only Open (→ its window); every other tile gets the full Add-to-Desktop/Dock menu.
+// The tile's right-click menu: Open + Add to Desktop/Dock (Remove when already pinned) — the same for
+// every tile, Settings included (it's a real pinnable reference now).
 function menuFor(item: FinderItem): ContextMenuOption[] {
-  if (isSettings(item)) return [{ label: 'Open', icon: 'lucide-settings', onClick: () => os.openSettings() }]
   return finderTileMenuOptions(item, os)
 }
 
@@ -66,10 +66,9 @@ function onTileKey(e: KeyboardEvent): void {
 }
 
 // Start a drag-out from a tile: hand its on-screen rect to the shared pointer loop, which on release
-// snaps to a desktop grid cell and persists a new desktop Placement. The Settings entry isn't a
-// pinnable surface reference, so it doesn't drag out.
+// snaps to a desktop grid cell and persists a new desktop Placement. Every tile (Settings included) is
+// a pinnable reference now, so any of them can drag out.
 function onTilePointerDown(item: FinderItem, e: PointerEvent): void {
-  if (isSettings(item)) return
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   startFinderDrag(item, rect, e)
 }

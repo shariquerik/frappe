@@ -49,11 +49,30 @@ describe('surfaceToRef (the active surface → its pinnable reference)', () => {
   it('maps an applet surface to its applet reference', () => {
     expect(surfaceToRef(appletSurface('frappe', 'my-todos'))).toEqual({ app: 'frappe', applet: 'my-todos' })
   })
-  it('falls back to the bare app for a form (a record is not a placement shape)', () => {
-    expect(surfaceToRef(formSurface('CRM Lead', 'L-1'))).toEqual({ app: 'crm' })
+  it('maps a saved form to its record reference (issue #02 — a record pins itself)', () => {
+    expect(surfaceToRef(formSurface('CRM Lead', 'L-1'))).toEqual({ doctype: 'CRM Lead', view: 'form', name: 'L-1' })
+  })
+  it('falls back to the bare app for an UNSAVED (new) form — no record to pin yet', () => {
+    expect(surfaceToRef(formSurface('CRM Lead', 'new'))).toEqual({ app: 'crm' })
   })
   it('falls back to the bare app for a settings surface', () => {
     expect(surfaceToRef(appSettingsSurface('crm'))).toEqual({ app: 'crm' })
+  })
+})
+
+// activeRef isn't exported, so its workspace-vs-app decision is pinned through the observable verb:
+// "Add to Desktop" on a workbench window pins that WORKSPACE (its window identity), not the app default.
+describe('a workbench window pins its workspace (issue #02)', () => {
+  it('Add to Desktop on a workbench upserts an {app, workspace} pin', () => {
+    os.openWorkspace('crm', 'fcrm_activity')
+    invoke(PLACEMENT_COMMANDS.find((c) => c.id === 'frappe.placement.add-desktop'), os)
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ app: 'crm', workspace: 'fcrm_activity' }])
+  })
+
+  it('an open saved record pins the record even from an app window', () => {
+    os.openRecordGlobal('CRM Lead', 'L-9')
+    invoke(PLACEMENT_COMMANDS.find((c) => c.id === 'frappe.placement.add-desktop'), os)
+    expect(usePlacements().desktop().map((p) => p.ref)).toEqual([{ doctype: 'CRM Lead', view: 'form', name: 'L-9' }])
   })
 })
 

@@ -241,6 +241,11 @@ export const openSurface = (surface: Surface) => ensureApp(surfaceAppId(surface)
 // Surface and opens in the owning app's window. The ONE open path a desktop double-click, a Finder
 // tile click, and the tile context menu's "Open" all share — so those three never drift apart.
 export const openRef = (ref: SurfaceRef) => {
+  // Settings and a workspace both carry an `app` with no applet/doctype/dashboard, so isAppRef would
+  // wrongly treat them as bare-app opens — route them FIRST. Neither is a navigable surface: Settings
+  // is a singleton window (openSettings), a workspace is window identity + body (openWorkspace).
+  if (ref.view === 'settings') return openSettings()
+  if (ref.workspace && ref.app) return openWorkspace(ref.app, ref.workspace)
   if (isAppRef(ref)) return openApp(ref.app!)
   const surface = placementSurface(ref)
   if (surface) openSurface(surface)

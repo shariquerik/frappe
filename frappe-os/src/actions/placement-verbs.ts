@@ -8,7 +8,7 @@
 // That toggle (Add ↔ Remove) is a pure function of the current pin state, decided at PROJECTION
 // time by suppressedPlacementCommands (which menuOptions in menubar.ts filters through for every
 // menu) — so the verbs stay genuine resolved Actions while the inverse only appears when it applies.
-import { surfaceAppId, windowRole } from '@/surface'
+import { surfaceAppId, windowRole, windowWorkspace } from '@/surface'
 import { usePlacements, placementKey, writePlacementOverride, removeResolvedPlacement } from '@/placements'
 import { nextDockOrder } from '@/desktop/dock-model'
 import { nextFreeCell, layoutDesktop } from '@/desktop/grid'
@@ -18,13 +18,16 @@ import { registerRunHandlers, type RunHandler } from './contributions'
 import { WINDOW_REGION } from './regions'
 
 // The surface reference (ADR-0021) a pin stores for what a window currently shows. Mirrors the
-// pinnable shapes placementSurface resolves back (applet / dashboard / doctype-list), so a pin
-// round-trips to the same Surface on open. A form (a record — not a placement shape) and every
-// other surface (empty/settings) pin the BARE APP, the most honest reusable destination.
+// pinnable shapes placementSurface / openRef resolve back (applet / dashboard / doctype-list / record),
+// so a pin round-trips to the same window on open. A SAVED record (form, not 'new') pins as a
+// {doctype, view:'form', name} shortcut (issue #02); an unsaved 'new' form and every other surface
+// (empty/settings) pin the BARE APP, the most honest reusable destination.
 export function surfaceToRef(surface: Surface): SurfaceRef {
   if (surface.kind === 'applet') return { app: surface.appId, applet: surface.appletId }
   if (surface.view === 'dashboard') return { app: surface.appId, dashboard: true }
   if (surface.view === 'list' && surface.doctype) return { doctype: surface.doctype, view: 'list' }
+  if (surface.view === 'form' && surface.doctype && surface.recordName && surface.recordName !== 'new')
+    return { doctype: surface.doctype, view: 'form', name: surface.recordName }
   return { app: surfaceAppId(surface) }
 }
 
@@ -34,7 +37,16 @@ export function surfaceToRef(surface: Surface): SurfaceRef {
 function activeRef(os: OsStore): SurfaceRef | null {
   const win = os.state.windows.find((w) => w.id === os.state.activeId)
   if (!win || windowRole(win.id) !== 'app') return null
-  return surfaceToRef(win.surface)
+  const ref = surfaceToRef(win.surface)
+  // A record/list/applet the user navigated to pins itself (the specific destination — it carries a
+  // doctype or applet). A workbench window whose body is the app dashboard/empty (surfaceToRef →
+  // dashboard or bare-app) instead pins its WORKSPACE identity — the workspace rides the window id,
+  // not the surface (ADR-0042) — so "Add to Desktop" on a workbench reopens that workbench (issue #02).
+  // A plain app window (openApp, no workspace on its id) keeps pinning the dashboard/app.
+  if (ref.doctype || ref.applet) return ref
+  const workspace = windowWorkspace(win.id)
+  if (workspace) return { app: surfaceAppId(win.surface), workspace }
+  return ref
 }
 
 // Is `ref` already pinned in `region`? Identity match on (region, surface-reference) — the same

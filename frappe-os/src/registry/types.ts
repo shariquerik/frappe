@@ -26,12 +26,19 @@ export interface Contribution {
 export interface SurfaceRef {
   applet?: string
   doctype?: string
+  // The window shape a reference targets: 'list'/'form' for a doctype, and 'settings' for the
+  // per-user Settings window ({app:'frappe', view:'settings'} — a pinnable shortcut to Settings,
+  // opened as its singleton window, not a navigable surface).
   view?: string
   // The record a form reference targets (ADR-0024): a Recents entry / form Placement pins a
   // {doctype, name, view:'form'}. Absent for the list/app/dashboard/applet shapes.
   name?: string
   dashboard?: boolean
   app?: string
+  // A workspace/workbench reference ({app, workspace}, issue #02): pins an app's workspace as a
+  // shortcut that reopens that workbench. The workspace is window identity (rides the window id),
+  // not surface content, so openRef routes it to openWorkspace rather than through placementSurface.
+  workspace?: string
 }
 
 // An app-declared menu-bar menu (ADR-0039 rule 2): its stable `id` (the menuId tail of the
