@@ -5,14 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/placements', () => ({ removeResolvedPlacement: vi.fn() }))
-vi.mock('@/desktop/windows', () => ({ openApp: vi.fn(), openAppWorkbench: vi.fn() }))
+vi.mock('@/desktop/windows', () => ({ openRef: vi.fn(), openAppWorkbench: vi.fn() }))
 vi.mock('@/surface', () => ({
   isAppRef: (ref) => !!ref.app && !ref.applet && !ref.doctype && !ref.dashboard,
   opensAppletOnClick: vi.fn(() => false),
 }))
 
 import { removeResolvedPlacement } from '@/placements'
-import { openApp, openAppWorkbench } from '@/desktop/windows'
+import { openRef, openAppWorkbench } from '@/desktop/windows'
 import { opensAppletOnClick } from '@/surface'
 import { tileMenuOptions } from '@/placements/tile-menu'
 
@@ -40,9 +40,9 @@ describe('tileMenuOptions', () => {
     }
   })
 
-  it('"Open" runs the tile-click action (openApp) for the pin\'s app', () => {
+  it('"Open" runs the shared tile-click action (openRef) with the pin\'s reference', () => {
     tileMenuOptions(appPin())[0].onClick()
-    expect(openApp).toHaveBeenCalledWith('crm')
+    expect(openRef).toHaveBeenCalledWith({ app: 'crm' })
   })
 
   it('"Open Workspaces" opens the app\'s workbench hub (openAppWorkbench)', () => {
@@ -51,10 +51,16 @@ describe('tileMenuOptions', () => {
     expect(openAppWorkbench).toHaveBeenCalledWith('crm')
   })
 
-  it('a non-app (doctype) pin lists no open verbs — just "Remove"', () => {
+  it('a doctype pin now shares the "Open" verb — "Open", a divider, then "Remove"', () => {
     const options = tileMenuOptions(doctypePin())
-    expect(labels(options)).toEqual(['Remove'])
+    expect(labels(options)).toEqual(['Open', '---', 'Remove'])
+    // A non-app ref never probes the applet-front-door check (no app to open a workbench for).
     expect(opensAppletOnClick).not.toHaveBeenCalled()
+  })
+
+  it('a doctype pin\'s "Open" opens its reference through the shared openRef path', () => {
+    tileMenuOptions(doctypePin())[0].onClick()
+    expect(openRef).toHaveBeenCalledWith({ doctype: 'ToDo', view: 'list' })
   })
 
   it('an applet pin still exposes its app\'s open verbs (the dock raven-chat pin, not just Remove)', () => {
@@ -82,8 +88,10 @@ describe('tileMenuOptions', () => {
     expect(labels(tileMenuOptions(appPin('dock'), { onRename: () => {} }))).toEqual(['Open', '---', 'Remove'])
   })
 
-  it('renames a doctype desktop pin too — "Rename" then "Remove", no open verbs', () => {
-    expect(labels(tileMenuOptions(doctypePin(), { onRename: () => {} }))).toEqual(['Rename', 'Remove'])
+  it('renames a doctype desktop pin too — "Open", divider, "Rename", "Remove"', () => {
+    expect(labels(tileMenuOptions(doctypePin(), { onRename: () => {} }))).toEqual([
+      'Open', '---', 'Rename', 'Remove',
+    ])
   })
 
   it('removes the exact pin through the shared remove path on click', () => {

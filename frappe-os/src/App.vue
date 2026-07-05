@@ -12,7 +12,6 @@ import { desktopContextItems, dispatchShortcut } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
 import { usePlacements, placementView, defaultLabel, writePlacementOverride } from "@/placements";
 import { tileMenuOptions } from "@/placements/tile-menu";
-import { placementSurface, isAppRef } from "@/surface";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
 import { dirtyWindows } from "@/desktop/working-state";
 import AppIconTile from "./components/AppIconTile.vue";
@@ -124,15 +123,7 @@ function isLabelTarget(target: EventTarget | null): boolean {
 }
 function onIconDblClick(di: DesktopIcon): void {
 	clearRenameTimer();
-	openPlacement(di.ref);
-}
-
-// Open a desktop pin: a bare-app reference opens the app's default surface (like the dock icon);
-// any other reference resolves to its Surface and opens in the owning app's window.
-function openPlacement(ref: SurfaceRef): void {
-	if (isAppRef(ref)) return os.openApp(ref.app!);
-	const surface = placementSurface(ref);
-	if (surface) os.openSurface(surface);
+	os.openRef(di.ref);
 }
 
 // Inline rename of a desktop icon (ADR-0023): the "Rename" tile-menu entry swaps this pin's label for

@@ -19,7 +19,7 @@ import {
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
-  openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
+  openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openRef, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
   focusWin, activateWin, restoreWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
   toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
   wallpaperDefs, currentWp, setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn,
@@ -57,7 +57,7 @@ export function useOS() {
     recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate, refreshRecords,
     // window lifecycle + navigation
-    openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
+    openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openRef, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
     startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,

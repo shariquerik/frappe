@@ -11,11 +11,12 @@ import { state } from './state'
 import {
   dashboardSurface, listSurface, formSurface, appSettingsSurface, settingsSurface, finderSurface, appletSurface,
   initialSurface, workspaceBodySurface, sameSurface, isBuiltin, windowRole, surfaceAppId, subjectKey,
+  placementSurface, isAppRef,
 } from '@/surface'
 import { pruneWindow, dropWindow, windowIsDirty } from './working-state'
 import { clearSelection } from './selection'
 import { clearFocusKind } from './focus-kind'
-import type { DockPosition, OsWindow, RowOpenTarget, Surface, WallpaperDef } from '@/types'
+import type { DockPosition, OsWindow, RowOpenTarget, Surface, SurfaceRef, WallpaperDef } from '@/types'
 
 // ---- surface helpers ---------------------------------------------------------
 // Presence dots shown on a window. The real backend has no viewer source yet, so a form
@@ -234,6 +235,16 @@ export const openApplet = (appId: string, appletId: string, props?: Record<strin
 // dispatches arbitrary surfaces through (the typed openers above are shorthands over
 // the same `ensureApp`). Component surfaces resolve to their declared `appId`.
 export const openSurface = (surface: Surface) => ensureApp(surfaceAppId(surface), surface)
+
+// Open ANY surface reference the way a desktop or Finder tile does (ADR-0023/0024): a bare-app
+// reference opens the app's default surface (like the dock icon), any other reference resolves to its
+// Surface and opens in the owning app's window. The ONE open path a desktop double-click, a Finder
+// tile click, and the tile context menu's "Open" all share — so those three never drift apart.
+export const openRef = (ref: SurfaceRef) => {
+  if (isAppRef(ref)) return openApp(ref.app!)
+  const surface = placementSurface(ref)
+  if (surface) openSurface(surface)
+}
 
 // In-window navigation (sidebar click, Aspect switch, goHome, new form): swap the window's content
 // while keeping its identity. No workspace threading (ADR-0042 retired the ADR-0040 carry-over rule):

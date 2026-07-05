@@ -9,9 +9,7 @@ import { useOS } from '@/desktop'
 import { itemsFor, favoritePlacements, type Location, type FinderItem } from './locations'
 import { startFinderDrag } from './drag'
 import { placementView, placementKey, removeResolvedPlacement } from '@/placements'
-import { placementSurface, isAppRef } from '@/surface'
 import type { ResolvedPlacement } from '@/placements/types'
-import type { SurfaceRef } from '@/registry/types'
 
 const props = defineProps<{ location: Location }>()
 const os = useOS()
@@ -27,16 +25,11 @@ const tiles = computed<FinderItem[]>(() => {
 })
 const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
 
-// Launch a tile: the Settings entry opens the per-user Settings window; a bare-app reference opens
-// the app's default surface (like the dock icon); any other reference resolves to its Surface and opens.
+// Launch a tile: the Settings entry opens the per-user Settings window; every other tile opens
+// through the one shared reference-open path (os.openRef) the desktop and tile menu also use.
 function launch(item: FinderItem): void {
   if ((item as { settings?: boolean }).settings) return os.openSettings()
-  openRef(item.ref)
-}
-function openRef(ref: SurfaceRef): void {
-  if (isAppRef(ref)) return os.openApp(ref.app!)
-  const surface = placementSurface(ref)
-  if (surface) os.openSurface(surface)
+  os.openRef(item.ref)
 }
 
 // Start a drag-out from a tile: hand its on-screen rect to the shared pointer loop, which on release
