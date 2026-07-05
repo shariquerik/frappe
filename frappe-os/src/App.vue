@@ -10,7 +10,7 @@ import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
 import { desktopContextItems, dispatchShortcut } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
-import { nextDockOrder } from "@/desktop/dock-model";
+import { dockInsertPlan } from "@/desktop/dock-model";
 import { usePlacements, placementView, defaultLabel, writePlacementOverride } from "@/placements";
 import { tileMenuOptions } from "@/placements/tile-menu";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
@@ -105,10 +105,20 @@ function onIconPointerDown(di: DesktopIcon, e: PointerEvent): void {
 		// onto the DOCK, it adds a dock pin (the desktop icon stays put); otherwise it snaps to a desktop
 		// cell. A press that didn't move on an already-focused label arms rename — after a beat, so a
 		// double-click (which opens) can cancel it first; the delay disambiguates single- from double-click.
-		if (moved && os.droppedOnDock(drop)) writePlacementOverride({ region: "dock", ref: di.ref, position: { order: nextDockOrder(usePlacements().dock()) } });
+		if (moved && os.droppedOnDock(drop)) insertDockPin(di.ref);
 		else if (moved) writePlacementOverride({ region: "desktop", ref: di.ref, position: cell });
 		else if (armRename) renameTimer = window.setTimeout(() => startRename(di), 250);
 	}, e);
+}
+
+// Pin a desktop icon dragged onto the dock at the slot Dock.vue previewed (os.dockDrop.index, set as
+// the ghost crossed the tiles), falling back to the end. dockInsertPlan re-orders every shifted pin,
+// so the tile lands where the parting gap previewed it — the same insert path a Finder drag-out uses.
+function insertDockPin(ref: SurfaceRef): void {
+	const dock = usePlacements().dock();
+	const plan = dockInsertPlan(dock, os.dockDrop.index ?? dock.length);
+	for (const { placement, order } of plan.moved) writePlacementOverride({ region: "dock", ref: placement.ref, position: { order } });
+	writePlacementOverride({ region: "dock", ref, position: { order: plan.newOrder } });
 }
 
 // The rename gesture: a click on a focused icon's label (armed above) opens the editor after a short
@@ -295,7 +305,7 @@ onBeforeUnmount(() => {
 					left: di.x + 'px',
 					top: di.y + 'px',
 					width: CELL_W - 14 + 'px',
-					...(os.isIconSelected(di.key) ? iconSelectedStyle : {}),
+					...(os.isIconSelected(di.key) && os.iconDragState.key !== di.key ? iconSelectedStyle : {}),
 				}"
 				@pointerdown="onIconPointerDown(di, $event)"
 				@dblclick="onIconDblClick(di)"

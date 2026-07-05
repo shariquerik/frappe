@@ -62,6 +62,31 @@ export function isPointOutside(
   return x < rect.left - pad || x > rect.right + pad || y < rect.top - pad || y > rect.bottom + pad
 }
 
+// How many tile midpoints the cursor has passed — the index a drop at `cursor` inserts at (0..n).
+// A drag hovering the dock reads this against the tiles' midpoints to know which slot it lands in.
+export function insertionIndex(cursor: number, midpoints: number[]): number {
+  let i = 0
+  while (i < midpoints.length && cursor >= midpoints[i]) i += 1
+  return i
+}
+
+// Deltas to insert a NEW pin at `index` in the ordered dock: the new pin's order plus the re-order
+// of every existing pin that shifts, kept contiguous 0..n (like reorderDeltas) so the row re-sorts
+// live. An incoming Finder/desktop add reads this to drop at the previewed slot, not always the end.
+export function dockInsertPlan(
+  dock: ResolvedPlacement[],
+  index: number,
+): { newOrder: number; moved: { placement: ResolvedPlacement; order: number }[] } {
+  const ordered = orderedDockPins(dock)
+  const at = Math.max(0, Math.min(index, ordered.length))
+  const moved: { placement: ResolvedPlacement; order: number }[] = []
+  ordered.forEach((placement, p) => {
+    const order = p < at ? p : p + 1
+    if ((placement.position?.order ?? -1) !== order) moved.push({ placement, order })
+  })
+  return { newOrder: at, moved }
+}
+
 // Recompute every pin's `order` for a reordered list (the dragged pin moved to `toIndex`): the
 // resolved row's new positional order. Returns the (ref → order) deltas a reorder persists — one
 // override per pin whose order changed — so the User layer captures the whole new arrangement.

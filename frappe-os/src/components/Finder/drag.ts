@@ -6,8 +6,8 @@
 // The pure decision (which cell, whether it counts as a drop) lives in geometry/grid; this module is
 // the thin wiring that turns a released drag into a brand-new desktop Placement. A bare-app or
 // doctype/applet reference all pin the same way — the reference is opaque to the placement write.
-import { occupiedDesktopCells, startIconDrag, desktopRef, droppedOnDock } from '@/desktop/geometry'
-import { nextDockOrder } from '@/desktop/dock-model'
+import { occupiedDesktopCells, startIconDrag, desktopRef, droppedOnDock, dockDrop } from '@/desktop/geometry'
+import { dockInsertPlan } from '@/desktop/dock-model'
 import { writePlacementOverride, usePlacements } from '@/placements'
 import type { FinderItem } from './locations'
 
@@ -28,9 +28,19 @@ export function startFinderDrag(item: FinderItem, tileRect: DOMRect, e: PointerE
     // desktop pin; a release back over a window (the Finder itself, or any other) is neither. The dock
     // is checked first — it sits over the wallpaper, so a dock drop would also read as a desktop drop.
     if (!moved) return
-    if (droppedOnDock(drop)) writePlacementOverride({ region: 'dock', ref: item.ref, position: { order: nextDockOrder(usePlacements().dock()) } })
+    if (droppedOnDock(drop)) insertDockPin(item.ref)
     else if (droppedOnDesktop(drop)) writePlacementOverride({ region: 'desktop', ref: item.ref, position: cell })
   }, e, { label: item.label, logo: item.logo, icon: item.icon })
+}
+
+// Pin a dropped reference into the dock at the previewed slot (`dockDrop.index`, set live by Dock.vue
+// as the ghost crossed the tiles), falling back to the end. dockInsertPlan re-orders every pin the
+// insert shifts, so the row lands the new tile exactly where the gap previewed it — not just appended.
+function insertDockPin(ref: FinderItem['ref']): void {
+  const dock = usePlacements().dock()
+  const plan = dockInsertPlan(dock, dockDrop.index ?? dock.length)
+  for (const { placement, order } of plan.moved) void writePlacementOverride({ region: 'dock', ref: placement.ref, position: { order } })
+  void writePlacementOverride({ region: 'dock', ref, position: { order: plan.newOrder } })
 }
 
 // Did the drag release over the bare desktop? The floating ghost is click-through (pointer-events:none),

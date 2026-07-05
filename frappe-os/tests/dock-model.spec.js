@@ -5,7 +5,7 @@
 // transient item; (3) a reorder yields the per-pin `order` deltas the User-layer write persists;
 // (4) a fresh user's dock reproduces the App-default dock baseline (whatever the server ships).
 import { afterEach, describe, expect, it } from 'vitest'
-import { orderedDockPins, transientAppIds, reorderDeltas, nextDockOrder, isPointOutside } from '../src/desktop/dock-model'
+import { orderedDockPins, transientAppIds, reorderDeltas, nextDockOrder, isPointOutside, insertionIndex, dockInsertPlan } from '../src/desktop/dock-model'
 import { placementKey, initPlacements, usePlacements } from '../src/placements'
 
 const dock = (ref, order) => ({ region: 'dock', ref, position: order === undefined ? null : { order } })
@@ -62,6 +62,59 @@ describe('reorderDeltas — moving a pin writes per-pin order deltas', () => {
   it('nextDockOrder appends past the current max order', () => {
     expect(nextDockOrder(pins)).toBe(3)
     expect(nextDockOrder([])).toBe(0)
+  })
+})
+
+describe('insertionIndex — the slot a drop at `cursor` lands in', () => {
+  const mids = [120, 180, 240] // three tile midpoints along the axis
+
+  it('is 0 when the cursor is before every midpoint', () => {
+    expect(insertionIndex(100, mids)).toBe(0)
+  })
+
+  it('is the middle index when the cursor sits between two midpoints', () => {
+    expect(insertionIndex(150, mids)).toBe(1) // past 120, before 180
+    expect(insertionIndex(200, mids)).toBe(2) // past 120/180, before 240
+  })
+
+  it('is n when the cursor is past every midpoint', () => {
+    expect(insertionIndex(300, mids)).toBe(3)
+  })
+
+  it('is 0 for an empty midpoints list', () => {
+    expect(insertionIndex(150, [])).toBe(0)
+  })
+})
+
+describe('dockInsertPlan — inserting a new pin at an index shifts the tail', () => {
+  const pins = [dock({ app: 'frappe' }, 0), dock({ app: 'erpnext' }, 1), dock({ app: 'crm' }, 2)]
+
+  it('insert at 0 shifts everything +1 and the new pin takes order 0', () => {
+    const plan = dockInsertPlan(pins, 0)
+    expect(plan.newOrder).toBe(0)
+    expect(plan.moved.map((d) => [d.placement.ref.app, d.order])).toEqual([
+      ['frappe', 1], ['erpnext', 2], ['crm', 3],
+    ])
+  })
+
+  it('insert at end adds no shifts and newOrder === length', () => {
+    const plan = dockInsertPlan(pins, 3)
+    expect(plan.newOrder).toBe(3)
+    expect(plan.moved).toEqual([])
+  })
+
+  it('insert in the middle shifts only the tail', () => {
+    const plan = dockInsertPlan(pins, 1)
+    expect(plan.newOrder).toBe(1)
+    expect(plan.moved.map((d) => [d.placement.ref.app, d.order])).toEqual([
+      ['erpnext', 2], ['crm', 3],
+    ])
+  })
+
+  it('clamps an out-of-range index to the ordered length', () => {
+    const plan = dockInsertPlan(pins, 99)
+    expect(plan.newOrder).toBe(3)
+    expect(plan.moved).toEqual([])
   })
 })
 

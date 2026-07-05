@@ -42,6 +42,10 @@ export const iconDragState = reactive<{ key: string | null; dx: number; dy: numb
 // drag; `x/y` are live client coordinates so App.vue can paint the ghost right under the pointer.
 export interface DragGhostView { label: string; logo?: string; icon?: string }
 export const dragGhost = reactive<{ view: DragGhostView | null; x: number; y: number }>({ view: null, x: 0, y: 0 })
+// The live dock-insertion index a drag hovering the dock would drop at (null when none). Dock.vue
+// computes it as the cursor crosses tile midpoints; an incoming Finder/desktop drop reads it to pin
+// at the previewed slot instead of appending at the end. Reset to null on every pointer release.
+export const dockDrop = reactive<{ index: number | null }>({ index: null })
 // Reactive so the desktop size is a single source: the cell→pixel projection, the live drag clamp,
 // AND the drop-snap on release all read it, and re-run when the viewport resizes (syncDesktopSize).
 const desktopRef = reactive<{ el: HTMLElement | null; w: number; h: number }>({ el: null, w: 1280, h: 800 })
@@ -164,7 +168,9 @@ export function onPointerMove(e: PointerEvent): void {
   else if (resize) setGeo(resize.id, resizePatch(resize, e))
   else if (iconDrag) {
     iconDragState.dx = e.clientX - iconDrag.sx; iconDragState.dy = e.clientY - iconDrag.sy
-    if (dragGhost.view) { dragGhost.x = e.clientX; dragGhost.y = e.clientY }
+    // Always track the live cursor during an icon drag (even a no-ghost desktop-icon move), so the
+    // dock can read it to preview an insertion slot.
+    dragGhost.x = e.clientX; dragGhost.y = e.clientY
   }
 }
 
@@ -182,6 +188,9 @@ export function onPointerUp(): void {
     // that landed back over a window rather than the free wallpaper.
     const drop: DropClient = { x: iconDrag.sx + iconDragState.dx, y: iconDrag.sy + iconDragState.dy }
     iconDrag.commit(cell, moved, drop)
+    // Clear the previewed dock-insertion index AFTER the commit — the incoming-add commit still reads
+    // it to pin at the previewed slot; the next drag re-derives its own.
+    dockDrop.index = null
     iconDrag = null
     iconDragState.key = null
     iconDragState.dx = 0

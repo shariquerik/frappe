@@ -18,6 +18,7 @@ export const ListSelectBanner: any
 export const ListFooter: any
 export const Dropdown: any
 export const Badge: any
+export const Tooltip: any
 export const SidebarItem: any
 export const SidebarSection: any
 export const Switch: any

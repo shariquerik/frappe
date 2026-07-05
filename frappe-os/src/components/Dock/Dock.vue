@@ -3,9 +3,10 @@
 // An app icon may own several windows now (multiple app instances, its settings
 // pane). Clicking an icon with >1 window opens a chooser popover above it
 // so any one window can be brought to the front; 0 or 1 window focuses directly.
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { Tooltip } from 'frappe-ui'
 import { useOS } from '@/desktop'
-import { orderedDockPins, transientAppIds, reorderDeltas, isPointOutside } from '@/desktop/dock-model'
+import { orderedDockPins, transientAppIds, reorderDeltas, isPointOutside, insertionIndex } from '@/desktop/dock-model'
 import { windowRole, systemWindowTitle, isBuiltin, isAppRef, isFinderWindow, placementSurface } from '@/surface'
 import { usePlacements, placementView, writePlacementOverride, removeResolvedPlacement } from '@/placements'
 import { tileMenuOptions } from '@/placements/tile-menu'
@@ -26,6 +27,8 @@ const dark = computed(() => os.currentWp.value.dark)
 // placement, popover side, and the divider — all derived from `pos` so the template stays declarative.
 const pos = computed(() => os.state.dockPosition)
 const vertical = computed(() => pos.value !== 'bottom')
+// A tile's tooltip sits away from the dock's edge — above a bottom dock, beside a vertical one.
+const tipSide = computed(() => ({ left: 'right', right: 'left', bottom: 'top' }[pos.value] as 'top' | 'right' | 'left'))
 
 const wrapClass = computed(() => ({
   left: 'left-[3px] top-1/2 -translate-y-1/2',
@@ -205,13 +208,9 @@ const transientItems = computed<DockItem[]>(() =>
 const dockItems = computed(() => [...pinnedItems.value, ...transientItems.value])
 
 function openItem(d: DockItem) {
-  // A pinned non-app reference opens its surface; an app reference (pinned or transient) opens the
-  // app's default surface — the same routing the desktop pins use (App.vue's openPlacement).
-  if (d.ref && !isAppRef(d.ref)) {
-    const surface = placementSurface(d.ref)
-    if (surface) os.openSurface(surface)
-    return
-  }
+  // Delegate to the shared resolver so settings/workspace refs route correctly — the same path
+  // the desktop pins use (App.vue's openRef). Transient tiles carry no ref, so open their app.
+  if (d.ref) { os.openRef(d.ref); return }
   os.openApp(d.appId)
 }
 
@@ -233,28 +232,96 @@ function reorderPin(fromKey: string, toIndex: number) {
   }
 }
 
-// Native drag-to-reorder of the pinned set: pick up a pin, drop it on another pinned slot, and
-// the write seam persists the new order. Transient items aren't draggable — they aren't pinned.
-const draggingKey = ref<string | null>(null)
-function onPinDrop(targetIndex: number) {
-  if (draggingKey.value) reorderPin(draggingKey.value, targetIndex)
-  draggingKey.value = null
-}
-
-// The dock tray element (also handed to the store for auto-hide), read live to hit-test a drag-end.
+// The dock tray element (also handed to the store for auto-hide), read live to hit-test a drag.
 let trayEl: HTMLElement | null = null
 const setTrayEl = (el: HTMLElement | null) => { trayEl = el; os.setDockEl(el) }
 
-// Drag a pin clear of the dock to remove it. A drop onto another tile reorders (onPinDrop already
-// cleared draggingKey), a release still over the dock is a no-op; only a pin whose drag ends more
-// than DROP_OFF_PAD px OFF the tray is removed — the same primitive as the right-click "Remove".
+// Pointer-loop drag of a pinned tile (no native HTML5 drag → no snap-back). The tile floats as the
+// shared `os.dragGhost`; the row parts to preview where it will land, and on release it either
+// reorders (dropped over the dock) or is removed (dropped clear of it — a clean disappear).
 const DROP_OFF_PAD = 30
-function onPinDragEnd(d: DockItem, e: DragEvent) {
-  const rect = trayEl?.getBoundingClientRect()
-  const off = !!rect && isPointOutside(rect, e.clientX, e.clientY, DROP_OFF_PAD)
-  if (draggingKey.value === d.key && d.pin && off) void removeResolvedPlacement(d.pin)
-  draggingKey.value = null
+const draggingKey = ref<string | null>(null)
+const gapIndex = ref<number | null>(null) // the slot the parting gap opens at (among the OTHER tiles)
+let dragFromPos = -1 // the dragged tile's index in the full pinned row, captured on press
+let startMids: number[] = [] // every pinned tile's axis midpoint, captured ONCE on press
+let extStartMids: number[] = [] // same, for an INCOMING drag — captured once as it enters the dock
+
+// The cursor's position along the dock's run: y for a vertical dock, x for a bottom one.
+const axisCursor = () => (vertical.value ? os.dragGhost.y : os.dragGhost.x)
+
+// Each pinned tile's midpoint along the run, in DOM (== pinnedItems) order. Measured once at drag
+// start so the live gap can't feed back into the measurement (a gap would move the very midpoints
+// we read to decide the gap).
+function tileMidpoints(): number[] {
+  const nodes = trayEl?.querySelectorAll('[data-dock-key]')
+  if (!nodes) return []
+  return Array.from(nodes).map((el) => {
+    const r = (el as HTMLElement).getBoundingClientRect()
+    return vertical.value ? r.top + r.height / 2 : r.left + r.width / 2
+  })
 }
+
+function onPinPointerDown(d: DockItem, e: PointerEvent) {
+  if (e.button !== 0) return
+  draggingKey.value = d.key
+  dragFromPos = pinnedItems.value.findIndex((p) => p.key === d.key)
+  startMids = tileMidpoints()
+  os.startIconDrag('dock:' + d.key, 0, 0, [], (cell, moved, drop) => onDockDragCommit(d, moved, drop), e, {
+    label: d.name, logo: d.logo, icon: d.icon,
+  })
+}
+
+// Recompute the parting gap from the live cursor as any pointer-drag moves. Two cases share the run:
+// an INTERNAL reorder (a dock tile is the one dragging → `draggingKey`) and an INCOMING add (some
+// OTHER icon — a Finder/desktop drag — hovers the dock). Both preview the slot a drop would land in;
+// the incoming one publishes it to `os.dockDrop.index` so the drop commit pins there, not at the end.
+watch([() => os.dragGhost.x, () => os.dragGhost.y, draggingKey, () => os.iconDragState.key], () => {
+  const rect = trayEl?.getBoundingClientRect()
+  const over = !!rect && !isPointOutside(rect, os.dragGhost.x, os.dragGhost.y, DROP_OFF_PAD)
+  // Internal reorder: off the dock → no gap (the row closes; release will remove). Over it → the slot
+  // among the OTHER tiles (the dragged tile left the row, so a raw index past it maps down by one).
+  if (draggingKey.value) {
+    os.dockDrop.index = null
+    if (!over) { gapIndex.value = null; return }
+    const raw = insertionIndex(axisCursor(), startMids)
+    gapIndex.value = raw > dragFromPos ? raw - 1 : raw
+    return
+  }
+  // Incoming add: capture the tile midpoints ONCE as the drag enters (before a gap exists, so the
+  // measurement is clean), then preview — and publish — the slot the drop lands at.
+  gapIndex.value = null
+  if (!os.iconDragState.key || !over) { os.dockDrop.index = null; extStartMids = []; return }
+  if (!extStartMids.length) extStartMids = tileMidpoints()
+  os.dockDrop.index = insertionIndex(axisCursor(), extStartMids)
+})
+
+function clearDockDrag() {
+  draggingKey.value = null
+  gapIndex.value = null
+  dragFromPos = -1
+  startMids = []
+}
+
+// Release a dragged pin: a non-move is a tap (open/focus/toggle); a drop over the dock reorders to
+// the previewed slot; a drop clear of the dock removes the pin (the same primitive as right-click
+// "Remove"). The pointer loop has no snap-back, so a removal reads as a clean disappear.
+function onDockDragCommit(d: DockItem, moved: boolean, drop: { x: number; y: number }) {
+  if (!moved) { onIconClick(d); clearDockDrag(); return }
+  if (os.droppedOnDock(drop) && gapIndex.value != null) reorderPin(d.key, gapIndex.value)
+  else void removeResolvedPlacement(d.pin!)
+  clearDockDrag()
+}
+
+// The rendered pinned row: the dragged tile is dropped (it floats as the ghost) and a gap marker is
+// spliced in where the drop will land — `gapIndex` for an internal reorder, `os.dockDrop.index` for
+// an incoming Finder/desktop add. A CSS transition on the tiles animates the parting.
+const rowSlots = computed<{ tile?: DockItem; gap?: boolean }[]>(() => {
+  const visible = draggingKey.value ? pinnedItems.value.filter((d) => d.key !== draggingKey.value) : pinnedItems.value
+  const slots: { tile?: DockItem; gap?: boolean }[] = visible.map((d) => ({ tile: d }))
+  const k = draggingKey.value ? gapIndex.value : os.dockDrop.index
+  if (k != null) slots.splice(Math.max(0, Math.min(k, slots.length)), 0, { gap: true })
+  return slots
+})
 
 // The dock right-click (tray) menu renders through OSContextMenu — the shell's one context-menu
 // primitive — wrapping the dock tray as its trigger, so reka opens it at the cursor natively (no
@@ -276,43 +343,54 @@ const ctxOptions = computed(() => dockContextOptions(os))
     <OSContextMenu :options="ctxOptions" @update:open="os.state.dockContextOpen = $event">
     <!-- Trayless by default; an opaque tray fades in when a window sits behind the dock. -->
     <div :ref="(el) => setTrayEl(el as HTMLElement | null)" class="flex gap-[7px] px-2.5 py-2 [transition:transform_.28s_cubic-bezier(0.4,0,0.2,1),background-color_.2s,box-shadow_.2s,border-color_.2s]" :class="[trayClass, trayFlow]">
-      <!-- pinned dock placements (ADR-0023), draggable to reorder → a User-layer order override -->
-      <div v-for="(d, i) in pinnedItems" :key="d.key" class="relative flex items-end" draggable="true"
-        @dragstart="draggingKey = d.key" @dragend="onPinDragEnd(d, $event)"
-        @dragover.prevent @drop.prevent="onPinDrop(i)">
-        <!-- Right-click a pinned tile → Remove from Dock. `.stop` keeps it from bubbling to the
-             tray's own right-click (dock settings), so the tile menu wins over its own icon. -->
-        <OSContextMenu :options="tileMenuOptions(d.pin!)" @update:open="os.state.dockContextOpen = $event">
-          <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)" @contextmenu.stop>
-            <AppIconTile :logo="d.logo" :icon="d.icon" :label="d.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
-            <!-- running indicator: a second dot hints at multiple windows -->
-            <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
-              <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
-              <span v-if="d.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
-            </span>
-          </button>
-        </OSContextMenu>
+      <!-- pinned dock placements (ADR-0023). A tile drags on the shared pointer loop (no native HTML5
+           drag → no snap-back); the row parts at a gap slot to preview where a drop will land. -->
+      <template v-for="slot in rowSlots" :key="slot.gap ? 'dock-gap' : slot.tile!.key">
+        <!-- the parting gap: an empty tile-sized spacer the incoming/reordered tile will fill -->
+        <div v-if="slot.gap" class="h-[46px] w-[46px] flex-shrink-0 [transition:width_.18s,height_.18s]"></div>
+        <!-- Tooltip wraps the whole tile (no extra DOM — reka providers render none), so the drag
+             measurements read the same `data-dock-key` div. Suppressed mid-drag so no bubble follows
+             a floating ghost. -->
+        <Tooltip v-else :text="slot.tile!.name" :placement="tipSide" :disabled="!!draggingKey">
+        <!-- The hover lift rides the whole tile (the tooltip's anchor), not just the glyph, so the
+             tooltip tracks the lifted icon and keeps a steady gap instead of the icon sliding into it. -->
+        <div :data-dock-key="slot.tile!.key" class="relative flex items-end [transition:transform_.18s,margin_.18s]" :class="hoverLift">
+          <!-- Right-click a pinned tile → Remove from Dock. `.stop` keeps it from bubbling to the
+               tray's own right-click (dock settings), so the tile menu wins over its own icon. -->
+          <OSContextMenu :options="tileMenuOptions(slot.tile!.pin!)" @update:open="os.state.dockContextOpen = $event">
+            <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" @pointerdown="onPinPointerDown(slot.tile!, $event)" @contextmenu.stop>
+              <AppIconTile :logo="slot.tile!.logo" :icon="slot.tile!.icon" :label="slot.tile!.name" radius="rounded-xl" glyph="size-[20px]" :shadow="iconShadow" />
+              <!-- running indicator: a second dot hints at multiple windows -->
+              <span v-if="slot.tile!.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
+                <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
+                <span v-if="slot.tile!.windows.length>1" class="h-1 w-1 rounded-full" :class="dotClass"></span>
+              </span>
+            </button>
+          </OSContextMenu>
 
-        <!-- window chooser popover -->
-        <div v-if="os.state.dockMenu===d.key" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
-          <div class="px-[9px] pb-[6px] pt-[5px] text-[11px] font-semibold text-ink-gray-5">{{ d.name }} — {{ d.windows.length }} windows</div>
-          <button v-for="w in d.windows" :key="w.id" class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-[9px] py-[7px] text-left hover:!bg-surface-gray-2" @click="pick(w.id)"
-            :style="{ background: w.active ? 'var(--surface-gray-3)' : 'transparent' }">
-            <span class="inline-flex h-[7px] w-[7px] flex-shrink-0 rounded-full" :style="{ background: w.min ? 'var(--outline-gray-3)' : 'var(--surface-green-5)' }"></span>
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-ink-gray-8">{{ w.title }}</span>
-              <span class="text-[11px] text-ink-gray-5">{{ w.sub }}{{ w.min ? ' · minimized' : '' }}</span>
-            </span>
-          </button>
+          <!-- window chooser popover -->
+          <div v-if="os.state.dockMenu===slot.tile!.key" class="absolute flex min-w-[210px] max-w-[280px] flex-col rounded-xl border border-outline-gray-2 bg-surface-base p-[5px] shadow-[var(--shadow-2xl)]" :class="popoverPlace" @pointerdown.stop>
+            <div class="px-[9px] pb-[6px] pt-[5px] text-[11px] font-semibold text-ink-gray-5">{{ slot.tile!.name }} — {{ slot.tile!.windows.length }} windows</div>
+            <button v-for="w in slot.tile!.windows" :key="w.id" class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-[9px] py-[7px] text-left hover:!bg-surface-gray-2" @click="pick(w.id)"
+              :style="{ background: w.active ? 'var(--surface-gray-3)' : 'transparent' }">
+              <span class="inline-flex h-[7px] w-[7px] flex-shrink-0 rounded-full" :style="{ background: w.min ? 'var(--outline-gray-3)' : 'var(--surface-green-5)' }"></span>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-ink-gray-8">{{ w.title }}</span>
+                <span class="text-[11px] text-ink-gray-5">{{ w.sub }}{{ w.min ? ' · minimized' : '' }}</span>
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
+        </Tooltip>
+      </template>
 
       <!-- separator between pinned and the running-but-unpinned (transient) set -->
       <div v-if="transientItems.length" class="self-center" :class="[dividerShape, dividerClass]"></div>
 
       <!-- transient running-but-unpinned apps: gone when their last window closes -->
-      <div v-for="d in transientItems" :key="d.key" class="relative flex items-end">
-        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 [transition:transform_.15s]" :class="hoverLift" :title="d.name" @click="onIconClick(d)">
+      <Tooltip v-for="d in transientItems" :key="d.key" :text="d.name" :placement="tipSide">
+      <div class="relative flex items-end [transition:transform_.15s]" :class="hoverLift">
+        <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0" @click="onIconClick(d)">
           <AppIconTile :logo="d.logo" :label="d.name" radius="rounded-xl" :shadow="iconShadow" />
           <span v-if="d.windows.length" class="absolute flex items-center gap-[3px]" :class="dotsPlace">
             <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
@@ -332,15 +410,18 @@ const ctxOptions = computed(() => dockContextOptions(os))
           </button>
         </div>
       </div>
+      </Tooltip>
 
       <div class="self-center" :class="[dividerShape, dividerClass]"></div>
-      <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[finderButtonClass, hoverLift]" title="Finder" @click="os.openFinder()">
+      <Tooltip text="Finder" :placement="tipSide">
+      <button class="relative inline-flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-xl border-none shadow-[var(--shadow-sm)] [transition:transform_.15s]" :class="[finderButtonClass, hoverLift]" @click="os.openFinder()">
         <span class="lucide-layout-grid size-[20px]"></span>
         <!-- the Finder's own running dot (it borrows no app tile's) -->
         <span v-if="finderWindow" class="absolute flex items-center" :class="dotsPlace">
           <span class="h-1 w-1 rounded-full" :class="dotClass"></span>
         </span>
       </button>
+      </Tooltip>
     </div>
     </OSContextMenu>
   </div>
