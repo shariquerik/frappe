@@ -332,5 +332,21 @@ onBeforeUnmount(() => {
 		<FullscreenPrompt />
 		<ToastProvider />
 		<div id="os-popover-layer" class="absolute z-[94000]"></div>
+
+		<!-- the floating drag ghost: a tile being dragged OUT (a Finder drag-out, #04) has no
+		     on-desktop element to follow the cursor, so we paint one here, centered on the pointer,
+		     above everything and click-through. A desktop-icon move sets no ghost and renders none. -->
+		<div
+			v-if="os.dragGhost.view"
+			class="pointer-events-none fixed z-[95000]"
+			:style="{
+				left: os.dragGhost.x - 23 + 'px',
+				top: os.dragGhost.y - 23 + 'px',
+				opacity: 0.9,
+				transform: 'scale(1.05)',
+			}"
+		>
+			<AppIconTile :logo="os.dragGhost.view.logo" :icon="os.dragGhost.view.icon" :label="os.dragGhost.view.label" />
+		</div>
 	</div>
 </template>

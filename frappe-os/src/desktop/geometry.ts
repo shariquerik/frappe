@@ -31,6 +31,12 @@ interface IconDragState { key: string; sx: number; sy: number; ox: number; oy: n
 let iconDrag: IconDragState | null = null
 // The live drag offset, reactive so the rendered icon follows the cursor; null when not dragging.
 export const iconDragState = reactive<{ key: string | null; dx: number; dy: number }>({ key: null, dx: 0, dy: 0 })
+// The floating OS-level drag ghost: the presentation of a tile being dragged OUT (a Finder drag-out,
+// #04) that has no on-desktop element of its own to follow the cursor — unlike a desktop-icon MOVE,
+// which lifts its own rendered tile and needs no ghost. `view` is null except during such a create-
+// drag; `x/y` are live client coordinates so App.vue can paint the ghost right under the pointer.
+export interface DragGhostView { label: string; logo?: string; icon?: string }
+export const dragGhost = reactive<{ view: DragGhostView | null; x: number; y: number }>({ view: null, x: 0, y: 0 })
 // Reactive so the desktop size is a single source: the cell→pixel projection, the live drag clamp,
 // AND the drop-snap on release all read it, and re-run when the viewport resizes (syncDesktopSize).
 const desktopRef = reactive<{ el: HTMLElement | null; w: number; h: number }>({ el: null, w: 1280, h: 800 })
@@ -89,8 +95,12 @@ export function startResize(id: string, dir: ResizeDir, e: PointerEvent): void {
 // Begin dragging a desktop icon. `ox/oy` are the icon's current top-left in desktop-local pixels
 // (its pre-drag cell projected), so the drop pixel is origin + pointer delta. `commit` is called
 // once on release with the resolved cell — the consumer turns it into a User-layer override write.
+// `ghost` is passed ONLY by a create-drag (a Finder drag-out) whose tile isn't rendered on the
+// desktop, so it needs a floating ghost to follow the cursor; a desktop-icon move omits it and lifts
+// its own tile instead.
 export function startIconDrag(
   key: string, ox: number, oy: number, occupied: Cell[], commit: (cell: Cell, moved: boolean) => void, e: PointerEvent,
+  ghost?: DragGhostView,
 ): void {
   if (e.button != null && e.button !== 0) return
   e.preventDefault()
@@ -98,6 +108,9 @@ export function startIconDrag(
   iconDragState.key = key
   iconDragState.dx = 0
   iconDragState.dy = 0
+  dragGhost.view = ghost ?? null
+  dragGhost.x = e.clientX
+  dragGhost.y = e.clientY
   document.body.style.userSelect = 'none'
 }
 
@@ -144,7 +157,10 @@ export function onPointerMove(e: PointerEvent): void {
   }
   if (drag) setGeo(drag.id, { x: Math.max(0, drag.ox + (e.clientX - drag.sx)), y: Math.max(34, drag.oy + (e.clientY - drag.sy)) })
   else if (resize) setGeo(resize.id, resizePatch(resize, e))
-  else if (iconDrag) { iconDragState.dx = e.clientX - iconDrag.sx; iconDragState.dy = e.clientY - iconDrag.sy }
+  else if (iconDrag) {
+    iconDragState.dx = e.clientX - iconDrag.sx; iconDragState.dy = e.clientY - iconDrag.sy
+    if (dragGhost.view) { dragGhost.x = e.clientX; dragGhost.y = e.clientY }
+  }
 }
 
 export function onPointerUp(): void {
@@ -162,6 +178,9 @@ export function onPointerUp(): void {
     iconDragState.key = null
     iconDragState.dx = 0
     iconDragState.dy = 0
+    dragGhost.view = null
+    dragGhost.x = 0
+    dragGhost.y = 0
     document.body.style.userSelect = ''
   }
 }

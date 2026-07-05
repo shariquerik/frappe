@@ -38,7 +38,7 @@ function launch(item: FinderItem): void {
 function onTilePointerDown(item: FinderItem, e: PointerEvent): void {
   if ((item as { settings?: boolean }).settings) return
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  startFinderDrag(item.ref, rect, e)
+  startFinderDrag(item, rect, e)
 }
 
 const view = (p: ResolvedPlacement) => placementView(p)

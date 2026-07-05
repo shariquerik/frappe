@@ -15,7 +15,7 @@ import type { AppDef } from '@/types'
 import { state, clockText } from './state'
 import {
   geoMap, startDrag, startResize, onPointerMove, onPointerUp,
-  setDesktopEl, setDockEl, desktopRef, syncDesktopSize, startIconDrag, iconDragState,
+  setDesktopEl, setDockEl, desktopRef, syncDesktopSize, startIconDrag, iconDragState, dragGhost,
 } from './geometry'
 import {
   presenceFor, winBack, winFwd,
@@ -60,7 +60,7 @@ export function useOS() {
     openApp, newAppWindow, openListGlobal, openRecordGlobal, openWorkspace, openApplet, openSurface, openRef, openList, openRecordInline, openRecordNewWindow, openNew, openAspect, openRow, goHome,
     winBack, winFwd, restoreWin, hydrate, startAutosave,
     focusWin, activateWin, closeWin, requestCloseWin, confirmCloseWin, cancelCloseWin, minimizeWin, clearFocus, toggleZoom,
-    startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState,
+    startDrag, startResize, onPointerMove, onPointerUp, startIconDrag, iconDragState, dragGhost,
     toggleSidebar, openAppSettings, closeAppSettings, setAppSettingsPane, enterSplit, exitSplit,
     setWallpaper, openSettings, closeSettings, setSettingsPane, openFinder, closeFinder, setFinderLocation, setRowOpenTarget, setRememberWindowSize, setDockPosition, setDockAutoHide, tog, isOn, openPalette, closePalette, openAbout, closeAbout,
     setDesktopEl, setDockEl, desktopRef, syncDesktopSize,
