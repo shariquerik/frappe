@@ -1,14 +1,15 @@
 <script setup lang="ts">
-// The Finder body (ADR-0024): renders the active Location's tiles. Applications and Doctypes are tile
-// grids reprojected from the Registry (locations.ts); Recents mirrors the recents log; Favorites is a
-// read-only mirror/manager of the viewer's resolved desktop + dock Placements. A tile behaves like a
+// The Finder body (ADR-0024): renders the active Location's tiles as titled sections (locations.ts) —
+// Workspaces group by app, Doctypes by workspace, the flat Locations (Applications/Recents) are one
+// heading-less section. Favorites is a read-only mirror/manager of the viewer's resolved desktop +
+// dock Placements. A tile behaves like a
 // desktop icon (issues #3/#5): a single click SELECTS it, a double-click OPENS it, Enter opens the
 // selected tile and Escape clears the selection, a right-click opens a context menu (Open + Add to
 // Desktop/Dock), and a drag-out onto the wallpaper creates a Placement (drag.ts →
 // writePlacementOverride). Favorites' remove clears the user's OWN pin.
 import { computed, watch } from 'vue'
 import { useOS } from '@/desktop'
-import { itemsFor, favoritePlacements, type Location, type FinderItem } from './locations'
+import { sectionsFor, favoritePlacements, type Location, type FinderItem, type FinderSection } from './locations'
 import { startFinderDrag } from './drag'
 import { finderTileMenuOptions } from './tile-menu'
 import { selectFinderTile, clearFinderSelection, isFinderTileSelected, selectedFinderTile } from './selection'
@@ -27,10 +28,16 @@ const os = useOS()
 const SETTINGS_TILE: FinderItem =
   { key: 'finder:settings', ref: { app: 'frappe', view: 'settings' }, label: 'Settings', icon: 'lucide-settings' }
 
-const tiles = computed<FinderItem[]>(() => {
-  const items = itemsFor(props.location)
-  return props.location === 'Applications' ? [...items, SETTINGS_TILE] : items
+// The Location's tiles as titled sections (Workspaces group by app, Doctypes by workspace; the flat
+// Locations are one heading-less section). Applications is a single section, so the Settings shortcut
+// is appended to it. The tile behavior is per-tile, so grouping changes only the layout.
+const sections = computed<FinderSection[]>(() => {
+  const secs = sectionsFor(props.location)
+  if (props.location !== 'Applications') return secs
+  return secs.map((section) => ({ ...section, items: [...section.items, SETTINGS_TILE] }))
 })
+// Every tile flat — the keyboard handler resolves the selected key against this, unaware of sections.
+const allTiles = computed<FinderItem[]>(() => sections.value.flatMap((section) => section.items))
 const favorites = computed<ResolvedPlacement[]>(() => favoritePlacements())
 
 // Switching Location drops any tile selection (like clicking away) — the highlighted tile is gone.
@@ -54,7 +61,7 @@ function menuFor(item: FinderItem): ContextMenuOption[] {
 function onTileKey(e: KeyboardEvent): void {
   if (e.key === 'Enter') {
     const key = selectedFinderTile()
-    const item = key ? tiles.value.find((t) => t.key === key) : undefined
+    const item = key ? allTiles.value.find((t) => t.key === key) : undefined
     if (!item) return
     e.preventDefault() // else the focused button also fires its own Enter-activation (a click)
     e.stopPropagation()
@@ -83,31 +90,40 @@ const keyOf = placementKey
 <template>
   <div class="flex min-w-0 flex-1 flex-col overflow-auto px-[22px] py-5">
     <!-- Recents starts empty until a record is opened; the other tile Locations are never empty. -->
-    <div v-if="location === 'Recents' && !tiles.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
+    <div v-if="location === 'Recents' && !allTiles.length" class="py-8 text-center text-[12.5px] text-ink-gray-5">
       No recent records yet. Open a record and it shows up here.
     </div>
 
-    <!-- Applications / Doctypes / Recents — draggable tile grid. A click on empty grid space clears the
-         selection (like clicking the Finder background); .self so a click on a tile doesn't. -->
-    <div v-else-if="location !== 'Favorites'" class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1"
-      @click.self="clearFinderSelection()">
-      <OSContextMenu v-for="item in tiles" :key="item.key" :options="menuFor(item)">
-        <button
-          :class="[
-            'flex cursor-grab flex-col items-center gap-[7px] rounded-lg border-none px-1 py-2.5 active:cursor-grabbing',
-            isFinderTileSelected(item.key) ? 'bg-surface-gray-3' : 'bg-transparent hover:bg-surface-gray-2',
-          ]"
-          @pointerdown="onTilePointerDown(item, $event)"
-          @click="selectFinderTile(item.key)"
-          @dblclick="launch(item)"
-          @keydown="onTileKey">
-          <img v-if="item.logo" :src="item.logo" :alt="item.label" class="h-[44px] w-[44px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]" />
-          <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
-            <span :class="item.icon" class="size-[21px]"></span>
-          </span>
-          <span class="line-clamp-2 max-w-[88px] break-words text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
-        </button>
-      </OSContextMenu>
+    <!-- Applications / Workspaces / Doctypes / Recents — titled sections of a draggable tile grid.
+         Grouped Locations (Workspaces by app, Doctypes by workspace) draw a heading per section; the
+         flat ones are one heading-less section. A click on empty space clears the selection (like
+         clicking the Finder background); .self so a click on a tile doesn't. -->
+    <div v-else-if="location !== 'Favorites'" class="flex flex-col gap-4" @click.self="clearFinderSelection()">
+      <div v-for="(section, si) in sections" :key="section.label || si" class="flex flex-col gap-1.5"
+        @click.self="clearFinderSelection()">
+        <div v-if="section.label" class="px-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-gray-5">
+          {{ section.label }}
+        </div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1" @click.self="clearFinderSelection()">
+          <OSContextMenu v-for="item in section.items" :key="item.key" :options="menuFor(item)">
+            <button
+              :class="[
+                'flex cursor-grab flex-col items-center gap-[7px] rounded-lg border-none px-1 py-2.5 active:cursor-grabbing',
+                isFinderTileSelected(item.key) ? 'bg-surface-gray-3' : 'bg-transparent hover:bg-surface-gray-2',
+              ]"
+              @pointerdown="onTilePointerDown(item, $event)"
+              @click="selectFinderTile(item.key)"
+              @dblclick="launch(item)"
+              @keydown="onTileKey">
+              <img v-if="item.logo" :src="item.logo" :alt="item.label" class="h-[44px] w-[44px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]" />
+              <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
+                <span :class="item.icon" class="size-[21px]"></span>
+              </span>
+              <span class="line-clamp-2 max-w-[88px] break-words text-center text-[11.5px] text-ink-gray-7">{{ item.label }}</span>
+            </button>
+          </OSContextMenu>
+        </div>
+      </div>
     </div>
 
     <!-- Favorites — read-only mirror of the viewer's desktop + dock Placements, with a remove affordance -->

@@ -13,7 +13,7 @@ import { initRegistry } from '@/registry'
 import { initPlacements, usePlacements, applyLocalOverride } from '@/placements'
 import { initRecents } from '@/recents'
 import { bootWith } from '../../../../tests/fixtures/os-boot'
-import { applicationItems, doctypeItems, workspaceItems, favoritePlacements, itemsFor } from '../locations'
+import { applicationItems, doctypeSections, workspaceSections, favoritePlacements, itemsFor } from '../locations'
 
 const os = useOS()
 
@@ -85,37 +85,40 @@ describe('Applications Location', () => {
   })
 })
 
-describe('Doctypes Location — reprojects the boot workspace doctype catalog', () => {
-  it('flattens every workspace doctype into a de-duped list of list references', () => {
-    const items = doctypeItems()
-    const doctypes = items.map((i) => i.ref.doctype)
-    // Drawn from boot workspace data (ADR-0042), cross-app and flattened.
-    expect(doctypes).toContain('ToDo') // frappe/core
-    expect(doctypes).toContain('CRM Lead') // crm/fcrm
-    expect(doctypes).toContain('Sales Invoice') // erpnext/selling
+describe('Doctypes Location — a section per workspace, its doctypes as list tiles', () => {
+  it('groups doctypes into a section per workspace, labelled by the workspace, each tile a list ref', () => {
+    const sections = doctypeSections()
+    // A section per workspace (across apps), labelled by the workspace label.
+    expect(sections.map((s) => s.label)).toEqual(['Core', 'Website', 'CRM', 'Activity', 'Selling', 'Stock'])
+    // Each section holds ITS workspace's doctypes (grouped, not a flat catalog).
+    expect(sections.find((s) => s.label === 'Core').items.map((i) => i.ref.doctype)).toContain('ToDo')
+    expect(sections.find((s) => s.label === 'CRM').items.map((i) => i.ref.doctype)).toContain('CRM Lead')
+    expect(sections.find((s) => s.label === 'Selling').items.map((i) => i.ref.doctype)).toContain('Sales Invoice')
     // Every tile is a list reference (drag one out → a list Placement).
-    expect(items.every((i) => i.ref.view === 'list')).toBe(true)
-    // De-duped: no doctype appears twice even if several workspaces list it.
-    expect(new Set(doctypes).size).toBe(doctypes.length)
+    expect(sections.every((s) => s.items.every((i) => i.ref.view === 'list'))).toBe(true)
   })
 })
 
-describe('Workspaces Location — reprojects each app\'s boot workspace catalog', () => {
-  it('lists every app\'s workspaces as {app, workspace} references, app order then workspace order', () => {
-    const items = workspaceItems()
-    // Drawn from boot workspace data (ADR-0042), flattened across apps in registry order.
-    expect(items.map((i) => i.ref)).toEqual([
+describe('Workspaces Location — a section per app, its workspaces as tiles', () => {
+  it('groups workspaces into a section per app, labelled by the app name', () => {
+    const sections = workspaceSections()
+    // A section per app (registry order), labelled by the app's display name.
+    expect(sections.map((s) => s.label)).toEqual(['Frappe', 'CRM', 'ERPNext'])
+    // Each section's tiles are that app's workspaces as {app, workspace} refs, in workspace order.
+    expect(sections[0].items.map((i) => i.ref)).toEqual([
+      { app: 'frappe', workspace: 'core' }, { app: 'frappe', workspace: 'website' },
+    ])
+    // A workspace tile labels by its workspace label (reused placementView, issue #02).
+    expect(sections[0].items[0].label).toBe('Core')
+    expect(sections.find((s) => s.label === 'CRM').items[0].label).toBe('CRM')
+  })
+
+  it('itemsFor flattens the sections into every {app, workspace} tile in app then workspace order', () => {
+    expect(itemsFor('Workspaces').map((i) => i.ref)).toEqual([
       { app: 'frappe', workspace: 'core' }, { app: 'frappe', workspace: 'website' },
       { app: 'crm', workspace: 'fcrm' }, { app: 'crm', workspace: 'fcrm_activity' },
       { app: 'erpnext', workspace: 'selling' }, { app: 'erpnext', workspace: 'stock' },
     ])
-    // A workspace tile labels by its workspace label (reused placementView, issue #02).
-    expect(items[0].label).toBe('Core')
-    expect(items.find((i) => i.ref.workspace === 'fcrm').label).toBe('CRM')
-  })
-
-  it('itemsFor returns the same set as workspaceItems', () => {
-    expect(itemsFor('Workspaces').map((i) => i.ref)).toEqual(workspaceItems().map((i) => i.ref))
   })
 
   it('a dragged workspace reference reads back as a new desktop workspace Placement', () => {
