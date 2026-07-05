@@ -149,10 +149,15 @@ export function applyRoute(os: OsStore, params: RouteParams): void {
   // the form for a known doctype + name and let the form view show a not-found state
   // on a 404 (Phase 4). A doctype with no name opens its list. `instance` targets a
   // specific app window when the URL carried `?instance=n` (else the canonical one).
+  // A URL that named a doctype but no workspace (`/frappe/Access Log`) canonicalises to the
+  // doctype's own workspace (ADR-0042), so it lands on the workbench — with the doctype rail and
+  // active row — not the hub; pathForFocus then reprojects the module segment. A doctype in no
+  // seeded workspace yields undefined and opens the plain app window (unchanged).
+  const ws = doctype ? workspace ?? os.workspaceForDoctype(doctype) : workspace
   if (doctype && name) {
-    os.openRecordGlobal(doctype, name, instance, aspect, workspace)
+    os.openRecordGlobal(doctype, name, instance, aspect, ws)
   } else if (doctype) {
-    os.openListGlobal(doctype, instance, workspace)
+    os.openListGlobal(doctype, instance, ws)
   } else if (knownApp) {
     openHome()
   }

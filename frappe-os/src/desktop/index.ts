@@ -9,7 +9,7 @@
 // so the store surface is derived from this assembly rather than hand-maintained. Adding
 // a member here automatically widens OsStore for every consumer (route-map, components).
 import { initials, pill } from '@/config/apps'
-import { useRegistry, getMeta, appForDoctype, knownApplet, workspaceForSlug, orderedWorkspaces, defaultWorkspace, workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes, ICON } from '@/registry'
+import { useRegistry, getMeta, appForDoctype, knownApplet, workspaceForSlug, workspaceForDoctype, orderedWorkspaces, defaultWorkspace, workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes, ICON } from '@/registry'
 import type { AppDef } from '@/types'
 
 import { state, clockText } from './state'
@@ -51,7 +51,7 @@ export function useOS() {
     get DATA() { return { APP: appMap(), ICON } },
     get APP_ORDER() { return useRegistry().apps().map((a) => a.id) },
     geoMap, clockText, currentWp, paletteResults,
-    initials, pill, getMeta, appForDoctype, knownApplet, workspaceForSlug, orderedWorkspaces, defaultWorkspace, workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes, ensureDoctype, wallpaperDefs, presenceFor,
+    initials, pill, getMeta, appForDoctype, knownApplet, workspaceForSlug, workspaceForDoctype, orderedWorkspaces, defaultWorkspace, workspaceGroups, workspaceDoctypes, appDoctypes, defaultWorkspaceDoctypes, ensureDoctype, wallpaperDefs, presenceFor,
     // live records store
     recordObj, listFor, docFor, countFor, fieldMetaFor,
     loadList, loadMore, loadDoc, loadCount, loadFieldMeta, saveDoc, createDoc, bulkUpdate, refreshRecords,

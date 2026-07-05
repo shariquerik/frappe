@@ -180,7 +180,8 @@ export const newAppWindow = (appId: string, surface?: Surface): OsWindow =>
 
 // `workspace` selects the target WINDOW identity (ADR-0042) from a cold deep-link / reload: the list
 // opens in the `(app, workspace)` window, not a plain one. Omitted on Spotlight/Finder/cross-app
-// entry, which never guess a workspace — they open the plain app window.
+// entry, which never guess a workspace — they open the plain app window. A workspace-less doctype URL
+// canonicalises to its workbench earlier, in applyRoute (route-map), so the URL path stays the seam.
 export const openListGlobal = (dt: string, instance?: number | null, workspace?: string) =>
   ensureApp(appForDoctype(dt), listSurface(dt), instance, workspace)
 // `aspect` seeds the form's selected facet (ADR-0018) from a cold deep-link / reload; omitted = default.

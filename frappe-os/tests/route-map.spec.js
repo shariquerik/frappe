@@ -182,8 +182,15 @@ describe('applyRoute', () => {
   })
 
   it('derives the app from the doctype even when the app segment is wrong', () => {
+    // The doctype derives its app (crm) AND — with no workspace in the URL — canonicalises to its
+    // own workspace (ADR-0042), so the deep-link lands on the workbench window, not the hub.
     applyRoute(os, { app: 'frappe', doctype: 'CRM Lead' })
-    expect(os.state.activeId).toBe('app:crm')
+    expect(os.state.activeId).toBe('app:crm/sales')
+  })
+
+  it('a workspace-less list deep-link canonicalises onto the doctype workbench', () => {
+    applyRoute(os, { app: 'crm', doctype: 'CRM Lead' })
+    expect(os.state.activeId).toBe('app:crm/sales')
   })
 
   it('clears focus for an unknown app with no valid doctype', () => {
@@ -275,8 +282,10 @@ describe('applyRoute', () => {
   it('a form deep-link with ?instance=n opens the form in that instance', () => {
     os.openApp('crm') // canonical already open
     applyRoute(os, { app: 'crm', doctype: 'CRM Lead', name: 'L-7', instance: 2 })
-    expect(os.state.activeId).toBe('app:crm#2')
-    const w = os.state.windows.find((x) => x.id === 'app:crm#2')
+    // The workspace-less URL canonicalises to the doctype's workspace, so the instance rides the
+    // `(crm, sales)` workbench identity: `app:crm/sales#2`.
+    expect(os.state.activeId).toBe('app:crm/sales#2')
+    const w = os.state.windows.find((x) => x.id === 'app:crm/sales#2')
     expect(w.surface).toMatchObject({ view: 'form', doctype: 'CRM Lead', recordName: 'L-7' })
   })
 

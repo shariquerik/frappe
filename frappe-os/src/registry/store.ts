@@ -192,6 +192,15 @@ export function workspaceDoctypes(appId: string, workspaceId: string): string[] 
   return workspaceGroups(appId).find((w) => w.id === workspaceId)?.doctypes ?? []
 }
 
+// The canonical workspace for a doctype (ADR-0042): the first workspace group in the doctype's own
+// app whose doctype set contains it. Undefined when the doctype belongs to no seeded workspace — the
+// caller then opens the plain app window (the pre-workspace behaviour, unchanged for stragglers). It
+// lets a workspace-less doctype deep-link (`/frappe/Access Log`) canonicalise onto its workbench.
+export function workspaceForDoctype(doctype: string): string | undefined {
+  const appId = appForDoctype(doctype)
+  return workspaceGroups(appId).find((w) => (w.doctypes ?? []).includes(doctype))?.id
+}
+
 // The app's whole doctype set — the deduped union across its workspaces, order preserved (ADR-0042).
 // The catalog Finder locations and the command palette project over.
 export function appDoctypes(appId: string): string[] {
