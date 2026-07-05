@@ -2,15 +2,16 @@
 // The Finder body (ADR-0024): renders the active Location's tiles. Applications and Doctypes are tile
 // grids reprojected from the Registry (locations.ts); Recents mirrors the recents log; Favorites is a
 // read-only mirror/manager of the viewer's resolved desktop + dock Placements. A tile behaves like a
-// desktop icon (issues #3/#5): a single click SELECTS it, a double-click OPENS it, a right-click opens
-// a context menu (Open + Add to Desktop/Dock), and a drag-out onto the wallpaper creates a Placement
-// (drag.ts → writePlacementOverride). Favorites' remove clears the user's OWN pin.
+// desktop icon (issues #3/#5): a single click SELECTS it, a double-click OPENS it, Enter opens the
+// selected tile and Escape clears the selection, a right-click opens a context menu (Open + Add to
+// Desktop/Dock), and a drag-out onto the wallpaper creates a Placement (drag.ts →
+// writePlacementOverride). Favorites' remove clears the user's OWN pin.
 import { computed, watch } from 'vue'
 import { useOS } from '@/desktop'
 import { itemsFor, favoritePlacements, type Location, type FinderItem } from './locations'
 import { startFinderDrag } from './drag'
 import { finderTileMenuOptions } from './tile-menu'
-import { selectFinderTile, clearFinderSelection, isFinderTileSelected } from './selection'
+import { selectFinderTile, clearFinderSelection, isFinderTileSelected, selectedFinderTile } from './selection'
 import { placementView, placementKey, removeResolvedPlacement } from '@/placements'
 import OSContextMenu, { type ContextMenuOption } from '@/components/OSContextMenu.vue'
 import type { ResolvedPlacement } from '@/placements/types'
@@ -45,6 +46,23 @@ function launch(item: FinderItem): void {
 function menuFor(item: FinderItem): ContextMenuOption[] {
   if (isSettings(item)) return [{ label: 'Open', icon: 'lucide-settings', onClick: () => os.openSettings() }]
   return finderTileMenuOptions(item, os)
+}
+
+// Keyboard on a focused tile (Finder-style): Enter opens the selected tile, Escape drops the
+// selection. It fires on the focused tile button and stops propagation so the desktop's global
+// Enter/F2 (rename) and Escape handlers in App.vue never double-fire while the Finder is in use.
+function onTileKey(e: KeyboardEvent): void {
+  if (e.key === 'Enter') {
+    const key = selectedFinderTile()
+    const item = key ? tiles.value.find((t) => t.key === key) : undefined
+    if (!item) return
+    e.preventDefault() // else the focused button also fires its own Enter-activation (a click)
+    e.stopPropagation()
+    launch(item)
+  } else if (e.key === 'Escape') {
+    e.stopPropagation()
+    clearFinderSelection()
+  }
 }
 
 // Start a drag-out from a tile: hand its on-screen rect to the shared pointer loop, which on release
@@ -82,7 +100,8 @@ const keyOf = placementKey
           ]"
           @pointerdown="onTilePointerDown(item, $event)"
           @click="selectFinderTile(item.key)"
-          @dblclick="launch(item)">
+          @dblclick="launch(item)"
+          @keydown="onTileKey">
           <img v-if="item.logo" :src="item.logo" :alt="item.label" class="h-[44px] w-[44px] rounded-[11px] object-contain shadow-[var(--shadow-sm)]" />
           <span v-else class="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[11px] border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-[var(--shadow-sm)]">
             <span :class="item.icon" class="size-[21px]"></span>
