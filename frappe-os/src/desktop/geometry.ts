@@ -7,6 +7,7 @@ import { state } from './state'
 import { shouldShowDock } from './dock-visibility'
 import { windowRole } from '@/surface'
 import { resolveDrop, layoutDesktop, type Cell } from './grid'
+import { isPointOutside } from './dock-model'
 import { usePlacements } from '@/placements'
 import type { Geo, OsWindow } from '@/types'
 
@@ -197,6 +198,16 @@ export function onPointerUp(): void {
 // resolved-list→cells projection the desktop render uses, against the live desktop height.
 export function occupiedDesktopCells(): Cell[] {
   return layoutDesktop(usePlacements().desktop(), desktopRef.h)
+}
+
+// Did a drag release over the dock (within `pad` px of the tray)? A create-drag (a Finder drag-out)
+// or a desktop-icon move reads this to route a drop onto the dock into a dock pin instead of a
+// desktop cell. The floating ghost is click-through, so the release point is the real target; the
+// dock is checked before the desktop because it sits over the wallpaper (a dock drop is also "on the
+// desktop"). Returns false when the dock is absent or auto-hidden off-screen (its rect won't match).
+export function droppedOnDock(drop: DropClient, pad = 30): boolean {
+  const rect = dockRef.el?.getBoundingClientRect()
+  return !!rect && !isPointOutside(rect, drop.x, drop.y, pad)
 }
 
 export const setDesktopEl = (el: HTMLElement | null): void => { if (el) { desktopRef.el = el; desktopRef.w = el.clientWidth; desktopRef.h = el.clientHeight } }

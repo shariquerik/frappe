@@ -6,8 +6,9 @@
 // The pure decision (which cell, whether it counts as a drop) lives in geometry/grid; this module is
 // the thin wiring that turns a released drag into a brand-new desktop Placement. A bare-app or
 // doctype/applet reference all pin the same way — the reference is opaque to the placement write.
-import { occupiedDesktopCells, startIconDrag, desktopRef } from '@/desktop/geometry'
-import { writePlacementOverride } from '@/placements'
+import { occupiedDesktopCells, startIconDrag, desktopRef, droppedOnDock } from '@/desktop/geometry'
+import { nextDockOrder } from '@/desktop/dock-model'
+import { writePlacementOverride, usePlacements } from '@/placements'
 import type { FinderItem } from './locations'
 
 // Begin dragging a Finder tile out onto the desktop. The drag starts from the tile's own on-screen
@@ -23,9 +24,12 @@ export function startFinderDrag(item: FinderItem, tileRect: DOMRect, e: PointerE
   const oy = tileRect.top - (desktop?.top ?? 0)
   const occupied = occupiedDesktopCells()
   startIconDrag(`finder:${JSON.stringify(item.ref)}`, ox, oy, occupied, (cell, moved, drop) => {
-    // Pin only when the tile was actually dragged AND released over the free wallpaper — a release
-    // back over a window (the Finder itself, or any other) is not a desktop drop, so it creates no pin.
-    if (moved && droppedOnDesktop(drop)) writePlacementOverride({ region: 'desktop', ref: item.ref, position: cell })
+    // Pin only on a real drag. A drop onto the DOCK adds a dock pin; onto the free WALLPAPER adds a
+    // desktop pin; a release back over a window (the Finder itself, or any other) is neither. The dock
+    // is checked first — it sits over the wallpaper, so a dock drop would also read as a desktop drop.
+    if (!moved) return
+    if (droppedOnDock(drop)) writePlacementOverride({ region: 'dock', ref: item.ref, position: { order: nextDockOrder(usePlacements().dock()) } })
+    else if (droppedOnDesktop(drop)) writePlacementOverride({ region: 'desktop', ref: item.ref, position: cell })
   }, e, { label: item.label, logo: item.logo, icon: item.icon })
 }
 

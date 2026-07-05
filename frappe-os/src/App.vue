@@ -10,6 +10,7 @@ import { ToastProvider, useTheme } from "frappe-ui";
 import { useOS } from "@/desktop";
 import { desktopContextItems, dispatchShortcut } from "@/actions";
 import { cellToPixel, layoutDesktop, CELL_W } from "@/desktop/grid";
+import { nextDockOrder } from "@/desktop/dock-model";
 import { usePlacements, placementView, defaultLabel, writePlacementOverride } from "@/placements";
 import { tileMenuOptions } from "@/placements/tile-menu";
 import type { SurfaceRef, ResolvedPlacement } from "@/types";
@@ -99,11 +100,13 @@ function onIconPointerDown(di: DesktopIcon, e: PointerEvent): void {
 	os.selectIcon(di.key, { additive });
 	const px = cellToPixel(di.cell, desktop.w);
 	const occupied = desktopIcons.value.filter((o) => o.key !== di.key).map((o) => o.cell);
-	os.startIconDrag(di.key, px.x, px.y, occupied, (cell, moved) => {
-		// A real move persists a User-layer position override (the frontend's only write path). A press
-		// that didn't move on an already-focused label arms rename — after a beat, so a double-click
-		// (which opens) can cancel it first; the delay is what disambiguates single-click from double.
-		if (moved) writePlacementOverride({ region: "desktop", ref: di.ref, position: cell });
+	os.startIconDrag(di.key, px.x, px.y, occupied, (cell, moved, drop) => {
+		// A real move persists a User-layer position override (the frontend's only write path). Dragged
+		// onto the DOCK, it adds a dock pin (the desktop icon stays put); otherwise it snaps to a desktop
+		// cell. A press that didn't move on an already-focused label arms rename — after a beat, so a
+		// double-click (which opens) can cancel it first; the delay disambiguates single- from double-click.
+		if (moved && os.droppedOnDock(drop)) writePlacementOverride({ region: "dock", ref: di.ref, position: { order: nextDockOrder(usePlacements().dock()) } });
+		else if (moved) writePlacementOverride({ region: "desktop", ref: di.ref, position: cell });
 		else if (armRename) renameTimer = window.setTimeout(() => startRename(di), 250);
 	}, e);
 }
