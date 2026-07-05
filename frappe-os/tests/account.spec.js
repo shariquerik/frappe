@@ -10,7 +10,9 @@ vi.mock('@/data/api', () => ({
   saveDoc: vi.fn(),
   callPost: vi.fn(),
 }))
-vi.mock('@/data/boot', () => ({
+// Stub only getBoot (the network read); keep the real isGuest — it's pure session logic.
+vi.mock('@/data/boot', async (importOriginal) => ({
+  ...(await importOriginal()),
   getBoot: vi.fn(),
 }))
 

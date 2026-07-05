@@ -41,6 +41,15 @@ function fromWindow(): BootData {
   }
 }
 
+// A real logged-in session: a present user that is not the "Guest" sentinel Frappe uses for the
+// anonymous user. www/os.py redirects Guests to /login before serving the shell, but the Vite dev
+// server serves it ungated — so the client re-checks the resolved boot user and redirects (main.ts),
+// and account.ts guards its own-User load the same way. A type guard so the caller narrows to a real
+// username in the affirmative branch.
+export function isRealUser(user: string | null | undefined): user is string {
+  return !!user && user !== 'Guest'
+}
+
 export async function getBoot(): Promise<BootData> {
   if (cached) return cached
   const injected = fromWindow()

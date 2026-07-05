@@ -9,7 +9,7 @@
 // are permlevel 1 or read-only and are stripped before the write (pickWritable).
 import { reactive } from 'vue'
 import { callPost, getDoc, saveDoc } from '@/data/api'
-import { getBoot } from '@/data/boot'
+import { getBoot, isRealUser } from '@/data/boot'
 import type { FrappeDoc } from '@/types'
 
 // The only User fields the self-DocShare can persist at permlevel 0. `full_name` is read-only
@@ -48,7 +48,7 @@ async function load(force = false): Promise<void> {
     // guard anyway: a missing user, or the "Guest" sentinel, is a broken session (no own account
     // to load), not a User doc to fetch.
     const { user } = await getBoot()
-    if (!user || user === 'Guest') throw new Error('No session user to load an account for')
+    if (!isRealUser(user)) throw new Error('No session user to load an account for')
     state.doc = await getDoc('User', user)
   } catch (e) {
     state.error = (e as Error).message

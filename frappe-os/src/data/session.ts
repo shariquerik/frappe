@@ -11,6 +11,19 @@ export async function logout(): Promise<void> {
   window.location.href = '/login'
 }
 
+// Involuntary exit: the server dropped our session (expiry, or a logout in another tab), so every
+// API call now returns as Guest. Leave for the login page, remembering where we were so the
+// post-login redirect lands the user back on the same OS deep link — the same `redirect-to`
+// contract www/os.py uses when a Guest cold-loads a deep link. Wired to the data layer's
+// session-expiry port at boot (main.ts). Guarded so a burst of failing requests navigates once.
+let leaving = false
+export function redirectToLogin(): void {
+  if (leaving) return
+  leaving = true
+  const here = window.location.pathname + window.location.search
+  window.location.href = `/login?${new URLSearchParams({ 'redirect-to': here })}`
+}
+
 // Hand back to classic Desk and remember the choice, so the next login lands on Desk too. The
 // symmetric partner of Desk's "Switch to OS" navbar action — both write the same per-user default.
 export async function switchToDesk(): Promise<void> {

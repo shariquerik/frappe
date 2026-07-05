@@ -7,7 +7,10 @@ import './index.css'
 import App from './App.vue'
 import { useOS } from '@/desktop'
 import { faviconHref, applyFavicon } from '@/desktop/favicon'
-import { getBoot, initOsApi } from '@/data'
+import { getBoot, isRealUser, initOsApi } from '@/data'
+import { ApiError } from '@/data/api'
+import { redirectToLogin } from '@/data/session'
+import { setOnSessionExpired } from '@/data/session-expiry'
 import { initRegistry } from '@/registry'
 import { initPlacements } from '@/placements'
 import { initRecents } from '@/recents'
@@ -146,6 +149,12 @@ async function boot() {
   //    Vite) — the seam stays uninitialised then, but no consumer reads it yet.
   try {
     const bootData = await getBoot()
+    // Guard the dev entry: www/os.py redirects Guests before serving the shell, but the Vite dev
+    // server serves it ungated, so a logged-out load reaches here. Leave for /login (desk parity)
+    // rather than render an empty desktop — a resolved Guest payload, or the whitelisted boot()
+    // call rejecting 401/403 because we're not authenticated. A plain network error (no bench
+    // behind Vite) carries no status and falls through to the offline seed below.
+    if (!isRealUser(bootData.user)) return redirectToLogin()
     // The live session identity drives the menu-bar label + dashboard greeting; left unset
     // on a failed/offline boot so those render a neutral state, never demo data.
     os.state.userName = bootData.user_fullname || undefined
@@ -154,12 +163,17 @@ async function boot() {
     initRecents(bootData)
     initWallpapers(bootData)
     initOsApi(bootData)
-  } catch {
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) return redirectToLogin()
     initRegistry(null)
     initPlacements(null)
     initRecents(null)
     initWallpapers(null)
   }
+
+  // Boot-independent: if the server ever drops our session (expiry, logout in another tab), the data
+  //   layer flags it on the failing response and leaves for /login. Wire that reaction here.
+  setOnSessionExpired(redirectToLogin)
 
   // Boot-independent: seed the Theme submenu's run Handlers + its checkmark provider (the seam that
   // bridges the OS chrome to frappe-ui's theme engine — kept out of the pure actions graph).

@@ -2,6 +2,7 @@
 // Reads go through whitelisted GET calls (no CSRF needed); writes use the REST
 // resource API with the CSRF token from boot.
 import type { ListFilters, FrappeDoc, GetListOptions, OsRegistryData, DoctypeMetaPayload } from '@/types'
+import { isSessionExpired, onSessionExpired } from './session-expiry'
 
 // The server seeds the CSRF token onto the global as a fallback for direct page loads.
 declare global {
@@ -17,6 +18,20 @@ interface FrappeResponse {
   data?: any
   exception?: string
   _server_messages?: string
+  // Set by the server when the session is no longer valid (see session-expiry.ts). Read here so
+  // `parse` can tell a lost session apart from an ordinary error and hand off to the login redirect.
+  exc_type?: string
+  session_expired?: number
+}
+
+// A failed HTTP response, carrying the status so callers can branch on it — an auth failure (401/
+// 403) versus a plain network error (no `status`, e.g. no bench behind Vite). The boot sequence
+// uses this to redirect a logged-out dev load to /login (main.ts); other callers just read .message.
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
 let csrfToken = ''
@@ -32,8 +47,14 @@ function getCsrf(): string {
 async function parse(res: Response): Promise<FrappeResponse> {
   const data: FrappeResponse = await res.json().catch(() => ({}))
   if (!res.ok) {
+    // A dropped session (expiry, or a logout in another tab) surfaces on every request from here on.
+    // Catch it at this one choke point — every read and write funnels through parse — and leave for
+    // the login page. Still throw, so the caller's promise rejects rather than proceeding on Guest data.
+    if (isSessionExpired({ status: res.status, exc_type: data.exc_type, session_expired: data.session_expired })) {
+      onSessionExpired()
+    }
     const msg = data.exception || (data._server_messages ?? res.statusText)
-    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg))
+    throw new ApiError(typeof msg === 'string' ? msg : JSON.stringify(msg), res.status)
   }
   return data
 }
