@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import frappeui from 'frappe-ui/vite'
 import frameworkUI from '@framework/ui/vite'
+import { assertNoChunkCycles } from './build/chunk-cycles.js'
 import path from 'node:path'
 
 // The ADR-0009 shared-singleton import map — maps the three bare specifiers a runtime-loaded
@@ -66,6 +67,8 @@ export default defineConfig({
     // vue / vue-router / frappe-ui / reka-ui instances (provide/inject context).
     frameworkUI(),
     osImportMap(),
+    // Build-time guard: a cyclic chunk graph boots to a blank screen (see build/chunk-cycles.js).
+    assertNoChunkCycles(),
   ],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
@@ -92,6 +95,24 @@ export default defineConfig({
           chunk.name.startsWith('broker-')
             ? `os-brokers/${chunk.name.slice('broker-'.length)}.js`
             : 'assets/[name]-[hash].js',
+        // Keep every frappe-ui module in ONE chunk. frappe-ui's barrel (`index.ts` re-exports
+        // a component that imports a sibling through the barrel again) makes its module graph
+        // cyclic. That's harmless inside a chunk — the bundler orders the modules — but when
+        // the chunker scatters those modules across chunks, the cycle is promoted to a CHUNK
+        // cycle, and chunks are ESM modules whose evaluation order the bundler no longer
+        // controls. A cyclic chunk then reads a not-yet-evaluated binding from its partner:
+        // `_export_sfc` is `var`-hoisted, so it reads `undefined` and the page dies at boot
+        // with "TypeError: at is not a function". `assertNoChunkCycles` (build/chunk-cycles.js)
+        // fails the build if this ever regresses, so the guard can't rot silently.
+        // The `vue-sfc-helper` group is the same rule for the `_export_sfc` helper itself:
+        // it's a virtual module shared by frappe-ui AND our own SFCs, so pinning it to its
+        // own leaf chunk keeps it out of whichever chunk would otherwise close a loop.
+        advancedChunks: {
+          groups: [
+            { name: 'vue-sfc-helper', test: /plugin-vue[:_]export-helper/ },
+            { name: 'frappe-ui', test: /[\\/]node_modules[\\/]frappe-ui[\\/]/ },
+          ],
+        },
       },
     },
   },
