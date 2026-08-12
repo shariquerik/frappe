@@ -57,6 +57,8 @@ export interface RawMetaField {
   precision?: number | string;
   hidden?: boolean | 0 | 1;
   read_only?: boolean | 0 | 1;
+  /** Field-level permission level; access is DocPerm rows × user roles. */
+  permlevel?: number;
   /** Whether a child-table field shows as a grid column. */
   in_list_view?: boolean | 0 | 1;
   /** Whether the field is surfaced as a default Quick Filter input (the

@@ -142,7 +142,8 @@ function resolveChildLayout(
   return buildLayoutFromMeta(childMeta, { childMetas, decorate });
 }
 
-function mapField(
+/** Resolve one raw meta field into a layout node (exported for layout joins). */
+export function mapField(
   field: RawMetaField,
   childMetas: Record<string, RawMetaField[]>,
   decorate?: Decorator
