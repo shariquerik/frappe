@@ -12,6 +12,7 @@ import type { RawMetaField } from "../../components/FormLayout/types";
 import { holdsChildRows } from "../../components/Fields/rowIdentity";
 import type { RowAddress } from "../../components/Fields/types";
 import { FieldsSurface, LAYOUT_BREAKS } from "./fields";
+import { ROW_EVENTS } from "./flattenHandlers";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
 import { readOnly, type ReadOnlyAdvice } from "./readOnly";
@@ -88,8 +89,8 @@ export interface RecordPageHost {
   /**
    * A child doctype's meta fields, by doctype name — what makes the row half of
    * the event vocabulary knowable. Absent while the metas load, and for a host
-   * that has none: the tables then speak `.add` / `.remove` only, which is what
-   * the vocabulary check assumes rather than warns about.
+   * that has none: the tables then speak `.onAdd` / `.onRemove` only, which is
+   * what the vocabulary check assumes rather than warns about.
    */
   childFields?: (doctype: string) => RawMetaField[] | undefined;
   /** Resolves when sources that register after mount (Page Scripts) are in. */
@@ -253,42 +254,76 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
 
   // Meta can lag the first paint, so the check waits for a replay that has fields.
   function warnUnknownHandlers() {
-    if (vocabularyChecked || !import.meta.env.DEV) return;
+    if (!import.meta.env.DEV) return;
     const fields = host.meta.value?.fields;
     if (!fields) return;
-    vocabularyChecked = true;
     const registrations = registrationsFor(host.doctype);
     // Nothing to shadow and no keys to check when no source is registered — and
     // saying so anyway would fire the warning on every record a plain app opens.
     if (!registrations.length) return;
-    warnShadowedTrigger(fields);
+    // Deliberately *not* behind the latch below: this one reads the **child**
+    // meta, which can land after the parent's — `handlerVocabulary`'s
+    // `unresolved` list exists for exactly that window — so latching on the
+    // parent alone would drop the collision warning for the whole session.
+    // Re-attempting it costs a loop over the tables, and `warnRowIssue`
+    // remembers what it has already said.
+    warnShadowedChildFields(fields);
+    if (vocabularyChecked) return;
+    vocabularyChecked = true;
     const known = handlerVocabulary(fields, host.childFields);
+    const said = new Set<string>();
     for (const { source, handlers } of registrations)
-      for (const key of Object.keys(handlers))
-        if (!known.has(key))
-          console.warn(
-            `[record-page] ${source}.${key} on ${host.doctype} is neither an event nor a fieldname — it will never fire`,
-          );
+      for (const key of Object.keys(handlers)) {
+        if (known.has(key)) continue;
+        // A whole block written under a fieldname that holds no rows is one
+        // mistake, not one per handler in it — so it is named by its table.
+        const [table] = key.split(".");
+        const nested = key.includes(".") && !known.isTable(table);
+        const message = nested
+          ? `${source}.${table} on ${host.doctype} is not a child table — nothing nested under it will fire`
+          : `${source}.${key} on ${host.doctype} is neither an event nor a fieldname — it will never fire`;
+        if (said.has(message)) continue;
+        said.add(message);
+        console.warn(`[record-page] ${message}`);
+      }
   }
 
   /**
-   * `trigger` is the row handle's one member and a child doctype may legitimately
-   * have a field of that name — Frappe reserves five names and this is not one.
-   * The verb wins and the field stays reachable through `page.doc`; said once,
-   * here, because the engine knows the child's fields, where v1 could only warn
-   * on every access.
+   * The three child fieldnames the table vocabulary occupies, named at load
+   * because the engine knows the child's fields where v1 could only warn on
+   * every access. Frappe reserves none of them (`RESERVED_KEYWORDS` is five
+   * names plus the cached properties), so a child doctype may legitimately
+   * carry any — and ticket 54 traded a guarantee for this warning knowingly.
+   *
+   * 54 called the result "an announced capability hole, never a misfire", and
+   * for `trigger` that is exact. For the two lifecycle names it is not: a child
+   * field named `onAdd` commits as `<table>.onAdd`, which is the *same string*
+   * the row-added event dispatches, so the author's `onAdd` handler runs — with
+   * a live row — on that field being edited. The hole is announced, but it is a
+   * misfire, and the warning says so rather than the comfortable thing.
    */
-  function warnShadowedTrigger(fields: RawMetaField[]) {
+  function warnShadowedChildFields(fields: RawMetaField[]) {
     for (const field of fields) {
       if (!holdsChildRows(field.fieldtype) || !field.options) continue;
       const child = host.childFields?.(field.options);
-      if (!child?.some((one) => one.fieldname === "trigger")) continue;
-      // Warned per child doctype for the session, not per controller: the same
-      // shadow is the same fact on every record of the doctype, and navigating
-      // between them must not restate it.
-      warnRowIssue(
-        `${field.options}.trigger is shadowed by the row handle's own trigger() — read it from page.doc.${field.fieldname} instead`,
-      );
+      if (!child) continue;
+      const has = (fieldname: string) =>
+        child.some((one) => one.fieldname === fieldname);
+      // The verb wins and the field stays reachable through `page.doc`.
+      if (has("trigger"))
+        // Warned per child doctype for the session, not per controller: the same
+        // shadow is the same fact on every record of the doctype, and navigating
+        // between them must not restate it.
+        warnRowIssue(
+          `${field.options}.trigger is shadowed by the row handle's own trigger() — read it from page.doc.${field.fieldname} instead`,
+        );
+      // One string cannot be two events, and the field's commit is the one that
+      // arrives unannounced — so the warning names the direction that bites.
+      for (const lifecycle of Object.values(ROW_EVENTS))
+        if (has(lifecycle))
+          warnRowIssue(
+            `${field.options}.${lifecycle} collides with the table's ${lifecycle} handler — editing that field on a row fires ${field.fieldname}.${lifecycle} as though a row had been ${lifecycle === ROW_EVENTS.add ? "added" : "removed"}. Rename the field, or handle it from page.doc.${field.fieldname}`,
+          );
     }
   }
 
@@ -322,6 +357,9 @@ function handlerVocabulary(
   childFields?: (doctype: string) => RawMetaField[] | undefined,
 ) {
   const known = new Set(RECORD_PAGE_EVENTS);
+  // Every child table on the doctype, so a nested block written under something
+  // that is not one can be named as that rather than as a generic typo.
+  const tables = new Set<string>();
   // Tables whose child doctype we cannot see. A host with no `childFields`, or
   // one whose child meta has not landed, must not accuse a correct key of being
   // a typo — so those tables are answered by prefix instead.
@@ -331,8 +369,9 @@ function handlerVocabulary(
       known.add(field.fieldname);
       continue;
     }
-    known.add(`${field.fieldname}.add`);
-    known.add(`${field.fieldname}.remove`);
+    tables.add(field.fieldname);
+    known.add(`${field.fieldname}.${ROW_EVENTS.add}`);
+    known.add(`${field.fieldname}.${ROW_EVENTS.remove}`);
     // A Table MultiSelect has no per-cell editing, so its vocabulary is add and
     // remove alone — an honest gap rather than keys that would never fire.
     if (field.fieldtype !== "Table") continue;
@@ -348,5 +387,6 @@ function handlerVocabulary(
   return {
     has: (key: string) =>
       known.has(key) || unresolved.some((table) => key.startsWith(`${table}.`)),
+    isTable: (fieldname: string) => tables.has(fieldname),
   };
 }

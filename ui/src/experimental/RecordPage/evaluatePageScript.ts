@@ -3,11 +3,11 @@
 // bare imports resolve through the page's import map — the four shared deps and
 // nothing else.
 import type { PageScriptRow } from "./pageScriptTypes";
-import type { RecordPageHandlers } from "./types";
+import type { AuthoredHandlers } from "./types";
 
 export async function evaluatePageScript(
   row: PageScriptRow,
-): Promise<RecordPageHandlers> {
+): Promise<AuthoredHandlers> {
   const url = URL.createObjectURL(
     new Blob([named(row)], { type: "text/javascript" }),
   );
@@ -26,8 +26,8 @@ function named(row: PageScriptRow) {
   return `${row.script}\n//# sourceURL=page-script/${row.name}.js\n`;
 }
 
-function handlersOf(handlers: unknown): RecordPageHandlers {
+function handlersOf(handlers: unknown): AuthoredHandlers {
   if (!handlers || typeof handlers !== "object")
     throw new Error("default export is not a handlers object");
-  return handlers as RecordPageHandlers;
+  return handlers as AuthoredHandlers;
 }

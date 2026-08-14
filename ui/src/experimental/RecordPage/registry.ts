@@ -1,7 +1,8 @@
 // Where every script lands, whatever delivered it: file scripts at bundle
 // evaluation, extensions as the loader imports them. Run order is precedence.
 import { registeringSource } from "./context";
-import type { RecordPageHandlers } from "./types";
+import { flattenHandlers } from "./flattenHandlers";
+import type { AuthoredHandlers, RecordPageHandlers } from "./types";
 
 export const ALL_DOCTYPES = "*";
 
@@ -15,9 +16,17 @@ const registrations: Registration[] = [];
 
 export function registerRecordPage(
   doctype: string,
-  handlers: RecordPageHandlers,
+  handlers: AuthoredHandlers,
 ) {
-  registrations.push({ source: registeringSource(), doctype, handlers });
+  const source = registeringSource();
+  // The one place a nested table block is flattened: file scripts and stored
+  // scripts both land here, so neither the loader nor the evaluator has to know
+  // the authored shape from the dispatched one.
+  registrations.push({
+    source,
+    doctype,
+    handlers: flattenHandlers(handlers, source, doctype),
+  });
 }
 
 /** Sources in registration order; within one, `*` handlers before the doctype's own. */

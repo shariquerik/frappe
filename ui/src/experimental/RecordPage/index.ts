@@ -43,6 +43,7 @@ export type { Rows, RowsHost } from "./rows";
 export { loadFrontendExtensions } from "./loader";
 export { withRegisteringSource, HOST_SOURCE } from "./context";
 export type {
+  AuthoredHandlers,
   FieldAccess,
   Handler,
   HeaderAction,

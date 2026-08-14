@@ -165,14 +165,16 @@ describe("the handle re-finds its row on every access (ticket 43 §2)", () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     await withRegisteringSource("page-script:C22", async () => {
       registerRecordPage("CRM Deal", {
-        "products.add": (page: RecordPageApi, row: PageRow) => {
-          page.doc.products.length = 0;
-          row.qty = 1;
+        products: {
+          onAdd: (page: RecordPageApi, row: PageRow) => {
+            page.doc.products.length = 0;
+            row.qty = 1;
+          },
         },
       });
     });
     const { controller } = makePage();
-    await controller.fireEvent("products.add", {
+    await controller.fireEvent("products.onAdd", {
       parentfield: "products",
       key: "name:row-a",
     });
@@ -242,26 +244,44 @@ describe("row.trigger", () => {
     expect(() => row.trigger("rate")).toThrow("no longer in the document");
   });
 
-  // 45 §3 gives `.remove` no row, so a verb that could fire it from a live row
+  // 45 §3 gives `.onRemove` no row, so a verb that could fire it from a live row
   // would hand a handler the grenade that decision exists to withhold.
   it("refuses the structural keys, a dotted argument and an unknown field", async () => {
     const fired: string[] = [];
     registerRecordPage("CRM Deal", {
-      "products.add": () => fired.push("add"),
-      "products.remove": () => fired.push("remove"),
-      "products.rate": () => fired.push("rate"),
+      products: {
+        onAdd: () => fired.push("add"),
+        onRemove: () => fired.push("remove"),
+        rate: () => fired.push("rate"),
+      },
     });
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { controller } = makePage({ childFields: () => CHILD_FIELDS });
     const row = controller.page.rows("products")[0];
-    await row.trigger("add");
-    await row.trigger("remove");
+    await row.trigger("onAdd");
+    await row.trigger("onRemove");
     await row.trigger("products.rate");
     await row.trigger("ratte");
     expect(fired).toEqual([]);
     expect(warnings.mock.calls).toHaveLength(4);
     await row.trigger("rate");
     expect(fired).toEqual(["rate"]);
+    warnings.mockRestore();
+  });
+
+  // The whole reason the lifecycle keys are `on`-prefixed (ticket 54): `add` is
+  // a legal, unreserved fieldname, so under the old spelling this row's own
+  // field was unaddressable and `products.add` meant two different events.
+  it("triggers a child field genuinely called add", async () => {
+    const fired: string[] = [];
+    registerRecordPage("CRM Deal", { products: { add: () => fired.push("add") } });
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { controller } = makePage({
+      childFields: () => [...CHILD_FIELDS, { fieldname: "add", fieldtype: "Check" }],
+    });
+    await controller.page.rows("products")[0].trigger("add");
+    expect(fired).toEqual(["add"]);
+    expect(warnings).not.toHaveBeenCalled();
     warnings.mockRestore();
   });
 

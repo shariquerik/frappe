@@ -30,10 +30,10 @@ describe("createCommitChannel", () => {
     const { commits, fired } = channel();
     commits.rowChanged(row, "add");
     commits.rowChanged(row, "remove");
-    expect(fired).toEqual(["products.add", "products.remove"]);
+    expect(fired).toEqual(["products.onAdd", "products.onRemove"]);
   });
 
-  // 45 §3: `.add` carries its row, `.remove` gets `(page)` alone — a handle for
+  // 45 §3: `.onAdd` carries its row, `.onRemove` gets `(page)` alone — a handle for
   // a removed row throws on every access, so handing one over is a grenade.
   it("carries the row on add and drops it on remove", () => {
     const { commits, addressed } = channel();
@@ -76,7 +76,7 @@ describe("createCommitChannel", () => {
     commits.pending("qty", 3, row);
     commits.rowChanged(row, "remove");
     await commits.flush();
-    expect(fired).toEqual(["products.remove"]);
+    expect(fired).toEqual(["products.onRemove"]);
   });
 
   it("ignores the echo a widget re-emits as it commits", async () => {

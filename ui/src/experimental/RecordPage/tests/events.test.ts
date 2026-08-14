@@ -144,7 +144,7 @@ describe("unknown handler keys", () => {
     warnings.mockRestore();
   });
 
-  it("accepts events, fieldnames and the dotted row family", async () => {
+  it("accepts events, fieldnames and a table's nested block", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     registerRecordPage("CRM Deal", {
       refresh: () => {},
@@ -152,9 +152,11 @@ describe("unknown handler keys", () => {
       after_save: () => {},
       on_tab_change: () => {},
       status: () => {},
-      "items.add": () => {},
-      "items.remove": () => {},
-      "items.qty": () => {},
+      items: {
+        onAdd: () => {},
+        onRemove: () => {},
+        qty: () => {},
+      },
     });
     const controller = createRecordPage(
       makeHost({ meta: ref({ fields }), childFields: () => childFields }),
@@ -187,9 +189,11 @@ describe("unknown handler keys", () => {
   it("gives a Table MultiSelect add and remove only", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     registerRecordPage("CRM Deal", {
-      "labels.add": () => {},
-      "labels.remove": () => {},
-      "labels.label": () => {},
+      labels: {
+        onAdd: () => {},
+        onRemove: () => {},
+        label: () => {},
+      },
     });
     const controller = createRecordPage(
       makeHost({
@@ -248,6 +252,82 @@ describe("unknown handler keys", () => {
       String(call[0]).includes("shadowed by the row handle"),
     );
     expect(shadowed).toHaveLength(1);
+    warnings.mockRestore();
+  });
+
+  // 54 §3: the convention is not a construction, so the two fieldnames that can
+  // still collide are named at load — an announced hole, not a silent misfire.
+  it("warns when a child doctype has a field named onAdd or onRemove (ticket 54)", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    resetRowWarnings();
+    registerRecordPage("CRM Deal", { refresh: () => {} });
+    await createRecordPage(
+      makeHost({
+        meta: ref({ fields }),
+        childFields: () => [
+          ...childFields,
+          { fieldname: "onAdd", fieldtype: "Check" },
+          { fieldname: "onRemove", fieldtype: "Check" },
+        ],
+      }),
+    ).refresh();
+    const collisions = warnings.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes("collides with the table's"));
+    expect(collisions).toHaveLength(2);
+    expect(collisions[0]).toContain("Deal Item.onAdd");
+    warnings.mockRestore();
+  });
+
+  // The collision is a *misfire*, not an inert gap — the thing the warning has
+  // to say, and the reason it says it. Editing the child field commits under
+  // the same string the row-added event dispatches.
+  it("routes a colliding child field's commit into the table's lifecycle handler", async () => {
+    const fired: string[] = [];
+    registerRecordPage("CRM Deal", { items: { onAdd: () => fired.push("onAdd") } });
+    const controller = createRecordPage(
+      makeHost({ meta: ref({ fields }), childFields: () => childFields }),
+    );
+    await controller.fireEvent("items.onAdd", { parentfield: "items", key: "name:a" });
+    expect(fired).toEqual(["onAdd"]);
+  });
+
+  // 48/50's lesson in its own shape: the shadow check reads the *child* meta,
+  // which can land after the parent's, so latching on the parent alone dropped
+  // the warning for the session.
+  it("still warns when the child meta lands after the parent's", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    resetRowWarnings();
+    registerRecordPage("CRM Deal", { refresh: () => {} });
+    let child: any[] | undefined = undefined;
+    const controller = createRecordPage(
+      makeHost({ meta: ref({ fields }), childFields: () => child }),
+    );
+    await controller.refresh();
+    child = [...childFields, { fieldname: "onAdd", fieldtype: "Check" }];
+    await controller.refresh();
+    const collisions = warnings.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes("collides with the table's"));
+    expect(collisions).toHaveLength(1);
+    warnings.mockRestore();
+  });
+
+  // A block under something that holds no rows is one mistake, not one per
+  // handler in it — and naming the table beats naming each dead key.
+  it("names the table once when a nested block is not on a child table", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    registerRecordPage("CRM Deal", {
+      status: { onAdd: () => {}, qty: () => {} },
+    });
+    await createRecordPage(
+      makeHost({ meta: ref({ fields }), childFields: () => childFields }),
+    ).refresh();
+    const rejected = warnings.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes("not a child table"));
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]).toContain("status");
     warnings.mockRestore();
   });
 

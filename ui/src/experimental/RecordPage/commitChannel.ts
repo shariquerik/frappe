@@ -6,6 +6,7 @@ import type {
   RowAddress,
   RowChange,
 } from "../../components/Fields/types";
+import { ROW_EVENTS } from "./flattenHandlers";
 
 export interface CommitChannelHost {
   dispatch: (event: string, row?: RowAddress) => Promise<void> | void;
@@ -59,7 +60,7 @@ export function createCommitChannel(
       // has nowhere left to land.
       pending = null;
       // A removed row has no address left to hand on: a handle for it throws on
-      // every access by design, so `'<table>.remove'` takes `(page)` alone and
+      // every access by design, so `'<table>.onRemove'` takes `(page)` alone and
       // un-totals by re-folding the table (ticket 45 §3).
       host.dispatch(rowEvent(row, change), change === "add" ? row : undefined);
     },
@@ -78,6 +79,11 @@ export function fieldEvent(fieldname: string, row?: RowAddress): string {
   return row ? `${row.parentfield}.${fieldname}` : fieldname;
 }
 
+/**
+ * The lifecycle keys are `on`-prefixed, so they cannot be the commit event of a
+ * child field called `add` — one spelling end to end, from what the author types
+ * to what an unknown-key warning names (ticket 54).
+ */
 export function rowEvent(row: RowAddress, change: RowChange): string {
-  return `${row.parentfield}.${change}`;
+  return `${row.parentfield}.${ROW_EVENTS[change]}`;
 }

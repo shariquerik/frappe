@@ -372,10 +372,15 @@ export interface RecordPageApi {
 export type { FieldAccess };
 
 /**
- * A handler's arguments are determined by its key (ticket 45 §3). A bare key —
- * an event or a parent fieldname — receives `(page)`. A dotted one receives the
- * row it happened to: `'products.qty'` and `'products.add'` get `(page, row)`,
- * while `'products.remove'` gets `(page)` alone, its row being gone.
+ * A handler's arguments are determined by its key (tickets 45 §3, 54). A
+ * top-level key — an event or a parent fieldname — receives `(page)`. One
+ * nested under a child table receives the row it happened to:
+ *
+ * ```js
+ * products: { onAdd(page, row) {}, qty(page, row) {} }
+ * ```
+ *
+ * `onRemove` is the exception, and gets `(page)` alone: its row is gone.
  *
  * The row is an address, not a payload: it carries no event data, and the same
  * handle is obtainable from `page.rows()` in any handler at all. That is why
@@ -383,5 +388,17 @@ export type { FieldAccess };
  */
 export type Handler = (page: RecordPageApi, row?: PageRow) => any;
 
-/** What a script evaluates to: named event handlers, each receiving `page`. */
+/**
+ * What an author writes: named event handlers, plus — for a child table — a
+ * block of them nested under the table's fieldname (ticket 54).
+ */
+export type AuthoredHandlers = Record<
+  string,
+  Handler | Record<string, Handler>
+>;
+
+/**
+ * What the engine dispatches against: one flat keyspace, a nested block having
+ * been flattened onto dotted keys at registration.
+ */
 export type RecordPageHandlers = Record<string, Handler>;

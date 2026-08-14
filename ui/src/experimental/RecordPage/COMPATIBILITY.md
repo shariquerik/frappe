@@ -38,12 +38,31 @@ What `page` is _for_ is a small, closed vocabulary:
   also create, while fields are authored elsewhere and a script only overrides their
   properties, so there is no `add`, `move` or `order` to mean anything.
 - **A closed event list** — `refresh`, `before_save`, `after_save`, `on_tab_change`,
-  `<fieldname>`, and a child table's dotted family: `<tablefield>.<childfield>`,
-  `<tablefield>.add`, `<tablefield>.remove`. The dot is not a convention — it is
-  the one character a Frappe fieldname structurally cannot contain, so a child
-  field can never collide with a parent one.
-- **One rule for a handler's arguments: its key decides them.** A bare key gets
-  `(page)`; a dotted one gets `(page, row)`, except `<tablefield>.remove`, whose
+  `<fieldname>`, and a child table's own family, written **nested under the table's
+  fieldname**: a handler per child field, plus `onAdd` and `onRemove`.
+
+  ```js
+  export default {
+    status(page) {},
+    products: {
+      onAdd(page, row) {},
+      onRemove(page) {},
+      qty(page, row) {},
+    },
+  }
+  ```
+
+  Internally these are one flat keyspace — `products.qty`, `products.onAdd` — joined
+  on the one character a Frappe fieldname structurally cannot contain, so a child
+  field can never collide with a parent one. The two lifecycle names are `on`-prefixed
+  because `add` is a legal, unreserved fieldname and `products.add` would otherwise be
+  the same string as the commit event of a child field called `add`. That prefix is a
+  convention rather than a guarantee — no fieldname *has* to be lowercase — so a child
+  doctype carrying `onAdd` or `onRemove` is warned about by name at load, **in a
+  development build**. Where it collides, editing that field on a row fires the table's
+  lifecycle handler: the hole is announced, but it is a misfire, not an inert gap.
+- **One rule for a handler's arguments: its key decides them.** A top-level key gets
+  `(page)`; one nested under a table gets `(page, row)`, except `onRemove`, whose
   row is gone. The row is an address, not a payload — `page.rows('products')`
   hands you the same handles in any handler at all.
 - **A handful of contracts**: every `page.dialog` verb resolves `null` when the reader
