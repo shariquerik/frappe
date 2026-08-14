@@ -16,19 +16,42 @@ export interface RecordCommitChannel extends CommitChannel {
   flush: () => Promise<void>;
 }
 
+interface Edit {
+  event: string;
+  value: any;
+  row?: RowAddress;
+}
+
 export function createCommitChannel(
   host: CommitChannelHost
 ): RecordCommitChannel {
-  let pending: { fieldname: string; row?: RowAddress } | null = null;
+  let pending: Edit | null = null;
+  let settled: Edit | null = null;
 
-  function commit(fieldname: string, row?: RowAddress) {
+  /**
+   * A commit only means something the last one did not, which is what makes
+   * every echo of a value already committed a no-op: a control that re-emits as
+   * it commits (frappe-ui's `TextInput` handles `input` and `change` alike),
+   * and the final `change` Chromium fires when a save repaints a focused input
+   * out of the DOM. A native `change` only ever carries a value that moved, so
+   * no edit of the reader's is lost to this.
+   */
+  function settles(event: string, value: any): boolean {
+    return !(settled?.event === event && Object.is(settled.value, value));
+  }
+
+  function commit(fieldname: string, value: any, row?: RowAddress) {
+    const event = fieldEvent(fieldname, row);
     pending = null;
-    return host.dispatch(fieldEvent(fieldname, row), row);
+    if (!settles(event, value)) return;
+    settled = { event, value, row };
+    return host.dispatch(event, row);
   }
 
   return {
-    pending: (fieldname, row) => {
-      pending = { fieldname, row };
+    pending: (fieldname, value, row) => {
+      const event = fieldEvent(fieldname, row);
+      if (settles(event, value)) pending = { event, value, row };
     },
     commit,
     rowChanged: (row, change) => {
@@ -40,7 +63,9 @@ export function createCommitChannel(
     flush: async () => {
       const edit = pending;
       if (!edit) return;
-      await commit(edit.fieldname, edit.row);
+      pending = null;
+      settled = edit;
+      await host.dispatch(edit.event, edit.row);
     },
   };
 }

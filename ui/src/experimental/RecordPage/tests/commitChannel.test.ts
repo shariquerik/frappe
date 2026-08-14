@@ -13,13 +13,13 @@ const row: RowAddress = { parentfield: "products", key: "row-1" };
 describe("createCommitChannel", () => {
   it("fires a top-level field under its own name", () => {
     const { commits, fired } = channel();
-    commits.commit("status");
+    commits.commit("status", "Won");
     expect(fired).toEqual(["status"]);
   });
 
   it("addresses a child field by its table", () => {
     const { commits, fired } = channel();
-    commits.commit("qty", row);
+    commits.commit("qty", 3, row);
     expect(fired).toEqual(["products.qty"]);
   });
 
@@ -32,13 +32,13 @@ describe("createCommitChannel", () => {
 
   it("fires nothing while an edit is only pending", () => {
     const { commits, fired } = channel();
-    commits.pending("qty");
+    commits.pending("qty", 3);
     expect(fired).toEqual([]);
   });
 
   it("flushes a pending edit once, then has nothing left to flush", async () => {
     const { commits, fired } = channel();
-    commits.pending("qty");
+    commits.pending("qty", 3);
     await commits.flush();
     await commits.flush();
     expect(fired).toEqual(["qty"]);
@@ -46,25 +46,58 @@ describe("createCommitChannel", () => {
 
   it("flushes the pending edit at its row address", async () => {
     const { commits, fired } = channel();
-    commits.pending("qty", row);
+    commits.pending("qty", 3, row);
     await commits.flush();
     expect(fired).toEqual(["products.qty"]);
   });
 
   it("a commit clears the pending edit, so a later save does not refire it", async () => {
     const { commits, fired } = channel();
-    commits.pending("qty");
-    commits.commit("qty");
+    commits.pending("qty", 3);
+    commits.commit("qty", 3);
     await commits.flush();
     expect(fired).toEqual(["qty"]);
   });
 
   it("a row add or remove clears the pending edit", async () => {
     const { commits, fired } = channel();
-    commits.pending("qty", row);
+    commits.pending("qty", 3, row);
     commits.rowChanged(row, "remove");
     await commits.flush();
     expect(fired).toEqual(["products.remove"]);
+  });
+
+  it("ignores the echo a widget re-emits as it commits", async () => {
+    const { commits, fired } = channel();
+    commits.commit("qty", 3);
+    commits.pending("qty", 3);
+    await commits.flush();
+    expect(fired).toEqual(["qty"]);
+  });
+
+  it("ignores the commit a repaint fires as it unmounts a focused input", async () => {
+    const { commits, fired } = channel();
+    commits.pending("qty", 3);
+    await commits.flush();
+    commits.commit("qty", 3);
+    expect(fired).toEqual(["qty"]);
+  });
+
+  it("takes a real edit after a commit of the same field", async () => {
+    const { commits, fired } = channel();
+    commits.commit("qty", 3);
+    commits.pending("qty", 4);
+    await commits.flush();
+    expect(fired).toEqual(["qty", "qty"]);
+  });
+
+  it("does not flush the same edit twice", async () => {
+    const { commits, fired } = channel();
+    commits.pending("qty", 3);
+    await commits.flush();
+    commits.pending("qty", 3);
+    await commits.flush();
+    expect(fired).toEqual(["qty"]);
   });
 
   it("awaits the handler it flushes, so the save cannot outrun it", async () => {
@@ -75,7 +108,7 @@ describe("createCommitChannel", () => {
         order.push(event);
       },
     });
-    commits.pending("qty");
+    commits.pending("qty", 3);
     await commits.flush();
     order.push("before_save");
     expect(order).toEqual(["qty", "before_save"]);

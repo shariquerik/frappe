@@ -23,7 +23,7 @@
 				:field="controlField"
 				:modelValue="doc[field.fieldname]"
 				@update:modelValue="(value: any) => edit(field.fieldname, value)"
-				@change="onCommit"
+				@change="(value: any) => onCommit(value)"
 				v-on="field.ui?.on ?? {}"
 			/>
 		</div>
@@ -74,13 +74,13 @@ const resolveField = inject(ResolveFieldKey)!;
 
 function edit(fieldname: string, value: any) {
 	update(fieldname, value);
-	commit.pending(fieldname);
+	commit.pending(fieldname, value);
 }
 
 // A commit both closes the inline editor and fires the field's handler.
-function onCommit() {
+function onCommit(value: any) {
 	editing.value = false;
-	commit.commit(props.field.fieldname);
+	commit.commit(props.field.fieldname, value);
 }
 
 const editing = ref(false);
