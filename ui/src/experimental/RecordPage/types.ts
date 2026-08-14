@@ -95,9 +95,11 @@ export interface PageDialogField {
  * v1's `button_color` is absent — no renderer here honours it.
  */
 export interface PageFieldPatch {
-  hidden?: boolean;
-  read_only?: boolean;
-  reqd?: boolean;
+  // `0 | 1` alongside the boolean, as `PageDialogField` has it: a DocField
+  // spells these as ints, and `page.meta`'s own refusal advises `{ hidden: 1 }`.
+  hidden?: boolean | 0 | 1;
+  read_only?: boolean | 0 | 1;
+  reqd?: boolean | 0 | 1;
   label?: string;
   placeholder?: string;
   description?: string;
@@ -122,6 +124,10 @@ export interface PageFieldPatch {
 export interface PageField extends PageFieldPatch {
   fieldname: string;
   fieldtype: string;
+  // Resolved, so these are answered as booleans however they were written.
+  hidden?: boolean;
+  read_only?: boolean;
+  reqd?: boolean;
 }
 
 /**

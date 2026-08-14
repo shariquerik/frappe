@@ -47,7 +47,10 @@ export function applyFieldPatch(
 ): FieldNode {
 	if (!patch) return node;
 	const patched: FieldNode = { ...node, ...patch.meta };
-	if (patch.override) patched.override = patch.override;
+	// Both halves merge rather than replace: nothing upstream writes `override`
+	// today, but a patch that names one key should not silently drop another.
+	if (patch.override)
+		patched.override = { ...node.override, ...patch.override };
 	if (patch.ui) patched.ui = { ...node.ui, ...patch.ui };
 	return patched;
 }

@@ -33,6 +33,10 @@ What `page` is _for_ is a small, closed vocabulary:
 - **Four surfaces** — `quickActions`, `headerActions`, `tabs`, `panelSections` — each
   speaking the same **seven verbs**: `add`, `hide`, `show`, `update`, `move`, `has`,
   `order`.
+- **A fifth, `fields`**, speaking a strict subset of them — `hide`, `show`, `update`,
+  `has`, `get`. The subset is the point: the other four arrange items a script may
+  also create, while fields are authored elsewhere and a script only overrides their
+  properties, so there is no `add`, `move` or `order` to mean anything.
 - **A closed event list** — `refresh`, `before_save`, `after_save`, `on_tab_change`,
   `<fieldname>`, `<tablefield>_add`, `<tablefield>_remove`.
 - **A handful of contracts**: every `page.dialog` verb resolves `null` when the reader

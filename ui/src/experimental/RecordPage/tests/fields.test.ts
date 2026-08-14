@@ -10,6 +10,7 @@ vi.mock("frappe-ui", () => ({
   createResource: () => ({ data: null, loading: false, fetch() {}, reload() {} }),
 }));
 
+import { markRaw } from "vue";
 import { FieldsSurface, resetFieldWarnings } from "../fields";
 import type { FieldsSurfaceHost } from "../fields";
 import type { RawMetaField } from "../../../components/FormLayout/types";
@@ -60,6 +61,15 @@ describe("the patch vocabulary", () => {
     expect(fields.resolve().qty.meta).toEqual({ precision: 2 });
   });
 
+  it("carries a patch's payload through by identity, not deep-proxied", () => {
+    // Anything a script puts in `props` reaches `v-bind`; a deep reactive
+    // wrapper there breaks a nested component's internal slots.
+    const props = { icon: markRaw({ name: "Icon" }) };
+    const fields = makeSurface();
+    fields.update("qty", { props });
+    expect(fields.resolve().qty.ui?.props).toBe(props);
+  });
+
   it("drops a key that is not a field property a script may set", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const fields = makeSurface();
@@ -81,6 +91,47 @@ describe("the patch vocabulary", () => {
     expect(warn).not.toHaveBeenCalled();
     // Recorded anyway: the meta lands later and the join applies it then.
     expect(fields.resolve().status).toEqual({ override: { hidden: true } });
+  });
+});
+
+// A fieldname and a patch key are both strings a script chooses, and both were
+// indexed into object literals — where four of them are inherited members.
+describe("names that are not names", () => {
+  it("keeps a `__proto__` fieldname out of Object.prototype", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fields = makeSurface();
+    fields.hide("__proto__");
+    const patches = fields.resolve();
+
+    // The damage this avoids: `resolveFieldConditionals` reads `override` off
+    // the prototype chain, so one such write would hide a field in every form
+    // in the application for the rest of the session.
+    expect(({} as any).override).toBeUndefined();
+    // Recorded as an ordinary own key instead — inert, since no field can be
+    // named this, and attributable rather than invisible.
+    expect(Object.hasOwn(patches, "__proto__")).toBe(true);
+    expect(Object.getPrototypeOf(patches)).toBe(Object.prototype);
+  });
+
+  it("drops an inherited patch key instead of letting it through unwarned", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fields = makeSurface();
+    fields.update("qty", { toString: "hi", constructor: 1 } as any);
+
+    expect(fields.resolve().qty).toEqual({});
+    expect(warn.mock.calls.map((call) => call[0]).join()).toContain("toString");
+  });
+
+  it("does not address a layout break, which never reaches the renderer", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fields = makeSurface({
+      fields: () => [
+        ...FIELDS,
+        { fieldname: "sb_1", fieldtype: "Section Break" },
+      ],
+    });
+    expect(fields.has("sb_1")).toBe(false);
+    expect(fields.get("sb_1")).toBeNull();
   });
 });
 
@@ -159,6 +210,24 @@ describe("get — the reader", () => {
     expect(() => {
       (snapshot as any).label = "Stage";
     }).toThrow("is read-only");
+  });
+
+  it("reports the component the host's decorator mounts, not a plain node", () => {
+    const Button = { name: "Button" };
+    const fields = makeSurface({
+      decorate: (field) =>
+        field.fieldname === "qty" ? { component: Button } : undefined,
+    });
+    // Without the decorator the reader would answer `undefined` while the
+    // renderer mounts a component — the asymmetry `get` exists to abolish.
+    expect(fields.get("qty")?.component).toBe(Button);
+  });
+
+  it("hands a component back by identity, not wrapped in the read-only proxy", () => {
+    const Button = markRaw({ name: "Button" });
+    const fields = makeSurface();
+    fields.update("qty", { component: Button });
+    expect(fields.get("qty")?.component).toBe(Button);
   });
 
   it("is null for a field the doctype does not have", () => {

@@ -110,6 +110,16 @@ function fixed(target: object, key: string | symbol) {
 // `page.roles.push('System Manager')` fix — no array special case exists.
 function wrappable(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
+  // `markRaw`'s stamp. A component's options object is a plain object, so it
+  // would otherwise be descended into: identity would stop holding
+  // (`get('x').component === MyComponent` false), and Vue's own render-time
+  // caches onto those options (`__vccOpts`, normalized props) would start
+  // throwing from inside a render effect.
+  //
+  // Asked as an own-property question, not a read: `page.perms` is itself a
+  // Proxy that warns about any key it does not recognise, and probing it for
+  // `__v_skip` would file that probe as the author's typo.
+  if (Object.hasOwn(value, "__v_skip")) return false;
   if (Array.isArray(value)) return true;
   const proto = Object.getPrototypeOf(value);
   return proto === Object.prototype || proto === null;

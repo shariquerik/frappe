@@ -7,6 +7,7 @@ import type { Router } from "vue-router";
 import { call, toast } from "frappe-ui";
 import { withRunningSource } from "./context";
 import { createPageDialogs, type PageDialogEntry } from "./dialog";
+import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta";
 import { FieldsSurface } from "./fields";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
@@ -74,6 +75,12 @@ export interface RecordPageHost {
   save: () => Promise<void>;
   reload: () => Promise<void>;
   router: Router;
+  /**
+   * The per-field UI overlay hook the host also passes its layout source. Only
+   * `page.fields.get` reads it here, and only so its answer cannot disagree
+   * with what the host actually renders.
+   */
+  decorate?: Decorator;
   /** Resolves when sources that register after mount (Page Scripts) are in. */
   sourcesReady?: () => Promise<void>;
 }
@@ -107,6 +114,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     fields: () => host.meta.value?.fields,
     doc: () => host.doc.value,
     fieldAccess: (fieldname) => permissions.fieldAccess(fieldname),
+    decorate: host.decorate,
   });
   // Every overlay a replay clears. `fields` is not a `Surface` — it overrides
   // properties rather than arranging items — but it clears with them.
