@@ -28,12 +28,7 @@ import PanelSection from "./PanelSection.vue";
 import { sectionName } from "./sectionName";
 import { resolveLayout } from "../../components/FormLayout/resolveLayout";
 import { useFieldTypes } from "../../components/FormLayout/useFieldTypes";
-import {
-	CommitKey,
-	DocKey,
-	ResolveFieldKey,
-	UpdateKey,
-} from "../../components/FormLayout/types";
+import { CommitKey, DocKey, ResolveFieldKey, UpdateKey } from "../../components/FormLayout/types";
 import { warnMissingCommit } from "../../components/FormLayout/warnMissingCommit";
 import type { FieldNode, Section, Tab } from "../../components/FormLayout/types";
 import type { PanelSectionItem } from "../RecordPage/types";
