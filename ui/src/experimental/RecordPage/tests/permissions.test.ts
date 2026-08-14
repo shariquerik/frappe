@@ -98,6 +98,23 @@ describe("page.perms", () => {
     expect(page.perms.write).toBeUndefined();
     expect(warn).not.toHaveBeenCalled();
   });
+
+  // Two Proxies on one object (ticket 49 §2): read-only is the outer one, so a
+  // write is refused before the advisory underneath it gets a say, and a read
+  // still reaches the advisory.
+  it("still warns on an unknown right through the read-only wrapper", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { page } = createRecordPage(makeHost({ perms: () => ({ read: 1 }) }));
+
+    void page.perms.wrtie;
+    expect(warn).toHaveBeenCalledTimes(1);
+
+    expect(() => {
+      (page.perms as any).write = 1;
+    }).toThrow("page.perms.write is read-only");
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("page.roles", () => {

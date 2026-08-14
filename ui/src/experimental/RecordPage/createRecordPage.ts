@@ -9,6 +9,7 @@ import { withRunningSource } from "./context";
 import { createPageDialogs, type PageDialogEntry } from "./dialog";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
+import { readOnly, type ReadOnlyAdvice } from "./readOnly";
 import { registrationsFor } from "./registry";
 import { reportCustomizationError } from "./reportError";
 import { Surface } from "./surface";
@@ -28,6 +29,25 @@ export const RECORD_PAGE_EVENTS = [
   "after_save",
   "on_tab_change",
 ];
+
+// Everything `page` hands back is read-only (ticket 47), and each member names
+// the verb that does support what the write was reaching for — a refusal that
+// names nothing is a removal wearing a Proxy.
+const META_IS_READ_ONLY: ReadOnlyAdvice = {
+  path: "page.meta",
+  instead: "page.fields.update('qty', { hidden: 1 })",
+};
+
+const PERMS_ARE_READ_ONLY: ReadOnlyAdvice = {
+  path: "page.perms",
+  instead: "a copy: { ...page.perms }, since rights come from the server",
+};
+
+const ROLES_ARE_READ_ONLY: ReadOnlyAdvice = {
+  path: "page.roles",
+  instead:
+    "a copy: [...page.roles], since roles belong to the session, not the page",
+};
 
 export interface RecordPageHost {
   doctype: string;
@@ -82,17 +102,21 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   const capabilities: RecordPageApi = {
     doctype: host.doctype,
     docname: host.docname,
+    // Exempt from the read-only rule below, and deliberately: mutating the
+    // document *is* the API. Do not "fix" this.
     get doc() {
       return host.doc.value;
     },
     get meta() {
-      return host.meta.value;
+      return readOnly(host.meta.value, META_IS_READ_ONLY);
     },
+    // Read-only goes outermost, so a write is refused before the DEV-only
+    // unknown-right advisory inside `permissions.perms()` gets to fire.
     get perms() {
-      return permissions.perms();
+      return readOnly(permissions.perms(), PERMS_ARE_READ_ONLY);
     },
     get roles() {
-      return permissions.roles();
+      return readOnly(permissions.roles(), ROLES_ARE_READ_ONLY);
     },
     fieldAccess: (fieldname) => permissions.fieldAccess(fieldname),
     get isDirty() {
@@ -111,6 +135,9 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     },
     dialog: dialogs.api,
     call: (method, params) => call(method, params),
+    // The one member handed straight through, as COMPATIBILITY.md already
+    // admits: it is the router, not our object, so the read-only rule has
+    // nothing to say about it. Do not "fix" this either.
     router: host.router,
   };
 

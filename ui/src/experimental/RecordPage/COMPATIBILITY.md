@@ -67,6 +67,35 @@ have no way to tell which of their options were safe and which were borrowed.
 A key `page` does not forward is **dropped, with a dev-mode warning naming it**. It
 does not silently do nothing.
 
+### The same line, outbound
+
+The rule above governs what goes _in_ to `page`. The symmetric one governs what comes
+back out:
+
+**Every object `page` hands back is read-only.** A script may not mutate `page`'s
+return values into shared state; a write throws, names the member, and points at the
+supported verb. `page.doc` is the one exception, and it is one by design — mutating the
+document is the API.
+
+This is a rule about `page`, not a list of members, and it binds every member added
+after it without anyone re-deriving the argument. The reason it has to be a rule is
+that almost nothing `page` returns belongs to your record: `page.roles` is the
+session's roles array, shared by the entire application; `page.perms` is a view shared
+by every source on the page; `page.meta` is a cached document that outlives navigating
+to another record — and to another doctype. A script that sorted `page.roles` in place
+was corrupting all three for everyone, permanently, with no error and no way to trace
+it.
+
+Only writes are refused. **Reads, `find`, `filter`, `map`, `includes` and spreads all
+keep working**, and a script that legitimately wants to reorder or edit copies first:
+
+```js
+const sorted = [...page.roles].sort();
+const visible = page.meta.fields.filter((field) => !field.hidden);
+```
+
+Both allocate something new, and what you do to it afterwards is your business.
+
 ## Asking what a host has
 
 `page` carries **no version number**, and will not get one. A version number invites
@@ -127,6 +156,9 @@ are declining to invent.
 - **A removed verb will break your script.** We tombstone it for one major so the
   error names the removal, and we tell you in the Error Log. We do not keep it
   working.
+- **You may not write to what `page` hands you.** Every return value is read-only
+  except `page.doc`; a write throws and names the verb to use instead. Copy it if you
+  need to change it.
 - **No migration tooling for stored scripts.** A Page Script is text in a table.
   Nothing rewrites it for you.
 - **None of this is a security boundary.** Error isolation is not sandboxing, and
