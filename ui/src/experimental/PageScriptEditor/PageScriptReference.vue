@@ -27,7 +27,10 @@
 			<dt class="text-ink-gray-5">Handlers</dt>
 			<dd class="text-ink-gray-7">
 				refresh · before_save (a throw aborts the save) · after_save · on_tab_change ·
-				&lt;fieldname&gt; · &lt;tablefield&gt;_add · &lt;tablefield&gt;_remove
+				&lt;fieldname&gt; · &lt;tablefield&gt;.&lt;childfield&gt; ·
+				&lt;tablefield&gt;.add · &lt;tablefield&gt;.remove. A dotted key is
+				quoted, and receives the row it happened to:
+				<code>'products.qty'(page, row)</code>.
 			</dd>
 			<dt class="text-ink-gray-5">Surfaces</dt>
 			<dd class="text-ink-gray-7">
@@ -38,8 +41,16 @@
 			</dd>
 			<dt class="text-ink-gray-5">page</dt>
 			<dd class="text-ink-gray-7">
-				doctype · docname · doc · meta · isDirty · perms · roles · fieldAccess · dialog ·
-				toast · call · router · save · reload · refresh
+				doctype · docname · doc · saved · meta · isDirty · perms · roles · fieldAccess ·
+				fields · rows · dialog · toast · call · router · save · reload · refresh
+			</dd>
+			<dt class="text-ink-gray-5">Rows</dt>
+			<dd class="text-ink-gray-7">
+				<code>page.rows('products')</code> hands back a handle per row. Fields are read
+				and written bare (<code>row.amount = row.qty * row.rate</code>), and
+				<code>row.trigger('rate')</code> fires that row's handler. A handle re-finds its
+				row every time you touch it, so it survives a reorder and an
+				<code>await</code> — and says so, loudly, once the row is gone.
 			</dd>
 			<dt class="text-ink-gray-5">Icons</dt>
 			<dd class="text-ink-gray-7">

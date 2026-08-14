@@ -38,7 +38,14 @@ What `page` is _for_ is a small, closed vocabulary:
   also create, while fields are authored elsewhere and a script only overrides their
   properties, so there is no `add`, `move` or `order` to mean anything.
 - **A closed event list** — `refresh`, `before_save`, `after_save`, `on_tab_change`,
-  `<fieldname>`, `<tablefield>_add`, `<tablefield>_remove`.
+  `<fieldname>`, and a child table's dotted family: `<tablefield>.<childfield>`,
+  `<tablefield>.add`, `<tablefield>.remove`. The dot is not a convention — it is
+  the one character a Frappe fieldname structurally cannot contain, so a child
+  field can never collide with a parent one.
+- **One rule for a handler's arguments: its key decides them.** A bare key gets
+  `(page)`; a dotted one gets `(page, row)`, except `<tablefield>.remove`, whose
+  row is gone. The row is an address, not a payload — `page.rows('products')`
+  hands you the same handles in any handler at all.
 - **A handful of contracts**: every `page.dialog` verb resolves `null` when the reader
   dismissed the dialog, so `if (!result) return` is always the idiom; a throw in
   `before_save` blocks the save; a handler that throws is isolated, half-applied, and
@@ -79,7 +86,9 @@ back out:
 **Every object `page` hands back is read-only.** A script may not mutate `page`'s
 return values into shared state; a write throws, names the member, and points at the
 supported verb. `page.doc` is the one exception, and it is one by design — mutating the
-document is the API.
+document is the API. A **row handle** from `page.rows()` inherits that exemption for
+the same reason: it addresses a row *inside* `page.doc`, so `row.amount = …` is a
+document write spelled shorter. The array holding the handles is read-only as usual.
 
 This is a rule about `page`, not a list of members, and it binds every member added
 after it without anyone re-deriving the argument. The reason it has to be a rule is
