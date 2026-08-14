@@ -3,7 +3,6 @@ import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta"
 import type {
 	Column,
 	FieldNode,
-	FieldOverride,
 	FormLayoutSchema,
 	RawMetaField,
 	Section,
@@ -11,6 +10,7 @@ import type {
 } from "../../components/FormLayout/types";
 import type { FieldAccess } from "../../composables/useDocPermissions";
 import { withAccess } from "./fieldAccess";
+import { applyFieldPatch, type FieldPatch } from "./fieldPatch";
 import { buildColumn, buildSection } from "./section";
 import type { LayoutTree, LayoutTreeColumn, LayoutTreeSection } from "./types";
 
@@ -28,11 +28,12 @@ export interface JoinLayoutOptions {
 	decorate?: Decorator;
 	/**
 	 * Per-render field property overrides, keyed by fieldname. Plain data on
-	 * purpose — `FormLayout` reads it off the schema and knows nothing about who
-	 * wrote it. Applied last by `resolveFieldConditionals`, so an override beats
-	 * `depends_on` but never a permlevel denial.
+	 * purpose — `FormLayout` reads the result off the schema and knows nothing
+	 * about who wrote it. A patch's `override` half is applied last by
+	 * `resolveFieldConditionals`, so it beats `depends_on` but never a permlevel
+	 * denial; the rest lands on the node as it is built.
 	 */
-	overrides?: Record<string, FieldOverride>;
+	overrides?: Record<string, FieldPatch>;
 }
 
 const LAYOUT_BREAKS = new Set(["Tab Break", "Section Break", "Column Break"]);
@@ -98,6 +99,5 @@ function joinField(
 		options.childMetas ?? {},
 		options.decorate
 	);
-	const override = options.overrides?.[fieldname];
-	return [override ? { ...node, override } : node];
+	return [applyFieldPatch(node, options.overrides?.[fieldname])];
 }

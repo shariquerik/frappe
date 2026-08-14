@@ -50,6 +50,7 @@ function makeHost(overrides: Partial<RecordPageHost> = {}): RecordPageHost {
     doctype: "CRM Deal",
     docname: "CRM-DEAL-1",
     doc: ref({ status: "Open" }),
+    saved: ref({ status: "Open" }),
     meta: ref(structuredClone(META)),
     perms: () => ({ read: 1, write: 1 }),
     isDirty: () => false,
@@ -226,6 +227,40 @@ describe("page.meta and page.perms at the door", () => {
     page.doc.status = "Won";
 
     expect(page.doc.status).toBe("Won");
+  });
+});
+
+// The saved mirror (wayfinder ticket 46): the v2 answer to "what was the
+// previous value", and one letter away from the draft you may edit.
+describe("page.saved", () => {
+  beforeEach(reset);
+
+  it("is the document as the server last showed it, defined before any edit", () => {
+    const { page } = createRecordPage(makeHost());
+
+    page.doc.status = "Won";
+
+    expect(page.saved.status).toBe("Open");
+    expect(page.saved.status !== page.doc.status).toBe(true);
+  });
+
+  it("refuses a write, and points at page.doc — the plausible typo", () => {
+    const host = makeHost();
+    const { page } = createRecordPage(host);
+
+    expect(() => {
+      page.saved.status = "Won";
+    }).toThrow("page.saved.status is read-only — use page.doc");
+    expect(host.saved.value.status).toBe("Open");
+  });
+
+  it("tracks the baseline the host repaints after a save", () => {
+    const host = makeHost();
+    const { page } = createRecordPage(host);
+
+    host.saved.value = { status: "Won" };
+
+    expect(page.saved.status).toBe("Won");
   });
 });
 

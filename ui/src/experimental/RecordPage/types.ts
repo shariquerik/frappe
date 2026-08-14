@@ -85,6 +85,70 @@ export interface PageDialogField {
    *  the two script-facing field types agree on what a script may write. */
 }
 
+/**
+ * What a script may override on one of the record's fields — v1's
+ * `setFieldProperty` vocabulary, enumerated and spelled as a DocField spells it
+ * (`PageDialogField`'s precedent: an author reads DocType Customize and writes
+ * what they read there). Closed, like every other curated forward: a key not
+ * named here is dropped with a dev-mode warning.
+ *
+ * v1's `button_color` is absent — no renderer here honours it.
+ */
+export interface PageFieldPatch {
+  hidden?: boolean;
+  read_only?: boolean;
+  reqd?: boolean;
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  /** Link target, or a `Select`'s newline-separated choices. */
+  options?: string;
+  /** Search filters for a `Link` field. v1 spells it this way; so do we. */
+  link_filters?: Record<string, unknown>;
+  /** Decimal places for a numeric field. */
+  precision?: number | string;
+  /** Renders this component in the field's slot instead of the default one. */
+  component?: Component;
+  /** Props bound onto whichever component renders the field. */
+  props?: Record<string, any>;
+}
+
+/**
+ * What `get` hands back: the same keys `update` writes, resolved as the renderer
+ * resolves them, plus the two that identify the field. Deliberately the *same*
+ * vocabulary rather than the internal `FieldMeta` — v1's `getField` cannot read
+ * back what its own setter wrote, and that asymmetry is the bug this avoids.
+ */
+export interface PageField extends PageFieldPatch {
+  fieldname: string;
+  fieldtype: string;
+}
+
+/**
+ * The fields surface: a script overriding the properties of fields authored
+ * elsewhere. It speaks a strict subset of the surface verbs — there is no `add`,
+ * `move` or `order`, because a script that adds a field is inventing a docfield
+ * and ordering is the Form Layout's job.
+ *
+ * Overrides are a render-time overlay: never written into the layout, the Form
+ * Layout row, or the doctype meta, and cleared by the ordinary replay before
+ * every re-fire — so a conditional override is a plain `if` with no `else`.
+ *
+ * Two floors an override cannot cross: a permlevel denial (a `show()` on a
+ * denied field is a no-op with a dev warning), and a hidden `panelSection`,
+ * which is a container above its fields. Between an override and `depends_on`,
+ * the override wins.
+ */
+export interface PageFields {
+  hide(fieldname: string): void;
+  show(fieldname: string): void;
+  update(fieldname: string, patch: PageFieldPatch): void;
+  /** Whether the doctype has this field at all. */
+  has(fieldname: string): boolean;
+  /** The field as it currently resolves — post-override, post-`depends_on`. */
+  get(fieldname: string): PageField | null;
+}
+
 /** One column of a `tabs` layout; its fields are written, not named. */
 export interface PageDialogColumn {
   name?: string;
@@ -234,6 +298,13 @@ export interface RecordPageApi {
   doctype: string;
   docname: string;
   doc: Record<string, any>;
+  /**
+   * The document as the server last showed it — the v2 answer to "what was the
+   * previous value": `page.saved.status !== page.doc.status`. Defined on the
+   * first paint, readable in any handler, and read-only (`page.doc` is the
+   * draft you edit).
+   */
+  saved: Record<string, any>;
   meta: Record<string, any> | null;
   /**
    * Every right frappe would check for this doctype — the 15 standard ones plus
@@ -249,6 +320,7 @@ export interface RecordPageApi {
   headerActions: SurfaceVerbs<HeaderAction>;
   tabs: TabsApi;
   panelSections: SurfaceVerbs<PanelSectionItem>;
+  fields: PageFields;
   save(): Promise<void>;
   reload(): Promise<void>;
   refresh(): Promise<void>;

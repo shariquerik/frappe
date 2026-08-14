@@ -44,6 +44,7 @@ function makeHost(overrides: Partial<RecordPageHost> = {}): RecordPageHost {
     doctype: "CRM Deal",
     docname: "CRM-DEAL-1",
     doc: ref({ status: "Open" }),
+    saved: ref({ status: "Open" }),
     meta: ref({ name: "CRM Deal", fields: FIELDS }),
     perms: () => ({}),
     isDirty: () => false,

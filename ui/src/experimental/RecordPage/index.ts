@@ -36,6 +36,8 @@ export { createPagePermissions } from "./pagePermissions";
 export type { PagePermissions, PagePermissionsHost } from "./pagePermissions";
 export { Surface, BUILTIN } from "./surface";
 export type { ResolvedItem } from "./surface";
+export { FieldsSurface, resetFieldWarnings } from "./fields";
+export type { FieldsSurfaceHost } from "./fields";
 export { loadFrontendExtensions } from "./loader";
 export { withRegisteringSource, HOST_SOURCE } from "./context";
 export type {
@@ -55,6 +57,9 @@ export type {
   PageDialogOpenOptions,
   PageDialogSection,
   PageDialogTab,
+  PageField,
+  PageFieldPatch,
+  PageFields,
   PageToast,
   PanelSectionItem,
   Position,

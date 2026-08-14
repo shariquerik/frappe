@@ -114,7 +114,7 @@ describe("joinLayout — decorate", () => {
 describe("joinLayout — overrides", () => {
 	it("attaches an override to the named field only", () => {
 		const [tab] = joinLayout(treeWith(["first_name", "status"]), fields, {
-			overrides: { first_name: { hidden: true } },
+			overrides: { first_name: { override: { hidden: true } } },
 		});
 		const [first, second] = tab.sections[0].columns[0].fields;
 		expect(first.override).toEqual({ hidden: true });
@@ -125,16 +125,41 @@ describe("joinLayout — overrides", () => {
 		// The carrier is inert data at join time; applying it early would put it
 		// back under `depends_on`, which re-ORs on every keystroke.
 		const [tab] = joinLayout(treeWith(["first_name"]), fields, {
-			overrides: { first_name: { hidden: true } },
+			overrides: { first_name: { override: { hidden: true } } },
 		});
 		expect(tab.sections[0].columns[0].fields[0].hidden).toBe(false);
 	});
 
 	it("ignores an override naming a field the layout does not render", () => {
 		const [tab] = joinLayout(treeWith(["first_name"]), fields, {
-			overrides: { gone: { hidden: true } },
+			overrides: { gone: { override: { hidden: true } } },
 		});
 		expect(tab.sections[0].columns[0].fields).toHaveLength(1);
+	});
+
+	it("applies the build-time half straight onto the node", () => {
+		// These are computed once and never recomputed, so there is nothing for
+		// `resolveLayout` to re-decide and no carrier to ride.
+		const [tab] = joinLayout(treeWith(["first_name"]), fields, {
+			overrides: {
+				first_name: { meta: { label: "Given name", placeholder: "Ada" } },
+			},
+		});
+		expect(tab.sections[0].columns[0].fields[0]).toMatchObject({
+			label: "Given name",
+			placeholder: "Ada",
+		});
+	});
+
+	it("merges a `ui` patch over whatever the decorator contributed", () => {
+		const [tab] = joinLayout(treeWith(["first_name"]), fields, {
+			decorate: () => ({ props: { variant: "outline" }, on: { click: () => {} } }),
+			overrides: { first_name: { ui: { props: { variant: "subtle" } } } },
+		});
+		const { ui } = tab.sections[0].columns[0].fields[0];
+		expect(ui?.props).toEqual({ variant: "subtle" });
+		// The decorator's listeners survive — a patch replaces only what it names.
+		expect(ui?.on?.click).toBeTypeOf("function");
 	});
 });
 
@@ -173,7 +198,7 @@ describe("joinLayout + resolveLayout — the permlevel floor, end to end", () =>
 	it("a `none` denial survives an override that tries to un-hide it", () => {
 		const joined = joinLayout(treeFor("secret"), fields, {
 			fieldAccess: () => "none",
-			overrides: { secret: { hidden: false } },
+			overrides: { secret: { override: { hidden: false } } },
 		});
 		expect(fieldOf(joined).permDenied).toBe(true);
 		expect(fieldOf(resolveLayout(joined, {})).hidden).toBe(true);
@@ -182,7 +207,7 @@ describe("joinLayout + resolveLayout — the permlevel floor, end to end", () =>
 	it("a `read` denial survives an override that tries to un-lock it", () => {
 		const joined = joinLayout(treeFor("secret"), fields, {
 			fieldAccess: () => "read",
-			overrides: { secret: { readOnly: false } },
+			overrides: { secret: { override: { readOnly: false } } },
 		});
 		expect(fieldOf(resolveLayout(joined, {})).readOnly).toBe(true);
 	});
@@ -192,7 +217,7 @@ describe("joinLayout + resolveLayout — the permlevel floor, end to end", () =>
 		// and the override applies — the case a `permlevel`-based floor broke.
 		const joined = joinLayout(treeFor("secret"), fields, {
 			fieldAccess: () => "write",
-			overrides: { secret: { hidden: true } },
+			overrides: { secret: { override: { hidden: true } } },
 		});
 		expect(fieldOf(joined).permDenied).toBe(false);
 		expect(fieldOf(resolveLayout(joined, {})).hidden).toBe(true);

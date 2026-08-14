@@ -26,6 +26,7 @@ function makeHost(overrides: Partial<RecordPageHost> = {}): RecordPageHost {
     doctype: "CRM Deal",
     docname: "CRM-DEAL-1",
     doc: ref({ status: "Open" }),
+    saved: ref({ status: "Open" }),
     meta: ref(null),
     perms: () => ({}),
     isDirty: () => false,
@@ -174,5 +175,28 @@ describe("unknown handler keys", () => {
 
     expect(reportedFailures()).toContain("page-script:A.refresh");
     expect(reportedFailures()).not.toContain("page-script:A.before_save");
+  });
+});
+
+describe("the replay clears the field overlay too (ticket 42)", () => {
+  it("drops every override before re-firing, so a condition is a plain if", async () => {
+    let stage = "Open";
+    registerRecordPage("CRM Deal", {
+      // No `else` branch anywhere: the overlay is gone before every re-fire.
+      refresh: (page) => {
+        if (stage === "Won") page.fields.hide("discount");
+      },
+    });
+    const controller = createRecordPage(makeHost());
+
+    stage = "Won";
+    await controller.refresh();
+    expect(controller.fields.resolve()).toEqual({
+      discount: { override: { hidden: true } },
+    });
+
+    stage = "Open";
+    await controller.refresh();
+    expect(controller.fields.resolve()).toEqual({});
   });
 });

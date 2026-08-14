@@ -2,11 +2,11 @@ import { computed, toValue } from "vue";
 import type { ComputedRef, MaybeRefOrGetter, Ref } from "vue";
 import { createResource, frappeRequest } from "frappe-ui";
 import type {
-	FieldOverride,
 	FormLayoutSchema,
 	RawMetaField,
 } from "../../components/FormLayout/types";
 import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta";
+import type { FieldPatch } from "./fieldPatch";
 import { useDoctypeMeta } from "../../composables/useDoctypeMeta";
 import { useDocPermissions } from "../../composables/useDocPermissions";
 import { memoizedState } from "../../utils/sharedState";
@@ -38,7 +38,7 @@ export interface UseFormLayoutOptions {
 	 * if a caller ever flips these per keystroke, attach them in a shallow pass
 	 * over an already-joined tree instead.
 	 */
-	overrides?: MaybeRefOrGetter<Record<string, FieldOverride>>;
+	overrides?: MaybeRefOrGetter<Record<string, FieldPatch>>;
 }
 
 export interface UseFormLayout {

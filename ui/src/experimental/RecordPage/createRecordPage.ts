@@ -7,6 +7,7 @@ import type { Router } from "vue-router";
 import { call, toast } from "frappe-ui";
 import { withRunningSource } from "./context";
 import { createPageDialogs, type PageDialogEntry } from "./dialog";
+import { FieldsSurface } from "./fields";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
 import { readOnly, type ReadOnlyAdvice } from "./readOnly";
@@ -49,10 +50,21 @@ const ROLES_ARE_READ_ONLY: ReadOnlyAdvice = {
     "a copy: [...page.roles], since roles belong to the session, not the page",
 };
 
+// The two differ by one letter and hold structurally identical objects, so
+// `page.saved.qty = 5` is a plausible typo for `page.doc.qty = 5` — and it would
+// otherwise silently rewrite the baseline `isDirty`, the layout conditions and
+// the conflict path all read.
+const SAVED_IS_READ_ONLY: ReadOnlyAdvice = {
+  path: "page.saved",
+  instead: "page.doc, which is the draft this is the saved counterpart of",
+};
+
 export interface RecordPageHost {
   doctype: string;
   docname: string;
   doc: Ref<Record<string, any>>;
+  /** The document as the server last showed it; the draft's baseline. */
+  saved: Ref<Record<string, any>>;
   meta: Ref<any>;
   /** `docinfo.permissions` as `getdoc` gave it; the engine curates it. */
   perms: () => Record<string, any>;
@@ -72,6 +84,8 @@ export interface RecordPageController {
   headerActions: Surface<HeaderAction>;
   tabs: Surface<TabItem>;
   panelSections: Surface<PanelSectionItem>;
+  /** Field property overrides; the host feeds `resolve()` to its layout source. */
+  fields: FieldsSurface;
   /** The replay: clears every surface, then runs every source's `refresh` in run order. */
   refresh: () => Promise<void>;
   fireEvent: (event: string) => Promise<void>;
@@ -88,7 +102,21 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   const headerActions = new Surface<HeaderAction>();
   const tabs = new Surface<TabItem>();
   const panelSections = new Surface<PanelSectionItem>();
-  const surfaces = [quickActions, headerActions, tabs, panelSections];
+  const permissions = createPagePermissions(host);
+  const fields = new FieldsSurface({
+    fields: () => host.meta.value?.fields,
+    doc: () => host.doc.value,
+    fieldAccess: (fieldname) => permissions.fieldAccess(fieldname),
+  });
+  // Every overlay a replay clears. `fields` is not a `Surface` — it overrides
+  // properties rather than arranging items — but it clears with them.
+  const surfaces: { reset: () => void }[] = [
+    quickActions,
+    headerActions,
+    tabs,
+    panelSections,
+    fields,
+  ];
 
   Object.defineProperty(tabs, "active", { get: () => host.activeTab() });
 
@@ -97,7 +125,6 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   let replaying = 0;
 
   const dialogs = createPageDialogs({ isReplaying: () => replaying > 0 });
-  const permissions = createPagePermissions(host);
 
   const capabilities: RecordPageApi = {
     doctype: host.doctype,
@@ -106,6 +133,9 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     // document *is* the API. Do not "fix" this.
     get doc() {
       return host.doc.value;
+    },
+    get saved() {
+      return readOnly(host.saved.value, SAVED_IS_READ_ONLY);
     },
     get meta() {
       return readOnly(host.meta.value, META_IS_READ_ONLY);
@@ -126,6 +156,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     headerActions,
     tabs: tabs as unknown as TabsApi,
     panelSections,
+    fields,
     save: () => host.save(),
     reload: () => host.reload(),
     refresh: () => refresh(),
@@ -211,6 +242,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     headerActions,
     tabs,
     panelSections,
+    fields,
     refresh,
     fireEvent,
     ready,
