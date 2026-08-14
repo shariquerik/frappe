@@ -4,8 +4,11 @@ import type { RowAddress } from "../../../components/Fields/types";
 
 function channel() {
   const fired: string[] = [];
-  const commits = createCommitChannel({ dispatch: (event) => void fired.push(event) });
-  return { commits, fired };
+  const addressed: (RowAddress | undefined)[] = [];
+  const commits = createCommitChannel({
+    dispatch: (event, row) => void (fired.push(event), addressed.push(row)),
+  });
+  return { commits, fired, addressed };
 }
 
 const row: RowAddress = { parentfield: "products", key: "row-1" };
@@ -28,6 +31,15 @@ describe("createCommitChannel", () => {
     commits.rowChanged(row, "add");
     commits.rowChanged(row, "remove");
     expect(fired).toEqual(["products.add", "products.remove"]);
+  });
+
+  // 45 §3: `.add` carries its row, `.remove` gets `(page)` alone — a handle for
+  // a removed row throws on every access, so handing one over is a grenade.
+  it("carries the row on add and drops it on remove", () => {
+    const { commits, addressed } = channel();
+    commits.rowChanged(row, "add");
+    commits.rowChanged(row, "remove");
+    expect(addressed).toEqual([row, undefined]);
   });
 
   it("fires nothing while an edit is only pending", () => {

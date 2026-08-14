@@ -155,6 +155,33 @@ export interface PageFields {
   get(fieldname: string): PageField | null;
 }
 
+/**
+ * A child row, as a script addresses it (ticket 43): an object holding
+ * `(parentfield, key)` that **re-finds its row on every access**, so nothing
+ * about a row's position is ever captured. Fields are read and written bare —
+ * `row.amount = row.qty * row.rate`, character for character what a v1 script
+ * writes — and a write through it is identical in effect to writing
+ * `page.doc.products[2].amount`: the handle is an address, not a write channel,
+ * and per ticket 44 neither fires anything.
+ *
+ * Reading or writing a row that has been removed **throws**, naming the path and
+ * aborting the handler. v1 loses those writes silently.
+ */
+export interface PageRow {
+  /**
+   * Fires this row's handler for one child field — `row.trigger('rate')`
+   * dispatches `'products.rate'` — across every registered source, and resolves
+   * when they have all run. The fieldname is bare: the handle knows its table.
+   *
+   * The one engine member on a row. It shares a namespace with the child
+   * doctype's fieldnames, and a child field literally named `trigger` is legal
+   * (Frappe reserves five names, and this is not one), so the collision is
+   * warned about once at load rather than defended against on every access.
+   */
+  trigger(fieldname: string): Promise<void>;
+  [fieldname: string]: any;
+}
+
 /** One column of a `tabs` layout; its fields are written, not named. */
 export interface PageDialogColumn {
   name?: string;
@@ -327,6 +354,12 @@ export interface RecordPageApi {
   tabs: TabsApi;
   panelSections: SurfaceVerbs<PanelSectionItem>;
   fields: PageFields;
+  /**
+   * The child table's rows as handles, in array order. Not a surface — there is
+   * nothing here to arrange or override; it is how a row is *addressed*. A
+   * fieldname that is not a child table dev-warns and answers empty.
+   */
+  rows(parentfield: string): PageRow[];
   save(): Promise<void>;
   reload(): Promise<void>;
   refresh(): Promise<void>;
@@ -338,7 +371,17 @@ export interface RecordPageApi {
 
 export type { FieldAccess };
 
-export type Handler = (page: RecordPageApi) => any;
+/**
+ * A handler's arguments are determined by its key (ticket 45 §3). A bare key —
+ * an event or a parent fieldname — receives `(page)`. A dotted one receives the
+ * row it happened to: `'products.qty'` and `'products.add'` get `(page, row)`,
+ * while `'products.remove'` gets `(page)` alone, its row being gone.
+ *
+ * The row is an address, not a payload: it carries no event data, and the same
+ * handle is obtainable from `page.rows()` in any handler at all. That is why
+ * ticket 14's rule against invisible arguments survives — the key announces it.
+ */
+export type Handler = (page: RecordPageApi, row?: PageRow) => any;
 
 /** What a script evaluates to: named event handlers, each receiving `page`. */
 export type RecordPageHandlers = Record<string, Handler>;

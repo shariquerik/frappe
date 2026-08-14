@@ -8,12 +8,16 @@ import { call, toast } from "frappe-ui";
 import { withRunningSource } from "./context";
 import { createPageDialogs, type PageDialogEntry } from "./dialog";
 import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta";
-import { FieldsSurface } from "./fields";
+import type { RawMetaField } from "../../components/FormLayout/types";
+import { holdsChildRows } from "../../components/Fields/rowIdentity";
+import type { RowAddress } from "../../components/Fields/types";
+import { FieldsSurface, LAYOUT_BREAKS } from "./fields";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
 import { readOnly, type ReadOnlyAdvice } from "./readOnly";
 import { registrationsFor } from "./registry";
 import { reportCustomizationError } from "./reportError";
+import { createRows, warnRowIssue } from "./rows";
 import { Surface } from "./surface";
 import type {
   HeaderAction,
@@ -81,6 +85,13 @@ export interface RecordPageHost {
    * with what the host actually renders.
    */
   decorate?: Decorator;
+  /**
+   * A child doctype's meta fields, by doctype name — what makes the row half of
+   * the event vocabulary knowable. Absent while the metas load, and for a host
+   * that has none: the tables then speak `.add` / `.remove` only, which is what
+   * the vocabulary check assumes rather than warns about.
+   */
+  childFields?: (doctype: string) => RawMetaField[] | undefined;
   /** Resolves when sources that register after mount (Page Scripts) are in. */
   sourcesReady?: () => Promise<void>;
 }
@@ -95,7 +106,8 @@ export interface RecordPageController {
   fields: FieldsSurface;
   /** The replay: clears every surface, then runs every source's `refresh` in run order. */
   refresh: () => Promise<void>;
-  fireEvent: (event: string) => Promise<void>;
+  /** `row` addresses the child row a dotted event happened to; see `Handler`. */
+  fireEvent: (event: string, row?: RowAddress) => Promise<void>;
   /** True once the first replay has run — before it, surfaces are only built-ins. */
   ready: Ref<boolean>;
   /** The `open`/`form` dialogs on screen, for the host's `<PageDialogs>`. */
@@ -115,6 +127,12 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     doc: () => host.doc.value,
     fieldAccess: (fieldname) => permissions.fieldAccess(fieldname),
     decorate: host.decorate,
+  });
+  const rows = createRows({
+    doc: () => host.doc.value,
+    fields: () => host.meta.value?.fields,
+    childFields: host.childFields,
+    dispatch: (event, row) => fireEvent(event, row),
   });
   // Every overlay a replay clears. `fields` is not a `Surface` — it overrides
   // properties rather than arranging items — but it clears with them.
@@ -165,6 +183,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     tabs: tabs as unknown as TabsApi,
     panelSections,
     fields,
+    rows: rows.rows,
     save: () => host.save(),
     reload: () => host.reload(),
     refresh: () => refresh(),
@@ -199,13 +218,16 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     ready.value = true;
   }
 
-  async function fireEvent(event: string) {
+  async function fireEvent(event: string, row?: RowAddress) {
+    // One handle for the whole dispatch, and the same object `page.rows()` hands
+    // back: it is an address, so every source is looking at the same live row.
+    const handle = row ? rows.handle(row) : undefined;
     for (const { source, handlers } of registrationsFor(host.doctype)) {
       const handler = handlers[event];
       if (!handler) continue;
       await withRunningSource(source, async () => {
         try {
-          await handler(page);
+          await handler(page, handle);
         } catch (error) {
           // `before_save` rethrows to abort the save, and is the one catch site
           // that does not report: the user is looking straight at a failed save,
@@ -235,13 +257,39 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     const fields = host.meta.value?.fields;
     if (!fields) return;
     vocabularyChecked = true;
-    const known = knownHandlerKeys(fields);
-    for (const { source, handlers } of registrationsFor(host.doctype))
+    const registrations = registrationsFor(host.doctype);
+    // Nothing to shadow and no keys to check when no source is registered — and
+    // saying so anyway would fire the warning on every record a plain app opens.
+    if (!registrations.length) return;
+    warnShadowedTrigger(fields);
+    const known = handlerVocabulary(fields, host.childFields);
+    for (const { source, handlers } of registrations)
       for (const key of Object.keys(handlers))
         if (!known.has(key))
           console.warn(
             `[record-page] ${source}.${key} on ${host.doctype} is neither an event nor a fieldname — it will never fire`,
           );
+  }
+
+  /**
+   * `trigger` is the row handle's one member and a child doctype may legitimately
+   * have a field of that name — Frappe reserves five names and this is not one.
+   * The verb wins and the field stays reachable through `page.doc`; said once,
+   * here, because the engine knows the child's fields, where v1 could only warn
+   * on every access.
+   */
+  function warnShadowedTrigger(fields: RawMetaField[]) {
+    for (const field of fields) {
+      if (!holdsChildRows(field.fieldtype) || !field.options) continue;
+      const child = host.childFields?.(field.options);
+      if (!child?.some((one) => one.fieldname === "trigger")) continue;
+      // Warned per child doctype for the session, not per controller: the same
+      // shadow is the same fact on every record of the doctype, and navigating
+      // between them must not restate it.
+      warnRowIssue(
+        `${field.options}.trigger is shadowed by the row handle's own trigger() — read it from page.doc.${field.fieldname} instead`,
+      );
+    }
   }
 
   return {
@@ -259,14 +307,46 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   };
 }
 
-function knownHandlerKeys(fields: { fieldname: string; fieldtype: string }[]) {
+/**
+ * The whole vocabulary a handler key may be drawn from (tickets 44, 45): the
+ * four events, every parent fieldname, and — for a child table — the dotted
+ * family and nothing else.
+ *
+ * A Table fieldtype's **bare** fieldname is deliberately not here. It was only
+ * ever firable because the deleted deep watch could not tell one row's edit from
+ * another's, so a table has no control that commits under its own name; leaving
+ * it in would accept `products() {}` silently and never fire it.
+ */
+function handlerVocabulary(
+  fields: RawMetaField[],
+  childFields?: (doctype: string) => RawMetaField[] | undefined,
+) {
   const known = new Set(RECORD_PAGE_EVENTS);
+  // Tables whose child doctype we cannot see. A host with no `childFields`, or
+  // one whose child meta has not landed, must not accuse a correct key of being
+  // a typo — so those tables are answered by prefix instead.
+  const unresolved: string[] = [];
   for (const field of fields) {
-    known.add(field.fieldname);
-    if (field.fieldtype?.startsWith("Table")) {
-      known.add(`${field.fieldname}_add`);
-      known.add(`${field.fieldname}_remove`);
+    if (!holdsChildRows(field.fieldtype)) {
+      known.add(field.fieldname);
+      continue;
     }
+    known.add(`${field.fieldname}.add`);
+    known.add(`${field.fieldname}.remove`);
+    // A Table MultiSelect has no per-cell editing, so its vocabulary is add and
+    // remove alone — an honest gap rather than keys that would never fire.
+    if (field.fieldtype !== "Table") continue;
+    const child = field.options && childFields?.(field.options);
+    if (!child) unresolved.push(field.fieldname);
+    // A layout break has no value and so no commit; `page.fields` excludes them
+    // for the same reason, and accepting one here would be a key that never fires.
+    else
+      for (const one of child)
+        if (!LAYOUT_BREAKS.has(one.fieldtype))
+          known.add(`${field.fieldname}.${one.fieldname}`);
   }
-  return known;
+  return {
+    has: (key: string) =>
+      known.has(key) || unresolved.some((table) => key.startsWith(`${table}.`)),
+  };
 }

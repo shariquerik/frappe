@@ -58,7 +58,10 @@ export function createCommitChannel(
       // A structural edit is itself a commit, and a removed row's pending edit
       // has nowhere left to land.
       pending = null;
-      host.dispatch(rowEvent(row, change), row);
+      // A removed row has no address left to hand on: a handle for it throws on
+      // every access by design, so `'<table>.remove'` takes `(page)` alone and
+      // un-totals by re-folding the table (ticket 45 §3).
+      host.dispatch(rowEvent(row, change), change === "add" ? row : undefined);
     },
     flush: async () => {
       const edit = pending;

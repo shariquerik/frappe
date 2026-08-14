@@ -27,7 +27,11 @@ const SNAPSHOT_IS_READ_ONLY: ReadOnlyAdvice = {
 };
 
 /** What `joinLayout` drops before any patch could apply. */
-const LAYOUT_BREAKS = new Set(["Tab Break", "Section Break", "Column Break"]);
+export const LAYOUT_BREAKS = new Set([
+  "Tab Break",
+  "Section Break",
+  "Column Break",
+]);
 
 type Slot = "meta" | "override" | "ui";
 

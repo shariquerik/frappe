@@ -19,6 +19,7 @@ import { createRecordPage, type RecordPageHost } from "../createRecordPage";
 import { registerRecordPage, resetRegistry } from "../registry";
 import { withRegisteringSource } from "../context";
 import { resetCustomizationErrorReports } from "../reportError";
+import { resetRowWarnings } from "../rows";
 import { call as mockedCall } from "frappe-ui";
 
 function makeHost(overrides: Partial<RecordPageHost> = {}): RecordPageHost {
@@ -119,7 +120,12 @@ describe("unknown handler keys", () => {
 
   const fields = [
     { fieldname: "status", fieldtype: "Select" },
-    { fieldname: "items", fieldtype: "Table" },
+    { fieldname: "items", fieldtype: "Table", options: "Deal Item" },
+  ];
+
+  const childFields = [
+    { fieldname: "qty", fieldtype: "Int" },
+    { fieldname: "rate", fieldtype: "Currency" },
   ];
 
   it("warns once, after meta arrives, for a key that will never fire", async () => {
@@ -138,7 +144,7 @@ describe("unknown handler keys", () => {
     warnings.mockRestore();
   });
 
-  it("accepts events, fieldnames and child-table row events", async () => {
+  it("accepts events, fieldnames and the dotted row family", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     registerRecordPage("CRM Deal", {
       refresh: () => {},
@@ -146,13 +152,102 @@ describe("unknown handler keys", () => {
       after_save: () => {},
       on_tab_change: () => {},
       status: () => {},
+      "items.add": () => {},
+      "items.remove": () => {},
+      "items.qty": () => {},
+    });
+    const controller = createRecordPage(
+      makeHost({ meta: ref({ fields }), childFields: () => childFields }),
+    );
+    await controller.refresh();
+    expect(warnings).not.toHaveBeenCalled();
+    warnings.mockRestore();
+  });
+
+  // 45 §5: only reachable because the deleted deep watch could not tell one
+  // row's edit from another's, and retiring it is what makes the warning useful.
+  it("rejects a Table fieldname, its underscore keys, and an unknown child field", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    registerRecordPage("CRM Deal", {
       items: () => {},
       items_add: () => {},
-      items_remove: () => {},
+      "items.nope": () => {},
     });
+    const controller = createRecordPage(
+      makeHost({ meta: ref({ fields }), childFields: () => childFields }),
+    );
+    await controller.refresh();
+    const rejected = warnings.mock.calls.map((call) => String(call[0]));
+    expect(rejected.filter((line) => line.includes("never fire"))).toHaveLength(3);
+    warnings.mockRestore();
+  });
+
+  // 45 §7: a Table MultiSelect has no per-cell editing, so a child-field key on
+  // one could never fire — and naming that is what the warning is for.
+  it("gives a Table MultiSelect add and remove only", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    registerRecordPage("CRM Deal", {
+      "labels.add": () => {},
+      "labels.remove": () => {},
+      "labels.label": () => {},
+    });
+    const controller = createRecordPage(
+      makeHost({
+        meta: ref({
+          fields: [
+            { fieldname: "labels", fieldtype: "Table MultiSelect", options: "Tag Link" },
+          ],
+        }),
+        childFields: () => [{ fieldname: "label", fieldtype: "Link" }],
+      }),
+    );
+    await controller.refresh();
+    const rejected = warnings.mock.calls.map((call) => String(call[0]));
+    expect(rejected.filter((line) => line.includes("never fire"))).toHaveLength(1);
+    expect(rejected[0]).toContain("labels.label");
+    warnings.mockRestore();
+  });
+
+  // The child meta lands with the parent's, but a host that has none must not
+  // accuse a correct key of being a typo.
+  it("stays quiet about a table whose child fields it cannot see", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    registerRecordPage("CRM Deal", { "items.anything": () => {} });
     const controller = createRecordPage(makeHost({ meta: ref({ fields }) }));
     await controller.refresh();
     expect(warnings).not.toHaveBeenCalled();
+    warnings.mockRestore();
+  });
+
+  // Once per child doctype for the session, not once per controller: navigating
+  // between records of the same doctype must not restate the same fact.
+  it("warns once when a child doctype has a field named trigger (ticket 43 §3)", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    resetRowWarnings();
+    registerRecordPage("CRM Deal", { refresh: () => {} });
+    const controller = createRecordPage(
+      makeHost({
+        meta: ref({ fields }),
+        childFields: () => [
+          ...childFields,
+          { fieldname: "trigger", fieldtype: "Data" },
+        ],
+      }),
+    );
+    await controller.refresh();
+    await createRecordPage({
+      ...makeHost({
+        meta: ref({ fields }),
+        childFields: () => [
+          ...childFields,
+          { fieldname: "trigger", fieldtype: "Data" },
+        ],
+      }),
+    }).refresh();
+    const shadowed = warnings.mock.calls.filter((call) =>
+      String(call[0]).includes("shadowed by the row handle"),
+    );
+    expect(shadowed).toHaveLength(1);
     warnings.mockRestore();
   });
 
