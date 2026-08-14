@@ -22,8 +22,8 @@
 				v-bind="field.ui?.props"
 				:field="controlField"
 				:modelValue="doc[field.fieldname]"
-				@update:modelValue="(value: any) => update(field.fieldname, value)"
-				@change="editing = false"
+				@update:modelValue="(value: any) => edit(field.fieldname, value)"
+				@change="onCommit"
 				v-on="field.ui?.on ?? {}"
 			/>
 		</div>
@@ -52,7 +52,13 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from "vue";
-import { DocKey, ResolveFieldKey, UpdateKey } from "../../components/FormLayout/types";
+import {
+	CommitKey,
+	DocKey,
+	NO_COMMIT,
+	ResolveFieldKey,
+	UpdateKey,
+} from "../../components/FormLayout/types";
 import type { FieldNode } from "../../components/FormLayout/types";
 import { getFormatDefaults } from "../../components/FormLayout/formatDefaults";
 import { resolveFieldCurrency } from "../../components/FormLayout/resolveCurrency";
@@ -63,7 +69,19 @@ const emit = defineEmits<{ expand: [field: FieldNode] }>();
 
 const doc = inject(DocKey)!;
 const update = inject(UpdateKey)!;
+const commit = inject(CommitKey, NO_COMMIT);
 const resolveField = inject(ResolveFieldKey)!;
+
+function edit(fieldname: string, value: any) {
+	update(fieldname, value);
+	commit.pending(fieldname);
+}
+
+// A commit both closes the inline editor and fires the field's handler.
+function onCommit() {
+	editing.value = false;
+	commit.commit(props.field.fieldname);
+}
 
 const editing = ref(false);
 const cell = ref<HTMLElement | null>(null);

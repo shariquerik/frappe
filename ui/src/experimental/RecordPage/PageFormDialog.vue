@@ -48,10 +48,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, provide, reactive, ref, watch } from "vue";
 import { Button, Dialog, ErrorMessage } from "frappe-ui";
 import type { DialogSize } from "frappe-ui";
 import { FormLayout } from "../../components/FormLayout";
+import { CommitKey, NO_COMMIT } from "../../components/FormLayout/types";
 import type { FormLayoutSchema } from "../../components/FormLayout/types";
 import { useDoctypeMeta } from "../../composables/useDoctypeMeta";
 import { useDocPermissions } from "../../composables/useDocPermissions";
@@ -70,6 +71,10 @@ import {
 } from "./formDialogLayout";
 import type { PageDialogEntry } from "./dialog";
 import type { PageDialogAction } from "./types";
+
+// The dialog's doc is its own and dies with it, so its fields commit to nothing
+// — without this they would fire the record's handlers under the same names.
+provide(CommitKey, NO_COMMIT);
 
 const props = defineProps<{ entry: PageDialogEntry }>();
 

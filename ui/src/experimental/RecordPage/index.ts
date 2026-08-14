@@ -18,6 +18,11 @@ export { PAGE_SCRIPT_CHANGED, GET_PAGE_SCRIPTS } from "./pageScriptTypes";
 export type { PageScriptRow, PageScriptsResponse } from "./pageScriptTypes";
 export { createRecordPage, RECORD_PAGE_EVENTS } from "./createRecordPage";
 export type { RecordPageController, RecordPageHost } from "./createRecordPage";
+export { createCommitChannel, fieldEvent, rowEvent } from "./commitChannel";
+export type {
+  CommitChannelHost,
+  RecordCommitChannel,
+} from "./commitChannel";
 export { default as PageDialogs } from "./PageDialogs.vue";
 export { createPageDialogs } from "./dialog";
 export type { PageDialogEntry, PageDialogHost } from "./dialog";

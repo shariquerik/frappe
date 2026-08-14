@@ -23,12 +23,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide } from "vue";
+import { computed, inject, provide } from "vue";
 import PanelSection from "./PanelSection.vue";
 import { sectionName } from "./sectionName";
 import { resolveLayout } from "../../components/FormLayout/resolveLayout";
 import { useFieldTypes } from "../../components/FormLayout/useFieldTypes";
-import { DocKey, ResolveFieldKey, UpdateKey } from "../../components/FormLayout/types";
+import {
+	CommitKey,
+	DocKey,
+	ResolveFieldKey,
+	UpdateKey,
+} from "../../components/FormLayout/types";
+import { warnMissingCommit } from "../../components/FormLayout/warnMissingCommit";
 import type { FieldNode, Section, Tab } from "../../components/FormLayout/types";
 import type { PanelSectionItem } from "../RecordPage/types";
 import type { PanelLayoutProps } from "./types";
@@ -137,6 +143,8 @@ function update(fieldname: string, value: any) {
 }
 
 const { resolve } = useFieldTypes();
+
+warnMissingCommit("PanelLayout", inject(CommitKey, null));
 
 provide(DocKey, doc);
 provide(UpdateKey, update);
