@@ -59,6 +59,14 @@ describe("createCommitChannel", () => {
     expect(fired).toEqual(["qty"]);
   });
 
+  it("a row add or remove clears the pending edit", async () => {
+    const { commits, fired } = channel();
+    commits.pending("qty", row);
+    commits.rowChanged(row, "remove");
+    await commits.flush();
+    expect(fired).toEqual(["products.remove"]);
+  });
+
   it("awaits the handler it flushes, so the save cannot outrun it", async () => {
     const order: string[] = [];
     const commits = createCommitChannel({

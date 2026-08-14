@@ -32,6 +32,9 @@ export function createCommitChannel(
     },
     commit,
     rowChanged: (row, change) => {
+      // A structural edit is itself a commit, and a removed row's pending edit
+      // has nowhere left to land.
+      pending = null;
       host.dispatch(rowEvent(row, change), row);
     },
     flush: async () => {
