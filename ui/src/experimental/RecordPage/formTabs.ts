@@ -61,6 +61,9 @@ export class FormTabsSurface implements PageFormTabs {
 
   /** Installed by `createRecordPage`, which reads it from the host's strip. */
   declare readonly active: string;
+  /** Installed there too: a miss on one strip wants to name the other, and
+   *  `createRecordPage` is the one place that holds both. */
+  declare activate: (identity: string) => void;
 
   constructor(private host: FormTabsSurfaceHost) {}
 
@@ -108,6 +111,16 @@ export class FormTabsSurface implements PageFormTabs {
   }
 
   // Host side, below: not part of what a script may call.
+
+  /**
+   * Whether the tab is on the strip right now — `depends_on` and this surface's
+   * ops both folded in, the replay in flight included. What `activate` asks to
+   * tell a hidden tab from one the administrator never authored.
+   */
+  isVisible(identity: string) {
+    const tab = this.resolved().find((one) => one.identity === identity);
+    return !!tab && !tab.hidden;
+  }
 
   /** Open a replay: ops recorded from here are staged, not applied. */
   beginReplay() {

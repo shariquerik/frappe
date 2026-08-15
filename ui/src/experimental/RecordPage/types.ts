@@ -75,6 +75,18 @@ export interface SurfaceVerbs<Item extends SurfaceItem = SurfaceItem> {
 /** The tabs surface also tells a handler which tab the reader is on. */
 export interface TabsApi extends SurfaceVerbs<TabItem> {
   readonly active: string;
+  /**
+   * Move the reader to a tab on *this* strip. A verb rather than a writable
+   * `active` because `active` is derived from what the strip can currently show:
+   * an assignment naming a hidden or unknown tab would read back as something
+   * the script never wrote, where a verb can say so. Hidden, unknown, or on the
+   * other strip all warn in a development build and do nothing — activation
+   * does not reveal a hidden tab, since `show()` is that verb already.
+   *
+   * The name resolves against the strip as it stands at the moment of the call;
+   * an activation fired before its tab is added misses, and is not queued.
+   */
+  activate(name: string): void;
 }
 
 export interface PageToast {
@@ -217,6 +229,15 @@ export interface PageFormTabs {
    * Layout tab's address is a resolved identity.
    */
   readonly active: string;
+  /**
+   * Move the reader to a tab of the form, on `TabsApi.activate`'s terms and
+   * missing in the same three ways. What it writes is the reader's *intent*,
+   * which is what this strip has always run on — so activating while the reader
+   * is elsewhere on the record is not a queued activation but an answer to a
+   * question the form will ask when it mounts: the identity resolves now, and
+   * that is where they arrive.
+   */
+  activate(identity: string): void;
 }
 
 /**

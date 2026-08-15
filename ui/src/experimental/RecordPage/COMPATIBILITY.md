@@ -68,10 +68,10 @@ What `page` is _for_ is a small, closed vocabulary:
   development build and does nothing** — activation does not reveal a hidden tab, because
   `show()` is already the verb for that, and one act should not quietly perform two. The
   name resolves against the strip as it stands at the moment of the call: an activation
-  fired before the tab exists misses, and is not queued.
-
-  > **In flight.** `activate` is decided but not yet shipped on either surface, so today
-  > it is absent from both. Delete this note when it ships.
+  fired before the tab exists misses, and is not queued. Called from `onRefresh`, it
+  resolves against the strip that replay is building — a tab the same handler just
+  added is a tab it can move to — and the reader arrives once the replay has settled,
+  because until then the strip on screen is still the last one.
 - **Three header renderings, from one flat list.** A `headerActions` item carries
   `display`: `'button'` gives it a top-level button of its own, `'dropdown'` gives it a
   top-level dropdown button of its own, and omitting it — the default — leaves it an entry

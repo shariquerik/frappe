@@ -70,6 +70,14 @@ const SAVED_IS_READ_ONLY: ReadOnlyAdvice = {
   instead: "page.doc, which is the draft this is the saved counterpart of",
 };
 
+/** The two tab strips, by the member each is reached through. */
+type TabStrip = "tabs" | "formTabs";
+
+const STRIPS: Record<TabStrip, { other: string; sibling: TabStrip }> = {
+  tabs: { other: "form's", sibling: "formTabs" },
+  formTabs: { other: "record's", sibling: "tabs" },
+};
+
 export interface RecordPageHost {
   doctype: string;
   docname: string;
@@ -83,6 +91,15 @@ export interface RecordPageHost {
   /** The name of the tab the reader is on, as the host's strip resolves it. */
   activeTab: () => string;
   /**
+   * Move the reader to a named tab of the record's strip — `activeTab`'s
+   * symmetric partner, and the host's half of `page.tabs.activate`. The engine
+   * has already resolved the name against the strip, so this is handed only
+   * tabs that are there and on screen; how a strip *records* where the reader is
+   * — a URL query here, a ref elsewhere — stays the host's business, which is
+   * what keeps activation from having to be spelled as a `page.router` edit.
+   */
+  activateTab: (name: string) => void;
+  /**
    * The record's Details layout, which is the strip `page.formTabs` addresses.
    * Absent for a host that renders no form.
    */
@@ -93,6 +110,13 @@ export interface RecordPageHost {
    * looking at the form.
    */
   activeFormTab?: () => string;
+  /**
+   * Move the reader to a tab of the form, by identity. Optional on the same
+   * terms as `activeFormTab`: a host that renders no form has no strip to move,
+   * and one absent here simply never receives an activation, because the
+   * identity will have missed against an empty layout first.
+   */
+  activateFormTab?: (identity: string) => void;
   save: () => Promise<void>;
   reload: () => Promise<void>;
   router: Router;
@@ -186,6 +210,24 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   const replaying = ref(0);
   const isReplaying = computed(() => replaying.value > 0);
 
+  // A replay's activation, held until the replay commits — one slot per strip,
+  // so a second call in the same replay replaces the first the way the reader's
+  // last move would. This is not the queueing `activate` refuses: the name is
+  // resolved at the moment of the call, against the strip the caller can see
+  // (`isVisible` reads the staged ops, as `has` does). Only the *delivery*
+  // waits, because until the commit the host is still rendering last replay's
+  // strip, and moving the reader to a tab that is not on it yet would show them
+  // the fallback for a tick — the replay's middle, leaking through the one
+  // channel ticket 71's staging does not cover.
+  const heldActivations = new Map<TabStrip, () => void>();
+
+  Object.defineProperty(tabs, "activate", {
+    value: (name: string) => activate("tabs", name),
+  });
+  Object.defineProperty(formTabs, "activate", {
+    value: (identity: string) => activate("formTabs", identity),
+  });
+
   const dialogs = createPageDialogs({ isReplaying: () => isReplaying.value });
 
   const capabilities: RecordPageApi = {
@@ -262,8 +304,62 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
       // would freeze the overlay on the previous replay for good.
       for (const surface of surfaces) surface.commitReplay();
       replaying.value -= 1;
+      // After the commit, so the strip the reader is being moved onto is the one
+      // on screen; and inside the same `finally`, so a throwing handler cannot
+      // strand a move that had already been decided.
+      if (!isReplaying.value) releaseActivations();
     }
     ready.value = true;
+  }
+
+  function releaseActivations() {
+    const held = [...heldActivations.values()];
+    heldActivations.clear();
+    for (const move of held) move();
+  }
+
+  /**
+   * `page.tabs.activate` and `page.formTabs.activate`, both of them, because the
+   * interesting miss is the one that names the *other* strip: the two are not
+   * interchangeable, an author will mix them up, and only a caller holding both
+   * can say which one they wanted. The engine resolves the name and the host
+   * moves the reader — activation never reaches for `page.router`.
+   */
+  function activate(strip: TabStrip, name: string) {
+    const here = strip === "tabs" ? tabs : formTabs;
+    const there = strip === "tabs" ? formTabs : tabs;
+    if (!here.has(name)) {
+      warnActivate(
+        strip,
+        name,
+        there.has(name)
+          ? `it is on the ${STRIPS[strip].other} strip — page.${STRIPS[strip].sibling}.activate("${name}")`
+          : "no such tab",
+      );
+      return;
+    }
+    // Hidden is a miss and not an invitation: `show()` is the verb that reveals
+    // a tab, and one call should not quietly perform two.
+    if (!here.isVisible(name)) {
+      warnActivate(strip, name, "it is hidden — show() reveals a tab");
+      return;
+    }
+    const move = () =>
+      strip === "tabs" ? host.activateTab(name) : host.activateFormTab?.(name);
+    if (isReplaying.value) heldActivations.set(strip, move);
+    else move();
+  }
+
+  /**
+   * Said every time, not once: a miss here is an act the script just performed —
+   * the reader was not moved — rather than a standing fault in its text, and the
+   * second failed move is not the first one repeated.
+   */
+  function warnActivate(strip: TabStrip, name: string, because: string) {
+    if (!import.meta.env.DEV) return;
+    console.warn(
+      `[record-page] page.${strip}.activate("${name}") — ${because}; the reader was not moved.`,
+    );
   }
 
   async function fireEvent(event: string, row?: RowAddress) {

@@ -49,6 +49,7 @@ function makeHost(overrides: Partial<RecordPageHost> = {}): RecordPageHost {
     perms: () => ({}),
     isDirty: () => false,
     activeTab: () => "activity",
+    activateTab: () => {},
     save: async () => {},
     reload: async () => {},
     router: {} as any,

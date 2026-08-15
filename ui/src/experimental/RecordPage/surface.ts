@@ -67,6 +67,15 @@ export class Surface<Item extends SurfaceItem = SurfaceItem> implements SurfaceV
 		return this.fold(this.pending ?? this.ops).some((entry) => entry.item.name === name);
 	}
 
+	// Host side, but reading the way `has` reads and for its reason: `activate`
+	// asks this to tell a hidden tab from an absent one, and a source that adds a
+	// tab and activates it in its own replay must be answered about its own work.
+	isVisible(name: string) {
+		return this.fold(this.pending ?? this.ops).some(
+			(entry) => entry.item.name === name && !entry.hidden,
+		);
+	}
+
 	// Host side, below: not part of what a script may call.
 
 	provideBuiltins(get: () => Item[]) {
