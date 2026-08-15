@@ -71,7 +71,16 @@ What `page` is _for_ is a small, closed vocabulary:
   fired before the tab exists misses, and is not queued. Called from `onRefresh`, it
   resolves against the strip that replay is building — a tab the same handler just
   added is a tab it can move to — and the reader arrives once the replay has settled,
-  because until then the strip on screen is still the last one.
+  because until then the strip on screen is still the last one. A tab that leaves the
+  strip before it settles is a miss, and warns like one.
+
+  Two things follow from *moving the reader* that reading `active` never had to worry
+  about. A **hit is not synchronous**: the move goes through the host's own navigation,
+  so `active` on the next line still reads the tab you left — read it in the next
+  handler. And a move **fires the strip's change event**, since `onTabChange` and
+  `onFormTabChange` fire on any cause; `activate` is the first verb that lets a handler
+  cause the event it is handling, so activating from inside one is yours to make
+  terminate.
 - **Three header renderings, from one flat list.** A `headerActions` item carries
   `display`: `'button'` gives it a top-level button of its own, `'dropdown'` gives it a
   top-level dropdown button of its own, and omitting it — the default — leaves it an entry

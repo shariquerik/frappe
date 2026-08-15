@@ -85,6 +85,10 @@ export interface TabsApi extends SurfaceVerbs<TabItem> {
    *
    * The name resolves against the strip as it stands at the moment of the call;
    * an activation fired before its tab is added misses, and is not queued.
+   *
+   * A *hit* is not synchronous either: the reader arrives by way of the host's
+   * own navigation, so `active` still reads the old tab on the line after the
+   * call. Read it in the next handler, not this one.
    */
   activate(name: string): void;
 }

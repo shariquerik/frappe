@@ -38,7 +38,10 @@
 				quickActions · headerActions · tabs · panelSections — each with
 				<code>add</code>, <code>hide</code>, <code>show</code>, <code>update</code>,
 				<code>move</code>, <code>has</code>, <code>order</code>. An added item needs a
-				<code>name</code>, and its callback is <code>run</code>.
+				<code>name</code>, and its callback is <code>run</code>. Both tab surfaces —
+				<code>tabs</code>, the record's, and <code>formTabs</code>, the form's — also read
+				<code>active</code> and carry <code>activate(name)</code>, which moves the reader
+				on that strip and warns if it cannot.
 			</dd>
 			<dt class="text-ink-gray-5">page</dt>
 			<dd class="text-ink-gray-7">

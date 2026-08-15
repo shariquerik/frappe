@@ -210,16 +210,18 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   const replaying = ref(0);
   const isReplaying = computed(() => replaying.value > 0);
 
-  // A replay's activation, held until the replay commits — one slot per strip,
-  // so a second call in the same replay replaces the first the way the reader's
+  // An activation made while a replay is in flight, held until it commits — one
+  // name per strip, so a second call replaces the first the way the reader's own
   // last move would. This is not the queueing `activate` refuses: the name is
   // resolved at the moment of the call, against the strip the caller can see
   // (`isVisible` reads the staged ops, as `has` does). Only the *delivery*
   // waits, because until the commit the host is still rendering last replay's
   // strip, and moving the reader to a tab that is not on it yet would show them
   // the fallback for a tick — the replay's middle, leaking through the one
-  // channel ticket 71's staging does not cover.
-  const heldActivations = new Map<TabStrip, () => void>();
+  // channel ticket 71's staging does not cover. That is true of any activation
+  // made in the window, not only the ones the replay's own handlers make, which
+  // is why the gate is `isReplaying` and not "am I inside `onRefresh`".
+  const heldActivations = new Map<TabStrip, string>();
 
   Object.defineProperty(tabs, "activate", {
     value: (name: string) => activate("tabs", name),
@@ -313,9 +315,24 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   }
 
   function releaseActivations() {
-    const held = [...heldActivations.values()];
+    const held = [...heldActivations];
     heldActivations.clear();
-    for (const move of held) move();
+    for (const [strip, name] of held) {
+      // Re-read, not replayed. The strip a held move was decided against is not
+      // the one that necessarily settled: a later source can hide the tab an
+      // earlier one activated, and delivering that move would land the reader on
+      // the strip's fallback — the very outcome a miss exists to prevent. A tab
+      // that left before the strip settled is a miss like any other.
+      if (!surfaceFor(strip).isVisible(name)) {
+        warnActivate(strip, name, "it left the strip before the replay settled");
+        continue;
+      }
+      move(strip, name);
+    }
+  }
+
+  function surfaceFor(strip: TabStrip) {
+    return strip === "tabs" ? tabs : formTabs;
   }
 
   /**
@@ -326,8 +343,20 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
    * moves the reader — activation never reaches for `page.router`.
    */
   function activate(strip: TabStrip, name: string) {
-    const here = strip === "tabs" ? tabs : formTabs;
-    const there = strip === "tabs" ? formTabs : tabs;
+    if (!canReach(strip, name)) return;
+    if (isReplaying.value) heldActivations.set(strip, name);
+    else move(strip, name);
+  }
+
+  function canReach(strip: TabStrip, name: string) {
+    // The Details layout can land after the first replay has run, and until it
+    // does, "the administrator never authored this" and "it is not here yet"
+    // are the same answer — which is why `FormTabsSurface.warnIfAbsent` holds
+    // its tongue in the same window. The move is dropped either way: an
+    // activation is resolved at the moment of the call and is not queued.
+    if (strip === "formTabs" && !host.formLayout?.()?.length) return false;
+    const here = surfaceFor(strip);
+    const there = surfaceFor(strip === "tabs" ? "formTabs" : "tabs");
     if (!here.has(name)) {
       warnActivate(
         strip,
@@ -336,18 +365,39 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
           ? `it is on the ${STRIPS[strip].other} strip — page.${STRIPS[strip].sibling}.activate("${name}")`
           : "no such tab",
       );
-      return;
+      return false;
     }
     // Hidden is a miss and not an invitation: `show()` is the verb that reveals
     // a tab, and one call should not quietly perform two.
     if (!here.isVisible(name)) {
       warnActivate(strip, name, "it is hidden — show() reveals a tab");
+      return false;
+    }
+    return true;
+  }
+
+  /** The host's half, and the only place the engine hands a strip a name. */
+  function move(strip: TabStrip, name: string) {
+    // A host that draws the form's strip but cannot move it would otherwise
+    // swallow an activation that passed every check — the one silent failure
+    // this verb exists to abolish.
+    if (strip === "formTabs" && !host.activateFormTab) {
+      warnActivate(strip, name, "this host cannot move the reader on that strip");
       return;
     }
-    const move = () =>
-      strip === "tabs" ? host.activateTab(name) : host.activateFormTab?.(name);
-    if (isReplaying.value) heldActivations.set(strip, move);
-    else move();
+    try {
+      if (strip === "tabs") host.activateTab(name);
+      else host.activateFormTab?.(name);
+    } catch (error) {
+      // Reported, never rethrown: a released move runs inside `refresh`'s
+      // `finally`, so a throwing host hook would take the rest of the release
+      // with it and leave `ready` false — a page stuck on its skeleton because
+      // a router guard said no.
+      console.error(
+        `[record-page] page.${strip}.activate("${name}") — the host threw`,
+        error,
+      );
+    }
   }
 
   /**

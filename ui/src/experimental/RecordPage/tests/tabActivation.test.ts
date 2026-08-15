@@ -183,6 +183,26 @@ describe("the three ways to miss", () => {
     );
   });
 
+  it("says nothing about the form's strip while its layout is still loading", () => {
+    // "The administrator never authored this" and "it has not arrived yet" are
+    // the same answer in that window, and `hide`/`show`/`update` already keep
+    // quiet in it. The move is dropped, not queued.
+    const { page, movedInForm } = makePage({ formLayout: () => [] });
+
+    page.formTabs.activate("lead_details");
+
+    expect(movedInForm).toEqual([]);
+    expect(warnings).toEqual([]);
+  });
+
+  it("says so when the host draws the form's strip but cannot move it", () => {
+    const { page } = makePage({ activateFormTab: undefined });
+
+    page.formTabs.activate("lead_details");
+
+    expect(warnings[0]).toContain("cannot move the reader on that strip");
+  });
+
   it("says so every time, because each miss is a move that did not happen", () => {
     const { page } = makePage();
 
@@ -259,6 +279,42 @@ describe("a replay's activation", () => {
     await controller.refresh();
 
     expect(moved).toEqual(["emails"]);
+  });
+
+  it("is dropped when a later source takes the tab off the strip", async () => {
+    // The held move is re-read against the strip that settled, not delivered on
+    // the strength of the strip it was decided against — otherwise the reader
+    // lands on `?tab=emails` with no `emails` to resolve it, which is the
+    // fallback-tab dumping a miss exists to prevent.
+    registerRecordPage("CRM Deal", {
+      onRefresh: (page) => {
+        page.tabs.activate("emails");
+        page.tabs.hide("emails");
+      },
+    });
+    const { controller, moved } = makePage();
+
+    await controller.refresh();
+
+    expect(moved).toEqual([]);
+    expect(warnings[0]).toContain("it left the strip before the replay settled");
+  });
+
+  it("keeps the page up when the host's own navigation throws", async () => {
+    // The release runs inside `refresh`'s `finally`: a throw escaping it would
+    // strand `ready` false and leave the strip a skeleton for good.
+    registerRecordPage("CRM Deal", {
+      onRefresh: (page) => page.tabs.activate("emails"),
+    });
+    const { controller } = makePage({
+      activateTab: () => {
+        throw new Error("a router guard said no");
+      },
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(controller.refresh()).resolves.toBeUndefined();
+    expect(controller.ready.value).toBe(true);
   });
 
   it("misses a tab that only appears in the *next* replay, and is not queued", async () => {
