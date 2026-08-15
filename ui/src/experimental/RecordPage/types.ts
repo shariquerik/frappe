@@ -155,6 +155,55 @@ export interface PageFields {
   get(fieldname: string): PageField | null;
 }
 
+/** What a script may override on one of the Form Layout's tabs. */
+export interface PageFormTabPatch {
+  label?: string;
+}
+
+/** What `page.formTabs.get()` hands back: the tab as the strip resolves it. */
+export interface PageFormTab {
+  /** What the author wrote, if anything; the address is `identity`. */
+  name?: string;
+  identity: string;
+  label: string;
+  /** Resolved: `depends_on` and this surface's own ops both folded in. */
+  hidden: boolean;
+}
+
+/**
+ * The Form Layout tabs surface: the strip *inside* the record's Details form,
+ * which `page.tabs` has never reached — that one is the record's own strip, and
+ * it stays what `page.tabs` means. Reaches the Details form and no other place
+ * `FormLayout` renders (a `page.dialog` form's tabs are the script's own).
+ *
+ * A strict subset of the surface verbs, on the clause that already governs
+ * `page.fields`: these tabs are authored in a doctype an administrator edits, so
+ * a script overrides their properties and there is no `add`, `move` or `order`
+ * to mean anything.
+ *
+ * A tab is addressed by its **identity** (`name` if the author wrote one, else
+ * the label slugified, else its position), never by its position, and never by
+ * its label — a relabelled tab keeps its address. Between an override and
+ * `depends_on` the override wins, in both directions: `show()` lifts a tab the
+ * expression hides.
+ */
+export interface PageFormTabs {
+  hide(identity: string): void;
+  show(identity: string): void;
+  update(identity: string, patch: PageFormTabPatch): void;
+  /** Whether the layout carries this tab at all, on screen or not. */
+  has(identity: string): boolean;
+  /** The tab as it currently resolves — post-override, post-`depends_on`. */
+  get(identity: string): PageFormTab | null;
+  /**
+   * The identity of the tab the reader is on, or `''` when they are not in the
+   * form at all. Deliberately asymmetric with `page.tabs.active`, which returns
+   * a **name**: the record strip's tabs are named by their author, while a Form
+   * Layout tab's address is a resolved identity.
+   */
+  readonly active: string;
+}
+
 /**
  * A child row, as a script addresses it (ticket 43): an object holding
  * `(parentfield, key)` that **re-finds its row on every access**, so nothing
@@ -354,6 +403,8 @@ export interface RecordPageApi {
   tabs: TabsApi;
   panelSections: SurfaceVerbs<PanelSectionItem>;
   fields: PageFields;
+  /** The Form Layout's own tab strip, inside the Details form. */
+  formTabs: PageFormTabs;
   /**
    * The child table's rows as handles, in array order. Not a surface — there is
    * nothing here to arrange or override; it is how a row is *addressed*. A

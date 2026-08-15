@@ -2,16 +2,20 @@
 // Handlers run serially in run order, each in its own try/catch: a thrower is
 // skipped half-applied, never taking the page or another source down with it.
 // The one exception is `beforeSave`, the veto point: its throw aborts the save.
-import { ref, type Ref } from "vue";
+import { computed, ref, type ComputedRef, type Ref } from "vue";
 import type { Router } from "vue-router";
 import { call, toast } from "frappe-ui";
 import { withRunningSource } from "./context";
 import { createPageDialogs, type PageDialogEntry } from "./dialog";
 import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta";
-import type { RawMetaField } from "../../components/FormLayout/types";
+import type {
+  FormLayoutSchema,
+  RawMetaField,
+} from "../../components/FormLayout/types";
 import { holdsChildRows } from "../../components/Fields/rowIdentity";
 import type { RowAddress } from "../../components/Fields/types";
 import { FieldsSurface, LAYOUT_BREAKS } from "./fields";
+import { FormTabsSurface } from "./formTabs";
 import { ROW_EVENTS } from "./flattenHandlers";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
@@ -35,6 +39,7 @@ export const RECORD_PAGE_EVENTS = [
   "beforeSave",
   "afterSave",
   "onTabChange",
+  "onFormTabChange",
 ];
 
 // Everything `page` hands back is read-only (ticket 47), and each member names
@@ -77,6 +82,17 @@ export interface RecordPageHost {
   isDirty: () => boolean;
   /** The name of the tab the reader is on, as the host's strip resolves it. */
   activeTab: () => string;
+  /**
+   * The record's Details layout, which is the strip `page.formTabs` addresses.
+   * Absent for a host that renders no form.
+   */
+  formLayout?: () => FormLayoutSchema | undefined;
+  /**
+   * The **identity** of the Form Layout tab the reader is on, as `FormLayout`
+   * resolves it and the host's strip reports it, or `''` when the reader is not
+   * looking at the form.
+   */
+  activeFormTab?: () => string;
   save: () => Promise<void>;
   reload: () => Promise<void>;
   router: Router;
@@ -105,12 +121,20 @@ export interface RecordPageController {
   panelSections: Surface<PanelSectionItem>;
   /** Field property overrides; the host feeds `resolve()` to its layout source. */
   fields: FieldsSurface;
+  /** Form Layout tab overrides; fed to the same layout source alongside them. */
+  formTabs: FormTabsSurface;
   /** The replay: clears every surface, then runs every source's `refresh` in run order. */
   refresh: () => Promise<void>;
   /** `row` addresses the child row a dotted event happened to; see `Handler`. */
   fireEvent: (event: string, row?: RowAddress) => Promise<void>;
   /** True once the first replay has run — before it, surfaces are only built-ins. */
   ready: Ref<boolean>;
+  /**
+   * True while a replay is staging. Reactive because a host that announces a
+   * *settled* strip has to wait for the commit, and the commit is the moment
+   * this goes false.
+   */
+  isReplaying: ComputedRef<boolean>;
   /** The `open`/`form` dialogs on screen, for the host's `<PageDialogs>`. */
   dialogs: Ref<PageDialogEntry[]>;
   /** Closes them newest-first, each promise resolving `null`. */
@@ -129,29 +153,40 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     fieldAccess: (fieldname) => permissions.fieldAccess(fieldname),
     decorate: host.decorate,
   });
+  const formTabs = new FormTabsSurface({
+    tabs: () => host.formLayout?.(),
+    doc: () => host.doc.value,
+  });
   const rows = createRows({
     doc: () => host.doc.value,
     fields: () => host.meta.value?.fields,
     childFields: host.childFields,
     dispatch: (event, row) => fireEvent(event, row),
   });
-  // Every overlay a replay stages. `fields` is not a `Surface` — it overrides
-  // properties rather than arranging items — but it stages with them.
+  // Every overlay a replay stages. `fields` and `formTabs` are not `Surface`s —
+  // they override properties rather than arranging items — but they stage here.
   const surfaces: { beginReplay: () => void; commitReplay: () => void }[] = [
     quickActions,
     headerActions,
     tabs,
     panelSections,
     fields,
+    formTabs,
   ];
 
   Object.defineProperty(tabs, "active", { get: () => host.activeTab() });
+  // The same shape as the record strip's: `active` is stored nowhere here
+  // either, it is a read into whichever strip the host is drawing.
+  Object.defineProperty(formTabs, "active", {
+    get: () => host.activeFormTab?.() ?? "",
+  });
 
   const ready = ref(false);
   let vocabularyChecked = false;
-  let replaying = 0;
+  const replaying = ref(0);
+  const isReplaying = computed(() => replaying.value > 0);
 
-  const dialogs = createPageDialogs({ isReplaying: () => replaying > 0 });
+  const dialogs = createPageDialogs({ isReplaying: () => isReplaying.value });
 
   const capabilities: RecordPageApi = {
     doctype: host.doctype,
@@ -184,6 +219,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     tabs: tabs as unknown as TabsApi,
     panelSections,
     fields,
+    formTabs,
     rows: rows.rows,
     save: () => host.save(),
     reload: () => host.reload(),
@@ -213,7 +249,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     await Promise.all([host.sourcesReady?.(), permissions.ready()]);
     warnUnknownHandlers();
     // Counted, not a boolean: a script's own `page.refresh()` re-enters this.
-    replaying += 1;
+    replaying.value += 1;
     // Staged, not cleared: clearing here and re-adding one microtask later is
     // what tore the rendered strip down between the two, taking the reader's
     // place in it with them (ticket 70). The surfaces publish on commit, in one
@@ -225,7 +261,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
       // In `finally` so a throwing handler cannot leave the page staged, which
       // would freeze the overlay on the previous replay for good.
       for (const surface of surfaces) surface.commitReplay();
-      replaying -= 1;
+      replaying.value -= 1;
     }
     ready.value = true;
   }
@@ -345,9 +381,11 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     tabs,
     panelSections,
     fields,
+    formTabs,
     refresh,
     fireEvent,
     ready,
+    isReplaying,
     dialogs: dialogs.entries,
     closeDialogs: dialogs.closeAll,
   };

@@ -27,7 +27,7 @@
 			<dt class="text-ink-gray-5">Handlers</dt>
 			<dd class="text-ink-gray-7">
 				onRefresh · beforeSave (a throw aborts the save) · afterSave · onTabChange ·
-				&lt;fieldname&gt;. A child table's handlers nest under its fieldname
+				onFormTabChange · &lt;fieldname&gt;. A child table's handlers nest under its fieldname
 				— a handler per child field, plus <code>onAdd</code> and
 				<code>onRemove</code> — and each receives the row it happened to:
 				<code>products: { onAdd(page, row) {}, qty(page, row) {} }</code>.
@@ -43,7 +43,8 @@
 			<dt class="text-ink-gray-5">page</dt>
 			<dd class="text-ink-gray-7">
 				doctype · docname · doc · saved · meta · isDirty · perms · roles · fieldAccess ·
-				fields · rows · dialog · toast · call · router · save · reload · refresh
+				fields · formTabs · rows · dialog · toast · call · router · save · reload ·
+				refresh
 			</dd>
 			<dt class="text-ink-gray-5">Rows</dt>
 			<dd class="text-ink-gray-7">

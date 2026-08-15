@@ -41,10 +41,13 @@ What `page` is _for_ is a small, closed vocabulary:
   strip inside the record's details tab — it is the administrator editing the layout, and
   a tab there is a container of *fields*, so an `add` would have to invent fields. That is
   `page.dialog`'s job. On both surfaces a script **beats `depends_on` in both directions**:
-  `hide()` closes a tab the condition opened, `show()` opens one it closed. `formTabs`
-  additionally carries two members `fields` has no use for — `active` and `activate` — for
-  the plain reason that a strip has a reader standing on it and a field list does not. What
-  the subset excludes is **arrangement**, not reading or navigation.
+  `hide()` closes a tab the condition opened, `show()` opens one it closed. On `formTabs`,
+  `update` takes a **`label` and nothing else**: rewriting the administrator's `depends_on`
+  expression is not a script's to do, and a script wanting conditional visibility already
+  has a real `if` in `onRefresh`. `formTabs` additionally carries two members `fields` has
+  no use for — `active` and `activate` — for the plain reason that a strip has a reader
+  standing on it and a field list does not. What the subset excludes is **arrangement**,
+  not reading or navigation.
 - **Two tab surfaces, and they are not interchangeable.** `page.tabs` means the **record**
   strip — activity, emails, files, details — and always will; `page.formTabs` means the
   Form Layout strip *inside* details. `page.tabs.active` returns a tab's **name**, because
@@ -84,10 +87,6 @@ What `page` is _for_ is a small, closed vocabulary:
     },
   }
   ```
-
-  > **In flight.** One entry above is decided but not yet shipped:
-  > `onFormTabChange` arrives with `page.formTabs`, and until it does, that key is an
-  > unknown key and does not fire. Delete this note when it ships.
 
   Internally these are one flat keyspace — `products.qty`, `products.onAdd` — joined
   on the one character a Frappe fieldname structurally cannot contain, so a child

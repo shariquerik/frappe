@@ -38,6 +38,8 @@ export { Surface, BUILTIN } from "./surface";
 export type { ResolvedItem } from "./surface";
 export { FieldsSurface, resetFieldWarnings } from "./fields";
 export type { FieldsSurfaceHost } from "./fields";
+export { FormTabsSurface, resetFormTabWarnings } from "./formTabs";
+export type { FormTabsSurfaceHost } from "./formTabs";
 export { createRows, resetRowWarnings } from "./rows";
 export type { Rows, RowsHost } from "./rows";
 export { loadFrontendExtensions } from "./loader";
@@ -63,6 +65,9 @@ export type {
   PageField,
   PageFieldPatch,
   PageFields,
+  PageFormTab,
+  PageFormTabPatch,
+  PageFormTabs,
   PageRow,
   PageToast,
   PanelSectionItem,

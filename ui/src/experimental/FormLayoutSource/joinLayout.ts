@@ -7,7 +7,9 @@ import type {
 	RawMetaField,
 	Section,
 	Tab,
+	TabOverride,
 } from "../../components/FormLayout/types";
+import { identifyTabs } from "../../components/FormLayout/tabIdentity";
 import type { FieldAccess } from "../../composables/useDocPermissions";
 import { withAccess } from "./fieldAccess";
 import { applyFieldPatch, type FieldPatch } from "./fieldPatch";
@@ -34,6 +36,15 @@ export interface JoinLayoutOptions {
 	 * denial; the rest lands on the node as it is built.
 	 */
 	overrides?: Record<string, FieldPatch>;
+	/**
+	 * Per-render tab overrides, keyed by the tab's **identity** — `identifyTabs`
+	 * resolves the same identities here as `FormLayout` does, since the join
+	 * leaves every tab's `name` and authored `label` alone.
+	 *
+	 * Carried, not applied: `FormLayout` is what draws the strip, so it is what
+	 * resolves the override against the `depends_on`.
+	 */
+	tabOverrides?: Record<string, TabOverride>;
 }
 
 const LAYOUT_BREAKS = new Set(["Tab Break", "Section Break", "Column Break"]);
@@ -49,11 +60,12 @@ export function joinLayout(
 	options: JoinLayoutOptions = {}
 ): FormLayoutSchema {
 	const byName = new Map(fields.map((field) => [field.fieldname, field]));
-	return (tree ?? []).map(
+	return identifyTabs(tree ?? []).map(
 		(tab): Tab => ({
 			name: tab.name,
 			label: tab.label,
 			dependsOn: tab.dependsOn,
+			override: options.tabOverrides?.[tab.identity],
 			sections: (tab.sections ?? []).map((section) =>
 				joinSection(section, byName, options)
 			),

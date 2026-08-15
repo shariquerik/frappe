@@ -4,6 +4,7 @@ import { createResource, frappeRequest } from "frappe-ui";
 import type {
 	FormLayoutSchema,
 	RawMetaField,
+	TabOverride,
 } from "../../components/FormLayout/types";
 import type { Decorator } from "../../components/FormLayout/buildLayoutFromMeta";
 import type { FieldPatch } from "./fieldPatch";
@@ -39,6 +40,11 @@ export interface UseFormLayoutOptions {
 	 * over an already-joined tree instead.
 	 */
 	overrides?: MaybeRefOrGetter<Record<string, FieldPatch>>;
+	/**
+	 * Per-render tab overrides, keyed by tab identity. Reactive, and re-joins on
+	 * the same terms as `overrides` above.
+	 */
+	tabOverrides?: MaybeRefOrGetter<Record<string, TabOverride>>;
 }
 
 export interface UseFormLayout {
@@ -93,6 +99,7 @@ export function useFormLayout(options: UseFormLayoutOptions): UseFormLayout {
 			fieldAccess,
 			decorate: options.decorate,
 			overrides: toValue(options.overrides),
+			tabOverrides: toValue(options.tabOverrides),
 		});
 	});
 
