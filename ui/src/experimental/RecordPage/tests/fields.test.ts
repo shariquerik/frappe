@@ -159,12 +159,39 @@ describe("the verbs", () => {
     expect(fields.has("nope")).toBe(false);
   });
 
-  it("clears every override on reset — the replay, and why a script needs no else", () => {
+  it("clears every override on replay — and why a script needs no else", () => {
     const fields = makeSurface();
     fields.hide("status");
     fields.update("qty", { label: "Quantity" });
-    fields.reset();
+    fields.beginReplay();
+    fields.commitReplay();
     expect(fields.resolve()).toEqual({});
+  });
+
+  // Ticket 71: the overlay used to empty on `reset()` and refill a microtask
+  // later, which is the `page.fields` flash — a script-hidden field visible for
+  // a tick on every save.
+  it("keeps the applied overlay whole while a replay is in flight", () => {
+    const fields = makeSurface();
+    fields.hide("status");
+    fields.beginReplay();
+    expect(fields.resolve().status).toEqual({ override: { hidden: true } });
+    fields.hide("status");
+    expect(fields.resolve().status).toEqual({ override: { hidden: true } });
+    fields.commitReplay();
+    expect(fields.resolve().status).toEqual({ override: { hidden: true } });
+  });
+
+  it("publishes only on the outermost commit of a nested replay", () => {
+    const fields = makeSurface();
+    fields.beginReplay();
+    fields.update("qty", { label: "Quantity" });
+    fields.beginReplay();
+    fields.update("qty", { label: "Nested" });
+    fields.commitReplay();
+    expect(fields.resolve()).toEqual({});
+    fields.commitReplay();
+    expect(fields.resolve().qty).toEqual({ meta: { label: "Nested" } });
   });
 });
 
@@ -179,6 +206,17 @@ describe("get — the reader", () => {
       read_only: true,
       options: "Open\nWon",
     });
+  });
+
+  // The other half of ticket 71's read split: the host renders the committed
+  // overlay, but a source reading its own work back mid-replay must see it.
+  it("reads the replay in flight, not the overlay the host is still rendering", () => {
+    const fields = makeSurface();
+    fields.update("status", { label: "Stage" });
+    fields.beginReplay();
+    fields.update("status", { label: "Rebuilt" });
+    expect(fields.get("status")).toMatchObject({ label: "Rebuilt" });
+    expect(fields.resolve().status).toEqual({ meta: { label: "Stage" } });
   });
 
   it("reads back what the setter wrote — the v1 asymmetry this exists to avoid", () => {

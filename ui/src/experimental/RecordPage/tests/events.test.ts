@@ -374,4 +374,24 @@ describe("the replay clears the field overlay too (ticket 42)", () => {
     await controller.refresh();
     expect(controller.fields.resolve()).toEqual({});
   });
+
+  // Ticket 71: the replay stages its ops now, so the commit has to happen on
+  // the way out of a failed replay too — otherwise the overlay would be frozen
+  // on the previous replay for the rest of the session.
+  it("commits what a failed replay managed to record", async () => {
+    registerRecordPage("CRM Deal", {
+      refresh: (page) => {
+        page.fields.hide("discount");
+        throw new Error("boom");
+      },
+    });
+    const controller = createRecordPage(makeHost());
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await controller.refresh();
+
+    expect(controller.fields.resolve()).toEqual({
+      discount: { override: { hidden: true } },
+    });
+  });
 });

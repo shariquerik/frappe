@@ -23,38 +23,48 @@ export const BUILTIN = "builtin";
 
 export class Surface<Item extends SurfaceItem = SurfaceItem> implements SurfaceVerbs<Item> {
 	private ops: Op<Item>[] = reactive([]);
+	// Where a replay's ops accumulate until it commits. Non-null only inside a
+	// replay: ops recorded anywhere else -- a `run` handler, `on_tab_change`, a
+	// quick-action callback -- go straight to `ops` and render immediately, as
+	// they always have. Staging is a property of the replay, not of the surface.
+	private pending: Op<Item>[] | null = null;
+	private replaying = 0;
 	private builtins: () => Item[] = () => [];
 
 	add(item: Item, position?: Position) {
 		ensureIcons(item);
 		keepComponentRaw(item);
-		this.ops.push({ verb: "add", source: runningSource(), item, position });
+		this.record({ verb: "add", source: runningSource(), item, position });
 	}
 
 	hide(name: string) {
-		this.ops.push({ verb: "hide", source: runningSource(), name });
+		this.record({ verb: "hide", source: runningSource(), name });
 	}
 
 	show(name: string) {
-		this.ops.push({ verb: "show", source: runningSource(), name });
+		this.record({ verb: "show", source: runningSource(), name });
 	}
 
 	update(name: string, patch: Partial<Item>) {
 		ensureIcons(patch);
 		keepComponentRaw(patch);
-		this.ops.push({ verb: "update", source: runningSource(), name, patch });
+		this.record({ verb: "update", source: runningSource(), name, patch });
 	}
 
 	move(name: string, position: Position) {
-		this.ops.push({ verb: "move", source: runningSource(), name, position });
+		this.record({ verb: "move", source: runningSource(), name, position });
 	}
 
 	order(names: string[]) {
-		this.ops.push({ verb: "order", source: runningSource(), names });
+		this.record({ verb: "order", source: runningSource(), names });
 	}
 
+	// The one read a script makes, and the one that resolves over the replay in
+	// flight: a source that calls `add('x')` and then `has('x')` in its own
+	// `refresh` handler is told the truth about its own work. Outside a replay
+	// there is no pending list and this is the committed answer.
 	has(name: string) {
-		return this.resolve().some((entry) => entry.item.name === name);
+		return this.fold(this.pending ?? this.ops).some((entry) => entry.item.name === name);
 	}
 
 	// Host side, below: not part of what a script may call.
@@ -63,25 +73,57 @@ export class Surface<Item extends SurfaceItem = SurfaceItem> implements SurfaceV
 		this.builtins = get;
 	}
 
-	/** The replay clear: the next resolve starts from built-ins alone. */
-	reset() {
-		this.ops.length = 0;
+	/**
+	 * Open a replay: from here until the matching commit, ops are staged instead
+	 * of rendered.
+	 *
+	 * Emptying the staged list is the replay clear that `reset()` used to be --
+	 * a replay rebuilds from built-ins alone. A nested replay (a script calling
+	 * `page.refresh()` from a `refresh` handler) clears it the same way, but
+	 * only the outermost commit publishes, so an inner one cannot put a
+	 * half-built outer list on screen.
+	 */
+	beginReplay() {
+		this.pending = [];
+		this.replaying += 1;
 	}
 
+	/** Close a replay: the outermost one publishes the staged ops in one flush. */
+	commitReplay() {
+		if (this.replaying === 0) return;
+		this.replaying -= 1;
+		if (this.replaying > 0) return;
+		const staged = this.pending ?? [];
+		this.pending = null;
+		// One splice, not a clear and a refill: `ops` is reactive and this is
+		// the whole point of staging -- the host renders the replay's result
+		// without ever rendering its middle.
+		this.ops.splice(0, this.ops.length, ...staged);
+	}
+
+	/** The rendered arrangement: committed ops only, never a replay in flight. */
 	resolve(): ResolvedItem<Item>[] {
-		const items = this.builtins().map((item) => ({
-			item: { ...item },
-			source: BUILTIN,
-			hidden: false,
-		}));
-		for (const op of this.ops) apply(items, op);
-		return items;
+		return this.fold(this.ops);
 	}
 
 	visible(): Item[] {
 		return this.resolve()
 			.filter((entry) => !entry.hidden)
 			.map((entry) => entry.item);
+	}
+
+	private record(op: Op<Item>) {
+		(this.pending ?? this.ops).push(op);
+	}
+
+	private fold(ops: Op<Item>[]): ResolvedItem<Item>[] {
+		const items = this.builtins().map((item) => ({
+			item: { ...item },
+			source: BUILTIN,
+			hidden: false,
+		}));
+		for (const op of ops) apply(items, op);
+		return items;
 	}
 }
 

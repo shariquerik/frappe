@@ -135,9 +135,9 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     childFields: host.childFields,
     dispatch: (event, row) => fireEvent(event, row),
   });
-  // Every overlay a replay clears. `fields` is not a `Surface` — it overrides
-  // properties rather than arranging items — but it clears with them.
-  const surfaces: { reset: () => void }[] = [
+  // Every overlay a replay stages. `fields` is not a `Surface` — it overrides
+  // properties rather than arranging items — but it stages with them.
+  const surfaces: { beginReplay: () => void; commitReplay: () => void }[] = [
     quickActions,
     headerActions,
     tabs,
@@ -208,12 +208,19 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
   async function refresh() {
     await Promise.all([host.sourcesReady?.(), permissions.ready()]);
     warnUnknownHandlers();
-    for (const surface of surfaces) surface.reset();
     // Counted, not a boolean: a script's own `page.refresh()` re-enters this.
     replaying += 1;
+    // Staged, not cleared: clearing here and re-adding one microtask later is
+    // what tore the rendered strip down between the two, taking the reader's
+    // place in it with them (ticket 70). The surfaces publish on commit, in one
+    // flush, so the host only ever sees a replay's result.
+    for (const surface of surfaces) surface.beginReplay();
     try {
       await fireEvent("refresh");
     } finally {
+      // In `finally` so a throwing handler cannot leave the page staged, which
+      // would freeze the overlay on the previous replay for good.
+      for (const surface of surfaces) surface.commitReplay();
       replaying -= 1;
     }
     ready.value = true;

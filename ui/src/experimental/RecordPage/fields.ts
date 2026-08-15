@@ -116,16 +116,22 @@ export class FieldsSurface implements PageFields {
   // script put there — a nested component, a `Date`, a class instance — which
   // is the internal-slots hazard `readOnly.ts` documents for its own wrapper.
   private ops: Op[] = shallowReactive([]);
+  // The replay's ops until it commits, so the host's overlay never carries a
+  // half-applied replay — which is what made a script-hidden field flash into
+  // view for a tick on every save. Non-null only inside a replay; see
+  // `Surface.beginReplay`, which this mirrors.
+  private pending: Op[] | null = null;
+  private replaying = 0;
 
   constructor(private host: FieldsSurfaceHost) {}
 
   hide(fieldname: string) {
-    this.ops.push({ verb: "hide", fieldname });
+    this.record({ verb: "hide", fieldname });
     this.warnIfAbsent(fieldname, "hide");
   }
 
   show(fieldname: string) {
-    this.ops.push({ verb: "show", fieldname });
+    this.record({ verb: "show", fieldname });
     this.warnIfAbsent(fieldname, "show");
   }
 
@@ -133,7 +139,7 @@ export class FieldsSurface implements PageFields {
     // Named before the keys are read, so an author who mistyped the fieldname
     // hears that first rather than after a list of keys it would never reach.
     this.warnIfAbsent(fieldname, "update");
-    this.ops.push({ verb: "update", fieldname, patch: translate(fieldname, patch) });
+    this.record({ verb: "update", fieldname, patch: translate(fieldname, patch) });
   }
 
   has(fieldname: string) {
@@ -153,16 +159,44 @@ export class FieldsSurface implements PageFields {
       {},
       this.host.decorate,
     );
-    const patched = applyFieldPatch(node, this.resolve()[fieldname]);
+    // Over the replay in flight when there is one, the same way `Surface.has`
+    // reads: a source that hides a field and then reads it back inside its own
+    // `refresh` handler is told about its own work, not about last replay's.
+    const patched = applyFieldPatch(node, this.fold(this.pending ?? this.ops)[fieldname]);
     const resolved = resolveFieldConditionals(patched, this.host.doc());
     return readOnly(snapshot(resolved), SNAPSHOT_IS_READ_ONLY);
   }
 
   // Host side, below: not part of what a script may call.
 
-  /** The replay clear: the next resolve starts from the authored layout alone. */
-  reset() {
-    this.ops.length = 0;
+  /**
+   * Open a replay: ops recorded from here are staged, not applied. The clear is
+   * the replay clear `reset()` used to be — the next commit starts from the
+   * authored layout alone. Counted, so a nested `page.refresh()` re-enters
+   * without publishing a half-built overlay.
+   */
+  beginReplay() {
+    this.pending = [];
+    this.replaying += 1;
+  }
+
+  /** Close a replay: the outermost one publishes the staged ops in one flush. */
+  commitReplay() {
+    if (this.replaying === 0) return;
+    this.replaying -= 1;
+    if (this.replaying > 0) return;
+    const staged = this.pending ?? [];
+    this.pending = null;
+    this.ops.splice(0, this.ops.length, ...staged);
+  }
+
+  /** The applied overlay: committed ops only, never a replay in flight. */
+  resolve(): Record<string, FieldPatch> {
+    return this.fold(this.ops);
+  }
+
+  private record(op: Op) {
+    (this.pending ?? this.ops).push(op);
   }
 
   /**
@@ -173,9 +207,9 @@ export class FieldsSurface implements PageFields {
    * `Object.prototype`, so the next `override.hidden` would be inherited by
    * every field object in the application for the rest of the session.
    */
-  resolve(): Record<string, FieldPatch> {
+  private fold(ops: Op[]): Record<string, FieldPatch> {
     const patches = new Map<string, FieldPatch>();
-    for (const op of this.ops) {
+    for (const op of ops) {
       let into = patches.get(op.fieldname);
       if (!into) patches.set(op.fieldname, (into = {}));
       if (op.verb === "update") mergeInto(into, op.patch);

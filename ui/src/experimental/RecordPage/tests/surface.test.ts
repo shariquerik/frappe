@@ -1,5 +1,6 @@
 // The merge & ordering rules (wayfinder ticket 06) as executable claims.
 import { describe, expect, it } from "vitest";
+import { nextTick, watchEffect } from "vue";
 import { Surface } from "../surface";
 import { registerRecordPage, registrationsFor, resetRegistry } from "../registry";
 import { withRegisteringSource } from "../context";
@@ -74,7 +75,8 @@ describe("surface verbs", () => {
 		builtins(surface, "email");
 		surface.add({ name: "convert" });
 		surface.hide("email");
-		surface.reset();
+		surface.beginReplay();
+		surface.commitReplay();
 		expect(names(surface)).toEqual(["email"]);
 	});
 
@@ -88,6 +90,89 @@ describe("surface verbs", () => {
 		expect(names(surface)).toEqual(["tags", "email"]);
 		tags = false;
 		expect(names(surface)).toEqual(["email"]);
+	});
+});
+
+// Ticket 71: a replay used to clear the ops synchronously and re-add them a
+// microtask later, so the host rendered the strip without its scripted items in
+// between -- and a keyless `v-for` rebuilt everything under it, losing the
+// reader's place. The staged replay is the fix, and these are its rules.
+describe("staged replay", () => {
+	it("never renders the middle of a replay", async () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.add({ name: "convert" });
+
+		const seen: string[][] = [];
+		const stop = watchEffect(() => seen.push(names(surface)));
+		await nextTick();
+
+		surface.beginReplay();
+		await nextTick(); // where the old `reset()` flushed a strip of built-ins alone
+		surface.add({ name: "convert" });
+		surface.commitReplay();
+		await nextTick();
+		stop();
+
+		expect(seen.length).toBeGreaterThan(0);
+		for (const render of seen) expect(render).toEqual(["email", "convert"]);
+	});
+
+	it("starts the replay from built-ins, so a dropped op does not survive it", () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.add({ name: "convert" });
+		surface.beginReplay();
+		surface.add({ name: "dial" });
+		surface.commitReplay();
+		expect(names(surface)).toEqual(["email", "dial"]);
+	});
+
+	it("renders an op recorded outside a replay immediately", () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.beginReplay();
+		surface.commitReplay();
+		// A `run` handler, an `on_tab_change`, a quick-action callback.
+		surface.add({ name: "dial" });
+		expect(names(surface)).toEqual(["email", "dial"]);
+	});
+
+	it("tells a source about its own work mid-replay, and only its own", () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.add({ name: "convert" });
+		surface.beginReplay();
+		// Last replay's `convert` is gone from the source's view the moment the
+		// new one opens, even though it is still what the host renders.
+		expect(surface.has("convert")).toBe(false);
+		expect(names(surface)).toEqual(["email", "convert"]);
+		surface.add({ name: "dial" });
+		expect(surface.has("dial")).toBe(true);
+		expect(names(surface)).toEqual(["email", "convert"]);
+	});
+
+	it("publishes only on the outermost commit of a nested replay", () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.beginReplay();
+		surface.add({ name: "convert" });
+		// A script calling `page.refresh()` from its own `refresh` handler.
+		surface.beginReplay();
+		surface.add({ name: "dial" });
+		surface.commitReplay();
+		expect(names(surface)).toEqual(["email"]);
+		surface.add({ name: "print" });
+		surface.commitReplay();
+		expect(names(surface)).toEqual(["email", "dial", "print"]);
+	});
+
+	it("ignores a commit with no replay open", () => {
+		const surface = new Surface();
+		builtins(surface, "email");
+		surface.add({ name: "convert" });
+		surface.commitReplay();
+		expect(names(surface)).toEqual(["email", "convert"]);
 	});
 });
 
