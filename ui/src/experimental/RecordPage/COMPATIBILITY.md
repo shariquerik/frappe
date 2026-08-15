@@ -41,7 +41,10 @@ What `page` is _for_ is a small, closed vocabulary:
   strip inside the record's details tab — it is the administrator editing the layout, and
   a tab there is a container of *fields*, so an `add` would have to invent fields. That is
   `page.dialog`'s job. On both surfaces a script **beats `depends_on` in both directions**:
-  `hide()` closes a tab the condition opened, `show()` opens one it closed.
+  `hide()` closes a tab the condition opened, `show()` opens one it closed. `formTabs`
+  additionally carries two members `fields` has no use for — `active` and `activate` — for
+  the plain reason that a strip has a reader standing on it and a field list does not. What
+  the subset excludes is **arrangement**, not reading or navigation.
 - **Two tab surfaces, and they are not interchangeable.** `page.tabs` means the **record**
   strip — activity, emails, files, details — and always will; `page.formTabs` means the
   Form Layout strip *inside* details. `page.tabs.active` returns a tab's **name**, because
@@ -49,6 +52,19 @@ What `page` is _for_ is a small, closed vocabulary:
   **identity** — a resolved address, since an administrator's tab may carry no name at all
   — or `''` when the reader is not in the form. The asymmetry is real; do not assume one
   from the other.
+- **`activate(name)` moves the reader; it is the only verb that does.** Both tab surfaces
+  carry it, each addressing its own strip and no other — `page.tabs.activate('emails')`,
+  `page.formTabs.activate('shipping')`. It is a **verb and not a writable `active`** on
+  purpose: `active` is *derived* from what the strip can currently show, so a script that
+  assigned a hidden or unknown name would read back something it never wrote. A verb can
+  say so instead. Naming a tab that is hidden, unknown, or on the other strip **warns in a
+  development build and does nothing** — activation does not reveal a hidden tab, because
+  `show()` is already the verb for that, and one act should not quietly perform two. The
+  name resolves against the strip as it stands at the moment of the call: an activation
+  fired before the tab exists misses, and is not queued.
+
+  > **In flight.** `activate` is decided but not yet shipped on either surface, so today
+  > it is absent from both. Delete this note when it ships.
 - **A closed event list** — `onRefresh`, `beforeSave`, `afterSave`, `onTabChange`,
   `onFormTabChange`, `<fieldname>`, and a child table's own family, written **nested under
   the table's fieldname**: a handler per child field, plus `onAdd` and `onRemove`.
@@ -158,6 +174,32 @@ const visible = page.meta.fields.filter((field) => !field.hidden);
 ```
 
 Both allocate something new, and what you do to it afterwards is your business.
+
+### The one hand-through: `page.router`
+
+Both rules above have exactly one standing exception. It is written down here because
+the engine claimed for a long time that it *was* written down here, and it was not.
+
+`page.router` is `host.router`, handed straight through. The outbound rule does not
+wrap it because it is vue-router's object rather than ours, and the inbound rule never
+catches it because nothing is being picked apart key by key — the whole dependency is
+the member.
+
+The cost is precisely the cost those rules exist to prevent, so it is worth saying
+plainly. A script calling `page.router.replace({ query: { … } })` is coupled to two
+things it does not own: vue-router's API, and **this host's URL scheme**. A stored
+script that names a query parameter goes on naming it after the host renames it, and
+nothing warns, because from `page`'s side nothing happened.
+
+It stays because withdrawing a shipped member is a break we have no reason to inflict,
+not because it earns its keep. Two rules bound it:
+
+- **No `page` capability may _require_ it.** Where reaching the router is the only way
+  to do something, that is a missing verb and the verb gets built. Moving the reader
+  between tabs was the case that established this: `activate()` exists on both tab
+  surfaces so that the capability is never spelled as a URL edit.
+- **It is not a precedent.** No second member is handed through on the strength of this
+  one.
 
 ## Asking what a host has
 

@@ -194,9 +194,13 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     },
     dialog: dialogs.api,
     call: (method, params) => call(method, params),
-    // The one member handed straight through, as COMPATIBILITY.md already
-    // admits: it is the router, not our object, so the read-only rule has
-    // nothing to say about it. Do not "fix" this either.
+    // The one member handed straight through: it is vue-router's object, not
+    // ours, so neither the inbound nor the outbound rule catches it. That is a
+    // real cost, not a technicality, and COMPATIBILITY.md's "The one
+    // hand-through" section now states it and the two rules that bound it —
+    // chiefly that no capability may *require* the router. Do not "fix" this
+    // by deleting the member, and do not hand a second one through on its
+    // precedent.
     router: host.router,
   };
 
