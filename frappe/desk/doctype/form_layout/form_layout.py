@@ -55,9 +55,7 @@ def get_form_layouts(dt: str, type: str):
 
 
 @frappe.whitelist()
-def save_form_layout(
-	dt: str, type: str, layout: str, name: str | None = None, condition: str | None = None
-):
+def save_form_layout(dt: str, type: str, layout: str, name: str | None = None, condition: str | None = None):
 	frappe.has_permission("Form Layout", "write", throw=True)
 	doc = find_layout_doc(dt, type, name)
 	doc.update({"dt": dt, "type": type, "layout": layout, "condition": condition})
@@ -98,7 +96,9 @@ def name_layout_containers(tabs: list):
 		tab["sections"] = [section for section in tab.get("sections") or [] if isinstance(section, dict)]
 		assign_names(tab["sections"], "section")
 		for section in tab["sections"]:
-			section["columns"] = [column for column in section.get("columns") or [] if isinstance(column, dict)]
+			section["columns"] = [
+				column for column in section.get("columns") or [] if isinstance(column, dict)
+			]
 			assign_names(section["columns"], "column")
 			for column in section["columns"]:
 				column["fields"] = [field for field in column.get("fields") or [] if field]
