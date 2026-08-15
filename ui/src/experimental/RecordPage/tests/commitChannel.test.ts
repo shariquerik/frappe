@@ -122,7 +122,7 @@ describe("createCommitChannel", () => {
     });
     commits.pending("qty", 3);
     await commits.flush();
-    order.push("before_save");
-    expect(order).toEqual(["qty", "before_save"]);
+    order.push("beforeSave");
+    expect(order).toEqual(["qty", "beforeSave"]);
   });
 });

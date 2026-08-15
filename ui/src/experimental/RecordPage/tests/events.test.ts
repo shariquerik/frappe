@@ -54,33 +54,33 @@ describe("fireEvent", () => {
     (mockedCall as any).mockReset();
   });
 
-  it("propagates a before_save throw so the host can abort the save", async () => {
+  it("propagates a beforeSave throw so the host can abort the save", async () => {
     registerRecordPage("CRM Deal", {
-      before_save: () => {
+      beforeSave: () => {
         throw new Error("Amount required");
       },
     });
     const controller = createRecordPage(makeHost());
-    await expect(controller.fireEvent("before_save")).rejects.toThrow(
+    await expect(controller.fireEvent("beforeSave")).rejects.toThrow(
       "Amount required",
     );
   });
 
-  it("stops later before_save handlers once one vetoes", async () => {
+  it("stops later beforeSave handlers once one vetoes", async () => {
     const ran: string[] = [];
     await withRegisteringSource("first", async () => {
       registerRecordPage("CRM Deal", {
-        before_save: () => {
+        beforeSave: () => {
           ran.push("first");
           throw new Error("veto");
         },
       });
     });
     await withRegisteringSource("second", async () => {
-      registerRecordPage("CRM Deal", { before_save: () => ran.push("second") });
+      registerRecordPage("CRM Deal", { beforeSave: () => ran.push("second") });
     });
     const controller = createRecordPage(makeHost());
-    await expect(controller.fireEvent("before_save")).rejects.toThrow("veto");
+    await expect(controller.fireEvent("beforeSave")).rejects.toThrow("veto");
     expect(ran).toEqual(["first"]);
   });
 
@@ -89,19 +89,57 @@ describe("fireEvent", () => {
     const ran: string[] = [];
     await withRegisteringSource("first", async () => {
       registerRecordPage("CRM Deal", {
-        refresh: () => {
+        onRefresh: () => {
           throw new Error("broken script");
         },
       });
     });
     await withRegisteringSource("second", async () => {
-      registerRecordPage("CRM Deal", { refresh: () => ran.push("second") });
+      registerRecordPage("CRM Deal", { onRefresh: () => ran.push("second") });
     });
     const controller = createRecordPage(makeHost());
     await controller.refresh();
     expect(ran).toEqual(["second"]);
     expect(errors).toHaveBeenCalled();
     errors.mockRestore();
+  });
+});
+
+// Ticket 74 respelled the four top-level keys to camelCase, a hard break with no
+// dual-accept: the old spellings are legal *fieldnames*, which is the collision the
+// rename exists to remove. Both halves are claims, not conventions.
+describe("the event vocabulary is camelCase (ticket 74)", () => {
+  beforeEach(() => resetRegistry());
+
+  it("never fires a handler under one of the retired snake_case keys", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const ran: string[] = [];
+    registerRecordPage("CRM Deal", {
+      refresh: () => ran.push("refresh"),
+      before_save: () => ran.push("before_save"),
+      after_save: () => ran.push("after_save"),
+      on_tab_change: () => ran.push("on_tab_change"),
+    });
+    const controller = createRecordPage(makeHost());
+
+    await controller.refresh();
+    for (const event of ["beforeSave", "afterSave", "onTabChange"])
+      await controller.fireEvent(event);
+
+    expect(ran).toEqual([]);
+  });
+
+  // `page.refresh()` is a different symbol from the `onRefresh` key and did not
+  // move: it is the imperative verb a handler calls to force its own replay.
+  it("keeps page.refresh() as the verb that re-fires onRefresh", async () => {
+    let fired = 0;
+    registerRecordPage("CRM Deal", { onRefresh: () => (fired += 1) });
+    const controller = createRecordPage(makeHost());
+    await controller.refresh();
+    expect(fired).toBe(1);
+
+    await controller.page.refresh();
+    expect(fired).toBe(2);
   });
 });
 
@@ -147,10 +185,10 @@ describe("unknown handler keys", () => {
   it("accepts events, fieldnames and a table's nested block", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     registerRecordPage("CRM Deal", {
-      refresh: () => {},
-      before_save: () => {},
-      after_save: () => {},
-      on_tab_change: () => {},
+      onRefresh: () => {},
+      beforeSave: () => {},
+      afterSave: () => {},
+      onTabChange: () => {},
       status: () => {},
       items: {
         onAdd: () => {},
@@ -228,7 +266,7 @@ describe("unknown handler keys", () => {
   it("warns once when a child doctype has a field named trigger (ticket 43 §3)", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     resetRowWarnings();
-    registerRecordPage("CRM Deal", { refresh: () => {} });
+    registerRecordPage("CRM Deal", { onRefresh: () => {} });
     const controller = createRecordPage(
       makeHost({
         meta: ref({ fields }),
@@ -260,7 +298,7 @@ describe("unknown handler keys", () => {
   it("warns when a child doctype has a field named onAdd or onRemove (ticket 54)", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     resetRowWarnings();
-    registerRecordPage("CRM Deal", { refresh: () => {} });
+    registerRecordPage("CRM Deal", { onRefresh: () => {} });
     await createRecordPage(
       makeHost({
         meta: ref({ fields }),
@@ -298,7 +336,7 @@ describe("unknown handler keys", () => {
   it("still warns when the child meta lands after the parent's", async () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     resetRowWarnings();
-    registerRecordPage("CRM Deal", { refresh: () => {} });
+    registerRecordPage("CRM Deal", { onRefresh: () => {} });
     let child: any[] | undefined = undefined;
     const controller = createRecordPage(
       makeHost({ meta: ref({ fields }), childFields: () => child }),
@@ -331,13 +369,13 @@ describe("unknown handler keys", () => {
     warnings.mockRestore();
   });
 
-  it("reports a handler throw, but never a before_save veto (ticket 19 §1)", async () => {
+  it("reports a handler throw, but never a beforeSave veto (ticket 19 §1)", async () => {
     withRegisteringSource("page-script:A", async () =>
       registerRecordPage("CRM Deal", {
-        refresh: () => {
+        onRefresh: () => {
           throw new Error("boom");
         },
-        before_save: () => {
+        beforeSave: () => {
           throw new Error("veto");
         },
       }),
@@ -345,11 +383,11 @@ describe("unknown handler keys", () => {
     const controller = createRecordPage(makeHost());
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await controller.fireEvent("refresh");
-    await expect(controller.fireEvent("before_save")).rejects.toThrow("veto");
+    await controller.fireEvent("onRefresh");
+    await expect(controller.fireEvent("beforeSave")).rejects.toThrow("veto");
 
-    expect(reportedFailures()).toContain("page-script:A.refresh");
-    expect(reportedFailures()).not.toContain("page-script:A.before_save");
+    expect(reportedFailures()).toContain("page-script:A.onRefresh");
+    expect(reportedFailures()).not.toContain("page-script:A.beforeSave");
   });
 });
 
@@ -358,7 +396,7 @@ describe("the replay clears the field overlay too (ticket 42)", () => {
     let stage = "Open";
     registerRecordPage("CRM Deal", {
       // No `else` branch anywhere: the overlay is gone before every re-fire.
-      refresh: (page) => {
+      onRefresh: (page) => {
         if (stage === "Won") page.fields.hide("discount");
       },
     });
@@ -380,7 +418,7 @@ describe("the replay clears the field overlay too (ticket 42)", () => {
   // on the previous replay for the rest of the session.
   it("commits what a failed replay managed to record", async () => {
     registerRecordPage("CRM Deal", {
-      refresh: (page) => {
+      onRefresh: (page) => {
         page.fields.hide("discount");
         throw new Error("boom");
       },

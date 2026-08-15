@@ -45,7 +45,7 @@ describe("the customization error reporter", () => {
   it("truncates before the request, not just at the server", () => {
     const error = new Error("m".repeat(5000));
     error.stack = "s".repeat(9000);
-    reportCustomizationError(error, { source: "host", event: "refresh" });
+    reportCustomizationError(error, { source: "host", event: "onRefresh" });
 
     expect(payload().message).toHaveLength(1000);
     expect(payload().stack).toHaveLength(4000);
@@ -55,14 +55,14 @@ describe("the customization error reporter", () => {
     for (let attempt = 0; attempt < 5; attempt++)
       reportCustomizationError(new Error("boom"), {
         source: "page-script:A",
-        event: "refresh",
+        event: "onRefresh",
       });
 
     expect(call).toHaveBeenCalledTimes(1);
   });
 
   it("still reports the same source's other events", () => {
-    for (const event of ["refresh", "after_save"])
+    for (const event of ["onRefresh", "afterSave"])
       reportCustomizationError(new Error("boom"), {
         source: "page-script:A",
         event,
@@ -75,7 +75,7 @@ describe("the customization error reporter", () => {
     const report = () =>
       reportCustomizationError(new Error("boom"), {
         source: "page-script:A",
-        event: "refresh",
+        event: "onRefresh",
       });
     report();
     resetCustomizationErrorReports();
@@ -142,7 +142,7 @@ describe("the customization error reporter", () => {
     });
     reportCustomizationError(error, {
       source: "page-script:A",
-      event: "refresh",
+      event: "onRefresh",
     });
 
     expect(call).toHaveBeenCalledTimes(1);

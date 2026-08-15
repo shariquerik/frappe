@@ -63,7 +63,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "default": "export default {\n\trefresh(page) {\n\t}\n}\n",
+   "default": "export default {\n\tonRefresh(page) {\n\t}\n}\n",
    "description": "An ES module whose default export is an object of event handlers. May import vue, vue-router, frappe-ui and @framework/ui; nothing else resolves.",
    "fieldname": "script",
    "fieldtype": "Code",

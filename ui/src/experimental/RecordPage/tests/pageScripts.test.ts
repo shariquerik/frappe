@@ -38,7 +38,7 @@ describe("the Page Script tier", () => {
     call.mockReset();
     toast.error.mockReset();
     evaluatePageScript.mockReset();
-    evaluatePageScript.mockImplementation(async () => ({ refresh: () => {} }));
+    evaluatePageScript.mockImplementation(async () => ({ onRefresh: () => {} }));
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -59,7 +59,7 @@ describe("the Page Script tier", () => {
     respond(["broken", "fine"]);
     evaluatePageScript.mockImplementation(async (row: { name: string }) => {
       if (row.name === "broken") throw new SyntaxError("Unexpected token");
-      return { refresh: () => {} };
+      return { onRefresh: () => {} };
     });
     await loadPageScripts("CRM Deal");
     expect(sources()).toEqual(["page-script:fine"]);

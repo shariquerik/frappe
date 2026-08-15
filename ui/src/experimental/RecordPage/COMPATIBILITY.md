@@ -33,16 +33,29 @@ What `page` is _for_ is a small, closed vocabulary:
 - **Four surfaces** — `quickActions`, `headerActions`, `tabs`, `panelSections` — each
   speaking the same **seven verbs**: `add`, `hide`, `show`, `update`, `move`, `has`,
   `order`.
-- **A fifth, `fields`**, speaking a strict subset of them — `hide`, `show`, `update`,
-  `has`, `get`. The subset is the point: the other four arrange items a script may
-  also create, while fields are authored elsewhere and a script only overrides their
-  properties, so there is no `add`, `move` or `order` to mean anything.
-- **A closed event list** — `refresh`, `before_save`, `after_save`, `on_tab_change`,
-  `<fieldname>`, and a child table's own family, written **nested under the table's
-  fieldname**: a handler per child field, plus `onAdd` and `onRemove`.
+- **Two more, `fields` and `formTabs`**, speaking a strict subset of them — `hide`,
+  `show`, `update`, `has`, `get`. The subset is the point: the other four arrange items
+  a script may also create, while these are authored elsewhere and a script only
+  overrides their properties, so there is no `add`, `move` or `order` to mean anything.
+  For `fields` the author is the DocType; for `formTabs` — the **Form Layout tabs**, the
+  strip inside the record's details tab — it is the administrator editing the layout, and
+  a tab there is a container of *fields*, so an `add` would have to invent fields. That is
+  `page.dialog`'s job. On both surfaces a script **beats `depends_on` in both directions**:
+  `hide()` closes a tab the condition opened, `show()` opens one it closed.
+- **Two tab surfaces, and they are not interchangeable.** `page.tabs` means the **record**
+  strip — activity, emails, files, details — and always will; `page.formTabs` means the
+  Form Layout strip *inside* details. `page.tabs.active` returns a tab's **name**, because
+  those tabs are named by whoever wrote them; `page.formTabs.active` returns an
+  **identity** — a resolved address, since an administrator's tab may carry no name at all
+  — or `''` when the reader is not in the form. The asymmetry is real; do not assume one
+  from the other.
+- **A closed event list** — `onRefresh`, `beforeSave`, `afterSave`, `onTabChange`,
+  `onFormTabChange`, `<fieldname>`, and a child table's own family, written **nested under
+  the table's fieldname**: a handler per child field, plus `onAdd` and `onRemove`.
 
   ```js
   export default {
+    onRefresh(page) {},
     status(page) {},
     products: {
       onAdd(page, row) {},
@@ -52,22 +65,40 @@ What `page` is _for_ is a small, closed vocabulary:
   }
   ```
 
+  > **In flight.** One entry above is decided but not yet shipped:
+  > `onFormTabChange` arrives with `page.formTabs`, and until it does, that key is an
+  > unknown key and does not fire. Delete this note when it ships.
+
   Internally these are one flat keyspace — `products.qty`, `products.onAdd` — joined
   on the one character a Frappe fieldname structurally cannot contain, so a child
-  field can never collide with a parent one. The two lifecycle names are `on`-prefixed
-  because `add` is a legal, unreserved fieldname and `products.add` would otherwise be
-  the same string as the commit event of a child field called `add`. That prefix is a
-  convention rather than a guarantee — no fieldname *has* to be lowercase — so a child
-  doctype carrying `onAdd` or `onRemove` is warned about by name at load, **in a
-  development build**. Where it collides, editing that field on a row fires the table's
-  lifecycle handler: the hole is announced, but it is a misfire, not an inert gap.
+  field can never collide with a parent one. **Every event name in that keyspace is
+  `on`-prefixed or camelCased for one reason**: the alternative is a legal fieldname.
+  `products.add` would be the same string as the commit event of a child field called
+  `add`, and `refresh`, `before_save` and `after_save` are all spellings a real field
+  can carry — which is why the top-level keys read `onRefresh`, `beforeSave`,
+  `afterSave`, `onTabChange`. Those four were respelled from snake_case as a **hard
+  break**: the old spellings are now unknown keys, warned about once and never fired.
+  Dual-accepting both would have put the collision back permanently.
+
+  The `on` prefix is a convention rather than a guarantee — no fieldname *has* to be
+  lowercase — so a child doctype carrying `onAdd` or `onRemove` is warned about by name
+  at load, **in a development build**. Where it collides, editing that field on a row
+  fires the table's lifecycle handler: the hole is announced, but it is a misfire, not
+  an inert gap.
+- **Both tab events fire on a change, never on arrival.** A tab event means the active tab
+  *changed* — by a click, by a script hiding the tab the reader was on, or by a `depends_on`
+  condition taking it away. It does not fire on first paint, and a strip that is torn down
+  and rebuilt is a first paint again: returning to the details tab restores where the reader
+  was without announcing it, because that move is the *record* strip's and `onTabChange`
+  has already reported it. A script that wants the tab on load reads `page.formTabs.active`
+  in `onRefresh` — which is what "state lives on `page`" is for.
 - **One rule for a handler's arguments: its key decides them.** A top-level key gets
   `(page)`; one nested under a table gets `(page, row)`, except `onRemove`, whose
   row is gone. The row is an address, not a payload — `page.rows('products')`
   hands you the same handles in any handler at all.
 - **A handful of contracts**: every `page.dialog` verb resolves `null` when the reader
   dismissed the dialog, so `if (!result) return` is always the idiom; a throw in
-  `before_save` blocks the save; a handler that throws is isolated, half-applied, and
+  `beforeSave` blocks the save; a handler that throws is isolated, half-applied, and
   does not take other scripts down with it.
 
 These are deliberately small, closed, and shaped like frappe rather than like the

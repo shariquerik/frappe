@@ -179,7 +179,7 @@
 							class="min-h-0 flex-1"
 							language="javascript"
 							:style="{ '--cm-max-height': '100%' }"
-							placeholder="export default { refresh(page) {} }"
+							placeholder="export default { onRefresh(page) {} }"
 						/>
 						<!-- The import surface is enforced, never stated. Not
 						     dismissible: a lint you can dismiss while it is still true

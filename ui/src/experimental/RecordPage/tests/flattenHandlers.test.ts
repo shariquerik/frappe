@@ -11,12 +11,12 @@ describe("flattenHandlers", () => {
   it("flattens a table's block onto dotted keys", () => {
     const qty = () => {};
     const flat = flattenHandlers(
-      { refresh: noop, products: { onAdd: noop, qty } },
+      { onRefresh: noop, products: { onAdd: noop, qty } },
       "host",
       "CRM Deal",
     );
     expect(Object.keys(flat)).toEqual([
-      "refresh",
+      "onRefresh",
       "products.onAdd",
       "products.qty",
     ]);
@@ -107,7 +107,7 @@ describe("flattenHandlers", () => {
   // A doctype may have a field called `constructor`, and an inherited hit would
   // dispatch that field's commit to `Object.prototype`.
   it("answers only with what the author wrote", () => {
-    const flat = flattenHandlers({ refresh: noop }, "host", "CRM Deal");
+    const flat = flattenHandlers({ onRefresh: noop }, "host", "CRM Deal");
     expect(flat["constructor"]).toBeUndefined();
     expect(flat["toString"]).toBeUndefined();
   });

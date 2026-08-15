@@ -109,7 +109,7 @@ describe("page.dialog.form and open", () => {
 
   it("tags the open with the source that ran", async () => {
     registerRecordPage("CRM Deal", {
-      refresh: (page) => {
+      onRefresh: (page) => {
         page.dialog.form({ fields: [] });
       },
     });
@@ -154,7 +154,7 @@ describe("page.dialog.form and open", () => {
   it("warns, naming the source, when a verb fires during a replay", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     registerRecordPage("CRM Deal", {
-      refresh: (page) => {
+      onRefresh: (page) => {
         page.dialog.form({ fields: [] });
       },
     });

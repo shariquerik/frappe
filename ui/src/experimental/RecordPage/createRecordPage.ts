@@ -1,7 +1,7 @@
 // Builds the curated `page` and the controller that fires events into it.
 // Handlers run serially in run order, each in its own try/catch: a thrower is
 // skipped half-applied, never taking the page or another source down with it.
-// The one exception is `before_save`, the veto point: its throw aborts the save.
+// The one exception is `beforeSave`, the veto point: its throw aborts the save.
 import { ref, type Ref } from "vue";
 import type { Router } from "vue-router";
 import { call, toast } from "frappe-ui";
@@ -31,10 +31,10 @@ import type {
 
 /** The closed event vocabulary (wayfinder ticket 14); every other key is a fieldname. */
 export const RECORD_PAGE_EVENTS = [
-  "refresh",
-  "before_save",
-  "after_save",
-  "on_tab_change",
+  "onRefresh",
+  "beforeSave",
+  "afterSave",
+  "onTabChange",
 ];
 
 // Everything `page` hands back is read-only (ticket 47), and each member names
@@ -216,7 +216,7 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
     // flush, so the host only ever sees a replay's result.
     for (const surface of surfaces) surface.beginReplay();
     try {
-      await fireEvent("refresh");
+      await fireEvent("onRefresh");
     } finally {
       // In `finally` so a throwing handler cannot leave the page staged, which
       // would freeze the overlay on the previous replay for good.
@@ -237,10 +237,10 @@ export function createRecordPage(host: RecordPageHost): RecordPageController {
         try {
           await handler(page, handle);
         } catch (error) {
-          // `before_save` rethrows to abort the save, and is the one catch site
+          // `beforeSave` rethrows to abort the save, and is the one catch site
           // that does not report: the user is looking straight at a failed save,
           // so logging it would file a working veto as an error.
-          if (event === "before_save") throw error;
+          if (event === "beforeSave") throw error;
           console.error(
             `[record-page] ${source}.${event} on ${host.doctype} threw`,
             error,

@@ -275,13 +275,13 @@ describe("the Page Script editor", () => {
     create.mockResolvedValue({ name: "third" });
     list.mockResolvedValue(rows("oldest", "newest", "third"));
 
-    await editor.create("third", "export default { refresh(page) {} }");
+    await editor.create("third", "export default { onRefresh(page) {} }");
 
     expect(create).toHaveBeenCalledWith({
       name: "third",
       dt: "CRM Deal",
       run_order: 3,
-      script: "export default { refresh(page) {} }",
+      script: "export default { onRefresh(page) {} }",
     });
   });
 

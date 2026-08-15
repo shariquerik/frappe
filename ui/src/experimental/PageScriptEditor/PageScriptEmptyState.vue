@@ -100,7 +100,7 @@ const STARTERS = [
 		code: "page.quickActions.add({ name, label, icon, run })",
 		icon: "lucide-mouse-pointer-click",
 		script: `export default {
-  refresh(page) {
+  onRefresh(page) {
     page.quickActions.add({
       name: 'renew',
       label: 'Renew',
@@ -118,7 +118,7 @@ const STARTERS = [
 		code: "page.dialog.form({ title, doctype, fieldnames })",
 		icon: "lucide-square-arrow-out-up-right",
 		script: `export default {
-  refresh(page) {
+  onRefresh(page) {
     page.quickActions.add({
       name: 'log_call',
       label: 'Log a call',
@@ -146,7 +146,7 @@ const STARTERS = [
 		code: "if (!page.roles.includes(…)) page.panelSections.hide(…)",
 		icon: "lucide-eye-off",
 		script: `export default {
-  refresh(page) {
+  onRefresh(page) {
     // Replace 'financials' with a section from this doctype's side panel —
     // hide() on a name that isn't there is a no-op, not an error.
     // Hiding is not enforcement — the server still decides who may read it.

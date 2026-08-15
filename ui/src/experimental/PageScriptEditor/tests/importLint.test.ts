@@ -76,7 +76,7 @@ describe("unresolvableImports", () => {
   });
 
   it("says nothing about a script with no imports", () => {
-    expect(unresolvableImports(`export default { refresh(page) {} }`)).toEqual(
+    expect(unresolvableImports(`export default { onRefresh(page) {} }`)).toEqual(
       [],
     );
   });

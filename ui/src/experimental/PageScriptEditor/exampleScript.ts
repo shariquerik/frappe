@@ -11,7 +11,7 @@
 export const EXAMPLE_SCRIPT = `import { toast } from 'frappe-ui'
 
 export default {
-  refresh(page) {
+  onRefresh(page) {
     page.quickActions.add(
       {
         name: 'renew',

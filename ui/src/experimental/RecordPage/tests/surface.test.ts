@@ -133,7 +133,7 @@ describe("staged replay", () => {
 		builtins(surface, "email");
 		surface.beginReplay();
 		surface.commitReplay();
-		// A `run` handler, an `on_tab_change`, a quick-action callback.
+		// A `run` handler, an `onTabChange`, a quick-action callback.
 		surface.add({ name: "dial" });
 		expect(names(surface)).toEqual(["email", "dial"]);
 	});
@@ -179,10 +179,10 @@ describe("staged replay", () => {
 describe("registry run order", () => {
 	it("keeps sources in registration order, generic before specific within one", async () => {
 		resetRegistry();
-		registerRecordPage("CRM Deal", { refresh: () => {} });
-		registerRecordPage("*", { refresh: () => {} });
+		registerRecordPage("CRM Deal", { onRefresh: () => {} });
+		registerRecordPage("*", { onRefresh: () => {} });
 		await withRegisteringSource("audit", async () => {
-			registerRecordPage("CRM Deal", { refresh: () => {} });
+			registerRecordPage("CRM Deal", { onRefresh: () => {} });
 		});
 		const order = registrationsFor("CRM Deal").map(
 			(registration) => `${registration.source}:${registration.doctype}`,

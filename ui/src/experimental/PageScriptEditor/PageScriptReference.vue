@@ -26,7 +26,7 @@
 			<dd class="text-ink-gray-7">{{ SHARED_DEPS.join(" · ") }}</dd>
 			<dt class="text-ink-gray-5">Handlers</dt>
 			<dd class="text-ink-gray-7">
-				refresh · before_save (a throw aborts the save) · after_save · on_tab_change ·
+				onRefresh · beforeSave (a throw aborts the save) · afterSave · onTabChange ·
 				&lt;fieldname&gt;. A child table's handlers nest under its fieldname
 				— a handler per child field, plus <code>onAdd</code> and
 				<code>onRemove</code> — and each receives the row it happened to:

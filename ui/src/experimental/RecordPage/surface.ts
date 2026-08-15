@@ -24,7 +24,7 @@ export const BUILTIN = "builtin";
 export class Surface<Item extends SurfaceItem = SurfaceItem> implements SurfaceVerbs<Item> {
 	private ops: Op<Item>[] = reactive([]);
 	// Where a replay's ops accumulate until it commits. Non-null only inside a
-	// replay: ops recorded anywhere else -- a `run` handler, `on_tab_change`, a
+	// replay: ops recorded anywhere else -- a `run` handler, `onTabChange`, a
 	// quick-action callback -- go straight to `ops` and render immediately, as
 	// they always have. Staging is a property of the replay, not of the surface.
 	private pending: Op<Item>[] | null = null;
