@@ -34,6 +34,8 @@ export {
 export type { Removal } from "./pageCompatibility";
 export { createPagePermissions } from "./pagePermissions";
 export type { PagePermissions, PagePermissionsHost } from "./pagePermissions";
+export { HeaderActionsSurface, projectHeaderActions } from "./headerRenderings";
+export type { HeaderBand, HeaderControl, HeaderProjection } from "./headerRenderings";
 export { Surface, BUILTIN } from "./surface";
 export type { ResolvedItem } from "./surface";
 export { FieldsSurface, resetFieldWarnings } from "./fields";

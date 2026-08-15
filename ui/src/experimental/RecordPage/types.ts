@@ -20,9 +20,24 @@ export interface QuickAction extends SurfaceItem {
   run?: (page: RecordPageApi) => any;
 }
 
+/**
+ * An action in the record's header. `display` picks which of the three v1
+ * renderings it gets: a top-level button of its own, a top-level dropdown
+ * button of its own, or — omitted, the default — an entry in the shared `⋯`.
+ *
+ * A `dropdown` is an ordinary addressable item that carries the label and the
+ * icon, and its members point at it with `group`. That **overloads `group`**:
+ * naming a `dropdown` item means membership, while any other value keeps its
+ * original meaning, the adjacency band this action joins inside `⋯`.
+ *
+ * How many top-level controls fit is the host's business and a script cannot
+ * observe it: one that does not fit is demoted into `⋯`, which is `add`'s
+ * promise — that the item is *reachable* — being kept.
+ */
 export interface HeaderAction extends SurfaceItem {
   label: string;
-  /** The menu band this action joins; omitted means `actions`. */
+  display?: "button" | "dropdown";
+  /** The dropdown this action joins, else the menu band; omitted means `actions`. */
   group?: string;
   run?: (page: RecordPageApi) => any;
 }

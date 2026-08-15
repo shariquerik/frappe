@@ -16,6 +16,7 @@ import { holdsChildRows } from "../../components/Fields/rowIdentity";
 import type { RowAddress } from "../../components/Fields/types";
 import { FieldsSurface, LAYOUT_BREAKS } from "./fields";
 import { FormTabsSurface } from "./formTabs";
+import { HeaderActionsSurface } from "./headerRenderings";
 import { ROW_EVENTS } from "./flattenHandlers";
 import { withRemovals } from "./pageCompatibility";
 import { createPagePermissions } from "./pagePermissions";
@@ -25,7 +26,6 @@ import { reportCustomizationError } from "./reportError";
 import { createRows, warnRowIssue } from "./rows";
 import { Surface } from "./surface";
 import type {
-  HeaderAction,
   PanelSectionItem,
   QuickAction,
   RecordPageApi,
@@ -116,7 +116,7 @@ export interface RecordPageHost {
 export interface RecordPageController {
   page: RecordPageApi;
   quickActions: Surface<QuickAction>;
-  headerActions: Surface<HeaderAction>;
+  headerActions: HeaderActionsSurface;
   tabs: Surface<TabItem>;
   panelSections: Surface<PanelSectionItem>;
   /** Field property overrides; the host feeds `resolve()` to its layout source. */
@@ -143,7 +143,7 @@ export interface RecordPageController {
 
 export function createRecordPage(host: RecordPageHost): RecordPageController {
   const quickActions = new Surface<QuickAction>();
-  const headerActions = new Surface<HeaderAction>();
+  const headerActions = new HeaderActionsSurface();
   const tabs = new Surface<TabItem>();
   const panelSections = new Surface<PanelSectionItem>();
   const permissions = createPagePermissions(host);

@@ -72,6 +72,42 @@ What `page` is _for_ is a small, closed vocabulary:
 
   > **In flight.** `activate` is decided but not yet shipped on either surface, so today
   > it is absent from both. Delete this note when it ships.
+- **Three header renderings, from one flat list.** A `headerActions` item carries
+  `display`: `'button'` gives it a top-level button of its own, `'dropdown'` gives it a
+  top-level dropdown button of its own, and omitting it — the default — leaves it an entry
+  in the shared `⋯`. Nothing nests: a dropdown is an ordinary, addressable item that
+  carries the label and the icon, and its members point at it with `group`. So
+  `hide('telephony')` removes the whole control, and a dropdown is placed by **its own**
+  position, never by its first member's.
+
+  That **overloads `group`**, which is the cost of keeping the list flat: naming a
+  `dropdown` item means membership, while any other value keeps its original meaning — the
+  adjacency band the item joins inside `⋯`.
+
+  ```js
+  page.headerActions.add({ name: 'refresh_quote', label: 'Refresh Quote', display: 'button' })
+  page.headerActions.add({ name: 'telephony', label: 'Telephony', display: 'dropdown' })
+  page.headerActions.add({ name: 'call', label: 'Call customer', group: 'telephony' })
+  ```
+
+  **Position orders items only within one rendering.** An anchor naming an item that
+  renders somewhere else still splices exactly where it always did — and warns in a
+  development build, because the author asked for "after Refresh Quote" and the reader got
+  "below Delete".
+- **How many top-level controls fit is the host's business, and a script cannot observe
+  it.** An item that does not fit is **demoted into `⋯`**, keeping its own band ahead of
+  the built-ins and in the order it asked for; a dropdown collapses whole, under its label.
+  That is `add`'s promise — that the item is *reachable* — being kept, so there is no
+  signal and nothing to branch on: `visible()` means *not hidden*, never *on screen where
+  you asked*. A dropdown whose members are all hidden is a button that opens nothing, so it
+  neither renders nor takes up room, while staying addressable. Which item loses is stated
+  over the one flat order — the last one loses first — so `order()` and `move()` are the
+  priority knob and there is no `priority` key. A promoted built-in
+  (`update('delete', { display: 'button' })` is allowed, like any other update) is ordered
+  and demoted by that same rule, with no exception for where it came from.
+- **`Save` is not on this surface and never will be.** It is not an item on
+  `headerActions`, so it cannot be hidden, relabelled, reordered or demoted, and
+  `hide('save')` reaches nothing. It is the one control the reader must always find.
 - **A closed event list** — `onRefresh`, `beforeSave`, `afterSave`, `onTabChange`,
   `onFormTabChange`, `<fieldname>`, and a child table's own family, written **nested under
   the table's fieldname**: a handler per child field, plus `onAdd` and `onRemove`.
