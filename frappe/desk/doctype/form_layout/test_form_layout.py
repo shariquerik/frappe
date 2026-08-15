@@ -4,7 +4,13 @@
 import json
 
 import frappe
-from frappe.desk.doctype.form_layout.form_layout import get_form_layouts, parse_layout
+from frappe.desk.doctype.form_layout.form_layout import (
+	deduplicate_names,
+	get_form_layouts,
+	named_layout,
+	parse_layout,
+)
+from frappe.patches.v16_0.persist_form_layout_names import execute as persist_names
 from frappe.tests import IntegrationTestCase
 
 
@@ -69,6 +75,109 @@ class TestFormLayout(IntegrationTestCase):
 		second = get_form_layouts("Note", "Details")["fallback"]
 		self.assertTrue(first)
 		self.assertEqual(json.dumps(first, sort_keys=True), json.dumps(second, sort_keys=True))
+
+	def test_names_are_stored_at_write_time(self):
+		tree = [{"label": "Lead Details", "sections": [{"label": "Who", "columns": [{"fields": ["title"]}]}]}]
+		doc = make_layout(layout=json.dumps(tree)).insert()
+		stored = json.loads(frappe.db.get_value("Form Layout", doc.name, "layout"))
+		self.assertEqual(stored[0]["name"], "lead_details")
+		self.assertEqual(stored[0]["sections"][0]["name"], "who")
+		self.assertEqual(stored[0]["sections"][0]["columns"][0]["name"], "column_1")
+
+	def test_stored_name_survives_a_label_rename(self):
+		tree = [{"label": "Lead Details", "sections": []}]
+		doc = make_layout(layout=json.dumps(tree)).insert()
+		stored = json.loads(doc.layout)
+		stored[0]["label"] = "Everything Else"
+		doc.layout = json.dumps(stored)
+		doc.save()
+		self.assertEqual(json.loads(doc.layout)[0]["name"], "lead_details")
+
+	def test_tabless_layout_is_stored_without_a_wrapper(self):
+		tree = [{"label": "Who", "columns": [{"fields": ["title"]}]}]
+		doc = make_layout(layout=json.dumps(tree)).insert()
+		stored = json.loads(doc.layout)
+		self.assertEqual(len(stored), 1)
+		self.assertEqual(stored[0]["name"], "who")
+		self.assertNotIn("sections", stored[0])
+
+	def test_duplicate_authored_names_are_rejected(self):
+		tree = [{"name": "details", "sections": []}, {"name": "details", "sections": []}]
+		self.assertRaises(frappe.ValidationError, make_layout(layout=json.dumps(tree)).insert)
+
+	def test_duplicate_names_are_rejected_at_every_level(self):
+		sections = [{"name": "who", "columns": []}, {"name": "who", "columns": []}]
+		self.assertRaises(
+			frappe.ValidationError, make_layout(layout=json.dumps([{"sections": sections}])).insert
+		)
+		columns = [{"name": "left", "fields": []}, {"name": "left", "fields": []}]
+		tree = [{"sections": [{"columns": columns}]}]
+		self.assertRaises(frappe.ValidationError, make_layout(layout=json.dumps(tree)).insert)
+
+	def test_invalid_layout_is_rejected(self):
+		self.assertRaises(frappe.ValidationError, make_layout(layout="{not json").insert)
+		self.assertRaises(frappe.ValidationError, make_layout(layout='{"tabs": []}').insert)
+
+	def test_repair_freezes_the_identity_the_reader_sees(self):
+		tree = [{"label": "Contact  Details!", "sections": [{"columns": []}]}]
+		named = json.loads(named_layout(json.dumps(tree)))
+		self.assertEqual(named[0]["name"], "contact_details")
+		self.assertEqual(named[0]["sections"][0]["name"], "section_1")
+
+	def test_repair_renames_duplicates_the_way_the_form_does(self):
+		tree = [{"name": "details", "sections": []}, {"name": "details", "sections": []}]
+		named = json.loads(named_layout(json.dumps(tree)))
+		self.assertEqual([tab["name"] for tab in named], ["details", "details-2"])
+
+	def test_repair_is_idempotent(self):
+		tree = [{"name": "details", "sections": []}, {"name": "details", "sections": []}]
+		once = named_layout(json.dumps(tree))
+		self.assertEqual(named_layout(once), once)
+
+	def test_unreadable_layouts_are_not_repaired(self):
+		self.assertIsNone(named_layout("{not json"))
+		self.assertIsNone(named_layout('{"tabs": []}'))
+		self.assertIsNone(named_layout(None))
+
+	def test_deduplicate_names_repairs_a_synthesized_collision(self):
+		# What `get_meta_layout` hits when a Tab Break's fieldname is literally `first_tab`.
+		tabs = [{"name": "first_tab", "sections": []}, {"name": "first_tab", "sections": []}]
+		deduplicate_names(tabs)
+		self.assertEqual([tab["name"] for tab in tabs], ["first_tab", "first_tab-2"])
+
+	def test_migration_names_stored_rows_without_touching_modified(self):
+		doc = make_layout().insert()
+		tree = [{"name": "lead_details", "sections": []}, {"name": "lead_details", "sections": []}]
+		# Straight to the table: the point is a row that never passed `validate`.
+		frappe.db.set_value("Form Layout", doc.name, "layout", json.dumps(tree), update_modified=False)
+		modified = frappe.db.get_value("Form Layout", doc.name, "modified")
+
+		persist_names()
+
+		stored = json.loads(frappe.db.get_value("Form Layout", doc.name, "layout"))
+		self.assertEqual([tab["name"] for tab in stored], ["lead_details", "lead_details-2"])
+		self.assertEqual(frappe.db.get_value("Form Layout", doc.name, "modified"), modified)
+
+		persist_names()
+		self.assertEqual(json.loads(frappe.db.get_value("Form Layout", doc.name, "layout")), stored)
+
+	def test_migration_does_not_move_what_a_reader_already_resolves(self):
+		doc = make_layout().insert()
+		tree = [{"label": "Lead Details", "sections": [{"columns": [{"fields": ["title"]}]}]}]
+		frappe.db.set_value("Form Layout", doc.name, "layout", json.dumps(tree), update_modified=False)
+		before = get_form_layouts("Note", "Details")["layouts"]
+
+		persist_names()
+
+		self.assertEqual(get_form_layouts("Note", "Details")["layouts"], before)
+
+	def test_fallback_names_are_unique(self):
+		tabs = get_form_layouts("Note", "Details")["fallback"]
+		names = [tab["name"] for tab in tabs]
+		self.assertEqual(len(names), len(set(names)))
+		for tab in tabs:
+			section_names = [section["name"] for section in tab["sections"]]
+			self.assertEqual(len(section_names), len(set(section_names)))
 
 	def test_rows_come_back_as_authored(self):
 		tree = [{"name": "main", "sections": [{"name": "who", "columns": [{"fields": ["title"]}]}]}]

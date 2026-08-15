@@ -49,9 +49,13 @@ What `page` is _for_ is a small, closed vocabulary:
   strip — activity, emails, files, details — and always will; `page.formTabs` means the
   Form Layout strip *inside* details. `page.tabs.active` returns a tab's **name**, because
   those tabs are named by whoever wrote them; `page.formTabs.active` returns an
-  **identity** — a resolved address, since an administrator's tab may carry no name at all
-  — or `''` when the reader is not in the form. The asymmetry is real; do not assume one
-  from the other.
+  **identity** — a resolved address — or `''` when the reader is not in the form. The
+  asymmetry is real; do not assume one from the other. An identity is **safe to store in a
+  script**: a Form Layout is named when it is *saved*, once and for good, so renaming a
+  tab's label or dragging an unlabelled one leaves its address alone. It reads as an
+  identity rather than a name because `FormLayout` resolves it itself — it renders in
+  dialogs too, where nothing has named the tabs — not because an administrator's tab might
+  be nameless. It no longer can be.
 - **`activate(name)` moves the reader; it is the only verb that does.** Both tab surfaces
   carry it, each addressing its own strip and no other — `page.tabs.activate('emails')`,
   `page.formTabs.activate('shipping')`. It is a **verb and not a writable `active`** on
