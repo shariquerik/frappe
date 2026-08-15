@@ -81,23 +81,48 @@ What `page` is _for_ is a small, closed vocabulary:
   `onFormTabChange` fire on any cause; `activate` is the first verb that lets a handler
   cause the event it is handling, so activating from inside one is yours to make
   terminate.
-- **Three header renderings, from one flat list.** A `headerActions` item carries
+- **The header's renderings come from one flat list.** A `headerActions` item carries
   `display`: `'button'` gives it a top-level button of its own, `'dropdown'` gives it a
-  top-level dropdown button of its own, and omitting it — the default — leaves it an entry
-  in the shared `⋯`. Nothing nests: a dropdown is an ordinary, addressable item that
-  carries the label and the icon, and its members point at it with `group`. So
-  `hide('telephony')` removes the whole control, and a dropdown is placed by **its own**
-  position, never by its first member's.
+  top-level dropdown button of its own, `'section'` gives it a titled band, and omitting it
+  — the default — leaves it an ordinary entry in the shared `⋯`.
 
-  That **overloads `group`**, which is the cost of keeping the list flat: naming a
-  `dropdown` item means membership, while any other value keeps its original meaning — the
-  adjacency band the item joins inside `⋯`.
+  A `dropdown` and a `section` are **containers**: ordinary, addressable items that carry
+  the label and the icon, differing only in when their members are visible — a dropdown
+  hides them behind a trigger, a section shows them under a grey title. So
+  `hide('telephony')` removes the whole control, members and all, however deep they sit,
+  and a container is placed by **its own** position, never by its first member's.
+
+  **`group` has one meaning: _put me inside the item named this._** If an item of that name
+  is declared, you get what it declares; if nothing of that name exists, the engine
+  synthesises an **anonymous, untitled container** — the adjacency band inside `⋯` that an
+  omitted `group` (meaning `actions`) has always given. So **a band shows a heading iff its
+  container is declared**, and a script that never declared one never grows headings.
 
   ```js
   page.headerActions.add({ name: 'refresh_quote', label: 'Refresh Quote', display: 'button' })
-  page.headerActions.add({ name: 'telephony', label: 'Telephony', display: 'dropdown' })
-  page.headerActions.add({ name: 'call', label: 'Call customer', group: 'telephony' })
+  page.headerActions.add([
+    { name: 'telephony', label: 'Telephony', display: 'dropdown' },
+    { name: 'call', label: 'Call customer', group: 'telephony' },
+    { name: 'danger', label: 'Danger', display: 'section', group: 'telephony' },
+    { name: 'wipe', label: 'Wipe call log', group: 'danger' },
+  ])
   ```
+
+  **The list you write stays flat; only the rendering nests.** A container that points at
+  another container renders inside it — a dropdown as a submenu, a section as a titled band
+  — so every item keeps one name and `hide`, `move` and `order` still reach all of them.
+  Nesting stops at **two containers**: deeper, and a `group` cycle, are clamped to the
+  deepest level they can reach and warned about in a development build. A container never
+  runs — its `run` warns and does nothing; the items inside it run.
+
+  A section's `icon` is part of the item — it is what makes the section
+  addressable, and `update('danger', { icon })` works like any other — but the
+  heading it renders as has no room for one, so **an icon on a section is not
+  drawn**. Nothing else about it is different.
+
+  **`add` also takes an array**, which splices as a unit at the anchor, in list order. It
+  is the same flat list either way: you still repeat `group` on each member, because
+  indentation is not scope and names are one namespace per surface.
 
   **Position orders items only within one rendering.** An anchor naming an item that
   renders somewhere else still splices exactly where it always did — and warns in a
@@ -106,6 +131,8 @@ What `page` is _for_ is a small, closed vocabulary:
 - **How many top-level controls fit is the host's business, and a script cannot observe
   it.** An item that does not fit is **demoted into `⋯`**, keeping its own band ahead of
   the built-ins and in the order it asked for; a dropdown collapses whole, under its label.
+  A submenu inside it survives the collapse and a **section inside it loses its title**,
+  which is one more thing demotion is lossy about and nothing to branch on.
   That is `add`'s promise — that the item is *reachable* — being kept, so there is no
   signal and nothing to branch on: `visible()` means *not hidden*, never *on screen where
   you asked*. A dropdown whose members are all hidden is a button that opens nothing, so it
@@ -191,6 +218,30 @@ have no way to tell which of their options were safe and which were borrowed.
 
 A key `page` does not forward is **dropped, with a dev-mode warning naming it**. It
 does not silently do nothing.
+
+### What that means for the header's menus
+
+The header renders through frappe-ui's `Menu`, which offers a good deal more than
+`display` and `group` do. The question is never *which of its keys do we pass on* —
+none, by the rule above — but **which of its capabilities the engine adopts into its
+own vocabulary**, and there the answer follows from what the engine already owns.
+
+Sections and submenus are **arrangement**: the shape of a list the engine builds
+itself, which it can therefore say in its own words, with no frappe-ui key ever
+reaching a script. That is why they are in.
+
+The rest is out for the same reason, read the other way. A switch is **state**, which
+the engine neither holds nor has a verb for. A custom row component is options
+forwarding at its purest — and is deprecated upstream, so adopting it would mean
+inheriting somebody else's exit. A route duplicates what `run` already does and drags
+in navigation policy that is `page.router`'s argument, not this one. Trigger width,
+side, alignment and portal target are **host layout**, which no script has ever been
+able to set anywhere else on the page.
+
+Expect that line to hold as `Menu` grows: a new frappe-ui option is not a new script
+capability, and the fact that it renders in a menu we happen to use is not an argument
+for it. There is no compiler help here either — a menu option type carries an index
+signature, so a key we do not adopt type-checks and vanishes.
 
 ### The same line, outbound
 

@@ -31,10 +31,19 @@ export class Surface<Item extends SurfaceItem = SurfaceItem> implements SurfaceV
 	private replaying = 0;
 	private builtins: () => Item[] = () => [];
 
-	add(item: Item, position?: Position) {
-		ensureIcons(item);
-		keepComponentRaw(item);
-		this.record({ verb: "add", source: runningSource(), item, position });
+	// A block splices as a unit at the anchor, in list order: the first item
+	// takes the caller's position and each one after it follows the one before,
+	// so `add([a, b, c], { before: 'delete' })` reads in the list the way it
+	// reads in the call (ticket 77 §5). No new op: an array is the sugar, the
+	// flat namespace underneath is unchanged.
+	add(item: Item | Item[], position?: Position) {
+		let anchor = position;
+		for (const one of Array.isArray(item) ? item : [item]) {
+			ensureIcons(one);
+			keepComponentRaw(one);
+			this.record({ verb: "add", source: runningSource(), item: one, position: anchor });
+			anchor = { after: one.name };
+		}
 	}
 
 	hide(name: string) {

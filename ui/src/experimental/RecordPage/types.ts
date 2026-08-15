@@ -21,14 +21,18 @@ export interface QuickAction extends SurfaceItem {
 }
 
 /**
- * An action in the record's header. `display` picks which of the three v1
- * renderings it gets: a top-level button of its own, a top-level dropdown
- * button of its own, or — omitted, the default — an entry in the shared `⋯`.
+ * An action in the record's header. `display` picks how it renders: a top-level
+ * button of its own, a top-level dropdown button of its own, a titled section,
+ * or — omitted, the default — an ordinary entry.
  *
- * A `dropdown` is an ordinary addressable item that carries the label and the
- * icon, and its members point at it with `group`. That **overloads `group`**:
- * naming a `dropdown` item means membership, while any other value keeps its
- * original meaning, the adjacency band this action joins inside `⋯`.
+ * A `dropdown` and a `section` are **containers**: ordinary addressable items
+ * that carry the label and the icon, differing only in when their members are
+ * visible — a dropdown hides them behind a trigger, a section shows them under
+ * a grey title. Either way the members point at the container with `group`, and
+ * a container that points at another container renders inside it.
+ *
+ * The list a script writes stays flat, so every item is reachable by its one
+ * name; only the rendering nests, and only two containers deep.
  *
  * How many top-level controls fit is the host's business and a script cannot
  * observe it: one that does not fit is demoted into `⋯`, which is `add`'s
@@ -36,8 +40,13 @@ export interface QuickAction extends SurfaceItem {
  */
 export interface HeaderAction extends SurfaceItem {
   label: string;
-  display?: "button" | "dropdown";
-  /** The dropdown this action joins, else the menu band; omitted means `actions`. */
+  display?: "button" | "dropdown" | "section";
+  /**
+   * Put me inside the item named this. If an item of that name is declared, you
+   * get what it declares; if nothing of that name exists, the engine
+   * synthesises an anonymous, untitled container — the adjacency band inside
+   * `⋯` that an omitted `group` (meaning `actions`) has always given.
+   */
   group?: string;
   run?: (page: RecordPageApi) => any;
 }
@@ -63,7 +72,8 @@ export interface PanelSectionItem extends SurfaceItem {
 }
 
 export interface SurfaceVerbs<Item extends SurfaceItem = SurfaceItem> {
-  add(item: Item, position?: Position): void;
+  /** One item, or a block that splices as a unit at the anchor, in list order. */
+  add(item: Item | Item[], position?: Position): void;
   hide(name: string): void;
   show(name: string): void;
   update(name: string, patch: Partial<Item>): void;
