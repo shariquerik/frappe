@@ -1,3 +1,11 @@
+// @vitest-environment node
+//
+// Pinned per file, not inherited: every assertion below is pure logic, and one
+// of them is *about* the headless path — `builtinGetDocValue` short-circuits on
+// `typeof window === "undefined"`. Under a DOM environment that guard never
+// fires, the mocked `createResource` (which returns undefined) is reached, and
+// the test dies on `resource.data`. The premise is the environment, so the file
+// states it rather than relying on whichever config runs it.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Stub frappe-ui so the module imports cleanly in vitest's node env (the
