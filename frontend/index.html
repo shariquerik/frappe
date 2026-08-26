@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  The ONE document. Not one per prefix, not one per app.
+
+  In dev, vite serves this file directly for every prefix (#42069 §6: one framework
+  vite server from frappe/frontend/). In prod, ShellPage renders a Jinja template
+  that is this file with hashed asset URLs (#42066).
+
+  What is NOT here, and the absence is the point:
+    - no boot JSON island. Boot is fetched in both environments (#42070 §1), so the
+      document is user-invariant. A `window.boot = {{ ... }}` here would be a second
+      producer that only ever runs in prod.
+    - no __FRONTEND_ROUTE__, no __SOCKETIO_PORT__. Both were build-time constants of
+      an app's own build; there is no app build now (#42065, #42070 §8).
+    - no import map. #42071 is deciding whether extensionHost's map survives.
+
+  So this file has no per-request content at all -- which is exactly why #42111 exists
+  to ask whether it can be cached. It is NOT cached today: ShellPage keeps no_cache
+  (#42070 §7).
+-->
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frappe</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

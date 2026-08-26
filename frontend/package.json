@@ -1,0 +1,12 @@
+{
+  "_comment": "PROTOTYPE. The framework-owned tree (#42069 §2). Apps declare deps in their OWN package.json; this installs one tree for all of them. Not a yarn workspace root -- workspaces hoist and nest on conflict rather than fail, and the charter wants hard failure.",
+  "name": "@frappe/frontend",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "_singletons": "vue, vue-router, frappe-ui, @framework/ui, reka-ui, dompurify -- version pinned HERE; an app naming any of them at a different range fails at manifest assembly, before vite starts (#42069 §3)"
+  }
+}
