@@ -1,6 +1,6 @@
 // HOW ONE ROUTER SERVES N PREFIXES.
 //
-// This is the scaffold's sharpest claim, and the one most worth attacking.
+// This is the scaffold's sharpest claim. **Confirmed by grilling on #42072: option A.**
 //
 // The claim: **the router's base is boot.app_route, set at runtime, and every route
 // path in the system is prefix-relative.** There is exactly one prefix live in a
@@ -12,7 +12,7 @@
 // design, and a worse one. The two are laid out below so the choice is explicit.
 //
 // ---------------------------------------------------------------------------
-// OPTION A (taken here): base = boot.app_route, paths prefix-relative
+// OPTION A (TAKEN, confirmed): base = boot.app_route, paths prefix-relative
 //
 //   createWebHistory('/crmv2')       routes: '/:doctype/:id'   page: 'deals'
 //
@@ -42,8 +42,11 @@
 // established cannot work client-side without a boot re-fetch. So B pays a real cost
 // to enable something that is already known not to be free.
 //
-// **This is the seam #42102 owns.** If #42102 decides the boot re-fetch is cheap and
-// crossing should be client-side, option A is wrong and this file is the evidence.
+// **#42102 inherits a constraint, not an open choice.** Cross-prefix navigation cannot
+// be a router.push under option A. If #42102 wants client-side crossing it must
+// re-create the router against the newly fetched boot, not widen the route table --
+// which is the same shape as a full navigation, and is the argument that A costs
+// nothing real. That is handed on as an input.
 // ---------------------------------------------------------------------------
 
 import { createRouter, createWebHistory } from 'vue-router'
