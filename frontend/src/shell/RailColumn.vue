@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { computed, inject } from "vue";
 import type { RouteLocationRaw } from "vue-router";
-import { Dropdown, Rail, RailItem, Tooltip, toast } from "frappe-ui";
+import { Dropdown, Rail, RailItem, Tooltip, toast, useColorScheme } from "frappe-ui";
 import type { Boot, NavigationItem } from "@/boot";
 import Icon from "@/icons/Icon.vue";
 import { labelOf, renderingOf } from "@/navigation/registry";
@@ -104,8 +104,26 @@ const cells = computed(() => {
 	return out;
 });
 
+// frappe-ui's own preference: it writes `data-theme` on `<html>` and remembers the choice.
+const { colorScheme, setColorScheme } = useColorScheme();
+const SCHEMES = [
+	{ label: "Light", value: "light", icon: "lucide-sun" },
+	{ label: "Dark", value: "dark", icon: "lucide-moon" },
+	{ label: "System", value: "system", icon: "lucide-monitor" },
+] as const;
+
 const menu = computed(() => [
 	{ label: "All apps", icon: "lucide-layout-grid", onClick: () => leave("/apps") },
+	{
+		label: "Theme",
+		icon: "lucide-sun-moon",
+		submenu: SCHEMES.map((scheme) => ({
+			label: scheme.label,
+			icon: scheme.icon,
+			selected: colorScheme.value === scheme.value,
+			onClick: () => setColorScheme(scheme.value),
+		})),
+	},
 	...(props.arrangeable
 		? [{ label: "Customize sidebar", icon: "lucide-settings-2", onClick: () => emit("arrange") }]
 		: []),
