@@ -8,8 +8,7 @@
 			v-model:collapsed="collapsed"
 			width="14rem"
 			:collapsedWidth="collapse === 'icons' ? '3rem' : '0px'"
-			class="border-l"
-			:class="collapsed && collapse === 'zero' ? 'border-transparent' : 'border-outline-gray-1'"
+			:class="collapsed && collapse === 'zero' ? 'border-0' : 'border-l border-outline-gray-1'"
 		>
 			<div class="flex shrink-0 items-center justify-between py-2 pl-4 pr-2">
 				<p v-show="!collapsed" class="truncate text-base font-medium text-ink-gray-8">
