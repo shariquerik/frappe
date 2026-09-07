@@ -3,7 +3,19 @@
   here because a save replaces the whole `{rail, sidebars}`, and the open sidebar is a fact about the address.
 -->
 <template>
-	<div class="flex h-screen w-screen bg-surface-base text-ink-gray-9">
+	<!-- Under the flag, frappe-ui's shell components draw the same state; nothing below changes. -->
+	<ShellFrame
+		v-if="frappeUiShell"
+		:rail="navigation.rail"
+		:rail-context="contexts.rail"
+		:current="current"
+		:sections="sections.sidebars"
+		:panel="panel"
+		:share-link="shareLink"
+		@saved="replace"
+	/>
+
+	<div v-else class="flex h-screen w-screen bg-surface-base text-ink-gray-9">
 		<AppRail
 			:items="navigation.rail"
 			:context="contexts.rail"
@@ -57,8 +69,13 @@ import { sectionMemory } from "@/navigation/sectionMemory";
 import AppRail from "./AppRail.vue";
 import AppSidebar from "./AppSidebar.vue";
 import ArrangementEditor from "./ArrangementEditor.vue";
+import ShellFrame from "./ShellFrame.vue";
+import { usesFrappeUiShell } from "./shellFlag";
 
 const boot = inject<Boot>("boot")!;
+
+// Read once: the flag picks the frame, and a frame is not swapped mid-session.
+const frappeUiShell = usesFrappeUiShell();
 const addresses = inject<Addresses>("addresses")!;
 const router = useRouter();
 const route = useRoute();
