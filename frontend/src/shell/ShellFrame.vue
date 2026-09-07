@@ -1,6 +1,8 @@
 <!--
-  The frame on frappe-ui's `DesktopShell`: rail, panel, the routed page, and one overlay slot
-  above the page that a hash names. `AppShell` still decides what is current and which panel is open.
+  PROTOTYPE: three variants of the frame on frappe-ui's `DesktopShell`, on the existing routes,
+  switchable with `?variant=`. `AppShell` still decides what is current and which panel is open.
+  A: icon rail, drawer editor, panel collapses to nothing. B: today's labelled rail, frappe-ui
+  panel only. C: icon rail, dialog editor, panel collapses to icons.
 -->
 <template>
 	<DesktopShell
@@ -8,7 +10,18 @@
 		class="relative h-screen w-screen bg-surface-base text-ink-gray-9"
 	>
 		<template #rail>
+			<AppRail
+				v-if="variant === 'B'"
+				:items="rail"
+				:context="railContext"
+				:current="current.railKey"
+				:sections="railSections"
+				:arrangeable="!!boot.app"
+				:share-link="shareLink"
+				@arrange="arrange.write('rail')"
+			/>
 			<RailColumn
+				v-else
 				:items="rail"
 				:context="railContext"
 				:current="current.railKey"
@@ -28,6 +41,7 @@
 				:title="panel.title"
 				:current="current.rowKey"
 				:sections="sections[panel.address]"
+				:collapse="variant === 'C' ? 'icons' : 'zero'"
 				arrangeable
 				@arrange="arrange.write('sidebar', panel.address)"
 			/>
@@ -38,8 +52,26 @@
 		</div>
 
 		<!-- The overlay slot: one hash, one overlay, above any page. `#arrange/...` is its first tenant. -->
+		<Dialog
+			v-if="variant === 'C'"
+			:modelValue="!!arranging"
+			bare
+			size="sm"
+			@update:modelValue="arrange.close()"
+		>
+			<ArrangementEditor
+				v-if="arranging"
+				:key="arranging.address"
+				class="h-[70vh] w-full border-0"
+				:container="arranging.container"
+				:address="arranging.address"
+				:title="arranging.title"
+				@saved="emit('saved', $event)"
+				@close="arrange.close()"
+			/>
+		</Dialog>
 		<ArrangementEditor
-			v-if="arranging"
+			v-else-if="arranging"
 			:key="arranging.address"
 			class="absolute inset-y-0 right-0 z-20 shadow-2xl"
 			:container="arranging.container"
@@ -50,25 +82,32 @@
 		/>
 
 		<ToastProvider />
+		<PrototypeSwitcher :state="current" />
 	</DesktopShell>
 </template>
 
 <script setup lang="ts">
 import { computed, inject } from "vue";
 import { RouterView } from "vue-router";
-import { DesktopShell, ToastProvider } from "frappe-ui";
+import { DesktopShell, Dialog, ToastProvider } from "frappe-ui";
 import type { Boot, Navigation, NavigationItem } from "@/boot";
 import type { Container } from "@/arrangement";
 import type { CurrentNavigation } from "@/navigation/current";
 import type { SectionMemory } from "@/navigation/sectionMemory";
 import type { ItemContext } from "@/navigation/types";
+import AppRail from "./AppRail.vue";
 import ArrangementEditor from "./ArrangementEditor.vue";
+import PrototypeSwitcher from "./PrototypeSwitcher.vue";
 import RailColumn from "./RailColumn.vue";
 import SidebarPanel from "./SidebarPanel.vue";
 import { useHashDialog } from "./useHashDialog";
+import type { Variant } from "./shellVariant";
 
 defineProps<{
+	variant: Variant;
 	rail: NavigationItem[];
+	/** Variant B's labelled rail keeps rail sections, so it needs their memory. */
+	railSections?: SectionMemory;
 	railContext: ItemContext;
 	current: CurrentNavigation;
 	sections: Record<string, SectionMemory>;

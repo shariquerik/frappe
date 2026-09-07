@@ -7,12 +7,14 @@
 		<Sidebar
 			v-model:collapsed="collapsed"
 			width="14rem"
-			collapsedWidth="0px"
+			:collapsedWidth="collapse === 'icons' ? '3rem' : '0px'"
 			class="border-r"
-			:class="collapsed ? 'border-transparent' : 'border-outline-gray-2'"
+			:class="collapsed && collapse === 'zero' ? 'border-transparent' : 'border-outline-gray-2'"
 		>
 			<div class="flex shrink-0 items-center justify-between py-2 pl-4 pr-2">
-				<p class="truncate text-base font-medium text-ink-gray-8">{{ title }}</p>
+				<p v-show="!collapsed" class="truncate text-base font-medium text-ink-gray-8">
+					{{ title }}
+				</p>
 				<Button
 					v-if="arrangeable"
 					variant="ghost"
@@ -35,15 +37,24 @@
 					/>
 				</nav>
 			</div>
+
+			<!-- Variant C: frappe-ui's own toggle row, and rows shrink to their icons. -->
+			<div v-if="collapse === 'icons'" class="shrink-0 px-2 pb-2">
+				<SidebarCollapseToggle />
+			</div>
 		</Sidebar>
 
-		<SidebarEdge :open="!collapsed" @toggle="collapsed = !collapsed" />
+		<SidebarEdge
+			v-if="collapse === 'zero'"
+			:open="!collapsed"
+			@toggle="collapsed = !collapsed"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Button, Sidebar } from "frappe-ui";
+import { Button, Sidebar, SidebarCollapseToggle } from "frappe-ui";
 import type { NavigationItem } from "@/boot";
 import type { SectionMemory } from "@/navigation/sectionMemory";
 import { useItemTree } from "@/navigation/useItemTree";
@@ -60,6 +71,8 @@ const props = defineProps<{
 	current?: string;
 	sections?: SectionMemory;
 	arrangeable?: boolean;
+	/** How the panel collapses: to nothing with the CRM seam, or to an icon column with frappe-ui's toggle. */
+	collapse: "zero" | "icons";
 }>();
 const emit = defineEmits<{ arrange: [] }>();
 
