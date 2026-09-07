@@ -7,7 +7,7 @@
 <template>
 	<DesktopShell
 		:scroll="false"
-		class="relative h-screen w-screen bg-surface-base text-ink-gray-9"
+		class="desk-shell relative h-screen w-screen bg-surface-base text-ink-gray-9"
 	>
 		<template #rail>
 			<AppRail
@@ -137,3 +137,10 @@ const arranging = computed<{ container: Container; address: string; title: strin
 	}
 );
 </script>
+
+<style scoped>
+/* The borders as CRM's frontend2 draws them: on the panel's left edge and the content's. */
+.desk-shell :deep([data-slot="desktop-shell-content"]) {
+	@apply border-l border-outline-gray-1 bg-surface-base;
+}
+</style>

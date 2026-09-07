@@ -3,7 +3,7 @@
   app menu; a rail heading has no icon form, so its children draw flat and the heading vanishes.
 -->
 <template>
-	<Rail class="border-r border-outline-gray-2">
+	<Rail>
 		<div class="mb-3 flex shrink-0 items-center justify-center">
 			<!-- A raw button: `Dropdown` cannot reach a trigger through `RailItem`'s `Tooltip`. -->
 			<Tooltip :text="appTitle" side="right">
