@@ -19,6 +19,16 @@ import graph with the structure research script, checks every import against the
 file, reads the concept tables and the five flows from `frontend/ARCHITECTURE.md`, and
 writes one HTML file that opens from disk.
 
+**On a site, at `/desk-architecture`.** The branch also has the route as a prototype:
+`frappe/desk_architecture.py` and one `page_renderer` line in `frappe/hooks.py`. The site
+must be in developer mode, and you must be signed in as a System Manager. Each request
+rebuilds the page from the working tree.
+
+Do not run this branch on a bench that shares Redis with another checkout of frappe. The
+hooks are cached in Redis, and a bench without `frappe/desk_architecture.py` would then
+load a renderer that it cannot import. Give the prototype server its own Redis and its own
+`sites` folder.
+
 Switch views with the bar at the bottom, the left and right arrow keys, or `?view=A` to
 `?view=D` in the address. In the flow view, the up and down arrow keys move between steps.
 
@@ -29,6 +39,7 @@ Switch views with the bar at the bottom, the left and right arrow keys, or `?vie
 | `diagram.template.html` | The page. The script puts the data into it |
 | `diagram.html` | The built page, committed so the branch can be opened without running anything |
 | `graph.json` | The import graph at `desk-v2` `fd65657f20` |
+| `../../frappe/desk_architecture.py` | The `/desk-architecture` route, in developer mode only |
 
 The branch is `desk-v2` at `9ce1d900cd` plus the structure research commit. The graph did
 not change since the research: 73 folders and 244 edges.
@@ -112,8 +123,10 @@ The shape for the build task:
 
 - **Route `/desk-architecture`.** Not under `/apps`: that address root belongs to the
   shell and its app prefixes, and the reserved route guard refuses anything else there.
-- **A page renderer**, found through the `page_renderer` hook the same way as the shell
-  page. It returns the whole HTML page. A `www/` page is harder: the website wraps any
+- **A page renderer**, found through the `page_renderer` hook. It returns the whole HTML
+  page. Today the shell page is a built-in renderer, not a hook, because the hook drops a
+  renderer that fails to import with no error. `ARCHITECTURE.md` moves the shell page to
+  the hook (#43495). For a developer tool, a silent drop is harmless. A `www/` page is harder: the website wraps any
   `www` template that has no `</body>` in the site's base template.
 - **Only in developer mode.** Without `developer_mode`, the route is "not found". The test
   pages under `frappe/www/_test` use the same gate in `frappe/website/path_resolver.py`.

@@ -87,6 +87,9 @@ website_redirects = [
 
 base_template = "templates/base.html"
 
+# PROTOTYPE (frappe/frappe#43434): the architecture diagram, in developer mode only.
+page_renderer = ["frappe.desk_architecture.DeskArchitecturePage"]
+
 write_file_keys = ["file_url", "file_name"]
 
 notification_config = "frappe.core.notifications.get_notification_config"

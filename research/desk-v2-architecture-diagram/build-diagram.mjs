@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PROTOTYPE (frappe/frappe#43434): throwaway. Builds diagram.html from the code.
 //
-// Usage: node research/desk-v2-architecture-diagram/build-diagram.mjs [--no-graph]
+// Usage: node research/desk-v2-architecture-diagram/build-diagram.mjs [--no-graph] [--out <folder>]
 //
 // 1. Runs ../desk-v2-structure/build-graph.mjs to write graph.json beside this file.
 // 2. Places every file in a layer from layers.json and checks every import against it.
@@ -18,8 +18,13 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, "..", "..");
-const GRAPH = path.join(here, "graph.json");
-const OUT = path.join(here, "diagram.html");
+// --out writes graph.json and diagram.html elsewhere, so the /desk-architecture route
+// does not change the working tree on each request.
+const outArg = process.argv.indexOf("--out");
+const OUT_DIR = outArg > 0 ? path.resolve(process.argv[outArg + 1]) : here;
+const GRAPH = path.join(OUT_DIR, "graph.json");
+const OUT = path.join(OUT_DIR, "diagram.html");
+fs.mkdirSync(OUT_DIR, { recursive: true });
 
 if (!process.argv.includes("--no-graph")) {
 	execFileSync("node", [path.join(here, "..", "desk-v2-structure", "build-graph.mjs"), ROOT, GRAPH], {
