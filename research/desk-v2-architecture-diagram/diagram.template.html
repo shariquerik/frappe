@@ -1,0 +1,446 @@
+<!doctype html>
+<!-- PROTOTYPE (frappe/frappe#43434): throwaway. build-diagram.mjs fills DATA and writes diagram.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Desk v2 architecture (prototype)</title>
+<style>
+	* { box-sizing: border-box; }
+	body { margin: 0; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1f2328; background: #f6f7f9; }
+	code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: #eef0f3; padding: 0 3px; border-radius: 3px; }
+	a { color: #0b5cad; text-decoration: none; }
+	a:hover { text-decoration: underline; }
+	header { display: flex; gap: 16px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #dde1e6; flex-wrap: wrap; }
+	header h1 { font-size: 15px; margin: 0; }
+	.tag { font-size: 11px; padding: 1px 6px; border-radius: 9px; background: #fff3cd; color: #7a5b00; }
+	.stats { display: flex; gap: 12px; color: #57606a; }
+	.stats b { color: #1f2328; }
+	.stats .red b { color: #c62828; }
+	main { display: flex; height: calc(100vh - 49px); }
+	#view { flex: 1; overflow: auto; padding: 14px 16px 80px; }
+	#panel { width: 380px; border-left: 1px solid #dde1e6; background: #fff; overflow: auto; padding: 14px 16px 80px; }
+	#panel h2 { font-size: 15px; margin: 0 0 4px; }
+	#panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #57606a; margin: 16px 0 6px; }
+	#panel table { border-collapse: collapse; width: 100%; }
+	#panel td { border-top: 1px solid #eef0f3; padding: 3px 4px; vertical-align: top; }
+	#panel .muted { color: #57606a; }
+	#panel code { word-break: break-all; }
+	.pill { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 9px; margin: 1px 2px 1px 0; background: #eef0f3; }
+	.pill.break { background: #fde2e1; color: #b3261e; }
+	.pill.known { background: #fde2e1; color: #b3261e; }
+	.pill.allowed { background: #e3f4e8; color: #1a7f37; }
+	.pill.inside { background: #eef0f3; }
+	.pill.callback { background: #e1ecfb; color: #0b5cad; }
+	.pill.server { background: #fff3cd; color: #7a5b00; }
+	.legend { display: flex; gap: 14px; margin: 0 0 10px; color: #57606a; flex-wrap: wrap; align-items: center; }
+	.legend i { display: inline-block; width: 22px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 4px; }
+	.legend label { cursor: pointer; }
+	svg text { font-size: 11px; pointer-events: none; }
+	.box rect { stroke: #fff; stroke-width: 1; cursor: pointer; }
+	.box.dim { opacity: .25; }
+	.box.sel rect { stroke: #1f2328; stroke-width: 2; }
+	.box.loop rect { stroke: #e36209; stroke-width: 2; stroke-dasharray: 4 2; }
+	.layerlabel { cursor: pointer; }
+	.layerlabel:hover rect { fill: #e7eaee; }
+	.edge { fill: none; }
+	.edge.hit { stroke: transparent; stroke-width: 9; cursor: pointer; }
+	/* matrix */
+	table.matrix { border-collapse: collapse; }
+	table.matrix th, table.matrix td { border: 1px solid #dde1e6; padding: 4px 6px; text-align: center; min-width: 46px; }
+	table.matrix th { background: #fff; font-weight: 600; font-size: 12px; }
+	table.matrix th.row { text-align: left; }
+	table.matrix td.may { background: #f0faf3; }
+	table.matrix td.no { background: #f6f7f9; }
+	table.matrix td.self { background: #eef0f3; }
+	table.matrix td.bad { background: #fbd3d0; color: #b3261e; font-weight: 700; }
+	table.matrix td.has { cursor: pointer; }
+	table.matrix td.has:hover { outline: 2px solid #1f2328; }
+	/* flow */
+	.flowtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+	.flowtabs button, .stepnav button { border: 1px solid #dde1e6; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; }
+	.flowtabs button.on { background: #1f2328; color: #fff; border-color: #1f2328; }
+	.flow { display: grid; grid-template-columns: minmax(320px, 1fr) 300px; gap: 16px; }
+	.step { background: #fff; border: 1px solid #dde1e6; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; cursor: pointer; }
+	.step.on { border-color: #1f2328; box-shadow: 0 0 0 1px #1f2328; }
+	.step .n { font-weight: 700; margin-right: 6px; }
+	.stack div { border-radius: 5px; padding: 6px 10px; margin-bottom: 4px; background: #fff; border: 1px solid #dde1e6; color: #8c959f; }
+	.stack div.lit { color: #fff; border-color: transparent; }
+	/* extension points */
+	.ext { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+	.ext h2 { font-size: 13px; margin: 0 0 8px; }
+	.card { background: #fff; border: 1px solid #dde1e6; border-left-width: 4px; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; cursor: pointer; }
+	.card.pairhit { outline: 2px solid #e36209; }
+	.card .pair { color: #e36209; font-size: 11px; }
+	/* switcher */
+	#switcher { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; background: #1f2328; color: #fff; padding: 6px 8px; border-radius: 22px; box-shadow: 0 6px 20px rgba(0,0,0,.25); z-index: 10; }
+	#switcher button { background: transparent; color: #fff; border: 0; font-size: 16px; width: 30px; height: 30px; border-radius: 15px; cursor: pointer; }
+	#switcher button:hover { background: #3a3f45; }
+	#switcher span { min-width: 210px; text-align: center; font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+	<h1>Desk v2 architecture</h1>
+	<span class="tag">PROTOTYPE, throwaway</span>
+	<div class="stats" id="stats"></div>
+</header>
+<main>
+	<div id="view"></div>
+	<aside id="panel"></aside>
+</main>
+<div id="switcher">
+	<button id="prev" title="Previous view (Left arrow)">&#8249;</button>
+	<span id="label"></span>
+	<button id="next" title="Next view (Right arrow)">&#8250;</button>
+</div>
+<script>
+const DATA = /*DATA*/null;
+
+const VIEWS = [
+	{ key: "A", name: "Layers", draw: drawLayers },
+	{ key: "B", name: "Layer matrix", draw: drawMatrix },
+	{ key: "C", name: "Flows, step by step", draw: drawFlow },
+	{ key: "D", name: "Ways to change the desk", draw: drawExtensions },
+];
+const ORDER = ["main", "9", "8", "7", "6", "5", "4", "3", "2", "1", "build"];
+const COLOR = { main: "#57606a", 9: "#8c959f", 8: "#6f42c1", 7: "#8250df", 6: "#5a67d8", 5: "#3b82c4", 4: "#1b998b", 3: "#16806f", 2: "#b7791f", 1: "#8a6116", build: "#c05621" };
+const GH = `https://github.com/frappe/frappe/blob/${DATA.branch}/`;
+const layer = (id) => DATA.layers.find((l) => l.id === id);
+const box = (id) => DATA.boxes.find((b) => b.id === id);
+const isBreak = (e) => e.status === "break" || e.status === "known";
+const inLoop = new Set(DATA.loops.flat());
+const state = { selected: null, showAll: false, showLoops: false, flow: 2, step: 0 };
+
+// ---------- shared ----------
+function esc(s) {
+	return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+function md(s) {
+	return esc(s)
+		.replace(/`([^`]+)`/g, "<code>$1</code>")
+		.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+		.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, t, u) => `<a href="${u.startsWith("#") ? GH + DATA.architecture + u : u}" target="_blank">${t}</a>`);
+}
+function short(folder) {
+	return folder.replace(/^frontend\/src\//, "").replace(/^ui\/src\//, "ui/").replace(/^frappe\//, "frappe/");
+}
+function fileLink(p, line) {
+	return `<a href="${GH}${p}${line ? "#L" + line : ""}" target="_blank"><code>${esc(p)}${line ? ":" + line : ""}</code></a>`;
+}
+function statusPill(s) {
+	const text = { break: "new break", known: "known break", allowed: "allowed", inside: "same layer", callback: "callback, not a use" }[s];
+	return `<span class="pill ${s}">${text}</span>`;
+}
+function layerName(id) {
+	const l = layer(id);
+	return `${/^\d$/.test(id) ? id + ". " : ""}${l.name}`;
+}
+function archLink(l) {
+	return `<a href="${GH}${DATA.architecture}#${l.section}" target="_blank">ARCHITECTURE.md, ${esc(layerName(l.id))}</a>`;
+}
+function stats() {
+	const breaks = DATA.edges.filter(isBreak).flatMap((e) => e.pairs);
+	const fresh = breaks.filter((p) => p.known === null).length;
+	const files = DATA.boxes.reduce((n, b) => n + b.files.length, 0);
+	const lines = DATA.boxes.reduce((n, b) => n + b.lines, 0);
+	document.getElementById("stats").innerHTML = [
+		`Built from <b>${DATA.branch}</b> at <b>${DATA.commit}</b>, ${DATA.builtAt}`,
+		`<span><b>${files}</b> files, <b>${lines.toLocaleString()}</b> lines</span>`,
+		`<span class="red"><b>${fresh}</b> new breaks</span>`,
+		`<span class="red"><b>${breaks.length - fresh}</b> known breaks</span>`,
+		`<span><b>${DATA.loops.length}</b> folder loops</span>`,
+		DATA.unplaced.length ? `<span class="red"><b>${DATA.unplaced.length}</b> files in no layer</span>` : "",
+	].join("");
+}
+
+// ---------- detail panel ----------
+function select(kind, id) {
+	state.selected = { kind, id };
+	const panel = document.getElementById("panel");
+	panel.innerHTML = { layer: layerDetail, box: boxDetail, edge: edgeDetail, cell: cellDetail, ext: extDetail }[kind](id);
+	panel.scrollTop = 0;
+	if (current().key === "A") drawLayers();
+}
+function idleDetail() {
+	return `<h2>Click anything</h2>
+		<p class="muted">A layer name, a folder, a line between folders, a matrix cell, a flow step or a card. The details show here.</p>
+		<h3>Read the colours</h3>
+		<p>A <b style="color:#c62828">red</b> line or cell is an import that the layer file does not allow. Dashed red is a known break: the layer file lists it with the ticket that removes it. Solid red is new: CI fails on it.</p>
+		<p>An orange dashed outline marks a folder inside a loop, where folders import each other.</p>
+		<h3>Where the data comes from</h3>
+		<p><code>build-diagram.mjs</code> reads the code (the import graph), <code>layers.json</code> (which layer may use which) and <code>${esc(DATA.architecture)}</code> (the concepts and the flows). Nothing here is drawn by hand except the "Ways to change the desk" view.</p>`;
+}
+function layerDetail(id) {
+	const l = layer(id);
+	const boxes = DATA.boxes.filter((b) => b.layer === id);
+	const out = DATA.edges.filter((e) => box(e.from).layer === id && box(e.to).layer !== id);
+	const inn = DATA.edges.filter((e) => box(e.to).layer === id && box(e.from).layer !== id);
+	const byLayer = (edges, end) => {
+		const m = {};
+		for (const e of edges) {
+			const k = box(e[end]).layer;
+			m[k] ??= { n: 0, bad: 0 };
+			m[k].n += e.count;
+			if (isBreak(e)) m[k].bad += e.count;
+		}
+		return Object.entries(m).sort((a, b) => ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]))
+			.map(([k, v]) => `<tr><td>${esc(layerName(k))}</td><td>${v.n}${v.bad ? ` <span class="pill break">${v.bad} break</span>` : ""}</td></tr>`).join("");
+	};
+	return `<h2>${esc(layerName(id))}</h2>
+		<div class="muted">${boxes.length} folders, ${boxes.reduce((n, b) => n + b.files.length, 0)} files, ${boxes.reduce((n, b) => n + b.lines, 0).toLocaleString()} lines. ${l.concepts.length} concepts.</div>
+		${l.note ? `<p>${esc(l.note)}</p>` : ""}
+		<h3>May use</h3><div>${l.mayUse.length ? l.mayUse.map((m) => `<span class="pill">${esc(layerName(m))}</span>`).join("") : "Nothing."}</div>
+		<h3>Paths in layers.json</h3><div>${l.paths.map((p) => `<code>${esc(p)}</code>`).join(" ") || "None: not in the import graph."}</div>
+		<h3>Uses (imports to other layers)</h3><table>${byLayer(out, "to") || "<tr><td>None</td></tr>"}</table>
+		<h3>Used by</h3><table>${byLayer(inn, "from") || "<tr><td>None</td></tr>"}</table>
+		<h3>Concepts (the closed list)</h3>
+		<table>${l.concepts.map((c) => `<tr><td>${md(c.name)}</td><td class="muted">${md(c.what)}</td></tr>`).join("")}</table>
+		<h3>Ruling</h3><div>${archLink(l)}. The target architecture ticket set the layers and the lists.</div>`;
+}
+function boxDetail(id) {
+	const b = box(id);
+	const out = DATA.edges.filter((e) => e.from === id);
+	const inn = DATA.edges.filter((e) => e.to === id);
+	const loops = DATA.loops.filter((c) => c.includes(b.folder));
+	const list = (edges, end) => edges.sort((x, y) => y.count - x.count)
+		.map((e) => `<tr><td><a href="#" onclick="select('edge','${e.id}');return false">${esc(short(box(e[end]).folder))}</a></td><td>${e.count}</td><td>${statusPill(e.status)}</td></tr>`).join("");
+	const ext = Object.entries(b.externals || {}).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("");
+	return `<h2><code>${esc(b.folder)}</code></h2>
+		<div class="muted">${esc(layerName(b.layer))}. ${b.files.length} files, ${b.lines.toLocaleString()} lines.</div>
+		${loops.length ? `<h3>In a loop</h3>${loops.map((c) => `<p>These ${c.length} folders import each other: ${c.map((f) => `<code>${esc(short(f))}</code>`).join(", ")}</p>`).join("")}` : ""}
+		<h3>Uses</h3><table>${list(out, "to") || "<tr><td>Nothing in the graph</td></tr>"}</table>
+		<h3>Used by</h3><table>${list(inn, "from") || "<tr><td>Nothing in the graph</td></tr>"}</table>
+		${ext ? `<h3>npm packages</h3><div>${ext}</div>` : ""}
+		<h3>Files</h3><table>${b.files.sort((x, y) => y.lines - x.lines).map((f) => `<tr><td>${fileLink(f.path)}</td><td>${f.lines}</td></tr>`).join("")}</table>
+		<h3>Concepts</h3><div>${archLink(layer(b.layer))}. The concept tables name concepts per layer, not per folder.</div>`;
+}
+function edgeDetail(id) {
+	const e = DATA.edges.find((x) => x.id === id);
+	const from = box(e.from), to = box(e.to);
+	const owners = [...new Set(e.pairs.filter((p) => p.known !== null).map((p) => p.known))].map((i) => DATA.knownBreaks[i]);
+	return `<h2><code>${esc(short(from.folder))}</code> uses <code>${esc(short(to.folder))}</code></h2>
+		<div>${statusPill(e.status)} <span class="pill">${esc(e.kind)}</span> ${e.count} file pairs</div>
+		<p class="muted">${esc(layerName(from.layer))} to ${esc(layerName(to.layer))}. ${
+			e.status === "allowed" ? "The layer file allows this." :
+			e.status === "inside" ? "Both folders are in the same layer." :
+			e.status === "callback" ? esc(DATA.layers && "A lower layer calls back what a higher layer registered. The layer file does not count this as a use.") :
+			`${esc(layerName(from.layer))} may use only: ${layer(from.layer).mayUse.map(layerName).map(esc).join(", ") || "nothing"}.`}</p>
+		${owners.map((k) => `<h3>Known break</h3><p>${md(k.why)}</p><p>Removed by <a href="https://github.com/frappe/frappe/issues/${k.ticket}" target="_blank">#${k.ticket}</a>: ${esc(k.title)}</p>`).join("")}
+		${e.status === "break" ? `<h3>What to do</h3><p>CI fails on this. Change the import so the lower layer does not use the higher one. If the rule is wrong, change <code>layers.json</code> in the same PR and get a ruling: a new "may use" edge needs one.</p>` : ""}
+		<h3>File pairs</h3><table>${e.pairs.map((p) => `<tr><td>${fileLink(p.from, p.line)}<br><span class="muted">to</span> ${fileLink(p.to)}</td></tr>`).join("")}</table>`;
+}
+function cellDetail(key) {
+	const [f, t] = key.split(">");
+	const edges = DATA.edges.filter((e) => box(e.from).layer === f && box(e.to).layer === t);
+	const may = layer(f).mayUse.includes(t);
+	return `<h2>${esc(layerName(f))} uses ${esc(layerName(t))}</h2>
+		<p>${f === t ? "Same layer." : may ? "The layer file allows this." : "<b style='color:#c62828'>The layer file does not allow this.</b>"}</p>
+		<table>${edges.sort((x, y) => y.count - x.count).map((e) => `<tr><td><a href="#" onclick="select('edge','${e.id}');return false">${esc(short(box(e.from).folder))} to ${esc(short(box(e.to).folder))}</a></td><td>${e.count}</td><td>${statusPill(e.status)}</td></tr>`).join("")}</table>`;
+}
+function extDetail(i) {
+	const x = DATA.extensions[i];
+	return `<h2>${esc(x.name)}</h2>
+		<div><span class="pill">${esc(x.tier)}</span> <span class="pill">${esc(layerName(x.layer))}</span></div>
+		<h3>What it changes</h3><p>${esc(x.changes)}</p>
+		<h3>How it is registered</h3><p>${esc(x.how)}</p>
+		${x.pair ? `<h3>Does the same job as</h3><p><b>${esc(x.pair)}</b>. ${esc(x.pairNote || "")}</p>` : ""}
+		<h3>Source</h3><p>Hand-kept list in <code>build-diagram.mjs</code>, taken from ${archLink(layer(x.layer))} and the structure research. The code has no one list of these.</p>`;
+}
+
+// ---------- A: layers ----------
+function drawLayers() {
+	const view = document.getElementById("view");
+	const W = Math.max(900, view.clientWidth - 40);
+	const LABEL = 200, SIDE = 170, ROW = 54, GAP = 12, TOP = 8;
+	const rows = ORDER.filter((id) => id !== "build");
+	const pos = new Map();
+	const avail = W - LABEL - SIDE - 24;
+	rows.forEach((id, r) => {
+		const bs = DATA.boxes.filter((b) => b.layer === id).sort((a, b) => b.lines - a.lines);
+		const minW = 34, total = bs.reduce((n, b) => n + b.lines, 0);
+		const free = avail - bs.length * (minW + 3);
+		let x = LABEL;
+		for (const b of bs) {
+			const w = minW + (total ? (b.lines / total) * free : 0);
+			pos.set(b.id, { x, y: TOP + r * (ROW + GAP), w, h: ROW });
+			x += w + 3;
+		}
+	});
+	const buildBoxes = DATA.boxes.filter((b) => b.layer === "build");
+	const bx = W - SIDE + 10, bTop = TOP + rows.indexOf("6") * (ROW + GAP);
+	buildBoxes.forEach((b, i) => pos.set(b.id, { x: bx, y: bTop + i * (ROW + GAP), w: SIDE - 20, h: ROW }));
+	const H = TOP + rows.length * (ROW + GAP) + 10;
+
+	const sel = state.selected?.kind === "box" ? state.selected.id : null;
+	const linked = sel ? new Set(DATA.edges.filter((e) => e.from === sel || e.to === sel).flatMap((e) => [e.from, e.to])) : null;
+	const shown = DATA.edges.filter((e) => {
+		if (sel) return e.from === sel || e.to === sel;
+		if (state.showAll) return true;
+		return isBreak(e);
+	});
+
+	let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+	rows.forEach((id, r) => {
+		const l = layer(id), y = TOP + r * (ROW + GAP);
+		const bs = DATA.boxes.filter((b) => b.layer === id);
+		const lines = bs.reduce((n, b) => n + b.lines, 0);
+		svg += `<g class="layerlabel" onclick="select('layer','${id}')"><rect x="0" y="${y}" width="${LABEL - 8}" height="${ROW}" rx="6" fill="#fff" stroke="#dde1e6"/>
+			<rect x="0" y="${y}" width="5" height="${ROW}" rx="2" fill="${COLOR[id]}"/>
+			<text x="12" y="${y + 20}" style="font-weight:600;font-size:12px">${esc(layerName(id))}</text>
+			<text x="12" y="${y + 38}" fill="#57606a">${bs.length ? `${bs.length} ${bs.length === 1 ? "folder" : "folders"}, ${lines.toLocaleString()} lines, ${l.concepts.length} concepts` : `${l.concepts.length} concepts, not in the graph`}</text></g>`;
+		if (!bs.length) svg += `<rect x="${LABEL}" y="${y}" width="${avail}" height="${ROW}" rx="4" fill="none" stroke="#c9ced4" stroke-dasharray="4 3"/>
+			<text x="${LABEL + 10}" y="${y + 31}" fill="#8c959f">App folders and Client Script rows. They reach the desk only through the import list and the page object.</text>`;
+	});
+	svg += `<text x="${bx}" y="${bTop - 8}" style="font-weight:600;font-size:12px" class="layerlabel">The build (beside)</text>`;
+
+	const edgeSvg = shown.map((e) => {
+		const a = pos.get(e.from), b = pos.get(e.to);
+		if (!a || !b) return "";
+		const up = b.y < a.y, same = a.y === b.y;
+		const x1 = a.x + a.w / 2, x2 = b.x + b.w / 2;
+		const y1 = same ? a.y : up ? a.y : a.y + a.h, y2 = same ? b.y : up ? b.y + b.h : b.y;
+		const bend = same ? -30 : (y2 - y1) / 2;
+		const d = `M${x1},${y1} C${x1},${y1 + bend} ${x2},${y2 - (same ? -bend : bend)} ${x2},${y2}`;
+		const stroke = isBreak(e) ? "#c62828" : e.status === "callback" ? "#0b5cad" : sel ? (e.from === sel ? "#3b4a5a" : "#1a7f37") : "#8c959f";
+		const width = isBreak(e) ? 2.2 : Math.min(4, 0.8 + Math.log2(e.count + 1) * 0.5);
+		const dash = e.status === "known" ? `stroke-dasharray="6 3"` : "";
+		const op = isBreak(e) || sel ? 0.9 : 0.25;
+		return `<path class="edge" d="${d}" stroke="${stroke}" stroke-width="${width}" ${dash} opacity="${op}"/>
+			<path class="edge hit" d="${d}" onclick="select('edge','${e.id}')"><title>${esc(short(box(e.from).folder))} to ${esc(short(box(e.to).folder))}: ${e.count} (${e.status})</title></path>`;
+	}).join("");
+
+	for (const b of DATA.boxes) {
+		const p = pos.get(b.id);
+		if (!p) continue;
+		const cls = ["box", sel === b.id ? "sel" : "", linked && !linked.has(b.id) ? "dim" : "", state.showLoops && inLoop.has(b.folder) ? "loop" : ""].join(" ");
+		const name = b.files.length === 1 ? b.files[0].path.split("/").pop() : short(b.folder).split("/").pop();
+		const fits = p.w > 52;
+		svg += `<g class="${cls}" onclick="select('box','${b.id}')"><title>${esc(b.folder)}: ${b.files.length} files, ${b.lines} lines</title>
+			<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="4" fill="${COLOR[b.layer]}" opacity="${0.55 + Math.min(0.45, b.lines / 6000)}"/>
+			${fits ? `<text x="${p.x + 5}" y="${p.y + 20}" fill="#fff" style="font-weight:600">${esc(name.length * 6.2 > p.w - 8 ? name.slice(0, Math.floor((p.w - 8) / 6.2)) + "…" : name)}</text>
+			<text x="${p.x + 5}" y="${p.y + 37}" fill="#fff" opacity=".85">${b.lines.toLocaleString()}</text>` : ""}</g>`;
+	}
+	svg += edgeSvg + `</svg>`;
+
+	view.innerHTML = `<div class="legend">
+		<span><i style="border-color:#c62828"></i>new break (CI fails)</span>
+		<span><i style="border-color:#c62828;border-top-style:dashed"></i>known break (has a ticket)</span>
+		<span><i style="border-color:#0b5cad"></i>callback</span>
+		<label><input type="checkbox" ${state.showAll ? "checked" : ""} onchange="state.showAll=this.checked;drawLayers()"> show all ${DATA.edges.length} edges</label>
+		<label><input type="checkbox" ${state.showLoops ? "checked" : ""} onchange="state.showLoops=this.checked;drawLayers()"> mark folders in loops</label>
+		${sel ? `<a href="#" onclick="state.selected=null;document.getElementById('panel').innerHTML=idleDetail();drawLayers();return false">clear selection</a>` : ""}
+		<span>Box width: share of its layer's lines.</span></div>` + svg;
+}
+
+// ---------- B: matrix ----------
+function drawMatrix() {
+	const ids = ORDER.filter((id) => id !== "9");
+	const sum = {};
+	for (const e of DATA.edges) {
+		const k = box(e.from).layer + ">" + box(e.to).layer;
+		sum[k] ??= { n: 0, bad: 0 };
+		sum[k].n += e.count;
+		if (isBreak(e)) sum[k].bad += e.count;
+	}
+	let html = `<p class="muted">Rows use columns. A green cell is a use the layer file allows; a grey cell is one it does not. A number is the count of file pairs; red means the code does what the layer file forbids. Customization is left out: it is not in the import graph.</p>
+		<table class="matrix"><tr><th class="row">uses →</th>${ids.map((c) => `<th title="${esc(layerName(c))}">${c === "main" ? "main" : c === "build" ? "build" : c}</th>`).join("")}</tr>`;
+	for (const r of ids) {
+		html += `<tr><th class="row"><a href="#" onclick="select('layer','${r}');return false">${esc(layerName(r))}</a></th>`;
+		for (const c of ids) {
+			const s = sum[r + ">" + c];
+			const may = layer(r).mayUse.includes(c);
+			const cls = r === c ? "self" : s?.bad ? "bad" : may ? "may" : "no";
+			html += `<td class="${cls} ${s ? "has" : ""}" ${s ? `onclick="select('cell','${r}>${c}')"` : ""}>${s ? s.n : ""}</td>`;
+		}
+		html += `</tr>`;
+	}
+	html += `</table>
+		<h3 style="margin-top:22px">Folder loops</h3>
+		<p class="muted">Groups of folders that import each other. The layer file cannot show these; the loop check does.</p>
+		<table class="matrix">${DATA.loops.map((c) => `<tr><td style="text-align:left">${c.length} folders</td><td style="text-align:left">${c.map((f) => `<code>${esc(short(f))}</code>`).join(" ")}</td></tr>`).join("")}</table>`;
+	document.getElementById("view").innerHTML = html;
+}
+
+// ---------- C: flows ----------
+function drawFlow() {
+	const flow = DATA.flows[state.flow];
+	const step = flow.steps[state.step];
+	const lit = new Set(step.layers.map((l) => (l === "main.ts" ? "main" : l)));
+	const server = lit.has("1") || lit.has("2");
+	const stack = ["index.html", ...ORDER].map((id) => {
+		const on = lit.has(id);
+		const name = id === "index.html" ? "index.html (inline script)" : layerName(id);
+		return `<div class="${on ? "lit" : ""}" style="${on ? `background:${COLOR[id] || "#57606a"}` : ""}">${esc(name)}</div>`;
+	}).join("");
+	document.getElementById("view").innerHTML = `
+		<div class="flowtabs">${DATA.flows.map((f, i) => `<button class="${i === state.flow ? "on" : ""}" onclick="state.flow=${i};state.step=0;drawFlow()">${md(f.title.split(":")[0])}</button>`).join("")}</div>
+		<h2 style="font-size:15px;margin:0 0 4px">${md(flow.title)}</h2>
+		<p class="muted">Budget: ${md(flow.budget)} Up and down arrows move between steps.</p>
+		<div class="flow"><div>${flow.steps.map((s, i) => `<div class="step ${i === state.step ? "on" : ""}" onclick="state.step=${i};drawFlow()">
+			<span class="n">${esc(s.n)}</span>${md(s.step)}
+			${i === state.step ? `<div style="margin-top:6px">
+				<div><span class="pill">layers ${esc(s.layerText)}</span>${server ? `<span class="pill server">goes to the server</span>` : ""}</div>
+				<div style="margin-top:4px"><b>Permission check:</b> ${md(s.check)}</div>
+				<div><b>Cache and key:</b> ${md(s.cache)}</div></div>` : ""}</div>`).join("")}</div>
+		<div class="stack">${stack}</div></div>`;
+	document.getElementById("panel").innerHTML = `<h2>Step ${esc(step.n)}</h2><p>${md(step.step)}</p>
+		<h3>Layers</h3><div>${[...lit].map((l) => `<span class="pill" style="background:${COLOR[l] || "#57606a"};color:#fff">${esc(l === "index.html" ? l : layerName(l))}</span>`).join("")}</div>
+		<h3>Permission check</h3><p>${md(step.check)}</p><h3>Cache and key</h3><p>${md(step.cache)}</p>
+		<h3>Not shown</h3><p class="muted">The files each step passes through, and its request. <code>ARCHITECTURE.md</code> names layers per step, not files or requests.</p>
+		<h3>Source</h3><p><a href="${GH}${DATA.architecture}#the-five-flows" target="_blank">ARCHITECTURE.md, the five flows</a></p>`;
+}
+
+// ---------- D: extension points ----------
+function drawExtensions() {
+	const tiers = [["app", "An app"], ["site", "A site admin"], ["user", "A user"]];
+	const pairs = DATA.extensions.filter((x) => x.pair).length;
+	document.getElementById("view").innerHTML = `<p class="muted">${DATA.extensions.length} ways to change the desk, by who uses them. ${pairs} rows name another row that does the same job. Hover a card to see its pair. This list is kept by hand.</p>
+		<div class="ext">${tiers.map(([t, title]) => `<div><h2>${title}</h2>${DATA.extensions.map((x, i) => x.tier !== t ? "" :
+			`<div class="card" data-name="${esc(x.name)}" data-pair="${esc(x.pair || "")}" style="border-left-color:${COLOR[x.layer]}" onclick="select('ext',${i})" onmouseenter="pairHit(this,true)" onmouseleave="pairHit(this,false)">
+				<b>${esc(x.name)}</b><div class="muted">${esc(x.changes)}</div>
+				<div><span class="pill">${esc(layerName(x.layer))}</span>${x.pair ? `<span class="pair">same job as ${esc(x.pair)}</span>` : ""}</div></div>`).join("")}</div>`).join("")}</div>`;
+}
+function pairHit(el, on) {
+	for (const c of document.querySelectorAll(".card")) {
+		if (c.dataset.name === el.dataset.pair || c.dataset.pair === el.dataset.name) c.classList.toggle("pairhit", on);
+	}
+}
+
+// ---------- switcher ----------
+function current() {
+	const key = new URLSearchParams(location.search).get("view") || "A";
+	return VIEWS.find((v) => v.key === key) || VIEWS[0];
+}
+function go(step) {
+	const i = (VIEWS.indexOf(current()) + step + VIEWS.length) % VIEWS.length;
+	const url = new URL(location.href);
+	url.searchParams.set("view", VIEWS[i].key);
+	history.replaceState(null, "", url);
+	render();
+}
+function render() {
+	const v = current();
+	document.getElementById("label").textContent = `${v.key}: ${v.name}`;
+	state.selected = null;
+	document.getElementById("panel").innerHTML = idleDetail();
+	v.draw();
+}
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+addEventListener("keydown", (e) => {
+	if (e.target.closest("input, textarea, [contenteditable]")) return;
+	if (e.key === "ArrowLeft") go(-1);
+	if (e.key === "ArrowRight") go(1);
+	if (current().key === "C" && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+		const n = DATA.flows[state.flow].steps.length;
+		state.step = (state.step + (e.key === "ArrowDown" ? 1 : -1) + n) % n;
+		e.preventDefault();
+		drawFlow();
+	}
+});
+addEventListener("resize", () => current().key === "A" && drawLayers());
+stats();
+render();
+</script>
+</body>
+</html>
