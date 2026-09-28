@@ -1,0 +1,7985 @@
+{
+	"commit": "6352fefbdfb6ff40487f976d099539bbce0d6bff",
+	"generatedBy": "research/desk-v2-structure/build-graph.mjs",
+	"rules": {
+		"node": "a folder; files directly in frontend/src, ui/src and frappe/shell are one node each",
+		"counted": "non-test .ts/.vue/.js/.mjs/.py files; tests/, stories/, *.test.*, *.spec.*, *.stories.*, *.d.ts left out",
+		"uiScope": "ui/src files reached from frontend/src or frontend/plugin through imports",
+		"edgeKinds": {
+			"import": "a static or dynamic import, or a Python import",
+			"virtual": "an import of a module the vite plugin generates",
+			"api": "a client string naming a whitelisted Python method",
+			"hook": "a frappe.shell path named in hooks.py"
+		},
+		"count": "import statements (or method strings) from one folder into the other; typeOnly and dynamic count the `import type` and `import()` ones among them"
+	},
+	"nodes": [
+		{
+			"id": "frappe",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 5113,
+			"fileList": [
+				{
+					"path": "frappe/sessions.py",
+					"lines": 594
+				},
+				{
+					"path": "frappe/translate.py",
+					"lines": 1017
+				},
+				{
+					"path": "frappe/boot.py",
+					"lines": 754
+				},
+				{
+					"path": "frappe/cache_manager.py",
+					"lines": 346
+				},
+				{
+					"path": "frappe/permissions.py",
+					"lines": 971
+				},
+				{
+					"path": "frappe/share.py",
+					"lines": 289
+				},
+				{
+					"path": "frappe/bundler.py",
+					"lines": 446
+				},
+				{
+					"path": "frappe/hooks.py",
+					"lines": 696
+				}
+			],
+			"externals": {},
+			"files": 8
+		},
+		{
+			"id": "frappe/core/api",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 131,
+			"fileList": [
+				{
+					"path": "frappe/core/api/file.py",
+					"lines": 131
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/core/doctype/communication",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 400,
+			"fileList": [
+				{
+					"path": "frappe/core/doctype/communication/email.py",
+					"lines": 400
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/custom/doctype/client_script",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 162,
+			"fileList": [
+				{
+					"path": "frappe/custom/doctype/client_script/client_script.py",
+					"lines": 162
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/desk",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 813,
+			"fileList": [
+				{
+					"path": "frappe/desk/customization_error.py",
+					"lines": 118
+				},
+				{
+					"path": "frappe/desk/layers.py",
+					"lines": 396
+				},
+				{
+					"path": "frappe/desk/desk_views.py",
+					"lines": 299
+				}
+			],
+			"externals": {},
+			"files": 3
+		},
+		{
+			"id": "frappe/desk/doctype/doctype_view",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 134,
+			"fileList": [
+				{
+					"path": "frappe/desk/doctype/doctype_view/api.py",
+					"lines": 134
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/desk/doctype/form_layout",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 306,
+			"fileList": [
+				{
+					"path": "frappe/desk/doctype/form_layout/form_layout.py",
+					"lines": 306
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/desk/doctype/tag",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 217,
+			"fileList": [
+				{
+					"path": "frappe/desk/doctype/tag/tag.py",
+					"lines": 217
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/email",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 415,
+			"fileList": [
+				{
+					"path": "frappe/email/inbox.py",
+					"lines": 159
+				},
+				{
+					"path": "frappe/email/__init__.py",
+					"lines": 256
+				}
+			],
+			"externals": {},
+			"files": 2
+		},
+		{
+			"id": "frappe/shell/__init__.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 4,
+			"fileList": [
+				{
+					"path": "frappe/shell/__init__.py",
+					"lines": 4
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/address_clash.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 76,
+			"fileList": [
+				{
+					"path": "frappe/shell/address_clash.py",
+					"lines": 76
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/arrangement.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 353,
+			"fileList": [
+				{
+					"path": "frappe/shell/arrangement.py",
+					"lines": 353
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/boot.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 176,
+			"fileList": [
+				{
+					"path": "frappe/shell/boot.py",
+					"lines": 176
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/doctypes.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 202,
+			"fileList": [
+				{
+					"path": "frappe/shell/doctypes.py",
+					"lines": 202
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/extensions.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 89,
+			"fileList": [
+				{
+					"path": "frappe/shell/extensions.py",
+					"lines": 89
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/install.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 51,
+			"fileList": [
+				{
+					"path": "frappe/shell/install.py",
+					"lines": 51
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/links.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 33,
+			"fileList": [
+				{
+					"path": "frappe/shell/links.py",
+					"lines": 33
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/manifest.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 381,
+			"fileList": [
+				{
+					"path": "frappe/shell/manifest.py",
+					"lines": 381
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/navigation_filter.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 315,
+			"fileList": [
+				{
+					"path": "frappe/shell/navigation_filter.py",
+					"lines": 315
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/navigation.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 556,
+			"fileList": [
+				{
+					"path": "frappe/shell/navigation.py",
+					"lines": 556
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/permissions.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 47,
+			"fileList": [
+				{
+					"path": "frappe/shell/permissions.py",
+					"lines": 47
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/registry.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 84,
+			"fileList": [
+				{
+					"path": "frappe/shell/registry.py",
+					"lines": 84
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/shell/route_guard.py",
+			"layer": "server",
+			"group": "python shell",
+			"lines": 46,
+			"fileList": [
+				{
+					"path": "frappe/shell/route_guard.py",
+					"lines": 46
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frappe/utils",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 4866,
+			"fileList": [
+				{
+					"path": "frappe/utils/__init__.py",
+					"lines": 1294
+				},
+				{
+					"path": "frappe/utils/caching.py",
+					"lines": 272
+				},
+				{
+					"path": "frappe/utils/modules.py",
+					"lines": 143
+				},
+				{
+					"path": "frappe/utils/data.py",
+					"lines": 3157
+				}
+			],
+			"externals": {},
+			"files": 4
+		},
+		{
+			"id": "frappe/website/page_renderers",
+			"layer": "server-other",
+			"group": "python other",
+			"lines": 80,
+			"fileList": [
+				{
+					"path": "frappe/website/page_renderers/shell_page.py",
+					"lines": 80
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frontend/plugin",
+			"layer": "build",
+			"group": "build plugin",
+			"lines": 926,
+			"fileList": [
+				{
+					"path": "frontend/plugin/replacements.js",
+					"lines": 97
+				},
+				{
+					"path": "frontend/plugin/folders.js",
+					"lines": 31
+				},
+				{
+					"path": "frontend/plugin/presets.js",
+					"lines": 118
+				},
+				{
+					"path": "frontend/plugin/pageClashes.js",
+					"lines": 70
+				},
+				{
+					"path": "frontend/plugin/oneTree.js",
+					"lines": 81
+				},
+				{
+					"path": "frontend/plugin/importMap.js",
+					"lines": 178
+				},
+				{
+					"path": "frontend/plugin/manifest.js",
+					"lines": 31
+				},
+				{
+					"path": "frontend/plugin/contributions.js",
+					"lines": 246
+				},
+				{
+					"path": "frontend/plugin/content.js",
+					"lines": 30
+				},
+				{
+					"path": "frontend/plugin/classList.js",
+					"lines": 44
+				}
+			],
+			"externals": {
+				"node:fs": 7,
+				"node:path": 8,
+				"jiti": 1,
+				"tailwindcss": 1,
+				"node:module": 1,
+				"node:url": 2,
+				"postcss": 1
+			},
+			"files": 10
+		},
+		{
+			"id": "frontend/src/addresses.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 85,
+			"fileList": [
+				{
+					"path": "frontend/src/addresses.ts",
+					"lines": 85
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/arrangement.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 145,
+			"fileList": [
+				{
+					"path": "frontend/src/arrangement.ts",
+					"lines": 145
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/boot.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 111,
+			"fileList": [
+				{
+					"path": "frontend/src/boot.ts",
+					"lines": 111
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/contents.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 71,
+			"fileList": [
+				{
+					"path": "frontend/src/contents.ts",
+					"lines": 71
+				}
+			],
+			"externals": {
+				"vue": 1
+			},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/contributions",
+			"layer": "desk",
+			"group": "contributions",
+			"lines": 194,
+			"fileList": [
+				{
+					"path": "frontend/src/contributions/registry.ts",
+					"lines": 135
+				},
+				{
+					"path": "frontend/src/contributions/types.ts",
+					"lines": 59
+				}
+			],
+			"externals": {},
+			"files": 2
+		},
+		{
+			"id": "frontend/src/i18n.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 56,
+			"fileList": [
+				{
+					"path": "frontend/src/i18n.ts",
+					"lines": 56
+				}
+			],
+			"externals": {
+				"vue": 1
+			},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/icons",
+			"layer": "desk",
+			"group": "icons",
+			"lines": 135,
+			"fileList": [
+				{
+					"path": "frontend/src/icons/Icon.vue",
+					"lines": 45
+				},
+				{
+					"path": "frontend/src/icons/sprite.ts",
+					"lines": 90
+				}
+			],
+			"externals": {
+				"vue": 2
+			},
+			"files": 2
+		},
+		{
+			"id": "frontend/src/list",
+			"layer": "desk",
+			"group": "list page",
+			"lines": 1105,
+			"fileList": [
+				{
+					"path": "frontend/src/list/useListSettings.ts",
+					"lines": 189
+				},
+				{
+					"path": "frontend/src/list/storedSettings.ts",
+					"lines": 98
+				},
+				{
+					"path": "frontend/src/list/useListPage.ts",
+					"lines": 295
+				},
+				{
+					"path": "frontend/src/list/useListRows.ts",
+					"lines": 220
+				},
+				{
+					"path": "frontend/src/list/query.ts",
+					"lines": 116
+				},
+				{
+					"path": "frontend/src/list/pageState.ts",
+					"lines": 48
+				},
+				{
+					"path": "frontend/src/list/defaults.ts",
+					"lines": 77
+				},
+				{
+					"path": "frontend/src/list/useScrollMemory.ts",
+					"lines": 62
+				}
+			],
+			"externals": {
+				"vue": 4,
+				"vue-router": 2
+			},
+			"files": 8
+		},
+		{
+			"id": "frontend/src/main.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 81,
+			"fileList": [
+				{
+					"path": "frontend/src/main.ts",
+					"lines": 81
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 1
+			},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/navigation",
+			"layer": "desk",
+			"group": "navigation",
+			"lines": 536,
+			"fileList": [
+				{
+					"path": "frontend/src/navigation/types.ts",
+					"lines": 55
+				},
+				{
+					"path": "frontend/src/navigation/registry.ts",
+					"lines": 96
+				},
+				{
+					"path": "frontend/src/navigation/sectionMemory.ts",
+					"lines": 82
+				},
+				{
+					"path": "frontend/src/navigation/tree.ts",
+					"lines": 64
+				},
+				{
+					"path": "frontend/src/navigation/useItemTree.ts",
+					"lines": 28
+				},
+				{
+					"path": "frontend/src/navigation/sidebarMemory.ts",
+					"lines": 47
+				},
+				{
+					"path": "frontend/src/navigation/current.ts",
+					"lines": 128
+				},
+				{
+					"path": "frontend/src/navigation/context.ts",
+					"lines": 36
+				}
+			],
+			"externals": {
+				"vue-router": 2,
+				"vue": 1
+			},
+			"files": 8
+		},
+		{
+			"id": "frontend/src/pages",
+			"layer": "page",
+			"group": "pages",
+			"lines": 1088,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/Record.vue",
+					"lines": 885
+				},
+				{
+					"path": "frontend/src/pages/List.vue",
+					"lines": 25
+				},
+				{
+					"path": "frontend/src/pages/Module.vue",
+					"lines": 52
+				},
+				{
+					"path": "frontend/src/pages/TileGridSkeleton.vue",
+					"lines": 14
+				},
+				{
+					"path": "frontend/src/pages/Home.vue",
+					"lines": 88
+				},
+				{
+					"path": "frontend/src/pages/MainPage.vue",
+					"lines": 24
+				}
+			],
+			"externals": {
+				"vue": 5,
+				"vue-router": 5,
+				"frappe-ui": 3
+			},
+			"files": 6
+		},
+		{
+			"id": "frontend/src/pages/list",
+			"layer": "page",
+			"group": "list page",
+			"lines": 238,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/list/DoctypeList.vue",
+					"lines": 175
+				},
+				{
+					"path": "frontend/src/pages/list/DeleteDialog.vue",
+					"lines": 63
+				}
+			],
+			"externals": {
+				"frappe-ui": 2,
+				"vue": 2,
+				"vue-router": 1
+			},
+			"files": 2
+		},
+		{
+			"id": "frontend/src/pages/record",
+			"layer": "page",
+			"group": "record page",
+			"lines": 877,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/saveResponse.ts",
+					"lines": 40
+				},
+				{
+					"path": "frontend/src/pages/record/refetchMerge.ts",
+					"lines": 26
+				},
+				{
+					"path": "frontend/src/pages/record/recordSource.ts",
+					"lines": 61
+				},
+				{
+					"path": "frontend/src/pages/record/liveClientScripts.ts",
+					"lines": 36
+				},
+				{
+					"path": "frontend/src/pages/record/liveDocinfo.ts",
+					"lines": 142
+				},
+				{
+					"path": "frontend/src/pages/record/follow.ts",
+					"lines": 19
+				},
+				{
+					"path": "frontend/src/pages/record/favourites.ts",
+					"lines": 15
+				},
+				{
+					"path": "frontend/src/pages/record/builtinActions.ts",
+					"lines": 121
+				},
+				{
+					"path": "frontend/src/pages/record/metaSource.ts",
+					"lines": 31
+				},
+				{
+					"path": "frontend/src/pages/record/formTabMemory.ts",
+					"lines": 42
+				},
+				{
+					"path": "frontend/src/pages/record/RecordHeader.vue",
+					"lines": 216
+				},
+				{
+					"path": "frontend/src/pages/record/RecordFavourite.vue",
+					"lines": 63
+				},
+				{
+					"path": "frontend/src/pages/record/headerMenuOptions.ts",
+					"lines": 31
+				},
+				{
+					"path": "frontend/src/pages/record/FrameBands.vue",
+					"lines": 22
+				},
+				{
+					"path": "frontend/src/pages/record/drawnProps.ts",
+					"lines": 12
+				}
+			],
+			"externals": {
+				"vue": 4,
+				"@vueuse/core": 2,
+				"vue-router": 1,
+				"frappe-ui": 4
+			},
+			"files": 15
+		},
+		{
+			"id": "frontend/src/pages/record/body",
+			"layer": "page",
+			"group": "record page",
+			"lines": 331,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/body/BodyColumns.vue",
+					"lines": 119
+				},
+				{
+					"path": "frontend/src/pages/record/body/columnStore.ts",
+					"lines": 44
+				},
+				{
+					"path": "frontend/src/pages/record/body/ColumnEdge.vue",
+					"lines": 104
+				},
+				{
+					"path": "frontend/src/pages/record/body/BodyColumn.vue",
+					"lines": 64
+				}
+			],
+			"externals": {
+				"vue": 4
+			},
+			"files": 4
+		},
+		{
+			"id": "frontend/src/pages/record/composer",
+			"layer": "page",
+			"group": "record page",
+			"lines": 1400,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/composer/writerContext.ts",
+					"lines": 85
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailSeed.ts",
+					"lines": 115
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailQuote.ts",
+					"lines": 39
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailPrefill.ts",
+					"lines": 47
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailDraft.ts",
+					"lines": 124
+				},
+				{
+					"path": "frontend/src/pages/record/composer/commentDraft.ts",
+					"lines": 38
+				},
+				{
+					"path": "frontend/src/pages/record/composer/composerHost.ts",
+					"lines": 52
+				},
+				{
+					"path": "frontend/src/pages/record/composer/useDockHeight.ts",
+					"lines": 39
+				},
+				{
+					"path": "frontend/src/pages/record/composer/EmailWriter.vue",
+					"lines": 106
+				},
+				{
+					"path": "frontend/src/pages/record/composer/useEmailDraft.ts",
+					"lines": 100
+				},
+				{
+					"path": "frontend/src/pages/record/composer/useCommentDraft.ts",
+					"lines": 63
+				},
+				{
+					"path": "frontend/src/pages/record/composer/commentUpload.ts",
+					"lines": 30
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailSenders.ts",
+					"lines": 59
+				},
+				{
+					"path": "frontend/src/pages/record/composer/emailPost.ts",
+					"lines": 117
+				},
+				{
+					"path": "frontend/src/pages/record/composer/AttachmentSeed.ts",
+					"lines": 18
+				},
+				{
+					"path": "frontend/src/pages/record/composer/CommentWriter.vue",
+					"lines": 64
+				},
+				{
+					"path": "frontend/src/pages/record/composer/commentPost.ts",
+					"lines": 99
+				},
+				{
+					"path": "frontend/src/pages/record/composer/RecordComposer.vue",
+					"lines": 87
+				},
+				{
+					"path": "frontend/src/pages/record/composer/createMenu.ts",
+					"lines": 32
+				},
+				{
+					"path": "frontend/src/pages/record/composer/ComposerPill.vue",
+					"lines": 86
+				}
+			],
+			"externals": {
+				"vue": 9,
+				"frappe-ui": 6,
+				"@vueuse/core": 2
+			},
+			"files": 20
+		},
+		{
+			"id": "frontend/src/pages/record/dialogs",
+			"layer": "page",
+			"group": "record page",
+			"lines": 277,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/dialogs/PageDialogs.vue",
+					"lines": 18
+				},
+				{
+					"path": "frontend/src/pages/record/dialogs/PageOpenDialog.vue",
+					"lines": 38
+				},
+				{
+					"path": "frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"lines": 221
+				}
+			],
+			"externals": {
+				"vue": 2,
+				"frappe-ui": 4
+			},
+			"files": 3
+		},
+		{
+			"id": "frontend/src/pages/record/feed",
+			"layer": "page",
+			"group": "record page",
+			"lines": 883,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/feed/recordFeeds.ts",
+					"lines": 271
+				},
+				{
+					"path": "frontend/src/pages/record/feed/files.ts",
+					"lines": 57
+				},
+				{
+					"path": "frontend/src/pages/record/feed/RecordUploadDialog.vue",
+					"lines": 47
+				},
+				{
+					"path": "frontend/src/pages/record/feed/TimelineFeed.vue",
+					"lines": 136
+				},
+				{
+					"path": "frontend/src/pages/record/feed/RecordFeed.vue",
+					"lines": 205
+				},
+				{
+					"path": "frontend/src/pages/record/feed/useScrollEdges.ts",
+					"lines": 28
+				},
+				{
+					"path": "frontend/src/pages/record/feed/FilesTab.vue",
+					"lines": 118
+				},
+				{
+					"path": "frontend/src/pages/record/feed/ActivityTab.vue",
+					"lines": 21
+				}
+			],
+			"externals": {
+				"vue": 7,
+				"vue-router": 1,
+				"@vueuse/core": 3,
+				"frappe-ui": 3
+			},
+			"files": 8
+		},
+		{
+			"id": "frontend/src/pages/record/panel",
+			"layer": "page",
+			"group": "record page",
+			"lines": 1864,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/panel/peopleActions.ts",
+					"lines": 47
+				},
+				{
+					"path": "frontend/src/pages/record/panel/context.ts",
+					"lines": 38
+				},
+				{
+					"path": "frontend/src/pages/record/panel/RecordPanel.vue",
+					"lines": 64
+				},
+				{
+					"path": "frontend/src/pages/record/panel/QuickActions.vue",
+					"lines": 133
+				},
+				{
+					"path": "frontend/src/pages/record/panel/TagPicker.vue",
+					"lines": 124
+				},
+				{
+					"path": "frontend/src/pages/record/panel/remoteSearch.ts",
+					"lines": 83
+				},
+				{
+					"path": "frontend/src/pages/record/panel/people.ts",
+					"lines": 75
+				},
+				{
+					"path": "frontend/src/pages/record/panel/fittedActions.ts",
+					"lines": 48
+				},
+				{
+					"path": "frontend/src/pages/record/panel/panelEntries.ts",
+					"lines": 114
+				},
+				{
+					"path": "frontend/src/pages/record/panel/PanelLayout.vue",
+					"lines": 108
+				},
+				{
+					"path": "frontend/src/pages/record/panel/PanelSection.vue",
+					"lines": 69
+				},
+				{
+					"path": "frontend/src/pages/record/panel/PanelField.vue",
+					"lines": 143
+				},
+				{
+					"path": "frontend/src/pages/record/panel/displayValue.ts",
+					"lines": 66
+				},
+				{
+					"path": "frontend/src/pages/record/panel/disclosure.ts",
+					"lines": 69
+				},
+				{
+					"path": "frontend/src/pages/record/panel/builtins.ts",
+					"lines": 12
+				},
+				{
+					"path": "frontend/src/pages/record/panel/RecordPeople.vue",
+					"lines": 62
+				},
+				{
+					"path": "frontend/src/pages/record/panel/ShareDialog.vue",
+					"lines": 93
+				},
+				{
+					"path": "frontend/src/pages/record/panel/PeopleRow.vue",
+					"lines": 19
+				},
+				{
+					"path": "frontend/src/pages/record/panel/PeopleAvatars.vue",
+					"lines": 39
+				},
+				{
+					"path": "frontend/src/pages/record/panel/AssigneePicker.vue",
+					"lines": 85
+				},
+				{
+					"path": "frontend/src/pages/record/panel/RecordIdentity.vue",
+					"lines": 82
+				},
+				{
+					"path": "frontend/src/pages/record/panel/RecordImage.vue",
+					"lines": 204
+				},
+				{
+					"path": "frontend/src/pages/record/panel/imageField.ts",
+					"lines": 87
+				}
+			],
+			"externals": {
+				"vue": 17,
+				"frappe-ui": 6,
+				"@vueuse/core": 2
+			},
+			"files": 23
+		},
+		{
+			"id": "frontend/src/pages/record/skeletons",
+			"layer": "page",
+			"group": "record page",
+			"lines": 181,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/skeletons/HeaderSkeleton.vue",
+					"lines": 27
+				},
+				{
+					"path": "frontend/src/pages/record/skeletons/BodySkeleton.vue",
+					"lines": 23
+				},
+				{
+					"path": "frontend/src/pages/record/skeletons/TabsSkeleton.vue",
+					"lines": 40
+				},
+				{
+					"path": "frontend/src/pages/record/skeletons/FormSkeleton.vue",
+					"lines": 23
+				},
+				{
+					"path": "frontend/src/pages/record/skeletons/PanelSkeleton.vue",
+					"lines": 41
+				},
+				{
+					"path": "frontend/src/pages/record/skeletons/PanelSectionsSkeleton.vue",
+					"lines": 27
+				}
+			],
+			"externals": {
+				"frappe-ui": 5,
+				"vue": 1,
+				"vue-router": 1
+			},
+			"files": 6
+		},
+		{
+			"id": "frontend/src/pages/record/tabs",
+			"layer": "page",
+			"group": "record page",
+			"lines": 351,
+			"fileList": [
+				{
+					"path": "frontend/src/pages/record/tabs/useRecordTabs.ts",
+					"lines": 49
+				},
+				{
+					"path": "frontend/src/pages/record/tabs/recordTabs.ts",
+					"lines": 168
+				},
+				{
+					"path": "frontend/src/pages/record/tabs/RecordTabs.vue",
+					"lines": 134
+				}
+			],
+			"externals": {
+				"vue": 3,
+				"vue-router": 2,
+				"frappe-ui": 1
+			},
+			"files": 3
+		},
+		{
+			"id": "frontend/src/public.ts",
+			"layer": "desk",
+			"group": "root modules",
+			"lines": 11,
+			"fileList": [
+				{
+					"path": "frontend/src/public.ts",
+					"lines": 11
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "frontend/src/recordPage",
+			"layer": "page",
+			"group": "record page",
+			"lines": 5801,
+			"fileList": [
+				{
+					"path": "frontend/src/recordPage/types.ts",
+					"lines": 613
+				},
+				{
+					"path": "frontend/src/recordPage/index.ts",
+					"lines": 76
+				},
+				{
+					"path": "frontend/src/recordPage/composer.ts",
+					"lines": 135
+				},
+				{
+					"path": "frontend/src/recordPage/surface.ts",
+					"lines": 255
+				},
+				{
+					"path": "frontend/src/recordPage/staging.ts",
+					"lines": 98
+				},
+				{
+					"path": "frontend/src/recordPage/iconClasses.ts",
+					"lines": 75
+				},
+				{
+					"path": "frontend/src/recordPage/context.ts",
+					"lines": 39
+				},
+				{
+					"path": "frontend/src/recordPage/formJoin.ts",
+					"lines": 110
+				},
+				{
+					"path": "frontend/src/recordPage/headerRenderings.ts",
+					"lines": 537
+				},
+				{
+					"path": "frontend/src/recordPage/drawnProps.ts",
+					"lines": 86
+				},
+				{
+					"path": "frontend/src/recordPage/body.ts",
+					"lines": 213
+				},
+				{
+					"path": "frontend/src/recordPage/frame.ts",
+					"lines": 72
+				},
+				{
+					"path": "frontend/src/recordPage/createRecordPage.ts",
+					"lines": 821
+				},
+				{
+					"path": "frontend/src/recordPage/paintGate.ts",
+					"lines": 291
+				},
+				{
+					"path": "frontend/src/recordPage/registry.ts",
+					"lines": 60
+				},
+				{
+					"path": "frontend/src/recordPage/flattenHandlers.ts",
+					"lines": 73
+				},
+				{
+					"path": "frontend/src/recordPage/clientScripts.ts",
+					"lines": 191
+				},
+				{
+					"path": "frontend/src/recordPage/reportError.ts",
+					"lines": 85
+				},
+				{
+					"path": "frontend/src/recordPage/clientScriptTypes.ts",
+					"lines": 15
+				},
+				{
+					"path": "frontend/src/recordPage/evaluateClientScript.ts",
+					"lines": 31
+				},
+				{
+					"path": "frontend/src/recordPage/rows.ts",
+					"lines": 243
+				},
+				{
+					"path": "frontend/src/recordPage/readOnly.ts",
+					"lines": 108
+				},
+				{
+					"path": "frontend/src/recordPage/pagePermissions.ts",
+					"lines": 104
+				},
+				{
+					"path": "frontend/src/recordPage/pageCompatibility.ts",
+					"lines": 109
+				},
+				{
+					"path": "frontend/src/recordPage/formTabs.ts",
+					"lines": 205
+				},
+				{
+					"path": "frontend/src/recordPage/form.ts",
+					"lines": 80
+				},
+				{
+					"path": "frontend/src/recordPage/fields.ts",
+					"lines": 251
+				},
+				{
+					"path": "frontend/src/recordPage/feed.ts",
+					"lines": 274
+				},
+				{
+					"path": "frontend/src/recordPage/dialog.ts",
+					"lines": 264
+				},
+				{
+					"path": "frontend/src/recordPage/commitChannel.ts",
+					"lines": 90
+				},
+				{
+					"path": "frontend/src/recordPage/errorMessage.ts",
+					"lines": 4
+				},
+				{
+					"path": "frontend/src/recordPage/formDialogLayout.ts",
+					"lines": 193
+				}
+			],
+			"externals": {
+				"vue": 11,
+				"vue-router": 2,
+				"frappe-ui": 4
+			},
+			"files": 32
+		},
+		{
+			"id": "frontend/src/recordPage/formLayoutSource",
+			"layer": "page",
+			"group": "record page",
+			"lines": 457,
+			"fileList": [
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"lines": 162
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/types.ts",
+					"lines": 44
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/joinLayout.ts",
+					"lines": 93
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/section.ts",
+					"lines": 43
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/fieldPatch.ts",
+					"lines": 40
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/fieldAccess.ts",
+					"lines": 17
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/chooseLayout.ts",
+					"lines": 43
+				},
+				{
+					"path": "frontend/src/recordPage/formLayoutSource/sectionName.ts",
+					"lines": 15
+				}
+			],
+			"externals": {
+				"vue": 2
+			},
+			"files": 8
+		},
+		{
+			"id": "frontend/src/router",
+			"layer": "desk",
+			"group": "router",
+			"lines": 477,
+			"fileList": [
+				{
+					"path": "frontend/src/router/failedPage.ts",
+					"lines": 37
+				},
+				{
+					"path": "frontend/src/router/standardPages.ts",
+					"lines": 6
+				},
+				{
+					"path": "frontend/src/router/routeFor.ts",
+					"lines": 109
+				},
+				{
+					"path": "frontend/src/router/mainPage.ts",
+					"lines": 59
+				},
+				{
+					"path": "frontend/src/router/index.ts",
+					"lines": 147
+				},
+				{
+					"path": "frontend/src/router/contributed.ts",
+					"lines": 52
+				},
+				{
+					"path": "frontend/src/router/generated.ts",
+					"lines": 67
+				}
+			],
+			"externals": {
+				"vue": 2,
+				"vue-router": 4
+			},
+			"files": 7
+		},
+		{
+			"id": "frontend/src/shell",
+			"layer": "desk",
+			"group": "shell",
+			"lines": 1751,
+			"fileList": [
+				{
+					"path": "frontend/src/shell/useHashDialog.ts",
+					"lines": 44
+				},
+				{
+					"path": "frontend/src/shell/socket.ts",
+					"lines": 26
+				},
+				{
+					"path": "frontend/src/shell/session.ts",
+					"lines": 10
+				},
+				{
+					"path": "frontend/src/shell/doctypeUpdates.ts",
+					"lines": 20
+				},
+				{
+					"path": "frontend/src/shell/composer.ts",
+					"lines": 216
+				},
+				{
+					"path": "frontend/src/shell/Unauthorized.vue",
+					"lines": 7
+				},
+				{
+					"path": "frontend/src/shell/SidebarRow.vue",
+					"lines": 200
+				},
+				{
+					"path": "frontend/src/shell/LoadingStatus.vue",
+					"lines": 8
+				},
+				{
+					"path": "frontend/src/shell/SidebarPanel.vue",
+					"lines": 78
+				},
+				{
+					"path": "frontend/src/shell/SidebarEdge.vue",
+					"lines": 74
+				},
+				{
+					"path": "frontend/src/shell/RailColumn.vue",
+					"lines": 280
+				},
+				{
+					"path": "frontend/src/shell/LogoutDialog.vue",
+					"lines": 31
+				},
+				{
+					"path": "frontend/src/shell/PageLoadError.vue",
+					"lines": 25
+				},
+				{
+					"path": "frontend/src/shell/PageFrame.vue",
+					"lines": 60
+				},
+				{
+					"path": "frontend/src/shell/NotFound.vue",
+					"lines": 7
+				},
+				{
+					"path": "frontend/src/shell/CustomizeSidebarDialog.vue",
+					"lines": 215
+				},
+				{
+					"path": "frontend/src/shell/ComposerWindow.vue",
+					"lines": 211
+				},
+				{
+					"path": "frontend/src/shell/BootError.vue",
+					"lines": 7
+				},
+				{
+					"path": "frontend/src/shell/AppShell.vue",
+					"lines": 232
+				}
+			],
+			"externals": {
+				"vue": 8,
+				"vue-router": 3,
+				"socket.io-client": 1,
+				"frappe-ui": 10,
+				"@vueuse/core": 1
+			},
+			"files": 19
+		},
+		{
+			"id": "ui/src/api",
+			"layer": "ui",
+			"group": "ui api",
+			"lines": 987,
+			"fileList": [
+				{
+					"path": "ui/src/api/index.ts",
+					"lines": 488
+				},
+				{
+					"path": "ui/src/api/upload.ts",
+					"lines": 243
+				},
+				{
+					"path": "ui/src/api/request.ts",
+					"lines": 113
+				},
+				{
+					"path": "ui/src/api/envelope.ts",
+					"lines": 82
+				},
+				{
+					"path": "ui/src/api/feed.ts",
+					"lines": 61
+				}
+			],
+			"externals": {},
+			"files": 5
+		},
+		{
+			"id": "ui/src/cache",
+			"layer": "ui",
+			"group": "ui cache",
+			"lines": 788,
+			"fileList": [
+				{
+					"path": "ui/src/cache/index.ts",
+					"lines": 106
+				},
+				{
+					"path": "ui/src/cache/listKey.ts",
+					"lines": 38
+				},
+				{
+					"path": "ui/src/cache/entries.ts",
+					"lines": 141
+				},
+				{
+					"path": "ui/src/cache/dataCache.ts",
+					"lines": 298
+				},
+				{
+					"path": "ui/src/cache/writeGate.ts",
+					"lines": 137
+				},
+				{
+					"path": "ui/src/cache/rowsMemo.ts",
+					"lines": 38
+				},
+				{
+					"path": "ui/src/cache/nameCounts.ts",
+					"lines": 30
+				}
+			],
+			"externals": {
+				"vue": 1
+			},
+			"files": 7
+		},
+		{
+			"id": "ui/src/components",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 12,
+			"fileList": [
+				{
+					"path": "ui/src/components/types.ts",
+					"lines": 12
+				}
+			],
+			"externals": {},
+			"files": 1
+		},
+		{
+			"id": "ui/src/components/ActivityTimeline",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 3032,
+			"fileList": [
+				{
+					"path": "ui/src/components/ActivityTimeline/types.ts",
+					"lines": 222
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/index.ts",
+					"lines": 42
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/grouping.ts",
+					"lines": 273
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/pendingRows.ts",
+					"lines": 208
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/utils.ts",
+					"lines": 225
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/useActivityTimeline.ts",
+					"lines": 192
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/timelineStore.ts",
+					"lines": 269
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/liveUpdates.ts",
+					"lines": 224
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/storeCache.ts",
+					"lines": 30
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/VersionItem.vue",
+					"lines": 154
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/TimeAgo.vue",
+					"lines": 16
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/ValueChange.vue",
+					"lines": 29
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/LogItem.vue",
+					"lines": 71
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/CommentItem.vue",
+					"lines": 110
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/TimelineCard.vue",
+					"lines": 23
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/AttachmentChip.vue",
+					"lines": 114
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/EmailItem.vue",
+					"lines": 91
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/EmailContent.vue",
+					"lines": 267
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/TimelineSkeleton.vue",
+					"lines": 57
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/TimelineContainer.vue",
+					"lines": 15
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/ActivityTimeline.vue",
+					"lines": 260
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/LoadMoreButton.vue",
+					"lines": 16
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/DotIcon.vue",
+					"lines": 85
+				},
+				{
+					"path": "ui/src/components/ActivityTimeline/icons.ts",
+					"lines": 39
+				}
+			],
+			"externals": {
+				"vue": 17,
+				"frappe-ui": 11,
+				"~icons": 13
+			},
+			"files": 24
+		},
+		{
+			"id": "ui/src/components/ColumnSettings",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 667,
+			"fileList": [
+				{
+					"path": "ui/src/components/ColumnSettings/types.ts",
+					"lines": 74
+				},
+				{
+					"path": "ui/src/components/ColumnSettings/index.ts",
+					"lines": 26
+				},
+				{
+					"path": "ui/src/components/ColumnSettings/getDefaultColumns.ts",
+					"lines": 85
+				},
+				{
+					"path": "ui/src/components/ColumnSettings/getColumnOptions.ts",
+					"lines": 56
+				},
+				{
+					"path": "ui/src/components/ColumnSettings/columns.ts",
+					"lines": 175
+				},
+				{
+					"path": "ui/src/components/ColumnSettings/ColumnSettings.vue",
+					"lines": 251
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 1,
+				"vuedraggable": 1
+			},
+			"files": 6
+		},
+		{
+			"id": "ui/src/components/Composer",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 650,
+			"fileList": [
+				{
+					"path": "ui/src/components/Composer/index.ts",
+					"lines": 21
+				},
+				{
+					"path": "ui/src/components/Composer/types.ts",
+					"lines": 124
+				},
+				{
+					"path": "ui/src/components/Composer/ComposerEditor.vue",
+					"lines": 505
+				}
+			],
+			"externals": {
+				"@tiptap/core": 2,
+				"frappe-ui": 3,
+				"vue": 1,
+				"@vueuse/core": 1,
+				"~icons": 9
+			},
+			"files": 3
+		},
+		{
+			"id": "ui/src/components/Composer/CommentComposer",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 50,
+			"fileList": [
+				{
+					"path": "ui/src/components/Composer/CommentComposer/CommentComposer.vue",
+					"lines": 50
+				}
+			],
+			"externals": {
+				"vue": 1
+			},
+			"files": 1
+		},
+		{
+			"id": "ui/src/components/Composer/EmailComposer",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 482,
+			"fileList": [
+				{
+					"path": "ui/src/components/Composer/EmailComposer/EmailComposer.vue",
+					"lines": 112
+				},
+				{
+					"path": "ui/src/components/Composer/EmailComposer/HeaderFields.vue",
+					"lines": 164
+				},
+				{
+					"path": "ui/src/components/Composer/EmailComposer/HeaderRow.vue",
+					"lines": 16
+				},
+				{
+					"path": "ui/src/components/Composer/EmailComposer/RecipientSelect.vue",
+					"lines": 190
+				}
+			],
+			"externals": {
+				"vue": 3,
+				"frappe-ui": 3,
+				"@vueuse/core": 1,
+				"~icons": 1
+			},
+			"files": 4
+		},
+		{
+			"id": "ui/src/components/Fields",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 2589,
+			"fileList": [
+				{
+					"path": "ui/src/components/Fields/types.ts",
+					"lines": 148
+				},
+				{
+					"path": "ui/src/components/Fields/rowIdentity.ts",
+					"lines": 40
+				},
+				{
+					"path": "ui/src/components/Fields/fieldTypes.ts",
+					"lines": 129
+				},
+				{
+					"path": "ui/src/components/Fields/CodeEditorField.vue",
+					"lines": 334
+				},
+				{
+					"path": "ui/src/components/Fields/fieldtypeToLanguage.ts",
+					"lines": 69
+				},
+				{
+					"path": "ui/src/components/Fields/CodePreview.vue",
+					"lines": 40
+				},
+				{
+					"path": "ui/src/components/Fields/TimeField.vue",
+					"lines": 28
+				},
+				{
+					"path": "ui/src/components/Fields/TextareaField.vue",
+					"lines": 25
+				},
+				{
+					"path": "ui/src/components/Fields/TextField.vue",
+					"lines": 20
+				},
+				{
+					"path": "ui/src/components/Fields/TableMultiSelectField.vue",
+					"lines": 46
+				},
+				{
+					"path": "ui/src/components/Fields/TableField.vue",
+					"lines": 427
+				},
+				{
+					"path": "ui/src/components/Fields/SelectField.vue",
+					"lines": 34
+				},
+				{
+					"path": "ui/src/components/Fields/RatingField.vue",
+					"lines": 34
+				},
+				{
+					"path": "ui/src/components/Fields/PhoneField.vue",
+					"lines": 23
+				},
+				{
+					"path": "ui/src/components/Fields/PasswordField.vue",
+					"lines": 25
+				},
+				{
+					"path": "ui/src/components/Fields/NumberField.vue",
+					"lines": 117
+				},
+				{
+					"path": "ui/src/components/Fields/LinkField.vue",
+					"lines": 43
+				},
+				{
+					"path": "ui/src/components/Fields/HtmlField.vue",
+					"lines": 17
+				},
+				{
+					"path": "ui/src/components/Fields/HeadingField.vue",
+					"lines": 11
+				},
+				{
+					"path": "ui/src/components/Fields/GeolocationField.vue",
+					"lines": 483
+				},
+				{
+					"path": "ui/src/components/Fields/ImageField.vue",
+					"lines": 69
+				},
+				{
+					"path": "ui/src/components/Fields/AttachField.vue",
+					"lines": 210
+				},
+				{
+					"path": "ui/src/components/Fields/DynamicLinkField.vue",
+					"lines": 47
+				},
+				{
+					"path": "ui/src/components/Fields/DurationField.vue",
+					"lines": 29
+				},
+				{
+					"path": "ui/src/components/Fields/DatetimeField.vue",
+					"lines": 28
+				},
+				{
+					"path": "ui/src/components/Fields/DateField.vue",
+					"lines": 28
+				},
+				{
+					"path": "ui/src/components/Fields/CheckField.vue",
+					"lines": 28
+				},
+				{
+					"path": "ui/src/components/Fields/ButtonField.vue",
+					"lines": 17
+				},
+				{
+					"path": "ui/src/components/Fields/AutocompleteField.vue",
+					"lines": 40
+				}
+			],
+			"externals": {
+				"vue": 23,
+				"@codemirror/state": 1,
+				"@codemirror/view": 1,
+				"frappe-ui": 21,
+				"@codemirror/lint": 1,
+				"@codemirror/lang-json": 1,
+				"dompurify": 2,
+				"marked": 1,
+				"leaflet": 7,
+				"leaflet-draw": 5,
+				"leaflet.locatecontrol": 2
+			},
+			"files": 29
+		},
+		{
+			"id": "ui/src/components/FileUpload",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 1985,
+			"fileList": [
+				{
+					"path": "ui/src/components/FileUpload/FileUploadDialog.vue",
+					"lines": 674
+				},
+				{
+					"path": "ui/src/components/FileUpload/ImageCropper.vue",
+					"lines": 150
+				},
+				{
+					"path": "ui/src/components/FileUpload/types.ts",
+					"lines": 147
+				},
+				{
+					"path": "ui/src/components/FileUpload/uploadTray.ts",
+					"lines": 90
+				},
+				{
+					"path": "ui/src/components/FileUpload/useUploader.ts",
+					"lines": 488
+				},
+				{
+					"path": "ui/src/components/FileUpload/useFileUpload.ts",
+					"lines": 38
+				},
+				{
+					"path": "ui/src/components/FileUpload/index.ts",
+					"lines": 35
+				},
+				{
+					"path": "ui/src/components/FileUpload/UploadTray.vue",
+					"lines": 201
+				},
+				{
+					"path": "ui/src/components/FileUpload/AttachmentsList.vue",
+					"lines": 162
+				}
+			],
+			"externals": {
+				"vue": 7,
+				"frappe-ui": 3,
+				"cropperjs": 1
+			},
+			"files": 9
+		},
+		{
+			"id": "ui/src/components/FileUpload/sources",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 189,
+			"fileList": [
+				{
+					"path": "ui/src/components/FileUpload/sources/index.ts",
+					"lines": 44
+				},
+				{
+					"path": "ui/src/components/FileUpload/sources/CameraSource.vue",
+					"lines": 145
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 1
+			},
+			"files": 2
+		},
+		{
+			"id": "ui/src/components/Filter",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 1112,
+			"fileList": [
+				{
+					"path": "ui/src/components/Filter/index.ts",
+					"lines": 18
+				},
+				{
+					"path": "ui/src/components/Filter/types.ts",
+					"lines": 60
+				},
+				{
+					"path": "ui/src/components/Filter/operators.ts",
+					"lines": 237
+				},
+				{
+					"path": "ui/src/components/Filter/getFilterableFields.ts",
+					"lines": 97
+				},
+				{
+					"path": "ui/src/components/Filter/filters.ts",
+					"lines": 132
+				},
+				{
+					"path": "ui/src/components/Filter/Filter.vue",
+					"lines": 228
+				},
+				{
+					"path": "ui/src/components/Filter/valueControlComponents.ts",
+					"lines": 36
+				},
+				{
+					"path": "ui/src/components/Filter/valueControl.ts",
+					"lines": 186
+				},
+				{
+					"path": "ui/src/components/Filter/MultiLinkInput.vue",
+					"lines": 74
+				},
+				{
+					"path": "ui/src/components/Filter/MultiSelectInput.vue",
+					"lines": 44
+				}
+			],
+			"externals": {
+				"vue": 4,
+				"frappe-ui": 4
+			},
+			"files": 10
+		},
+		{
+			"id": "ui/src/components/FormLayout",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 2010,
+			"fileList": [
+				{
+					"path": "ui/src/components/FormLayout/types.ts",
+					"lines": 199
+				},
+				{
+					"path": "ui/src/components/FormLayout/index.ts",
+					"lines": 58
+				},
+				{
+					"path": "ui/src/components/FormLayout/formatDefaults.ts",
+					"lines": 70
+				},
+				{
+					"path": "ui/src/components/FormLayout/formatNumber.ts",
+					"lines": 328
+				},
+				{
+					"path": "ui/src/components/FormLayout/dependsOn.ts",
+					"lines": 52
+				},
+				{
+					"path": "ui/src/components/FormLayout/newRowValues.ts",
+					"lines": 107
+				},
+				{
+					"path": "ui/src/components/FormLayout/resolveLayout.ts",
+					"lines": 214
+				},
+				{
+					"path": "ui/src/components/FormLayout/fieldsToLayout.ts",
+					"lines": 24
+				},
+				{
+					"path": "ui/src/components/FormLayout/buildLayoutFromMeta.ts",
+					"lines": 244
+				},
+				{
+					"path": "ui/src/components/FormLayout/useChildRowModel.ts",
+					"lines": 72
+				},
+				{
+					"path": "ui/src/components/FormLayout/FormLayout.vue",
+					"lines": 161
+				},
+				{
+					"path": "ui/src/components/FormLayout/warnMissingCommit.ts",
+					"lines": 17
+				},
+				{
+					"path": "ui/src/components/FormLayout/tabIdentity.ts",
+					"lines": 55
+				},
+				{
+					"path": "ui/src/components/FormLayout/useFieldTypes.ts",
+					"lines": 11
+				},
+				{
+					"path": "ui/src/components/FormLayout/FormLayoutSection.vue",
+					"lines": 131
+				},
+				{
+					"path": "ui/src/components/FormLayout/FormLayoutPart.vue",
+					"lines": 13
+				},
+				{
+					"path": "ui/src/components/FormLayout/FormLayoutColumn.vue",
+					"lines": 50
+				},
+				{
+					"path": "ui/src/components/FormLayout/FormLayoutField.vue",
+					"lines": 50
+				},
+				{
+					"path": "ui/src/components/FormLayout/resolveCurrency.ts",
+					"lines": 127
+				},
+				{
+					"path": "ui/src/components/FormLayout/pickSiblingValue.ts",
+					"lines": 27
+				}
+			],
+			"externals": {
+				"vue": 11,
+				"frappe-ui": 2,
+				"reka-ui": 1
+			},
+			"files": 20
+		},
+		{
+			"id": "ui/src/components/Grid",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 712,
+			"fileList": [
+				{
+					"path": "ui/src/components/Grid/index.ts",
+					"lines": 2
+				},
+				{
+					"path": "ui/src/components/Grid/types.ts",
+					"lines": 91
+				},
+				{
+					"path": "ui/src/components/Grid/Grid.vue",
+					"lines": 619
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 2,
+				"vuedraggable": 1
+			},
+			"files": 3
+		},
+		{
+			"id": "ui/src/components/Link",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 212,
+			"fileList": [
+				{
+					"path": "ui/src/components/Link/linkOption.ts",
+					"lines": 20
+				},
+				{
+					"path": "ui/src/components/Link/types.ts",
+					"lines": 36
+				},
+				{
+					"path": "ui/src/components/Link/index.ts",
+					"lines": 2
+				},
+				{
+					"path": "ui/src/components/Link/Link.vue",
+					"lines": 154
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 2
+			},
+			"files": 4
+		},
+		{
+			"id": "ui/src/components/QuickFilter",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 787,
+			"fileList": [
+				{
+					"path": "ui/src/components/QuickFilter/index.ts",
+					"lines": 16
+				},
+				{
+					"path": "ui/src/components/QuickFilter/types.ts",
+					"lines": 6
+				},
+				{
+					"path": "ui/src/components/QuickFilter/quickFilters.ts",
+					"lines": 157
+				},
+				{
+					"path": "ui/src/components/QuickFilter/getQuickFilterFields.ts",
+					"lines": 41
+				},
+				{
+					"path": "ui/src/components/QuickFilter/QuickFilter.vue",
+					"lines": 105
+				},
+				{
+					"path": "ui/src/components/QuickFilter/QuickFilterCustomize.vue",
+					"lines": 118
+				},
+				{
+					"path": "ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"lines": 344
+				}
+			],
+			"externals": {
+				"vue": 2,
+				"frappe-ui": 3,
+				"vuedraggable": 1
+			},
+			"files": 7
+		},
+		{
+			"id": "ui/src/components/SortBy",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 322,
+			"fileList": [
+				{
+					"path": "ui/src/components/SortBy/index.ts",
+					"lines": 8
+				},
+				{
+					"path": "ui/src/components/SortBy/types.ts",
+					"lines": 23
+				},
+				{
+					"path": "ui/src/components/SortBy/getSortOptions.ts",
+					"lines": 46
+				},
+				{
+					"path": "ui/src/components/SortBy/orderBy.ts",
+					"lines": 17
+				},
+				{
+					"path": "ui/src/components/SortBy/SortBy.vue",
+					"lines": 228
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 1,
+				"vuedraggable": 1
+			},
+			"files": 5
+		},
+		{
+			"id": "ui/src/components/TableMultiSelect",
+			"layer": "ui",
+			"group": "ui components",
+			"lines": 183,
+			"fileList": [
+				{
+					"path": "ui/src/components/TableMultiSelect/index.ts",
+					"lines": 6
+				},
+				{
+					"path": "ui/src/components/TableMultiSelect/types.ts",
+					"lines": 31
+				},
+				{
+					"path": "ui/src/components/TableMultiSelect/TableMultiSelect.vue",
+					"lines": 146
+				}
+			],
+			"externals": {
+				"vue": 1,
+				"frappe-ui": 1
+			},
+			"files": 3
+		},
+		{
+			"id": "ui/src/composables",
+			"layer": "ui",
+			"group": "ui composables",
+			"lines": 360,
+			"fileList": [
+				{
+					"path": "ui/src/composables/useDoctypeMeta.ts",
+					"lines": 116
+				},
+				{
+					"path": "ui/src/composables/useSession.ts",
+					"lines": 97
+				},
+				{
+					"path": "ui/src/composables/useLinkSearch.ts",
+					"lines": 58
+				},
+				{
+					"path": "ui/src/composables/useDocPermissions.ts",
+					"lines": 63
+				},
+				{
+					"path": "ui/src/composables/useUserRoles.ts",
+					"lines": 26
+				}
+			],
+			"externals": {
+				"vue": 10
+			},
+			"files": 5
+		},
+		{
+			"id": "ui/src/experimental/List",
+			"layer": "ui",
+			"group": "ui experimental",
+			"lines": 688,
+			"fileList": [
+				{
+					"path": "ui/src/experimental/List/index.ts",
+					"lines": 14
+				},
+				{
+					"path": "ui/src/experimental/List/types.ts",
+					"lines": 35
+				},
+				{
+					"path": "ui/src/experimental/List/headerSort.ts",
+					"lines": 15
+				},
+				{
+					"path": "ui/src/experimental/List/columnTracks.ts",
+					"lines": 27
+				},
+				{
+					"path": "ui/src/experimental/List/ListBulkBar.vue",
+					"lines": 43
+				},
+				{
+					"path": "ui/src/experimental/List/ListFooter.vue",
+					"lines": 88
+				},
+				{
+					"path": "ui/src/experimental/List/List.vue",
+					"lines": 276
+				},
+				{
+					"path": "ui/src/experimental/List/useVirtualRows.ts",
+					"lines": 62
+				},
+				{
+					"path": "ui/src/experimental/List/useRowSelection.ts",
+					"lines": 48
+				},
+				{
+					"path": "ui/src/experimental/List/useColumnResize.ts",
+					"lines": 80
+				}
+			],
+			"externals": {
+				"vue-router": 1,
+				"frappe-ui": 4,
+				"vue": 6,
+				"@vueuse/core": 1
+			},
+			"files": 10
+		},
+		{
+			"id": "ui/src/socket.ts",
+			"layer": "ui",
+			"group": "ui socket",
+			"lines": 91,
+			"fileList": [
+				{
+					"path": "ui/src/socket.ts",
+					"lines": 91
+				}
+			],
+			"externals": {
+				"vue": 1
+			},
+			"files": 1
+		},
+		{
+			"id": "ui/src/utils",
+			"layer": "ui",
+			"group": "ui utils",
+			"lines": 156,
+			"fileList": [
+				{
+					"path": "ui/src/utils/sharedState.ts",
+					"lines": 67
+				},
+				{
+					"path": "ui/src/utils/scopedRegistry.ts",
+					"lines": 75
+				},
+				{
+					"path": "ui/src/utils/sanitize.ts",
+					"lines": 14
+				}
+			],
+			"externals": {
+				"vue": 3,
+				"dompurify": 1
+			},
+			"files": 3
+		}
+	],
+	"edges": [
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 16,
+			"typeOnly": 9,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formJoin.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/createRecordPage.ts",
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/createRecordPage.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/rows.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formTabs.ts",
+					"ui/src/components/FormLayout/resolveLayout.ts"
+				],
+				[
+					"frontend/src/recordPage/formTabs.ts",
+					"ui/src/components/FormLayout/tabIdentity.ts"
+				],
+				[
+					"frontend/src/recordPage/formTabs.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/form.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"ui/src/components/FormLayout/resolveLayout.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"ui/src/components/FormLayout/fieldsToLayout.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"ui/src/components/FormLayout/resolveLayout.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/navigation",
+			"kind": "import",
+			"count": 15,
+			"typeOnly": 6,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/SidebarRow.vue",
+					"frontend/src/navigation/tree.ts"
+				],
+				[
+					"frontend/src/shell/SidebarRow.vue",
+					"frontend/src/navigation/sectionMemory.ts"
+				],
+				[
+					"frontend/src/shell/SidebarRow.vue",
+					"frontend/src/navigation/registry.ts"
+				],
+				[
+					"frontend/src/shell/SidebarRow.vue",
+					"frontend/src/navigation/types.ts"
+				],
+				[
+					"frontend/src/shell/SidebarPanel.vue",
+					"frontend/src/navigation/sectionMemory.ts"
+				],
+				[
+					"frontend/src/shell/SidebarPanel.vue",
+					"frontend/src/navigation/useItemTree.ts"
+				],
+				[
+					"frontend/src/shell/SidebarPanel.vue",
+					"frontend/src/navigation/types.ts"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/navigation/registry.ts"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/navigation/tree.ts"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/navigation/useItemTree.ts"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/navigation/types.ts"
+				],
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/navigation/context.ts"
+				],
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/navigation/current.ts"
+				],
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/navigation/sidebarMemory.ts"
+				],
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/navigation/sectionMemory.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 14,
+			"typeOnly": 6,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/RecordPanel.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/panelEntries.ts",
+					"ui/src/components/FormLayout/resolveLayout.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/panelEntries.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"ui/src/components/FormLayout/useFieldTypes.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"ui/src/components/FormLayout/warnMissingCommit.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelSection.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelField.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelField.vue",
+					"ui/src/components/FormLayout/formatDefaults.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelField.vue",
+					"ui/src/components/FormLayout/resolveCurrency.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/displayValue.ts",
+					"ui/src/components/FormLayout/formatNumber.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 13,
+			"typeOnly": 2,
+			"dynamic": 1,
+			"pairs": [
+				[
+					"ui/src/components/Fields/types.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"ui/src/components/Fields/TableMultiSelectField.vue",
+					"ui/src/components/FormLayout/useChildRowModel.ts"
+				],
+				[
+					"ui/src/components/Fields/TableMultiSelectField.vue",
+					"ui/src/components/FormLayout/newRowValues.ts"
+				],
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/FormLayout/fieldsToLayout.ts"
+				],
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/FormLayout/resolveLayout.ts"
+				],
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/FormLayout/newRowValues.ts"
+				],
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/FormLayout/FormLayout.vue"
+				],
+				[
+					"ui/src/components/Fields/NumberField.vue",
+					"ui/src/components/FormLayout/formatNumber.ts"
+				],
+				[
+					"ui/src/components/Fields/NumberField.vue",
+					"ui/src/components/FormLayout/resolveCurrency.ts"
+				],
+				[
+					"ui/src/components/Fields/NumberField.vue",
+					"ui/src/components/FormLayout/formatDefaults.ts"
+				],
+				[
+					"ui/src/components/Fields/DynamicLinkField.vue",
+					"ui/src/components/FormLayout/pickSiblingValue.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 12,
+			"typeOnly": 8,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSeed.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/composerHost.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/composerHost.ts",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPost.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentPost.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/RecordComposer.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/RecordComposer.vue",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/createMenu.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/createMenu.ts",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/ComposerPill.vue",
+					"frontend/src/recordPage/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 12,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSeed.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailDraft.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentDraft.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/composerHost.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/EmailWriter.vue",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/useEmailDraft.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/useCommentDraft.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPost.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/CommentWriter.vue",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentPost.ts",
+					"frontend/src/shell/composer.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/RecordComposer.vue",
+					"frontend/src/shell/composer.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record",
+			"kind": "import",
+			"count": 12,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/FrameBands.vue"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/RecordHeader.vue"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/formTabMemory.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/metaSource.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/builtinActions.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/favourites.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/follow.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/liveDocinfo.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/liveClientScripts.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/recordSource.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/refetchMerge.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/saveResponse.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/FormLayout",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 11,
+			"typeOnly": 4,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/FormLayout/types.ts",
+					"ui/src/components/Fields/types.ts"
+				],
+				[
+					"ui/src/components/FormLayout/index.ts",
+					"ui/src/components/Fields/fieldTypes.ts"
+				],
+				[
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts",
+					"ui/src/components/Fields/rowIdentity.ts"
+				],
+				[
+					"ui/src/components/FormLayout/useChildRowModel.ts",
+					"ui/src/components/Fields/types.ts"
+				],
+				[
+					"ui/src/components/FormLayout/useChildRowModel.ts",
+					"ui/src/components/Fields/rowIdentity.ts"
+				],
+				[
+					"ui/src/components/FormLayout/useFieldTypes.ts",
+					"ui/src/components/Fields/fieldTypes.ts"
+				],
+				[
+					"ui/src/components/FormLayout/FormLayoutField.vue",
+					"ui/src/components/Fields/rowIdentity.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage/formLayoutSource",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 10,
+			"typeOnly": 8,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/joinLayout.ts",
+					"ui/src/components/FormLayout/buildLayoutFromMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/joinLayout.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/joinLayout.ts",
+					"ui/src/components/FormLayout/tabIdentity.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/section.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/fieldPatch.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/fieldAccess.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/sectionName.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "ui/src/components/Composer",
+			"kind": "import",
+			"count": 10,
+			"typeOnly": 8,
+			"dynamic": 2,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/emailDraft.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentDraft.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/EmailWriter.vue",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/useEmailDraft.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/useCommentDraft.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSenders.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/AttachmentSeed.ts",
+					"ui/src/components/Composer/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/CommentWriter.vue",
+					"ui/src/components/Composer/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 9,
+			"typeOnly": 6,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/peopleActions.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/context.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/RecordPanel.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/QuickActions.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/remoteSearch.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/panelEntries.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"frontend/src/recordPage/surface.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/builtins.ts",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Filter",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 8,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/SelectField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/LinkField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/NumberField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/DateField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/DatetimeField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/DurationField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControlComponents.ts",
+					"ui/src/components/Fields/RatingField.vue"
+				],
+				[
+					"ui/src/components/Filter/valueControl.ts",
+					"ui/src/components/Fields/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "frontend/src/recordPage/formLayoutSource",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/index.ts",
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts"
+				],
+				[
+					"frontend/src/recordPage/index.ts",
+					"frontend/src/recordPage/formLayoutSource/types.ts"
+				],
+				[
+					"frontend/src/recordPage/index.ts",
+					"frontend/src/recordPage/formLayoutSource/sectionName.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"frontend/src/recordPage/formLayoutSource/fieldAccess.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"frontend/src/recordPage/formLayoutSource/fieldPatch.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"frontend/src/recordPage/formLayoutSource/fieldAccess.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"frontend/src/recordPage/formLayoutSource/section.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/navigation",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 7,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/navigation/types.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/registry.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/sectionMemory.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/tree.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/useItemTree.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/current.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/navigation/context.ts",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 4,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/EmailWriter.vue",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSenders.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPost.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/CommentWriter.vue",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentPost.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/RecordComposer.vue",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/ComposerPill.vue",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/panel",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/builtins.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/context.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/peopleActions.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/people.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/disclosure.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/panelEntries.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/panel/RecordPanel.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 6,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/liveClientScripts.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/builtinActions.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/builtinActions.ts",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/RecordHeader.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/headerMenuOptions.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/FrameBands.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/drawnProps.ts",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/dialogs",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 4,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/dialogs/PageDialogs.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageOpenDialog.vue",
+					"frontend/src/recordPage/dialog.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/recordPage/dialog.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/recordPage/errorMessage.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/recordPage/formDialogLayout.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/recordPage/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/QuickFilter",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 7,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/SelectField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/LinkField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/NumberField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/DateField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/DatetimeField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/DurationField.vue"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Fields/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/cache",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/cache/index.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/cache/listKey.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/cache/entries.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/cache/dataCache.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/cache/dataCache.ts",
+					"ui/src/api/envelope.ts"
+				],
+				[
+					"ui/src/cache/rowsMemo.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/types.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				],
+				[
+					"frontend/src/recordPage/pagePermissions.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				],
+				[
+					"frontend/src/recordPage/pagePermissions.ts",
+					"ui/src/composables/useUserRoles.ts"
+				],
+				[
+					"frontend/src/recordPage/fields.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				],
+				[
+					"frontend/src/recordPage/feed.ts",
+					"ui/src/composables/useSession.ts"
+				],
+				[
+					"frontend/src/recordPage/formDialogLayout.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/pages/record/composer",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/commentDraft.ts"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/CommentWriter.vue"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/emailDraft.ts"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/EmailWriter.vue"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/useDockHeight.ts"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/pages/record/composer/writerContext.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/emailQuote.ts",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPrefill.ts",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/composerHost.ts",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/EmailWriter.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/CommentWriter.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/ComposerPill.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/recordFeeds.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/files.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/RecordUploadDialog.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/TimelineFeed.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/FilesTab.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/ActivityTab.vue",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/QuickFilter",
+			"to": "ui/src/components/Filter",
+			"kind": "import",
+			"count": 6,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/QuickFilter/quickFilters.ts",
+					"ui/src/components/Filter/types.ts"
+				],
+				[
+					"ui/src/components/QuickFilter/getQuickFilterFields.ts",
+					"ui/src/components/Filter/types.ts"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilter.vue",
+					"ui/src/components/Filter/getFilterableFields.ts"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilter.vue",
+					"ui/src/components/Filter/types.ts"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterCustomize.vue",
+					"ui/src/components/Filter/types.ts"
+				],
+				[
+					"ui/src/components/QuickFilter/QuickFilterInputs.vue",
+					"ui/src/components/Filter/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/socket.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/shell/SidebarPanel.vue",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/shell/CustomizeSidebarDialog.vue",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/api",
+			"to": "ui/src/cache",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/api/index.ts",
+					"ui/src/cache/index.ts"
+				],
+				[
+					"ui/src/api/upload.ts",
+					"ui/src/cache/index.ts"
+				],
+				[
+					"ui/src/api/request.ts",
+					"ui/src/cache/index.ts"
+				],
+				[
+					"ui/src/api/feed.ts",
+					"ui/src/cache/index.ts"
+				],
+				[
+					"ui/src/api/feed.ts",
+					"ui/src/cache/listKey.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/createRecordPage.ts",
+					"ui/src/components/Fields/rowIdentity.ts"
+				],
+				[
+					"frontend/src/recordPage/createRecordPage.ts",
+					"ui/src/components/Fields/types.ts"
+				],
+				[
+					"frontend/src/recordPage/rows.ts",
+					"ui/src/components/Fields/rowIdentity.ts"
+				],
+				[
+					"frontend/src/recordPage/rows.ts",
+					"ui/src/components/Fields/types.ts"
+				],
+				[
+					"frontend/src/recordPage/commitChannel.ts",
+					"ui/src/components/Fields/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "ui/src/components/ActivityTimeline",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/emailSeed.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailQuote.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPrefill.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailPost.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentPost.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/router",
+			"to": "frontend/src/pages",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 0,
+			"dynamic": 4,
+			"pairs": [
+				[
+					"frontend/src/router/standardPages.ts",
+					"frontend/src/pages/List.vue"
+				],
+				[
+					"frontend/src/router/standardPages.ts",
+					"frontend/src/pages/Record.vue"
+				],
+				[
+					"frontend/src/router/generated.ts",
+					"frontend/src/pages/MainPage.vue"
+				],
+				[
+					"frontend/src/router/generated.ts",
+					"frontend/src/pages/Home.vue"
+				],
+				[
+					"frontend/src/router/generated.ts",
+					"frontend/src/pages/Module.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/shell/PageFrame.vue"
+				],
+				[
+					"frontend/src/pages/List.vue",
+					"frontend/src/shell/PageFrame.vue"
+				],
+				[
+					"frontend/src/pages/Module.vue",
+					"frontend/src/shell/PageFrame.vue"
+				],
+				[
+					"frontend/src/pages/TileGridSkeleton.vue",
+					"frontend/src/shell/LoadingStatus.vue"
+				],
+				[
+					"frontend/src/pages/Home.vue",
+					"frontend/src/shell/PageFrame.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/pages/List.vue",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/pages/Module.vue",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/pages/Home.vue",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/pages/MainPage.vue",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "frontend/src/pages/record/panel",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 4,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/recordSource.ts",
+					"frontend/src/pages/record/panel/context.ts"
+				],
+				[
+					"frontend/src/pages/record/favourites.ts",
+					"frontend/src/pages/record/panel/context.ts"
+				],
+				[
+					"frontend/src/pages/record/favourites.ts",
+					"frontend/src/pages/record/panel/people.ts"
+				],
+				[
+					"frontend/src/pages/record/RecordHeader.vue",
+					"frontend/src/pages/record/panel/people.ts"
+				],
+				[
+					"frontend/src/pages/record/RecordFavourite.vue",
+					"frontend/src/pages/record/panel/people.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/router",
+			"to": "frontend/src/contributions",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/router/routeFor.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/router/mainPage.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/router/index.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/router/contributed.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/router/contributed.ts",
+					"frontend/src/contributions/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/tabs",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 5,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/tabs/useRecordTabs.ts",
+					"frontend/src/recordPage/createRecordPage.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/recordPage/surface.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/recordPage/types.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/RecordTabs.vue",
+					"frontend/src/recordPage/surface.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/RecordTabs.vue",
+					"frontend/src/recordPage/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/tabs",
+			"to": "frontend/src/pages/record/feed",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/pages/record/feed/ActivityTab.vue"
+				],
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/pages/record/feed/FilesTab.vue"
+				],
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/pages/record/feed/TimelineFeed.vue"
+				],
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/RecordTabs.vue",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 5,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/shell/AppShell.vue"
+				],
+				[
+					"frontend/src/main.ts",
+					"frontend/src/shell/socket.ts"
+				],
+				[
+					"frontend/src/main.ts",
+					"frontend/src/shell/doctypeUpdates.ts"
+				],
+				[
+					"frontend/src/main.ts",
+					"frontend/src/shell/Unauthorized.vue"
+				],
+				[
+					"frontend/src/main.ts",
+					"frontend/src/shell/BootError.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/components/SortBy",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/storedSettings.ts",
+					"ui/src/components/SortBy/index.ts"
+				],
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/components/SortBy/index.ts"
+				],
+				[
+					"frontend/src/list/query.ts",
+					"ui/src/components/SortBy/index.ts"
+				],
+				[
+					"frontend/src/list/defaults.ts",
+					"ui/src/components/SortBy/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/composables",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/composables/useDoctypeMeta.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/composables/useSession.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/composables/useLinkSearch.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/FileUpload",
+			"to": "ui/src/components/FileUpload/sources",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/FileUpload/FileUploadDialog.vue",
+					"ui/src/components/FileUpload/sources/CameraSource.vue"
+				],
+				[
+					"ui/src/components/FileUpload/FileUploadDialog.vue",
+					"ui/src/components/FileUpload/sources/index.ts"
+				],
+				[
+					"ui/src/components/FileUpload/index.ts",
+					"ui/src/components/FileUpload/sources/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/FileUpload",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/FileUpload/useFileUpload.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"ui/src/components/FileUpload/AttachmentsList.vue",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage/formLayoutSource",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/composables/useDoctypeMeta.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/joinLayout.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				],
+				[
+					"frontend/src/recordPage/formLayoutSource/fieldAccess.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frontend/src/pages/record/feed",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"frontend/src/pages/record/feed/files.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSeed.ts",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/RecordComposer.vue",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Composer/EmailComposer",
+			"to": "ui/src/components/Composer",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Composer/EmailComposer/EmailComposer.vue",
+					"ui/src/components/Composer/ComposerEditor.vue"
+				],
+				[
+					"ui/src/components/Composer/EmailComposer/EmailComposer.vue",
+					"ui/src/components/Composer/types.ts"
+				],
+				[
+					"ui/src/components/Composer/EmailComposer/HeaderFields.vue",
+					"ui/src/components/Composer/types.ts"
+				],
+				[
+					"ui/src/components/Composer/EmailComposer/RecipientSelect.vue",
+					"ui/src/components/Composer/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "ui/src/components/ActivityTimeline",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/recordFeeds.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/files.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/TimelineFeed.vue",
+					"ui/src/components/ActivityTimeline/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/FilesTab.vue",
+					"ui/src/components/ActivityTimeline/TimeAgo.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/router/routeFor.ts"
+				],
+				[
+					"frontend/src/pages/Module.vue",
+					"frontend/src/router/routeFor.ts"
+				],
+				[
+					"frontend/src/pages/Home.vue",
+					"frontend/src/router/routeFor.ts"
+				],
+				[
+					"frontend/src/pages/MainPage.vue",
+					"frontend/src/router/mainPage.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/body",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/body/BodyColumns.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/body/columnStore.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/body/ColumnEdge.vue",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/pages/record/body/BodyColumn.vue",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/router",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 4,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/router/routeFor.ts",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/router/mainPage.ts",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/router/index.ts",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/router/contributed.ts",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/doctypes.py",
+			"to": "frappe",
+			"kind": "import",
+			"count": 4,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/boot.py"
+				],
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/cache_manager.py"
+				],
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/permissions.py"
+				],
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/share.py"
+				]
+			]
+		},
+		{
+			"from": "frappe",
+			"to": "frappe/shell/address_clash.py",
+			"kind": "hook",
+			"count": 4,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/hooks.py",
+					"frappe/shell/address_clash.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/components/ColumnSettings",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/storedSettings.ts",
+					"ui/src/components/ColumnSettings/index.ts"
+				],
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/components/ColumnSettings/index.ts"
+				],
+				[
+					"frontend/src/list/defaults.ts",
+					"ui/src/components/ColumnSettings/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/experimental/List",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/storedSettings.ts",
+					"ui/src/experimental/List/index.ts"
+				],
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/experimental/List/index.ts"
+				],
+				[
+					"frontend/src/list/defaults.ts",
+					"ui/src/experimental/List/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/components/Filter",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/storedSettings.ts",
+					"ui/src/components/Filter/index.ts"
+				],
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/components/Filter/index.ts"
+				],
+				[
+					"frontend/src/list/query.ts",
+					"ui/src/components/Filter/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/storedSettings.ts",
+					"ui/src/components/FormLayout/index.ts"
+				],
+				[
+					"frontend/src/list/query.ts",
+					"ui/src/components/FormLayout/index.ts"
+				],
+				[
+					"frontend/src/list/defaults.ts",
+					"ui/src/components/FormLayout/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Filter",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Filter/Filter.vue",
+					"ui/src/composables/useDoctypeMeta.ts"
+				],
+				[
+					"ui/src/components/Filter/MultiLinkInput.vue",
+					"ui/src/composables/useLinkSearch.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/ColumnSettings",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/ColumnSettings/getDefaultColumns.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"ui/src/components/ColumnSettings/getColumnOptions.ts",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"ui/src/components/ColumnSettings/columns.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/createRecordPage.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/recordPage/clientScripts.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/recordPage/reportError.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/LoadingStatus.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/shell/PageLoadError.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/arrangement.ts",
+			"to": "frappe/shell/arrangement.py",
+			"kind": "api",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/arrangement.ts",
+					"frappe/shell/arrangement.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/writerContext.ts",
+					"ui/src/components/FileUpload/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/useEmailDraft.ts",
+					"ui/src/components/FileUpload/index.ts"
+				],
+				[
+					"frontend/src/pages/record/composer/commentUpload.ts",
+					"ui/src/components/FileUpload/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "frontend/src/pages/record/panel",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/recordFeeds.ts",
+					"frontend/src/pages/record/panel/context.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/recordFeeds.ts",
+					"frontend/src/pages/record/panel/peopleActions.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/FilesTab.vue",
+					"frontend/src/pages/record/panel/context.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/components/FormLayout/index.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/components/FormLayout/types.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/components/FormLayout/tabIdentity.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/tabs",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/tabs/RecordTabs.vue"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/tabs/recordTabs.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/tabs/useRecordTabs.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/composer",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/composer/RecordComposer.vue"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/composer/composerHost.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/composer/writerContext.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 3,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/pages/Module.vue",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/pages/Home.vue",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/recordSource.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/follow.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/builtinActions.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 1,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"ui/src/components/FileUpload/useFileUpload.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"ui/src/components/FileUpload/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"ui/src/components/FileUpload/FileUploadDialog.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/dialogs",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"ui/src/components/FormLayout/index.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/TimelineFeed.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/RecordFeed.vue",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/FilesTab.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "frontend/src/list",
+			"kind": "import",
+			"count": 3,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"frontend/src/list/useListPage.ts"
+				],
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"frontend/src/list/useScrollMemory.ts"
+				],
+				[
+					"frontend/src/pages/list/DeleteDialog.vue",
+					"frontend/src/list/useListPage.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "ui/src/socket.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/socket.ts",
+					"ui/src/socket.ts"
+				],
+				[
+					"frontend/src/shell/doctypeUpdates.ts",
+					"ui/src/socket.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/session.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/shell/ComposerWindow.vue",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/doctypeUpdates.ts",
+					"ui/src/composables/useDoctypeMeta.ts"
+				],
+				[
+					"frontend/src/shell/composer.ts",
+					"ui/src/composables/useSession.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/useListSettings.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/list/useListRows.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/components/Grid",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Fields/TableField.vue",
+					"ui/src/components/Grid/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/components/Link",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Fields/LinkField.vue",
+					"ui/src/components/Link/index.ts"
+				],
+				[
+					"ui/src/components/Fields/DynamicLinkField.vue",
+					"ui/src/components/Link/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 1,
+			"pairs": [
+				[
+					"ui/src/components/Fields/AttachField.vue",
+					"ui/src/components/FileUpload/types.ts"
+				],
+				[
+					"ui/src/components/Fields/AttachField.vue",
+					"ui/src/components/FileUpload/FileUploadDialog.vue"
+				]
+			]
+		},
+		{
+			"from": "ui/src/experimental/List",
+			"to": "ui/src/components/SortBy",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/experimental/List/headerSort.ts",
+					"ui/src/components/SortBy/types.ts"
+				],
+				[
+					"ui/src/experimental/List/List.vue",
+					"ui/src/components/SortBy/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/composer.ts",
+					"frontend/src/recordPage/index.ts"
+				],
+				[
+					"frontend/src/shell/composer.ts",
+					"frontend/src/recordPage/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/components/ActivityTimeline",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/types.ts",
+					"ui/src/components/ActivityTimeline/types.ts"
+				],
+				[
+					"frontend/src/recordPage/feed.ts",
+					"ui/src/components/ActivityTimeline/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/icons",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/SidebarRow.vue",
+					"frontend/src/icons/Icon.vue"
+				],
+				[
+					"frontend/src/shell/RailColumn.vue",
+					"frontend/src/icons/Icon.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/navigation",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/navigation/types.ts",
+					"frontend/src/addresses.ts"
+				],
+				[
+					"frontend/src/navigation/context.ts",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/navigation",
+			"to": "frontend/src/contents.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/navigation/types.ts",
+					"frontend/src/contents.ts"
+				],
+				[
+					"frontend/src/navigation/context.ts",
+					"frontend/src/contents.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/navigation",
+			"to": "frontend/src/contributions",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/navigation/registry.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/navigation/context.ts",
+					"frontend/src/contributions/registry.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/contributions",
+			"to": "frontend/src/navigation",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/contributions/registry.ts",
+					"frontend/src/navigation/types.ts"
+				],
+				[
+					"frontend/src/contributions/types.ts",
+					"frontend/src/navigation/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/arrangement.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/CustomizeSidebarDialog.vue",
+					"frontend/src/arrangement.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Composer/CommentComposer",
+			"to": "ui/src/components/Composer",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Composer/CommentComposer/CommentComposer.vue",
+					"ui/src/components/Composer/ComposerEditor.vue"
+				],
+				[
+					"ui/src/components/Composer/CommentComposer/CommentComposer.vue",
+					"ui/src/components/Composer/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/recordFeeds.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/files.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/files.ts",
+					"ui/src/components/FileUpload/index.ts"
+				],
+				[
+					"frontend/src/pages/record/feed/RecordUploadDialog.vue",
+					"ui/src/components/FileUpload/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/peopleActions.ts",
+					"ui/src/api/index.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/remoteSearch.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frappe/email",
+			"kind": "api",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/emailSenders.ts",
+					"frappe/email/inbox.py"
+				],
+				[
+					"frontend/src/pages/record/composer/emailSenders.ts",
+					"frappe/email/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/feed",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/feed/RecordUploadDialog.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/skeletons",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/skeletons/BodySkeleton.vue"
+				],
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/skeletons/HeaderSkeleton.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/FormSkeleton.vue",
+					"frontend/src/shell/LoadingStatus.vue"
+				],
+				[
+					"frontend/src/pages/record/skeletons/PanelSectionsSkeleton.vue",
+					"frontend/src/shell/LoadingStatus.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/displayValue.ts",
+					"ui/src/components/Fields/types.ts"
+				],
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"ui/src/components/Fields/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/router",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 2,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/router/routeFor.ts",
+					"frontend/src/boot.ts"
+				],
+				[
+					"frontend/src/router/index.ts",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/dialogs",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"ui/src/composables/useDoctypeMeta.ts"
+				],
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"ui/src/composables/useDocPermissions.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/tabs",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/tabs/recordTabs.ts",
+					"frontend/src/i18n.ts"
+				],
+				[
+					"frontend/src/pages/record/tabs/RecordTabs.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/composables/useDoctypeMeta.ts"
+				],
+				[
+					"frontend/src/list/useListPage.ts",
+					"ui/src/composables/useDocPermissions.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "frontend/src/contributions",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/useListPage.ts",
+					"frontend/src/contributions/registry.ts"
+				],
+				[
+					"frontend/src/list/defaults.ts",
+					"frontend/src/contributions/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/contents.ts",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Module.vue",
+					"frontend/src/contents.ts"
+				],
+				[
+					"frontend/src/pages/Home.vue",
+					"frontend/src/contents.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/router/index.ts"
+				],
+				[
+					"frontend/src/main.ts",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/sessions.py"
+				],
+				[
+					"frappe/shell/boot.py",
+					"frappe/translate.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/doctypes.py",
+			"to": "frappe/shell/permissions.py",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/shell/permissions.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/doctypes.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation.py",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation.py",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation_filter.py",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation_filter.py",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frappe",
+			"to": "frappe/shell/manifest.py",
+			"kind": "import",
+			"count": 2,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/bundler.py",
+					"frappe/shell/manifest.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/boot.ts",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/boot.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/boot.ts",
+			"to": "frappe/shell/boot.py",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/boot.ts",
+					"frappe/shell/boot.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/recordPage/formLayoutSource",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/doctypeUpdates.ts",
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/list",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/doctypeUpdates.ts",
+					"frontend/src/list/useListSettings.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "frappe/desk/doctype/doctype_view",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/useListSettings.ts",
+					"frappe/desk/doctype/doctype_view/api.py"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/SortBy",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/SortBy/getSortOptions.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/SortBy",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/SortBy/SortBy.vue",
+					"ui/src/composables/useDoctypeMeta.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/composables",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/composables/useDoctypeMeta.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/composables",
+			"to": "ui/src/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/composables/useDoctypeMeta.ts",
+					"ui/src/utils/sharedState.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/FormLayout",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/FormLayout/formatDefaults.ts",
+					"ui/src/composables/useSession.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/composables",
+			"to": "ui/src/cache",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/composables/useSession.ts",
+					"ui/src/cache/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Fields/fieldTypes.ts",
+					"ui/src/utils/scopedRegistry.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Fields",
+			"to": "ui/src/components/TableMultiSelect",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Fields/TableMultiSelectField.vue",
+					"ui/src/components/TableMultiSelect/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/TableMultiSelect",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/TableMultiSelect/TableMultiSelect.vue",
+					"ui/src/composables/useLinkSearch.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/composables",
+			"to": "ui/src/components/Link",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/composables/useLinkSearch.ts",
+					"ui/src/components/Link/linkOption.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Link",
+			"to": "ui/src/components",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Link/types.ts",
+					"ui/src/components/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Grid",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Grid/Grid.vue",
+					"ui/src/components/Fields/rowIdentity.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/FormLayout",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/FormLayout/resolveCurrency.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Link",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Link/Link.vue",
+					"ui/src/composables/useLinkSearch.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Filter",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Filter/getFilterableFields.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/experimental/List",
+			"to": "ui/src/components/ColumnSettings",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/experimental/List/types.ts",
+					"ui/src/components/ColumnSettings/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/ColumnSettings",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/ColumnSettings/ColumnSettings.vue",
+					"ui/src/composables/useDoctypeMeta.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage/formLayoutSource",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage/formLayoutSource",
+			"to": "ui/src/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"ui/src/utils/sharedState.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage/formLayoutSource",
+			"to": "frappe/desk/doctype/form_layout",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts",
+					"frappe/desk/doctype/form_layout/form_layout.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/composer.ts",
+					"ui/src/components/FileUpload/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "ui/src/socket.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/clientScripts.ts",
+					"ui/src/socket.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "frappe/desk",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/reportError.ts",
+					"frappe/desk/customization_error.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/recordPage",
+			"to": "frappe/custom/doctype/client_script",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/recordPage/clientScriptTypes.ts",
+					"frappe/custom/doctype/client_script/client_script.py"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/ActivityTimeline",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/ActivityTimeline/timelineStore.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/ActivityTimeline",
+			"to": "ui/src/socket.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/ActivityTimeline/liveUpdates.ts",
+					"ui/src/socket.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/contents.ts",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/contents.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/contents.ts",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/contents.ts",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/addresses.ts",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/addresses.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/addresses.ts",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/addresses.ts",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/i18n.ts",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/i18n.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/contributions",
+			"to": "frontend/plugin",
+			"kind": "virtual",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/contributions/registry.ts",
+					"frontend/plugin/contributions.js"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/contributions",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/contributions/registry.ts",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/arrangement.ts",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/arrangement.ts",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/arrangement.ts",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/arrangement.ts",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Composer",
+			"to": "ui/src/components/Composer/EmailComposer",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Composer/index.ts",
+					"ui/src/components/Composer/EmailComposer/EmailComposer.vue"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Composer",
+			"to": "ui/src/components/Composer/CommentComposer",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Composer/index.ts",
+					"ui/src/components/Composer/CommentComposer/CommentComposer.vue"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/Composer",
+			"to": "ui/src/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/Composer/ComposerEditor.vue",
+					"ui/src/utils/sanitize.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/composer",
+			"to": "frappe/core/doctype/communication",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/composer/emailPost.ts",
+					"frappe/core/doctype/communication/email.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/shell",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/shell/AppShell.vue",
+					"frontend/src/router/failedPage.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "ui/src/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/api/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "ui/src/components/Fields",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/components/Fields/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "ui/src/socket.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"ui/src/socket.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/recordPage/formLayoutSource",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/recordPage/formLayoutSource/useFormLayout.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/body",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/body/BodyColumns.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/record/dialogs",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/Record.vue",
+					"frontend/src/pages/record/dialogs/PageDialogs.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/saveResponse.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "ui/src/cache",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/recordSource.ts",
+					"ui/src/cache/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/BodySkeleton.vue",
+					"frontend/src/recordPage/body.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "frontend/src/pages/record/body",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/BodySkeleton.vue",
+					"frontend/src/pages/record/body/BodyColumns.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "ui/src/components/ActivityTimeline",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/TabsSkeleton.vue",
+					"ui/src/components/ActivityTimeline/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/TabsSkeleton.vue",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/skeletons",
+			"to": "frontend/src/pages/record/feed",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/skeletons/TabsSkeleton.vue",
+					"frontend/src/pages/record/feed/recordFeeds.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/body",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/body/BodyColumn.vue",
+					"frontend/src/shell/PageFrame.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frappe/desk/doctype/tag",
+			"kind": "api",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/remoteSearch.ts",
+					"frappe/desk/doctype/tag/tag.py"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frontend/src/recordPage/formLayoutSource",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/panelEntries.ts",
+					"frontend/src/recordPage/formLayoutSource/sectionName.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frontend/src/pages/record/skeletons",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/PanelLayout.vue",
+					"frontend/src/pages/record/skeletons/PanelSectionsSkeleton.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frontend/src/navigation",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/disclosure.ts",
+					"frontend/src/navigation/sectionMemory.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "ui/src/socket.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/liveDocinfo.ts",
+					"ui/src/socket.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/builtinActions.ts",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"ui/src/composables/useDocPermissions.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/panel",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/panel/RecordImage.vue",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/metaSource.ts",
+					"ui/src/composables/useDoctypeMeta.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/dialogs",
+			"to": "frontend/src/pages/record/skeletons",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/dialogs/PageFormDialog.vue",
+					"frontend/src/pages/record/skeletons/FormSkeleton.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record/feed",
+			"to": "frontend/src/pages/record/composer",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/feed/TimelineFeed.vue",
+					"frontend/src/pages/record/composer/emailDraft.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/record",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/record/FrameBands.vue",
+					"frontend/src/shell/PageFrame.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages",
+			"to": "frontend/src/pages/list",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/List.vue",
+					"frontend/src/pages/list/DoctypeList.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "ui/src/components/ColumnSettings",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"ui/src/components/ColumnSettings/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "ui/src/experimental/List",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"ui/src/experimental/List/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "ui/src/components/Filter",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"ui/src/components/Filter/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "ui/src/components/QuickFilter",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"ui/src/components/QuickFilter/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "ui/src/components/SortBy",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"ui/src/components/SortBy/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/pages/list",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/pages/list/DoctypeList.vue",
+					"frontend/src/shell/PageFrame.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/list",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/list/useListPage.ts",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/QuickFilter",
+			"to": "ui/src/components/FormLayout",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/QuickFilter/getQuickFilterFields.ts",
+					"ui/src/components/FormLayout/types.ts"
+				]
+			]
+		},
+		{
+			"from": "ui/src/components/QuickFilter",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"ui/src/components/QuickFilter/QuickFilter.vue",
+					"ui/src/composables/useDoctypeMeta.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/router",
+			"to": "frontend/src/shell",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 1,
+			"pairs": [
+				[
+					"frontend/src/router/index.ts",
+					"frontend/src/shell/NotFound.vue"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/public.ts",
+			"to": "frontend/src/router",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/public.ts",
+					"frontend/src/router/routeFor.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/public.ts",
+			"to": "frontend/src/contents.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 1,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/public.ts",
+					"frontend/src/contents.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "ui/src/composables",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"ui/src/composables/useSession.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "ui/src/components/FileUpload",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"ui/src/components/FileUpload/types.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/boot.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/boot.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/addresses.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/addresses.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/i18n.ts",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/i18n.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/icons",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/icons/sprite.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/recordPage",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/recordPage/index.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/pages/record",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/pages/record/drawnProps.ts"
+				]
+			]
+		},
+		{
+			"from": "frontend/src/main.ts",
+			"to": "frontend/src/contributions",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frontend/src/main.ts",
+					"frontend/src/contributions/registry.ts"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/address_clash.py",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/address_clash.py",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/address_clash.py",
+			"to": "frappe/shell/manifest.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/address_clash.py",
+					"frappe/shell/manifest.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/address_clash.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/address_clash.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/arrangement.py",
+			"to": "frappe/shell/navigation.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/arrangement.py",
+					"frappe/shell/navigation.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/arrangement.py",
+			"to": "frappe/shell/navigation_filter.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/arrangement.py",
+					"frappe/shell/navigation_filter.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/arrangement.py",
+			"to": "frappe/shell/permissions.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/arrangement.py",
+					"frappe/shell/permissions.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/shell/__init__.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/shell/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/shell/navigation.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/shell/navigation.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/shell/permissions.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/shell/permissions.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/core/api",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/core/api/file.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/boot.py",
+			"to": "frappe/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/boot.py",
+					"frappe/utils/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/doctypes.py",
+			"to": "frappe/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/doctypes.py",
+					"frappe/utils/caching.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/extensions.py",
+			"to": "frappe/desk",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/extensions.py",
+					"frappe/desk/layers.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/install.py",
+			"to": "frappe/shell/__init__.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/install.py",
+					"frappe/shell/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/install.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/install.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/links.py",
+			"to": "frappe/shell/__init__.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/links.py",
+					"frappe/shell/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/links.py",
+			"to": "frappe/shell/doctypes.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/links.py",
+					"frappe/shell/doctypes.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/links.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/links.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/links.py",
+			"to": "frappe/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/links.py",
+					"frappe/utils/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/manifest.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/manifest.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/manifest.py",
+			"to": "frappe/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/manifest.py",
+					"frappe/utils/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation.py",
+			"to": "frappe/shell/extensions.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation.py",
+					"frappe/shell/extensions.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation.py",
+			"to": "frappe/shell/navigation_filter.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation.py",
+					"frappe/shell/navigation_filter.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation.py",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation.py",
+			"to": "frappe/desk",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation.py",
+					"frappe/desk/layers.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation_filter.py",
+			"to": "frappe/shell/navigation.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation_filter.py",
+					"frappe/shell/navigation.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation_filter.py",
+			"to": "frappe/utils",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation_filter.py",
+					"frappe/utils/modules.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/navigation_filter.py",
+			"to": "frappe/desk",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/navigation_filter.py",
+					"frappe/desk/desk_views.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/registry.py",
+			"to": "frappe/shell/__init__.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/registry.py",
+					"frappe/shell/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/shell/route_guard.py",
+			"to": "frappe/shell/__init__.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/shell/route_guard.py",
+					"frappe/shell/__init__.py"
+				]
+			]
+		},
+		{
+			"from": "frappe",
+			"to": "frappe/shell/install.py",
+			"kind": "hook",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/hooks.py",
+					"frappe/shell/install.py"
+				]
+			]
+		},
+		{
+			"from": "frappe",
+			"to": "frappe/shell/registry.py",
+			"kind": "hook",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/hooks.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		},
+		{
+			"from": "frappe",
+			"to": "frappe/shell/route_guard.py",
+			"kind": "hook",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/hooks.py",
+					"frappe/shell/route_guard.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/utils",
+			"to": "frappe/shell/links.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/utils/data.py",
+					"frappe/shell/links.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/website/page_renderers",
+			"to": "frappe/shell/permissions.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/website/page_renderers/shell_page.py",
+					"frappe/shell/permissions.py"
+				]
+			]
+		},
+		{
+			"from": "frappe/website/page_renderers",
+			"to": "frappe/shell/registry.py",
+			"kind": "import",
+			"count": 1,
+			"typeOnly": 0,
+			"dynamic": 0,
+			"pairs": [
+				[
+					"frappe/website/page_renderers/shell_page.py",
+					"frappe/shell/registry.py"
+				]
+			]
+		}
+	],
+	"folderCycles": [
+		[
+			"ui/src/api",
+			"ui/src/cache"
+		],
+		[
+			"ui/src/components/Fields",
+			"ui/src/components/FormLayout",
+			"ui/src/components/Grid",
+			"ui/src/components/Link",
+			"ui/src/components/TableMultiSelect",
+			"ui/src/composables"
+		],
+		[
+			"frontend/src/contributions",
+			"frontend/src/navigation"
+		],
+		[
+			"ui/src/components/Composer",
+			"ui/src/components/Composer/CommentComposer",
+			"ui/src/components/Composer/EmailComposer"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/pages",
+			"frontend/src/pages/list",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/body",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/router",
+			"frontend/src/shell"
+		],
+		[
+			"frappe",
+			"frappe/shell/doctypes.py",
+			"frappe/shell/links.py",
+			"frappe/shell/manifest.py",
+			"frappe/utils"
+		],
+		[
+			"frappe/shell/navigation.py",
+			"frappe/shell/navigation_filter.py"
+		]
+	],
+	"elementaryCycles": [
+		[
+			"frappe/shell/links.py",
+			"frappe/utils"
+		],
+		[
+			"frappe/shell/navigation.py",
+			"frappe/shell/navigation_filter.py"
+		],
+		[
+			"frontend/src/contributions",
+			"frontend/src/navigation"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed"
+		],
+		[
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/router",
+			"frontend/src/shell"
+		],
+		[
+			"ui/src/api",
+			"ui/src/cache"
+		],
+		[
+			"ui/src/components/Composer",
+			"ui/src/components/Composer/CommentComposer"
+		],
+		[
+			"ui/src/components/Composer",
+			"ui/src/components/Composer/EmailComposer"
+		],
+		[
+			"ui/src/components/Fields",
+			"ui/src/components/FormLayout"
+		],
+		[
+			"ui/src/components/Fields",
+			"ui/src/components/Grid"
+		],
+		[
+			"ui/src/components/FormLayout",
+			"ui/src/composables"
+		],
+		[
+			"ui/src/components/Link",
+			"ui/src/composables"
+		],
+		[
+			"frappe/shell/doctypes.py",
+			"frappe/utils",
+			"frappe/shell/links.py"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/list",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/list"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/list",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"ui/src/components/Fields",
+			"ui/src/components/Link",
+			"ui/src/composables",
+			"ui/src/components/FormLayout"
+		],
+		[
+			"ui/src/components/Fields",
+			"ui/src/components/TableMultiSelect",
+			"ui/src/composables",
+			"ui/src/components/FormLayout"
+		],
+		[
+			"frappe",
+			"frappe/shell/manifest.py",
+			"frappe/utils",
+			"frappe/shell/links.py",
+			"frappe/shell/doctypes.py"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/list",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/list",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/router"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/composer",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/list",
+			"frontend/src/router",
+			"frontend/src/pages",
+			"frontend/src/pages/record/tabs",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell"
+		],
+		[
+			"frontend/src/pages",
+			"frontend/src/pages/record/dialogs",
+			"frontend/src/pages/record/skeletons",
+			"frontend/src/pages/record/body",
+			"frontend/src/shell",
+			"frontend/src/pages/record/composer",
+			"frontend/src/pages/record/feed",
+			"frontend/src/pages/record/panel",
+			"frontend/src/router"
+		]
+	],
+	"fileCycles": [
+		[
+			"ui/src/api/feed.ts",
+			"ui/src/api/index.ts",
+			"ui/src/api/request.ts",
+			"ui/src/api/upload.ts",
+			"ui/src/cache/dataCache.ts",
+			"ui/src/cache/entries.ts",
+			"ui/src/cache/index.ts",
+			"ui/src/cache/listKey.ts",
+			"ui/src/cache/nameCounts.ts",
+			"ui/src/cache/rowsMemo.ts"
+		],
+		[
+			"ui/src/components/Fields/types.ts",
+			"ui/src/components/FormLayout/types.ts"
+		],
+		[
+			"ui/src/components/Fields/TableField.vue",
+			"ui/src/components/Fields/fieldTypes.ts",
+			"ui/src/components/FormLayout/FormLayout.vue",
+			"ui/src/components/FormLayout/useFieldTypes.ts"
+		],
+		[
+			"frappe/shell/navigation.py",
+			"frappe/shell/navigation_filter.py"
+		]
+	]
+}
