@@ -329,7 +329,7 @@ page loads the editor to show saved comments.
 cd research/desk-v2-speed
 node measure.mjs 5 results/runs.json                       # all flows, 5 runs
 CPU_SLOWDOWN=4 node measure.mjs 3 results/runs-cpu4.json   # CPU slowed 4 times
-node summarize.mjs results/runs.json.gz > results/summary.md
+node summarize.mjs results/runs.json > results/summary.md      # also reads the committed .json.gz
 RUNS=10 ./serverTime.sh
 ```
 
