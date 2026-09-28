@@ -104,19 +104,31 @@ Two things the ticket asked for are not there:
 
 ### 3. Where it lives
 
-**A standalone HTML file that a script builds from the repo.** The reasons:
+**Ruled by the user on 2026-09-28: on the site, at a route, in developer mode.** The
+prototype first recommended a file opened from disk. The ticket's rule of "no route" was
+for the prototype only.
 
-- The ticket forbids a desk route, a DocType or a request. A page in the desk is out.
-- The page and the CI check use the same script and the same data, so they cannot
-  disagree.
-- It opens from disk with no server. The file is 218 KB.
-- CI can upload it as an artifact on every PR, so a reviewer sees the diagram of that PR.
+The shape for the build task:
 
-A published site is not needed. If it becomes useful, GitHub Pages can serve the same file.
-
-The built `diagram.html` must not be committed in the real build. It would go stale after
-each merge and fill diffs. Commit `layers.json` and the script; build the page in CI. This
-prototype commits it only so the branch can be opened without running anything.
+- **Route `/desk-architecture`.** Not under `/apps`: that address root belongs to the
+  shell and its app prefixes, and the reserved route guard refuses anything else there.
+- **A page renderer**, found through the `page_renderer` hook the same way as the shell
+  page. It returns the whole HTML page. A `www/` page is harder: the website wraps any
+  `www` template that has no `</body>` in the site's base template.
+- **Only in developer mode.** Without `developer_mode`, the route is "not found". The test
+  pages under `frappe/www/_test` use the same gate in `frappe/website/path_resolver.py`.
+  In developer mode, only a System Manager sees the page.
+- **Built on each request.** The renderer runs the script, which takes about 0.2 seconds.
+  So the page shows the working tree as it is, with edits not yet committed, and a
+  developer sees a red line while writing the import. It needs `node` and `git`, which a
+  development bench has.
+- **CI does not change.** It runs the same script as the check, and uploads the built
+  page on each PR, so a reviewer without a development site can still see it.
+- **The built page is not committed.** It would go stale after each merge. This prototype
+  commits it only so the branch can be opened without running anything.
+- **It is a new concept.** `ARCHITECTURE.md` gets a row for the route under "Outside the
+  layers", beside the build. The renderer and the script live with the build code, not in
+  a layer, because the running desk never uses them.
 
 ### 4. How it stays current
 
