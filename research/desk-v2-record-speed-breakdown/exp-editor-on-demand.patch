@@ -1,0 +1,27 @@
+diff --git a/ui/src/components/ActivityTimeline/CommentItem.vue b/ui/src/components/ActivityTimeline/CommentItem.vue
+index 85d9b98aca..73f9919e97 100644
+--- a/ui/src/components/ActivityTimeline/CommentItem.vue
++++ b/ui/src/components/ActivityTimeline/CommentItem.vue
+@@ -58,8 +58,9 @@
+ 
+ <script setup lang="ts">
+ import { Button } from "frappe-ui";
+-import { CommentKit, Editor, EditorContent } from "frappe-ui/editor";
+-import { nextTick, ref, watch } from "vue";
++import { defineAsyncComponent, nextTick, ref, watch } from "vue";
++const Editor = defineAsyncComponent(() => import("frappe-ui/editor").then((m) => m.Editor));
++const EditorContent = defineAsyncComponent(() => import("frappe-ui/editor").then((m) => m.EditorContent));
+ import AttachmentChip from "./AttachmentChip.vue";
+ import TimeAgo from "./TimeAgo.vue";
+ import TimelineCard from "./TimelineCard.vue";
+@@ -75,8 +76,8 @@ const emit = defineEmits<{
+ 	discard: [];
+ }>();
+ 
+-const extensions = [CommentKit];
+-const editorRef = ref<InstanceType<typeof Editor> | null>(null);
++const extensions: never[] = [];
++const editorRef = ref<any>(null);
+ const editedContent = ref(props.comment.data.content);
+ 
+ // entering edit starts from the saved content; leaving it (discard) reverts to it.

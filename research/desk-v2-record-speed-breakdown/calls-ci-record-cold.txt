@@ -1,0 +1,17 @@
+# The 13 API calls of a cold ToDo record load, from the Cypress spec cypress/integration/desk_v2_api_calls.js
+# CI run https://github.com/frappe/frappe/actions/runs/36531503137 (job 109286795743), commit e1600abb8f, 2026-09-29.
+# Browser cache on in that run; the baseline commit e36b945f75 turned it off and set the baseline to 13. Same 13 calls.
+      record sent 13 API calls, baseline 12. Remove the calls, or raise the baseline in frontend/speed-budgets.json to 13.
+GET /api/v2/method/frappe.shell.boot.get_boot?path=%2Fapps%2Fdesk%2Ftodo%2Fbbgih9tjpo
+GET /api/v2/method/frappe.translate.get_boot_translations?lang=en&v=9e485688_1790664038.655719
+GET /api/v2/method/frappe.shell.doctypes.get_addresses?v=ffa21e87406a559bd404a9be55bc9ee2310b563d84f8089260f4bf91
+GET /api/v2/method/frappe.custom.doctype.client_script.client_script.get_client_scripts?dt=ToDo&view=Record
+GET /api/v2/doctype/ToDo/meta?include=children
+GET /api/v2/method/frappe.desk.doctype.form_layout.form_layout.get_form_layouts?dt=ToDo&type=Details
+GET /api/v2/method/frappe.desk.doctype.form_layout.form_layout.get_form_layouts?dt=ToDo&type=Side+Panel
+GET /api/v2/document/ToDo/bbgih9tjpo?include=permissions%2Cassignments%2Cshares%2Ctags%2Cfavourites%2Cfollows%2Cusers%2Clink_titles%2Cattachments%2Cseen
+GET /api/v2/doctype/User/search?txt=&filters=%7B%7D
+GET /api/v2/doctype/DocType/search?txt=&filters=%7B%7D
+GET /api/v2/doctype/Role/search?txt=&filters=%7B%7D
+GET /api/v2/doctype/User/search?txt=&filters=%7B%7D
+GET /api/v2/doctype/Assignment%20Rule/search?txt=&filters=%7B%7D

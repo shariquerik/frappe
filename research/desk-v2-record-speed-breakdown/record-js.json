@@ -1,0 +1,5950 @@
+{
+ "pageJsKb": {
+  "home": 281.8,
+  "list": 374.2,
+  "record": 723.5
+ },
+ "pages": {
+  "home": [
+   "assets/index-CTmPHUfY.js",
+   "assets/rolldown-runtime-CNC7AqOf.js",
+   "assets/vue.runtime.esm-bundler-B0srrsnN.js",
+   "assets/useColorScheme-BaMKsZCL.js",
+   "assets/ItemListRow-BOfCMz8Z.js",
+   "assets/Button-BnkxjjGL.js",
+   "assets/vue-router-BnJskh84.js",
+   "assets/_plugin-vue_export-helper-BDNMzG2s.js",
+   "assets/purify.es-tvBDqVuI.js",
+   "assets/Combobox-BrTEh7hv.js",
+   "assets/target-BwBDc4Oo.js",
+   "assets/Skeleton-lfR_5kK7.js",
+   "assets/DateTimePicker-vGi1phZ3.js",
+   "assets/ErrorMessage-BcibnkOO.js",
+   "assets/toast-CwsIcQnc.js",
+   "assets/TooltipProvider-CZd0Yb9Y.js",
+   "assets/Badge-q1Pa0NDc.js",
+   "assets/Icon-BHseh8IW.js",
+   "assets/Tooltip-BjFFX0uN.js",
+   "assets/Dropdown-CN1CG0VL.js",
+   "assets/RovingFocusGroup-D9kr1kX6.js",
+   "assets/Dialog-Cef2BNUo.js",
+   "assets/feed-C-5CFqhS.js",
+   "assets/api-FZuFhq0H.js",
+   "assets/tabIdentity-BluexJgo.js",
+   "assets/types-DHMNlwcF.js",
+   "assets/registry-8PUyZu2f.js",
+   "assets/useDoctypeMeta-BLkGMEYj.js",
+   "assets/preload-helper-D0fOQXss.js",
+   "assets/useActivityTimeline-D9Uiyl86.js",
+   "assets/writerContext-DZFD9aH_.js",
+   "assets/upload-DIERqW7G.js",
+   "assets/i18n-C5dYE5_P.js",
+   "assets/core-CQ-zN4iX.js",
+   "assets/useFileUpload-C1D_fJgc.js",
+   "assets/LoadingStatus-B0uwT9VJ.js",
+   "assets/Home-DNLrsYay.js",
+   "assets/PageFrame-B58FLyPV.js",
+   "assets/PageHeaderTitle-B3k9nts6.js",
+   "assets/TileGridSkeleton-l7UCkwW9.js"
+  ],
+  "list": [
+   "assets/index-CTmPHUfY.js",
+   "assets/rolldown-runtime-CNC7AqOf.js",
+   "assets/vue.runtime.esm-bundler-B0srrsnN.js",
+   "assets/useColorScheme-BaMKsZCL.js",
+   "assets/ItemListRow-BOfCMz8Z.js",
+   "assets/Button-BnkxjjGL.js",
+   "assets/vue-router-BnJskh84.js",
+   "assets/_plugin-vue_export-helper-BDNMzG2s.js",
+   "assets/purify.es-tvBDqVuI.js",
+   "assets/Combobox-BrTEh7hv.js",
+   "assets/target-BwBDc4Oo.js",
+   "assets/Skeleton-lfR_5kK7.js",
+   "assets/DateTimePicker-vGi1phZ3.js",
+   "assets/ErrorMessage-BcibnkOO.js",
+   "assets/toast-CwsIcQnc.js",
+   "assets/TooltipProvider-CZd0Yb9Y.js",
+   "assets/Badge-q1Pa0NDc.js",
+   "assets/Icon-BHseh8IW.js",
+   "assets/Tooltip-BjFFX0uN.js",
+   "assets/Dropdown-CN1CG0VL.js",
+   "assets/RovingFocusGroup-D9kr1kX6.js",
+   "assets/Dialog-Cef2BNUo.js",
+   "assets/feed-C-5CFqhS.js",
+   "assets/api-FZuFhq0H.js",
+   "assets/tabIdentity-BluexJgo.js",
+   "assets/types-DHMNlwcF.js",
+   "assets/registry-8PUyZu2f.js",
+   "assets/useDoctypeMeta-BLkGMEYj.js",
+   "assets/preload-helper-D0fOQXss.js",
+   "assets/useActivityTimeline-D9Uiyl86.js",
+   "assets/writerContext-DZFD9aH_.js",
+   "assets/upload-DIERqW7G.js",
+   "assets/i18n-C5dYE5_P.js",
+   "assets/core-CQ-zN4iX.js",
+   "assets/useFileUpload-C1D_fJgc.js",
+   "assets/LoadingStatus-B0uwT9VJ.js",
+   "assets/List-Dcii7atC.js",
+   "assets/TabButtons-RXMmS2eb.js",
+   "assets/nativeElements-DgJLvAvB.js",
+   "assets/Breadcrumbs-DbKrx_jK.js",
+   "assets/vuedraggable.umd-081n_sxq.js",
+   "assets/PageFrame-B58FLyPV.js",
+   "assets/PageHeaderTitle-B3k9nts6.js"
+  ],
+  "record": [
+   "assets/index-CTmPHUfY.js",
+   "assets/rolldown-runtime-CNC7AqOf.js",
+   "assets/vue.runtime.esm-bundler-B0srrsnN.js",
+   "assets/useColorScheme-BaMKsZCL.js",
+   "assets/ItemListRow-BOfCMz8Z.js",
+   "assets/Button-BnkxjjGL.js",
+   "assets/vue-router-BnJskh84.js",
+   "assets/_plugin-vue_export-helper-BDNMzG2s.js",
+   "assets/purify.es-tvBDqVuI.js",
+   "assets/Combobox-BrTEh7hv.js",
+   "assets/target-BwBDc4Oo.js",
+   "assets/Skeleton-lfR_5kK7.js",
+   "assets/DateTimePicker-vGi1phZ3.js",
+   "assets/ErrorMessage-BcibnkOO.js",
+   "assets/toast-CwsIcQnc.js",
+   "assets/TooltipProvider-CZd0Yb9Y.js",
+   "assets/Badge-q1Pa0NDc.js",
+   "assets/Icon-BHseh8IW.js",
+   "assets/Tooltip-BjFFX0uN.js",
+   "assets/Dropdown-CN1CG0VL.js",
+   "assets/RovingFocusGroup-D9kr1kX6.js",
+   "assets/Dialog-Cef2BNUo.js",
+   "assets/feed-C-5CFqhS.js",
+   "assets/api-FZuFhq0H.js",
+   "assets/tabIdentity-BluexJgo.js",
+   "assets/types-DHMNlwcF.js",
+   "assets/registry-8PUyZu2f.js",
+   "assets/useDoctypeMeta-BLkGMEYj.js",
+   "assets/preload-helper-D0fOQXss.js",
+   "assets/useActivityTimeline-D9Uiyl86.js",
+   "assets/writerContext-DZFD9aH_.js",
+   "assets/upload-DIERqW7G.js",
+   "assets/i18n-C5dYE5_P.js",
+   "assets/core-CQ-zN4iX.js",
+   "assets/useFileUpload-C1D_fJgc.js",
+   "assets/LoadingStatus-B0uwT9VJ.js",
+   "assets/Record-DhQu9oQO.js",
+   "assets/FormLayout-BjwzYa9u.js",
+   "assets/Tabs-lBSDlIar.js",
+   "assets/nativeElements-DgJLvAvB.js",
+   "assets/vuedraggable.umd-081n_sxq.js",
+   "assets/HoverCard-DPuJxixZ.js",
+   "assets/Breadcrumbs-DbKrx_jK.js",
+   "assets/ActivityTimeline-B8pcuTE_.js",
+   "assets/paperclip-DRhRrKbi.js",
+   "assets/warnDeprecated-CgRRuDHJ.js",
+   "assets/w3c-keyname-BOAvb0qz.js",
+   "assets/marked.esm-CtaBI5gJ.js",
+   "assets/FileUploadDialog-CPqI_Tgt.js",
+   "assets/PageFrame-B58FLyPV.js",
+   "assets/PageHeaderTitle-B3k9nts6.js"
+  ]
+ },
+ "chunks": {
+  "assets/index-CTmPHUfY.js": {
+   "raw": 100531,
+   "gzip": 32911,
+   "sources": {
+    "frontend/node_modules/engine.io-client/build/esm/socket.js": {
+     "raw": 8300,
+     "gzipShare": 2717.1847489829006
+    },
+    "frontend/node_modules/socket.io-client/build/esm/socket.js": {
+     "raw": 6423,
+     "gzipShare": 2102.7081497249605
+    },
+    "(unmapped)": {
+     "raw": 5040,
+     "gzipShare": 1649.9531487799784
+    },
+    "frontend/src/shell/RailColumn.vue": {
+     "raw": 4384,
+     "gzipShare": 1435.197342113378
+    },
+    "frontend/node_modules/socket.io-client/build/esm/manager.js": {
+     "raw": 4141,
+     "gzipShare": 1355.6460295829147
+    },
+    "frontend/node_modules/socket.io-parser/build/esm/index.js": {
+     "raw": 3872,
+     "gzipShare": 1267.5830539833485
+    },
+    "frontend/src/shell/SidebarRow.vue": {
+     "raw": 3537,
+     "gzipShare": 1157.9135490545204
+    },
+    "frontend/src/shell/ComposerWindow.vue": {
+     "raw": 3498,
+     "gzipShare": 1145.146054450866
+    },
+    "frontend/node_modules/frappe-ui/experimental/FloatingWindow/FloatingWindow.vue": {
+     "raw": 3420,
+     "gzipShare": 1119.6110652435568
+    },
+    "frontend/src/shell/CustomizeSidebarDialog.vue": {
+     "raw": 3160,
+     "gzipShare": 1034.4944345525262
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transports/polling-xhr.js": {
+     "raw": 3092,
+     "gzipShare": 1012.2331619102565
+    },
+    "frontend/node_modules/frappe-ui/experimental/FloatingWindow/useFloatingWindow.ts": {
+     "raw": 2870,
+     "gzipShare": 939.5566541663766
+    },
+    "frontend/src/shell/AppShell.vue": {
+     "raw": 2754,
+     "gzipShare": 901.5815420119167
+    },
+    "frontend/src/list/useListSettings.ts": {
+     "raw": 2095,
+     "gzipShare": 685.8436203758044
+    },
+    "frontend/src/pages/record/composer/EmailWriter.vue": {
+     "raw": 2058,
+     "gzipShare": 673.7308690851578
+    },
+    "frontend/src/shell/SidebarEdge.vue": {
+     "raw": 1775,
+     "gzipShare": 581.084690294536
+    },
+    "frontend/src/arrangement.ts": {
+     "raw": 1705,
+     "gzipShare": 558.1686743392586
+    },
+    "frontend/src/router/index.ts": {
+     "raw": 1617,
+     "gzipShare": 529.3599685669097
+    },
+    "frontend/node_modules/engine.io-parser/build/esm/index.js": {
+     "raw": 1537,
+     "gzipShare": 503.1702360465926
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transports/websocket.js": {
+     "raw": 1517,
+     "gzipShare": 496.6228029165133
+    },
+    "frontend/node_modules/@socket.io/component-emitter/lib/esm/index.js": {
+     "raw": 1311,
+     "gzipShare": 429.18424167669673
+    },
+    "frontend/src/pages/record/composer/useEmailDraft.ts": {
+     "raw": 1214,
+     "gzipShare": 397.42919099581223
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transport.js": {
+     "raw": 1184,
+     "gzipShare": 387.60804130069334
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transports/polling.js": {
+     "raw": 1183,
+     "gzipShare": 387.28066964418935
+    },
+    "frontend/src/router/generated.ts": {
+     "raw": 1134,
+     "gzipShare": 371.2394584754951
+    },
+    "frontend/node_modules/engine.io-client/build/esm/contrib/parseuri.js": {
+     "raw": 1124,
+     "gzipShare": 367.9657419104555
+    },
+    "frontend/src/pages/record/composer/emailPost.ts": {
+     "raw": 1073,
+     "gzipShare": 351.2697874287533
+    },
+    "frontend/src/pages/record/composer/CommentWriter.vue": {
+     "raw": 1033,
+     "gzipShare": 338.1749211685948
+    },
+    "frontend/node_modules/socket.io-parser/build/esm/binary.js": {
+     "raw": 1032,
+     "gzipShare": 337.8475495120908
+    },
+    "frontend/src/icons/sprite.ts": {
+     "raw": 1015,
+     "gzipShare": 332.2822313515234
+    },
+    "frontend/src/shell/SidebarPanel.vue": {
+     "raw": 1004,
+     "gzipShare": 328.68114312997983
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transports/webtransport.js": {
+     "raw": 991,
+     "gzipShare": 324.4253115954283
+    },
+    "frontend/node_modules/engine.io-parser/build/esm/encodePacket.browser.js": {
+     "raw": 878,
+     "gzipShare": 287.43231441048033
+    },
+    "frontend/src/pages/record/composer/useDockHeight.ts": {
+     "raw": 852,
+     "gzipShare": 278.92065134137727
+    },
+    "frontend/src/pages/record/composer/commentPost.ts": {
+     "raw": 850,
+     "gzipShare": 278.2659080283694
+    },
+    "frontend/src/addresses.ts": {
+     "raw": 843,
+     "gzipShare": 275.9743064328416
+    },
+    "frontend/src/navigation/registry.ts": {
+     "raw": 842,
+     "gzipShare": 275.6469347763377
+    },
+    "frontend/node_modules/socket.io-parser/build/esm/is-binary.js": {
+     "raw": 775,
+     "gzipShare": 253.71303379057207
+    },
+    "frontend/src/navigation/current.ts": {
+     "raw": 764,
+     "gzipShare": 250.11194556902845
+    },
+    "frontend/src/pages/record/composer/useCommentDraft.ts": {
+     "raw": 741,
+     "gzipShare": 242.5823974694373
+    },
+    "frontend/src/shell/LogoutDialog.vue": {
+     "raw": 739,
+     "gzipShare": 241.92765415642936
+    },
+    "frontend/src/router/contributed.ts": {
+     "raw": 715,
+     "gzipShare": 234.07073440033423
+    },
+    "frontend/src/main.ts": {
+     "raw": 686,
+     "gzipShare": 224.57695636171928
+    },
+    "frontend/src/router/mainPage.ts": {
+     "raw": 635,
+     "gzipShare": 207.8810018800171
+    },
+    "frontend/node_modules/engine.io-client/build/esm/util.js": {
+     "raw": 629,
+     "gzipShare": 205.91677194099333
+    },
+    "frontend/src/icons/Icon.vue": {
+     "raw": 566,
+     "gzipShare": 185.2923575812436
+    },
+    "frontend/node_modules/socket.io-client/build/esm/url.js": {
+     "raw": 541,
+     "gzipShare": 177.10806616864448
+    },
+    "frontend/node_modules/socket.io-client/build/esm/contrib/backo2.js": {
+     "raw": 535,
+     "gzipShare": 175.14383622962072
+    },
+    "frontend/src/pages/record/composer/emailSenders.ts": {
+     "raw": 518,
+     "gzipShare": 169.57851806905333
+    },
+    "frontend/node_modules/engine.io-parser/build/esm/contrib/base64-arraybuffer.js": {
+     "raw": 499,
+     "gzipShare": 163.358456595478
+    },
+    "frontend/src/shell/useHashDialog.ts": {
+     "raw": 472,
+     "gzipShare": 154.519421869871
+    },
+    "frontend/src/navigation/tree.ts": {
+     "raw": 467,
+     "gzipShare": 152.88256358735117
+    },
+    "frontend/src/navigation/sidebarMemory.ts": {
+     "raw": 455,
+     "gzipShare": 148.9541037093036
+    },
+    "frontend/src/shell/Unauthorized.vue": {
+     "raw": 436,
+     "gzipShare": 142.73404223572828
+    },
+    "frontend/src/shell/BootError.vue": {
+     "raw": 423,
+     "gzipShare": 138.47821070117675
+    },
+    "frontend/src/router/standardPages.ts": {
+     "raw": 417,
+     "gzipShare": 136.51398076215295
+    },
+    "frontend/node_modules/engine.io-parser/build/esm/decodePacket.browser.js": {
+     "raw": 416,
+     "gzipShare": 136.186609105649
+    },
+    "frontend/src/contents.ts": {
+     "raw": 399,
+     "gzipShare": 130.62129094508163
+    },
+    "frontend/node_modules/socket.io-client/build/esm/index.js": {
+     "raw": 390,
+     "gzipShare": 127.67494603654595
+    },
+    "frontend/src/shell/PageLoadError.vue": {
+     "raw": 371,
+     "gzipShare": 121.45488456297062
+    },
+    "frontend/src/boot.ts": {
+     "raw": 310,
+     "gzipShare": 101.48521351622882
+    },
+    "frontend/src/pages/record/composer/commentUpload.ts": {
+     "raw": 308,
+     "gzipShare": 100.8304702032209
+    },
+    "frontend/node_modules/engine.io-client/build/esm/contrib/parseqs.js": {
+     "raw": 299,
+     "gzipShare": 97.88412529468522
+    },
+    "frontend/src/shell/session.ts": {
+     "raw": 295,
+     "gzipShare": 96.57463866866937
+    },
+    "frontend/src/pages/MainPage.vue": {
+     "raw": 254,
+     "gzipShare": 83.15240075200684
+    },
+    "frontend/src/shell/socket.ts": {
+     "raw": 252,
+     "gzipShare": 82.49765743899891
+    },
+    "frontend/src/navigation/context.ts": {
+     "raw": 251,
+     "gzipShare": 82.17028578249496
+    },
+    "frontend/src/router/failedPage.ts": {
+     "raw": 236,
+     "gzipShare": 77.2597109349355
+    },
+    "frontend/node_modules/engine.io-parser/build/esm/commons.js": {
+     "raw": 215,
+     "gzipShare": 70.38490614835224
+    },
+    "frontend/node_modules/engine.io-client/build/esm/globals.js": {
+     "raw": 204,
+     "gzipShare": 66.78381792680865
+    },
+    "frontend/src/navigation/useItemTree.ts": {
+     "raw": 191,
+     "gzipShare": 62.52798639225711
+    },
+    "frontend/src/shell/doctypeUpdates.ts": {
+     "raw": 177,
+     "gzipShare": 57.944783201201616
+    },
+    "frontend/src/pages/record/composer/AttachmentSeed.ts": {
+     "raw": 168,
+     "gzipShare": 54.998438292665945
+    },
+    "frontend/src/pages/record/drawnProps.ts": {
+     "raw": 149,
+     "gzipShare": 48.77837681909063
+    },
+    "frontend/node_modules/engine.io-client/build/esm/contrib/has-cors.js": {
+     "raw": 96,
+     "gzipShare": 31.427679024380538
+    },
+    "frontend/node_modules/engine.io-client/build/esm/transports/index.js": {
+     "raw": 67,
+     "gzipShare": 21.933900985765586
+    },
+    "frontend/node_modules/socket.io-client/build/esm/on.js": {
+     "raw": 58,
+     "gzipShare": 18.987556077229907
+    },
+    "frontend/node_modules/engine.io-client/build/esm/index.js": {
+     "raw": 12,
+     "gzipShare": 3.9284598780475672
+    }
+   }
+  },
+  "assets/rolldown-runtime-CNC7AqOf.js": {
+   "raw": 879,
+   "gzip": 505,
+   "sources": {
+    "(no source map)": {
+     "raw": 879,
+     "gzipShare": 505
+    }
+   }
+  },
+  "assets/vue.runtime.esm-bundler-B0srrsnN.js": {
+   "raw": 127998,
+   "gzip": 48612,
+   "sources": {
+    "frontend/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js": {
+     "raw": 66227,
+     "gzipShare": 25152.165846341348
+    },
+    "frontend/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-bundler.js": {
+     "raw": 27273,
+     "gzipShare": 10357.93587399803
+    },
+    "frontend/node_modules/@vue/reactivity/dist/reactivity.esm-bundler.js": {
+     "raw": 17705,
+     "gzipShare": 6724.132095813997
+    },
+    "frontend/node_modules/@vue/shared/dist/shared.esm-bundler.js": {
+     "raw": 13532,
+     "gzipShare": 5139.280176252754
+    },
+    "frontend/node_modules/vue/dist/vue.runtime.esm-bundler.js": {
+     "raw": 1709,
+     "gzipShare": 649.0562977546524
+    },
+    "(unmapped)": {
+     "raw": 1492,
+     "gzipShare": 566.6424787887311
+    }
+   }
+  },
+  "assets/useColorScheme-BaMKsZCL.js": {
+   "raw": 29921,
+   "gzip": 10094,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/resources/listResource.js": {
+     "raw": 3949,
+     "gzipShare": 1332.2150329200226
+    },
+    "frontend/node_modules/frappe-ui/src/components/Sidebar/SidebarItem.vue": {
+     "raw": 3347,
+     "gzipShare": 1129.12730189499
+    },
+    "frontend/node_modules/frappe-ui/src/resources/documentResource.js": {
+     "raw": 2866,
+     "gzipShare": 966.8595300959192
+    },
+    "frontend/node_modules/frappe-ui/src/resources/resources.js": {
+     "raw": 2206,
+     "gzipShare": 744.205207045219
+    },
+    "frontend/node_modules/frappe-ui/src/components/SidebarRail/SidebarRailItem.vue": {
+     "raw": 2153,
+     "gzipShare": 726.325390194178
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useColorScheme.ts": {
+     "raw": 1829,
+     "gzipShare": 617.0223588783797
+    },
+    "frontend/node_modules/frappe-ui/src/components/Sidebar/SidebarSection.vue": {
+     "raw": 1674,
+     "gzipShare": 564.7323284649577
+    },
+    "frontend/node_modules/frappe-ui/src/components/SidebarRail/SidebarRailItemBadge.vue": {
+     "raw": 1603,
+     "gzipShare": 540.7801209852612
+    },
+    "frontend/node_modules/frappe-ui/src/utils/plugin.ts": {
+     "raw": 1396,
+     "gzipShare": 470.94762875572343
+    },
+    "frontend/node_modules/idb-keyval/dist/index.js": {
+     "raw": 1009,
+     "gzipShare": 340.39123023963106
+    },
+    "frontend/node_modules/frappe-ui/src/components/Toast/ToastProvider.vue": {
+     "raw": 981,
+     "gzipShare": 330.94528926172256
+    },
+    "(unmapped)": {
+     "raw": 957,
+     "gzipShare": 322.84876842351525
+    },
+    "frontend/node_modules/frappe-ui/src/components/Sidebar/Sidebar.vue": {
+     "raw": 929,
+     "gzipShare": 313.40282744560676
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useShellScrolled.ts": {
+     "raw": 889,
+     "gzipShare": 299.9086260485946
+    },
+    "frontend/node_modules/frappe-ui/src/resources/plugin.js": {
+     "raw": 864,
+     "gzipShare": 291.4747501754621
+    },
+    "frontend/node_modules/frappe-ui/src/utils/request.ts": {
+     "raw": 756,
+     "gzipShare": 255.0404064035293
+    },
+    "frontend/node_modules/frappe-ui/src/components/DesktopShell/DesktopShell.vue": {
+     "raw": 541,
+     "gzipShare": 182.50907389458908
+    },
+    "frontend/node_modules/frappe-ui/src/components/Dialogs.vue": {
+     "raw": 496,
+     "gzipShare": 167.32809732295044
+    },
+    "frontend/node_modules/frappe-ui/src/components/SidebarRail/SidebarRail.vue": {
+     "raw": 386,
+     "gzipShare": 130.21904348116706
+    },
+    "frontend/node_modules/frappe-ui/src/components/Sidebar/types.ts": {
+     "raw": 383,
+     "gzipShare": 129.20697837639116
+    },
+    "frontend/node_modules/frappe-ui/src/resources/local.ts": {
+     "raw": 301,
+     "gzipShare": 101.54386551251629
+    },
+    "frontend/node_modules/frappe-ui/src/resources/realtime.ts": {
+     "raw": 150,
+     "gzipShare": 50.6032552387955
+    },
+    "frontend/node_modules/frappe-ui/src/components/PageHeader/PageHeaderTarget.vue": {
+     "raw": 150,
+     "gzipShare": 50.6032552387955
+    },
+    "frontend/node_modules/frappe-ui/src/resources/socketAccess.ts": {
+     "raw": 55,
+     "gzipShare": 18.554526920891682
+    }
+   }
+  },
+  "assets/ItemListRow-BOfCMz8Z.js": {
+   "raw": 36383,
+   "gzip": 11872,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Dialog/Dialog.vue": {
+     "raw": 4362,
+     "gzipShare": 1423.3478272819723
+    },
+    "frontend/node_modules/frappe-ui/src/components/TextInput/TextInput.vue": {
+     "raw": 3919,
+     "gzipShare": 1278.794162108677
+    },
+    "frontend/node_modules/reka-ui/dist/FocusScope/FocusScope.js": {
+     "raw": 2419,
+     "gzipShare": 789.3347992194157
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useBodyScrollLock.js": {
+     "raw": 1996,
+     "gzipShare": 651.3072588846439
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogContentImpl.js": {
+     "raw": 1566,
+     "gzipShare": 510.995574856389
+    },
+    "frontend/node_modules/aria-hidden/dist/es2015/index.js": {
+     "raw": 1461,
+     "gzipShare": 476.7334194541407
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useAutofocusOnOpen.ts": {
+     "raw": 1400,
+     "gzipShare": 456.82873869664405
+    },
+    "frontend/node_modules/frappe-ui/src/components/ItemListRow/ItemListRow.vue": {
+     "raw": 1260,
+     "gzipShare": 411.1458648269796
+    },
+    "frontend/node_modules/reka-ui/dist/VisuallyHidden/VisuallyHiddenInput.js": {
+     "raw": 1247,
+     "gzipShare": 406.90388368193936
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogContentModal.js": {
+     "raw": 1192,
+     "gzipShare": 388.9570403759998
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogContentNonModal.js": {
+     "raw": 1188,
+     "gzipShare": 387.6518154082951
+    },
+    "frontend/node_modules/reka-ui/dist/Collection/Collection.js": {
+     "raw": 1127,
+     "gzipShare": 367.74713465079844
+    },
+    "frontend/node_modules/frappe-ui/src/utils/vnode.ts": {
+     "raw": 1036,
+     "gzipShare": 338.0532666355166
+    },
+    "frontend/node_modules/reka-ui/dist/FocusScope/utils.js": {
+     "raw": 1004,
+     "gzipShare": 327.611466893879
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogContent.js": {
+     "raw": 985,
+     "gzipShare": 321.4116482972817
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useInputLabeling.ts": {
+     "raw": 945,
+     "gzipShare": 308.35939862023474
+    },
+    "(unmapped)": {
+     "raw": 810,
+     "gzipShare": 264.3080559602012
+    },
+    "frontend/node_modules/reka-ui/dist/VisuallyHidden/VisuallyHiddenInputBubble.js": {
+     "raw": 772,
+     "gzipShare": 251.90841876700657
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogRoot.js": {
+     "raw": 714,
+     "gzipShare": 232.98265673528846
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useTypeahead.js": {
+     "raw": 665,
+     "gzipShare": 216.9936508809059
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogOverlay.js": {
+     "raw": 624,
+     "gzipShare": 203.61509496193278
+    },
+    "frontend/node_modules/reka-ui/dist/RovingFocus/utils.js": {
+     "raw": 620,
+     "gzipShare": 202.30986999422808
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/utils.js": {
+     "raw": 617,
+     "gzipShare": 201.33095126844955
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useFocusGuards.js": {
+     "raw": 548,
+     "gzipShare": 178.8158205755435
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogOverlayImpl.js": {
+     "raw": 512,
+     "gzipShare": 167.06879586620124
+    },
+    "frontend/node_modules/frappe-ui/src/components/InputLabeling/InputError.vue": {
+     "raw": 390,
+     "gzipShare": 127.25943435120799
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogClose.js": {
+     "raw": 324,
+     "gzipShare": 105.72322238408047
+    },
+    "frontend/node_modules/frappe-ui/src/utils/errorLines.ts": {
+     "raw": 300,
+     "gzipShare": 97.8918725778523
+    },
+    "frontend/node_modules/frappe-ui/src/components/InputLabeling/LabelingWrapper.vue": {
+     "raw": 298,
+     "gzipShare": 97.23926009399995
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogPortal.js": {
+     "raw": 288,
+     "gzipShare": 93.9761976747382
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogDescription.js": {
+     "raw": 276,
+     "gzipShare": 90.06052277162411
+    },
+    "frontend/node_modules/reka-ui/dist/FocusScope/stack.js": {
+     "raw": 268,
+     "gzipShare": 87.45007283621472
+    },
+    "frontend/node_modules/reka-ui/dist/Dialog/DialogTitle.js": {
+     "raw": 258,
+     "gzipShare": 84.18701041695297
+    },
+    "frontend/node_modules/frappe-ui/src/utils/debounce.ts": {
+     "raw": 207,
+     "gzipShare": 67.54539207871808
+    },
+    "frontend/node_modules/reka-ui/dist/shared/getActiveElement.js": {
+     "raw": 179,
+     "gzipShare": 58.4088173047852
+    },
+    "frontend/node_modules/reka-ui/dist/Primitive/usePrimitiveElement.js": {
+     "raw": 171,
+     "gzipShare": 55.79836736937581
+    },
+    "frontend/node_modules/frappe-ui/src/utils/resolvePropValue.ts": {
+     "raw": 146,
+     "gzipShare": 47.64071132122145
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useHideOthers.js": {
+     "raw": 143,
+     "gzipShare": 46.661792595442925
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useFormControl.js": {
+     "raw": 61,
+     "gzipShare": 19.90468075749663
+    },
+    "frontend/node_modules/frappe-ui/src/utils/useId.ts": {
+     "raw": 37,
+     "gzipShare": 12.07333095126845
+    }
+   }
+  },
+  "assets/Button-BnkxjjGL.js": {
+   "raw": 71417,
+   "gzip": 23721,
+   "sources": {
+    "frontend/node_modules/@floating-ui/core/dist/floating-ui.core.mjs": {
+     "raw": 7689,
+     "gzipShare": 2553.884495288237
+    },
+    "frontend/node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs": {
+     "raw": 7062,
+     "gzipShare": 2345.6278197067927
+    },
+    "frontend/node_modules/frappe-ui/src/components/Button/Button.vue": {
+     "raw": 6741,
+     "gzipShare": 2239.008373356484
+    },
+    "frontend/node_modules/@vueuse/shared/dist/index.js": {
+     "raw": 6433,
+     "gzipShare": 2136.7068485094587
+    },
+    "frontend/node_modules/reka-ui/dist/Popper/PopperContent.js": {
+     "raw": 4412,
+     "gzipShare": 1465.4361286528417
+    },
+    "frontend/node_modules/reka-ui/node_modules/@vueuse/core/dist/index.js": {
+     "raw": 3569,
+     "gzipShare": 1185.435526555302
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useGraceArea.js": {
+     "raw": 2433,
+     "gzipShare": 808.1156167299102
+    },
+    "frontend/node_modules/reka-ui/dist/DismissableLayer/DismissableLayer.js": {
+     "raw": 2303,
+     "gzipShare": 764.9364016970749
+    },
+    "frontend/node_modules/@floating-ui/utils/dist/floating-ui.utils.dom.mjs": {
+     "raw": 2233,
+     "gzipShare": 741.6860551409328
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipContentImpl.js": {
+     "raw": 2197,
+     "gzipShare": 729.7287340549169
+    },
+    "frontend/node_modules/reka-ui/dist/Presence/usePresence.js": {
+     "raw": 1950,
+     "gzipShare": 647.6882254925298
+    },
+    "frontend/node_modules/@floating-ui/vue/dist/floating-ui.vue.mjs": {
+     "raw": 1737,
+     "gzipShare": 576.9407424002688
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipRoot.js": {
+     "raw": 1590,
+     "gzipShare": 528.1150146323704
+    },
+    "frontend/node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs": {
+     "raw": 1514,
+     "gzipShare": 502.87178122855903
+    },
+    "frontend/node_modules/reka-ui/dist/DismissableLayer/utils.js": {
+     "raw": 1507,
+     "gzipShare": 500.5467465729448
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipTrigger.js": {
+     "raw": 1340,
+     "gzipShare": 445.0780626461487
+    },
+    "frontend/node_modules/reka-ui/dist/Popper/PopperArrow.js": {
+     "raw": 1164,
+     "gzipShare": 386.62004844784855
+    },
+    "frontend/node_modules/reka-ui/dist/Presence/Presence.js": {
+     "raw": 1093,
+     "gzipShare": 363.03755408376156
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipContent.js": {
+     "raw": 1009,
+     "gzipShare": 335.13713821639107
+    },
+    "frontend/node_modules/frappe-ui/src/components/Spinner/Spinner.vue": {
+     "raw": 950,
+     "gzipShare": 315.54041754764273
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useForwardExpose.js": {
+     "raw": 937,
+     "gzipShare": 311.22249604435916
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipContentHoverable.js": {
+     "raw": 909,
+     "gzipShare": 301.92235742190235
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipProvider.js": {
+     "raw": 906,
+     "gzipShare": 300.9259139980677
+    },
+    "frontend/node_modules/reka-ui/dist/VisuallyHidden/VisuallyHidden.js": {
+     "raw": 746,
+     "gzipShare": 247.78226472688576
+    },
+    "(unmapped)": {
+     "raw": 683,
+     "gzipShare": 226.85695282635788
+    },
+    "frontend/node_modules/reka-ui/dist/component/Arrow.js": {
+     "raw": 674,
+     "gzipShare": 223.86762255485388
+    },
+    "frontend/node_modules/reka-ui/dist/Popper/utils.js": {
+     "raw": 673,
+     "gzipShare": 223.535474746909
+    },
+    "frontend/node_modules/defu/dist/defu.mjs": {
+     "raw": 659,
+     "gzipShare": 218.88540543568058
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useSize.js": {
+     "raw": 517,
+     "gzipShare": 171.72041670750662
+    },
+    "frontend/node_modules/frappe-ui/src/components/Button/types.ts": {
+     "raw": 505,
+     "gzipShare": 167.73464301216796
+    },
+    "frontend/node_modules/reka-ui/dist/Teleport/Teleport.js": {
+     "raw": 420,
+     "gzipShare": 139.50207933685257
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tooltip/TooltipBubble.vue": {
+     "raw": 410,
+     "gzipShare": 136.1806012574037
+    },
+    "frontend/node_modules/reka-ui/dist/Popper/PopperAnchor.js": {
+     "raw": 389,
+     "gzipShare": 129.20549729056108
+    },
+    "frontend/node_modules/reka-ui/dist/Primitive/Primitive.js": {
+     "raw": 355,
+     "gzipShare": 117.91247182043492
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useForwardProps.js": {
+     "raw": 335,
+     "gzipShare": 111.26951566153717
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipArrow.js": {
+     "raw": 321,
+     "gzipShare": 106.61944635030875
+    },
+    "frontend/node_modules/reka-ui/dist/shared/createContext.js": {
+     "raw": 307,
+     "gzipShare": 101.96937703908033
+    },
+    "frontend/node_modules/reka-ui/dist/Primitive/Slot.js": {
+     "raw": 306,
+     "gzipShare": 101.63722923113545
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/TooltipPortal.js": {
+     "raw": 289,
+     "gzipShare": 95.99071649607237
+    },
+    "frontend/node_modules/frappe-ui/src/utils/iconString.ts": {
+     "raw": 246,
+     "gzipShare": 81.70836075444223
+    },
+    "frontend/node_modules/frappe-ui/src/composables/usePortalTarget.ts": {
+     "raw": 232,
+     "gzipShare": 77.0582914432138
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useEmitAsProps.js": {
+     "raw": 203,
+     "gzipShare": 67.42600501281207
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useReactiveSlots.ts": {
+     "raw": 188,
+     "gzipShare": 62.44378789363877
+    },
+    "frontend/node_modules/reka-ui/dist/Popper/PopperRoot.js": {
+     "raw": 179,
+     "gzipShare": 59.45445762213478
+    },
+    "frontend/node_modules/reka-ui/dist/shared/handleAndDispatchCustomEvent.js": {
+     "raw": 161,
+     "gzipShare": 53.47579707912682
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useId.js": {
+     "raw": 155,
+     "gzipShare": 51.482910231457495
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useSlotTick.ts": {
+     "raw": 146,
+     "gzipShare": 48.493579959953514
+    },
+    "frontend/node_modules/reka-ui/dist/DismissableLayer/context.js": {
+     "raw": 127,
+     "gzipShare": 42.18277160900066
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useStateMachine.js": {
+     "raw": 123,
+     "gzipShare": 40.85418037722111
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useDirection.js": {
+     "raw": 92,
+     "gzipShare": 30.55759833092961
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useForwardPropsEmits.js": {
+     "raw": 84,
+     "gzipShare": 27.900415867370516
+    },
+    "frontend/node_modules/reka-ui/dist/shared/renderSlotFragments.js": {
+     "raw": 71,
+     "gzipShare": 23.582494364086983
+    },
+    "frontend/node_modules/reka-ui/dist/shared/nullish.js": {
+     "raw": 38,
+     "gzipShare": 12.621616701905708
+    },
+    "frontend/node_modules/reka-ui/dist/ConfigProvider/ConfigProvider.js": {
+     "raw": 36,
+     "gzipShare": 11.957321086015934
+    },
+    "frontend/node_modules/reka-ui/dist/Tooltip/utils.js": {
+     "raw": 26,
+     "gzipShare": 8.635843006567065
+    }
+   }
+  },
+  "assets/vue-router-BnJskh84.js": {
+   "raw": 26706,
+   "gzip": 10213,
+   "sources": {
+    "frontend/node_modules/vue-router/dist/vue-router.mjs": {
+     "raw": 19282,
+     "gzipShare": 7373.88848947802
+    },
+    "frontend/node_modules/vue-router/dist/devtools-EWN81iOl.mjs": {
+     "raw": 7185,
+     "gzipShare": 2747.712311840036
+    },
+    "(unmapped)": {
+     "raw": 192,
+     "gzipShare": 73.42529768591328
+    }
+   }
+  },
+  "assets/_plugin-vue_export-helper-BDNMzG2s.js": {
+   "raw": 84,
+   "gzip": 100,
+   "sources": {
+    "(no source map)": {
+     "raw": 84,
+     "gzipShare": 100
+    }
+   }
+  },
+  "assets/purify.es-tvBDqVuI.js": {
+   "raw": 28315,
+   "gzip": 11203,
+   "sources": {
+    "frontend/node_modules/dompurify/dist/purify.es.mjs": {
+     "raw": 26775,
+     "gzipShare": 10593.689740420272
+    },
+    "frontend/node_modules/frappe-ui/src/components/InputLabeling/InputLabel.vue": {
+     "raw": 576,
+     "gzipShare": 227.89786332332685
+    },
+    "frontend/node_modules/frappe-ui/src/components/InputLabeling/RequiredIndicator.vue": {
+     "raw": 346,
+     "gzipShare": 136.89698039908177
+    },
+    "(unmapped)": {
+     "raw": 342,
+     "gzipShare": 135.31435634822532
+    },
+    "frontend/node_modules/frappe-ui/src/components/InputLabeling/InputDescription.vue": {
+     "raw": 230,
+     "gzipShare": 91.0008829242451
+    }
+   }
+  },
+  "assets/Combobox-BrTEh7hv.js": {
+   "raw": 85595,
+   "gzip": 22880,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Combobox/Combobox.vue": {
+     "raw": 9003,
+     "gzipShare": 2406.549915298791
+    },
+    "frontend/node_modules/frappe-ui/src/components/Select/Select.vue": {
+     "raw": 6959,
+     "gzipShare": 1860.1778141246568
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxRoot.js": {
+     "raw": 4932,
+     "gzipShare": 1318.3499036158655
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectContentImpl.js": {
+     "raw": 4225,
+     "gzipShare": 1129.3650330042642
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxContentImpl.js": {
+     "raw": 3610,
+     "gzipShare": 964.9722530521642
+    },
+    "frontend/node_modules/frappe-ui/src/components/Combobox/ComboboxResults.vue": {
+     "raw": 3531,
+     "gzipShare": 943.855131724984
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxRoot.js": {
+     "raw": 3397,
+     "gzipShare": 908.036217068754
+    },
+    "frontend/node_modules/frappe-ui/src/components/Textarea/Textarea.vue": {
+     "raw": 3281,
+     "gzipShare": 877.0287984111221
+    },
+    "frontend/node_modules/ohash/dist/_chunks/is-equal.mjs": {
+     "raw": 3158,
+     "gzipShare": 844.1502424207022
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectItemAlignedPosition.js": {
+     "raw": 2660,
+     "gzipShare": 711.0321864594895
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxInput.js": {
+     "raw": 2501,
+     "gzipShare": 668.5306384718733
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectRoot.js": {
+     "raw": 2300,
+     "gzipShare": 614.8022664875285
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectItem.js": {
+     "raw": 2251,
+     "gzipShare": 601.7043051580116
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/utils.ts": {
+     "raw": 2188,
+     "gzipShare": 584.8640691629184
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectTrigger.js": {
+     "raw": 1928,
+     "gzipShare": 515.3646825165022
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectContent.js": {
+     "raw": 1830,
+     "gzipShare": 489.16875985746833
+    },
+    "frontend/node_modules/frappe-ui/src/components/Combobox/utils.ts": {
+     "raw": 1702,
+     "gzipShare": 454.9536772007711
+    },
+    "frontend/node_modules/frappe-ui/src/components/Select/utils.ts": {
+     "raw": 1674,
+     "gzipShare": 447.46912786961855
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxFilter.js": {
+     "raw": 1605,
+     "gzipShare": 429.0250598749927
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxItem.js": {
+     "raw": 1569,
+     "gzipShare": 419.4020678777966
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxItem.js": {
+     "raw": 1505,
+     "gzipShare": 402.294526549448
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxContent.js": {
+     "raw": 1503,
+     "gzipShare": 401.7599158829371
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectPopperPosition.js": {
+     "raw": 1457,
+     "gzipShare": 389.4638705531865
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectViewport.js": {
+     "raw": 1381,
+     "gzipShare": 369.14866522577256
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/useIsModelBound.ts": {
+     "raw": 1237,
+     "gzipShare": 330.6566972369881
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxContent.js": {
+     "raw": 1081,
+     "gzipShare": 288.9570652491384
+    },
+    "(unmapped)": {
+     "raw": 972,
+     "gzipShare": 259.82078392429463
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectValue.js": {
+     "raw": 876,
+     "gzipShare": 234.15947193177172
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxTrigger.js": {
+     "raw": 860,
+     "gzipShare": 229.88258659968457
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxViewport.js": {
+     "raw": 826,
+     "gzipShare": 220.79420526899935
+    },
+    "frontend/node_modules/reka-ui/dist/Select/BubbleSelect.js": {
+     "raw": 808,
+     "gzipShare": 215.9827092704013
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectItemText.js": {
+     "raw": 628,
+     "gzipShare": 167.86774928442082
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxGroup.js": {
+     "raw": 604,
+     "gzipShare": 161.45242128629008
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useComposing.js": {
+     "raw": 559,
+     "gzipShare": 149.42368128979496
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useFilter.js": {
+     "raw": 536,
+     "gzipShare": 143.27565862491969
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/useComboboxContentPositioning.js": {
+     "raw": 506,
+     "gzipShare": 135.25649862725626
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useKbd.js": {
+     "raw": 484,
+     "gzipShare": 129.37578129563641
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxAnchor.js": {
+     "raw": 415,
+     "gzipShare": 110.93171330101057
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/useEmptyValueMapping.ts": {
+     "raw": 371,
+     "gzipShare": 99.17027863777089
+    },
+    "frontend/node_modules/reka-ui/dist/Select/utils.js": {
+     "raw": 370,
+     "gzipShare": 98.90297330451546
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxLabel.js": {
+     "raw": 368,
+     "gzipShare": 98.36836263800456
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxGroup.js": {
+     "raw": 344,
+     "gzipShare": 91.95303463987382
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/popover/PopoverPanel.vue": {
+     "raw": 336,
+     "gzipShare": 89.81459197383025
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/OptionIcon.vue": {
+     "raw": 325,
+     "gzipShare": 86.87423330802032
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/ListboxItemIndicator.js": {
+     "raw": 312,
+     "gzipShare": 83.39926397569951
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectItemIndicator.js": {
+     "raw": 303,
+     "gzipShare": 80.99351597640049
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectPortal.js": {
+     "raw": 290,
+     "gzipShare": 77.51854664407968
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxPortal.js": {
+     "raw": 288,
+     "gzipShare": 76.98393597756878
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/useFilteredGroups.ts": {
+     "raw": 267,
+     "gzipShare": 71.37052397920439
+    },
+    "frontend/node_modules/reka-ui/dist/Listbox/utils.js": {
+     "raw": 244,
+     "gzipShare": 65.22250131432911
+    },
+    "frontend/node_modules/reka-ui/dist/Combobox/ComboboxItemIndicator.js": {
+     "raw": 238,
+     "gzipShare": 63.61866931479643
+    },
+    "frontend/node_modules/reka-ui/dist/Select/SelectProvider.js": {
+     "raw": 173,
+     "gzipShare": 46.24382265319236
+    },
+    "frontend/node_modules/reka-ui/dist/shared/arrays.js": {
+     "raw": 156,
+     "gzipShare": 41.699631987849756
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/selection/createItemSlotRender.ts": {
+     "raw": 155,
+     "gzipShare": 41.43232665459431
+    },
+    "frontend/node_modules/frappe-ui/src/components/LoadingIndicator/LoadingIndicator.vue": {
+     "raw": 131,
+     "gzipShare": 35.01699865646358
+    },
+    "frontend/node_modules/frappe-ui/src/utils/moduleSingleton.ts": {
+     "raw": 96,
+     "gzipShare": 25.66131199252293
+    },
+    "frontend/node_modules/frappe-ui/src/utils/config.ts": {
+     "raw": 88,
+     "gzipShare": 23.522869326479352
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useNonce.js": {
+     "raw": 84,
+     "gzipShare": 22.45364799345756
+    },
+    "frontend/node_modules/reka-ui/dist/shared/clamp.js": {
+     "raw": 69,
+     "gzipShare": 18.444067994625854
+    }
+   }
+  },
+  "assets/target-BwBDc4Oo.js": {
+   "raw": 23638,
+   "gzip": 7054,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/utils/dialog.ts": {
+     "raw": 4967,
+     "gzipShare": 1482.2412217615704
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarImpl.js": {
+     "raw": 1945,
+     "gzipShare": 580.4226245875285
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarGlimpse.js": {
+     "raw": 1569,
+     "gzipShare": 468.2175310940012
+    },
+    "frontend/node_modules/frappe-ui/src/components/ScrollArea/ScrollBar.vue": {
+     "raw": 1495,
+     "gzipShare": 446.1346137575091
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarVisible.js": {
+     "raw": 1492,
+     "gzipShare": 445.2393603519756
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbar.js": {
+     "raw": 1418,
+     "gzipShare": 423.15644301548355
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaRoot.js": {
+     "raw": 1301,
+     "gzipShare": 388.2415601996785
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaViewport.js": {
+     "raw": 1169,
+     "gzipShare": 348.8504103562061
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/utils.js": {
+     "raw": 1070,
+     "gzipShare": 319.3070479736018
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarScroll.js": {
+     "raw": 1019,
+     "gzipShare": 304.087740079533
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaThumb.js": {
+     "raw": 991,
+     "gzipShare": 295.7320416278873
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarHover.js": {
+     "raw": 770,
+     "gzipShare": 229.78170742025551
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaCornerImpl.js": {
+     "raw": 689,
+     "gzipShare": 205.60986547085201
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarX.js": {
+     "raw": 646,
+     "gzipShare": 192.77789999153904
+    },
+    "frontend/node_modules/frappe-ui/src/components/ScrollArea/ScrollArea.vue": {
+     "raw": 630,
+     "gzipShare": 188.00321516202723
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarY.js": {
+     "raw": 621,
+     "gzipShare": 185.31745494542685
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaScrollbarAuto.js": {
+     "raw": 616,
+     "gzipShare": 183.8253659362044
+    },
+    "(unmapped)": {
+     "raw": 587,
+     "gzipShare": 175.17124968271426
+    },
+    "frontend/node_modules/reka-ui/dist/ScrollArea/ScrollAreaCorner.js": {
+     "raw": 363,
+     "gzipShare": 108.32566206954903
+    },
+    "frontend/node_modules/frappe-ui/src/components/PageHeader/target.ts": {
+     "raw": 237,
+     "gzipShare": 70.72501903714358
+    }
+   }
+  },
+  "assets/Skeleton-lfR_5kK7.js": {
+   "raw": 22018,
+   "gzip": 8708,
+   "sources": {
+    "frontend/node_modules/frappe-ui/node_modules/@vueuse/core/dist/index.js": {
+     "raw": 12058,
+     "gzipShare": 4768.873830502316
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/DateRangePicker.vue": {
+     "raw": 4659,
+     "gzipShare": 1842.609319647561
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/DateRangeCalendar.vue": {
+     "raw": 2945,
+     "gzipShare": 1164.731583250068
+    },
+    "frontend/node_modules/frappe-ui/src/components/FormControl/FormControl.vue": {
+     "raw": 1174,
+     "gzipShare": 464.3106549187029
+    },
+    "(unmapped)": {
+     "raw": 889,
+     "gzipShare": 351.59469524934144
+    },
+    "frontend/node_modules/frappe-ui/src/components/Skeleton/Skeleton.vue": {
+     "raw": 248,
+     "gzipShare": 98.082659642111
+    }
+   }
+  },
+  "assets/DateTimePicker-vGi1phZ3.js": {
+   "raw": 86715,
+   "gzip": 26369,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/MultiSelect/MultiSelect.vue": {
+     "raw": 6916,
+     "gzipShare": 2103.0733321801304
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/CalendarPanel.vue": {
+     "raw": 6776,
+     "gzipShare": 2060.5009975206135
+    },
+    "frontend/node_modules/frappe-ui/src/components/TimePicker/TimePicker.vue": {
+     "raw": 6765,
+     "gzipShare": 2057.1560283687945
+    },
+    "frontend/node_modules/dayjs/esm/index.js": {
+     "raw": 5841,
+     "gzipShare": 1776.1786196159835
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/DateTimePicker.vue": {
+     "raw": 5139,
+     "gzipShare": 1562.7087701089777
+    },
+    "frontend/node_modules/frappe-ui/src/components/MultiSelect/MultiSelectResults.vue": {
+     "raw": 4811,
+     "gzipShare": 1462.967871763824
+    },
+    "frontend/node_modules/dayjs/esm/plugin/duration/index.js": {
+     "raw": 4606,
+     "gzipShare": 1400.629810298103
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/DatePicker.vue": {
+     "raw": 3693,
+     "gzipShare": 1122.9973706971111
+    },
+    "frontend/node_modules/dayjs/esm/plugin/customParseFormat/index.js": {
+     "raw": 3371,
+     "gzipShare": 1025.0810009802226
+    },
+    "frontend/node_modules/frappe-ui/src/components/Checkbox/Checkbox.vue": {
+     "raw": 3192,
+     "gzipShare": 970.6492302369833
+    },
+    "frontend/node_modules/frappe-ui/src/components/TimePicker/utils.ts": {
+     "raw": 3115,
+     "gzipShare": 947.234446174249
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/picker/PickerShell.vue": {
+     "raw": 2637,
+     "gzipShare": 801.8803321224701
+    },
+    "frontend/node_modules/frappe-ui/src/components/Popover/Popover.vue": {
+     "raw": 2456,
+     "gzipShare": 746.8403851698091
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverContentImpl.js": {
+     "raw": 2444,
+     "gzipShare": 743.1913279132791
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/utils.ts": {
+     "raw": 2155,
+     "gzipShare": 655.309865651848
+    },
+    "frontend/node_modules/dayjs/esm/plugin/utc/index.js": {
+     "raw": 2019,
+     "gzipShare": 613.9538834111745
+    },
+    "frontend/node_modules/dayjs/esm/plugin/timezone/index.js": {
+     "raw": 1974,
+     "gzipShare": 600.269918699187
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/DateCalendar.vue": {
+     "raw": 1948,
+     "gzipShare": 592.3636279767053
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverContentNonModal.js": {
+     "raw": 1740,
+     "gzipShare": 529.1133021968518
+    },
+    "frontend/node_modules/frappe-ui/src/components/DatePicker/composables.ts": {
+     "raw": 1684,
+     "gzipShare": 512.0843683330451
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverContentModal.js": {
+     "raw": 1669,
+     "gzipShare": 507.52304676238253
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverContent.js": {
+     "raw": 1537,
+     "gzipShare": 467.38341694055237
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverTrigger.js": {
+     "raw": 1423,
+     "gzipShare": 432.71737300351725
+    },
+    "frontend/node_modules/dayjs/esm/plugin/relativeTime/index.js": {
+     "raw": 1171,
+     "gzipShare": 356.087170616387
+    },
+    "frontend/node_modules/frappe-ui/src/components/MultiSelect/utils.ts": {
+     "raw": 1153,
+     "gzipShare": 350.61358473159197
+    },
+    "(unmapped)": {
+     "raw": 1033,
+     "gzipShare": 314.12301216629186
+    },
+    "frontend/node_modules/dayjs/esm/plugin/advancedFormat/index.js": {
+     "raw": 839,
+     "gzipShare": 255.12991985239
+    },
+    "frontend/node_modules/dayjs/esm/utils.js": {
+     "raw": 695,
+     "gzipShare": 211.34123277402986
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverRoot.js": {
+     "raw": 621,
+     "gzipShare": 188.83871302542812
+    },
+    "frontend/node_modules/dayjs/esm/plugin/updateLocale/index.js": {
+     "raw": 449,
+     "gzipShare": 136.5355590151646
+    },
+    "frontend/node_modules/frappe-ui/src/utils/dayjs.ts": {
+     "raw": 423,
+     "gzipShare": 128.62926829268292
+    },
+    "frontend/node_modules/dayjs/esm/constant.js": {
+     "raw": 403,
+     "gzipShare": 122.54750619846624
+    },
+    "frontend/node_modules/dayjs/esm/plugin/localizedFormat/utils.js": {
+     "raw": 376,
+     "gzipShare": 114.33712737127371
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverArrow.js": {
+     "raw": 355,
+     "gzipShare": 107.9512771723462
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverAnchor.js": {
+     "raw": 342,
+     "gzipShare": 103.99813181110534
+    },
+    "frontend/node_modules/dayjs/esm/locale/en.js": {
+     "raw": 300,
+     "gzipShare": 91.2264314132503
+    },
+    "frontend/node_modules/reka-ui/dist/Popover/PopoverPortal.js": {
+     "raw": 287,
+     "gzipShare": 87.27328605200945
+    },
+    "frontend/node_modules/dayjs/esm/plugin/localizedFormat/index.js": {
+     "raw": 183,
+     "gzipShare": 55.64812316208268
+    },
+    "frontend/node_modules/dayjs/esm/plugin/isToday/index.js": {
+     "raw": 123,
+     "gzipShare": 37.40283687943263
+    }
+   }
+  },
+  "assets/ErrorMessage-BcibnkOO.js": {
+   "raw": 694,
+   "gzip": 491,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/ErrorMessage/ErrorMessage.vue": {
+     "raw": 377,
+     "gzipShare": 266.7247838616715
+    },
+    "(unmapped)": {
+     "raw": 268,
+     "gzipShare": 189.60806916426512
+    }
+   }
+  },
+  "assets/toast-CwsIcQnc.js": {
+   "raw": 23469,
+   "gzip": 7729,
+   "sources": {
+    "frontend/node_modules/vue-sonner/lib/index.js": {
+     "raw": 22278,
+     "gzipShare": 7336.7702927265755
+    },
+    "frontend/node_modules/frappe-ui/src/components/Toast/toast.ts": {
+     "raw": 789,
+     "gzipShare": 259.8398312667774
+    },
+    "(unmapped)": {
+     "raw": 360,
+     "gzipShare": 118.55809791640036
+    }
+   }
+  },
+  "assets/TooltipProvider-CZd0Yb9Y.js": {
+   "raw": 3205,
+   "gzip": 1442,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Avatar/Avatar.vue": {
+     "raw": 2428,
+     "gzipShare": 1092.410608424337
+    },
+    "(unmapped)": {
+     "raw": 395,
+     "gzipShare": 177.7191887675507
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tooltip/TooltipProvider.vue": {
+     "raw": 330,
+     "gzipShare": 148.47425897035882
+    }
+   }
+  },
+  "assets/Badge-q1Pa0NDc.js": {
+   "raw": 2217,
+   "gzip": 859,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Badge/Badge.vue": {
+     "raw": 1864,
+     "gzipShare": 722.2264321154713
+    },
+    "(unmapped)": {
+     "raw": 311,
+     "gzipShare": 120.50022552999549
+    }
+   }
+  },
+  "assets/Icon-BHseh8IW.js": {
+   "raw": 887,
+   "gzip": 500,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Icon/Icon.vue": {
+     "raw": 547,
+     "gzipShare": 308.34272829763245
+    },
+    "(unmapped)": {
+     "raw": 299,
+     "gzipShare": 168.5456595264938
+    }
+   }
+  },
+  "assets/Tooltip-BjFFX0uN.js": {
+   "raw": 1148,
+   "gzip": 651,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Tooltip/Tooltip.vue": {
+     "raw": 638,
+     "gzipShare": 361.7926829268293
+    },
+    "(unmapped)": {
+     "raw": 466,
+     "gzipShare": 264.2560975609756
+    }
+   }
+  },
+  "assets/Dropdown-CN1CG0VL.js": {
+   "raw": 45683,
+   "gzip": 11394,
+   "sources": {
+    "frontend/node_modules/reka-ui/dist/Menu/MenuContentImpl.js": {
+     "raw": 5364,
+     "gzipShare": 1337.859072302607
+    },
+    "frontend/node_modules/frappe-ui/src/components/Switch/Switch.vue": {
+     "raw": 4849,
+     "gzipShare": 1209.4106341527483
+    },
+    "frontend/node_modules/frappe-ui/src/components/Menu/Menu.vue": {
+     "raw": 3587,
+     "gzipShare": 894.6496070748418
+    },
+    "frontend/node_modules/frappe-ui/src/components/Menu/MenuItemContent.vue": {
+     "raw": 2593,
+     "gzipShare": 646.7316507234639
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuSubContent.js": {
+     "raw": 2278,
+     "gzipShare": 568.166101175492
+    },
+    "frontend/node_modules/frappe-ui/src/components/Menu/utils.ts": {
+     "raw": 2168,
+     "gzipShare": 540.7305124444541
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuContent.js": {
+     "raw": 2127,
+     "gzipShare": 530.5045202810674
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuSubTrigger.js": {
+     "raw": 2004,
+     "gzipShare": 499.8265437909069
+    },
+    "frontend/node_modules/frappe-ui/src/components/Dropdown/Dropdown.vue": {
+     "raw": 1954,
+     "gzipShare": 487.3558216404352
+    },
+    "frontend/node_modules/reka-ui/dist/Switch/SwitchRoot.js": {
+     "raw": 1814,
+     "gzipShare": 452.43779961911434
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuSubContent.js": {
+     "raw": 1564,
+     "gzipShare": 390.0841888667557
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuRootContentModal.js": {
+     "raw": 1485,
+     "gzipShare": 370.38044786901037
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuItemImpl.js": {
+     "raw": 1436,
+     "gzipShare": 358.15914016154807
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuContent.js": {
+     "raw": 1427,
+     "gzipShare": 355.91441017446317
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuRootContentNonModal.js": {
+     "raw": 1298,
+     "gzipShare": 323.7399470262461
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuTrigger.js": {
+     "raw": 1215,
+     "gzipShare": 303.038548256463
+    },
+    "(unmapped)": {
+     "raw": 1055,
+     "gzipShare": 263.1322373749535
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useArrowNavigation.js": {
+     "raw": 1016,
+     "gzipShare": 253.40507409758553
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuItem.js": {
+     "raw": 852,
+     "gzipShare": 212.50110544403827
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuRoot.js": {
+     "raw": 731,
+     "gzipShare": 182.32195783989667
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuRoot.js": {
+     "raw": 568,
+     "gzipShare": 141.66740362935883
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuSub.js": {
+     "raw": 534,
+     "gzipShare": 133.18731256703808
+    },
+    "frontend/node_modules/reka-ui/dist/Switch/SwitchThumb.js": {
+     "raw": 476,
+     "gzipShare": 118.72127487249087
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuSub.js": {
+     "raw": 420,
+     "gzipShare": 104.75406606396253
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuItem.js": {
+     "raw": 346,
+     "gzipShare": 86.29739728126437
+    },
+    "frontend/node_modules/frappe-ui/src/components/Menu/MenuRenderContentAsChild.vue": {
+     "raw": 337,
+     "gzipShare": 84.05266729417946
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuSubTrigger.js": {
+     "raw": 305,
+     "gzipShare": 76.07140511787755
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuPortal.js": {
+     "raw": 292,
+     "gzipShare": 72.8290173587549
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuPortal.js": {
+     "raw": 284,
+     "gzipShare": 70.83370181467942
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuLabel.js": {
+     "raw": 267,
+     "gzipShare": 66.59365628351904
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuAnchor.js": {
+     "raw": 246,
+     "gzipShare": 61.35595298032091
+    },
+    "frontend/node_modules/reka-ui/dist/DropdownMenu/DropdownMenuLabel.js": {
+     "raw": 228,
+     "gzipShare": 56.86649300615108
+    },
+    "frontend/node_modules/frappe-ui/src/components/Menu/MenuRenderContent.vue": {
+     "raw": 216,
+     "gzipShare": 53.87351969003787
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useIsUsingKeyboard.js": {
+     "raw": 197,
+     "gzipShare": 49.13464527285861
+    },
+    "frontend/node_modules/reka-ui/dist/shared/useForwardScopeId.js": {
+     "raw": 74,
+     "gzipShare": 18.45666878269816
+    },
+    "frontend/node_modules/reka-ui/dist/Menu/MenuGroup.js": {
+     "raw": 31,
+     "gzipShare": 7.731847733292472
+    }
+   }
+  },
+  "assets/RovingFocusGroup-D9kr1kX6.js": {
+   "raw": 2129,
+   "gzip": 1049,
+   "sources": {
+    "frontend/node_modules/reka-ui/dist/RovingFocus/RovingFocusGroup.js": {
+     "raw": 1804,
+     "gzipShare": 888.8661343353688
+    },
+    "(unmapped)": {
+     "raw": 272,
+     "gzipShare": 134.0197275716299
+    }
+   }
+  },
+  "assets/Dialog-Cef2BNUo.js": {
+   "raw": 170,
+   "gzip": 165,
+   "sources": {
+    "(unmapped)": {
+     "raw": 68,
+     "gzipShare": 66
+    },
+    "frontend/node_modules/frappe-ui/src/components/Dialog/index.ts": {
+     "raw": 59,
+     "gzipShare": 57.26470588235294
+    }
+   }
+  },
+  "assets/feed-C-5CFqhS.js": {
+   "raw": 12828,
+   "gzip": 4543,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/cache/dataCache.ts": {
+     "raw": 4506,
+     "gzipShare": 1595.7871842843779
+    },
+    "frontend/node_modules/@framework/ui/src/cache/writeGate.ts": {
+     "raw": 1894,
+     "gzipShare": 670.7547552229498
+    },
+    "frontend/node_modules/@framework/ui/src/cache/entries.ts": {
+     "raw": 1561,
+     "gzipShare": 552.8237449329591
+    },
+    "frontend/node_modules/@framework/ui/src/api/request.ts": {
+     "raw": 1319,
+     "gzipShare": 467.12012784533835
+    },
+    "frontend/node_modules/@framework/ui/src/api/envelope.ts": {
+     "raw": 826,
+     "gzipShare": 292.5255690676645
+    },
+    "frontend/node_modules/@framework/ui/src/api/feed.ts": {
+     "raw": 701,
+     "gzipShare": 248.25717181166198
+    },
+    "frontend/node_modules/@framework/ui/src/cache/index.ts": {
+     "raw": 673,
+     "gzipShare": 238.34105082631743
+    },
+    "frontend/node_modules/@framework/ui/src/cache/listKey.ts": {
+     "raw": 572,
+     "gzipShare": 202.57218584346742
+    },
+    "frontend/node_modules/@framework/ui/src/cache/rowsMemo.ts": {
+     "raw": 376,
+     "gzipShare": 133.1593389460555
+    },
+    "frontend/node_modules/@framework/ui/src/cache/nameCounts.ts": {
+     "raw": 291,
+     "gzipShare": 103.0568288119738
+    },
+    "(unmapped)": {
+     "raw": 68,
+     "gzipShare": 24.082008107265356
+    }
+   }
+  },
+  "assets/api-FZuFhq0H.js": {
+   "raw": 3111,
+   "gzip": 1113,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/api/index.ts": {
+     "raw": 2952,
+     "gzipShare": 1056.115718418515
+    },
+    "(unmapped)": {
+     "raw": 119,
+     "gzipShare": 42.57377049180328
+    }
+   }
+  },
+  "assets/tabIdentity-BluexJgo.js": {
+   "raw": 2708,
+   "gzip": 1296,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/resolveLayout.ts": {
+     "raw": 953,
+     "gzipShare": 456.08862629246676
+    },
+    "frontend/node_modules/@framework/ui/src/composables/useSession.ts": {
+     "raw": 579,
+     "gzipShare": 277.0989660265879
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/tabIdentity.ts": {
+     "raw": 439,
+     "gzipShare": 210.09748892171345
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/rowIdentity.ts": {
+     "raw": 256,
+     "gzipShare": 122.51698670605613
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/dependsOn.ts": {
+     "raw": 241,
+     "gzipShare": 115.33825701624815
+    },
+    "(unmapped)": {
+     "raw": 192,
+     "gzipShare": 91.8877400295421
+    }
+   }
+  },
+  "assets/types-DHMNlwcF.js": {
+   "raw": 87,
+   "gzip": 107,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/types.ts": {
+     "raw": 44,
+     "gzipShare": 54.11494252873563
+    },
+    "(unmapped)": {
+     "raw": 1,
+     "gzipShare": 1.2298850574712643
+    }
+   }
+  },
+  "assets/registry-8PUyZu2f.js": {
+   "raw": 58868,
+   "gzip": 20184,
+   "sources": {
+    "frontend/src/recordPage/createRecordPage.ts": {
+     "raw": 6484,
+     "gzipShare": 2223.161242100972
+    },
+    "frontend/src/recordPage/headerRenderings.ts": {
+     "raw": 5104,
+     "gzipShare": 1750.0023102534483
+    },
+    "frontend/src/recordPage/feed.ts": {
+     "raw": 3798,
+     "gzipShare": 1302.2156689542705
+    },
+    "frontend/src/recordPage/surface.ts": {
+     "raw": 2724,
+     "gzipShare": 933.9745872120677
+    },
+    "frontend/src/recordPage/paintGate.ts": {
+     "raw": 2573,
+     "gzipShare": 882.2013997417952
+    },
+    "frontend/src/recordPage/fields.ts": {
+     "raw": 2434,
+     "gzipShare": 834.542637765849
+    },
+    "frontend/src/recordPage/rows.ts": {
+     "raw": 2358,
+     "gzipShare": 808.4846096351158
+    },
+    "frontend/src/recordPage/body.ts": {
+     "raw": 2343,
+     "gzipShare": 803.341577767208
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/buildLayoutFromMeta.ts": {
+     "raw": 1855,
+     "gzipShare": 636.0216076646055
+    },
+    "frappe/desk/navigation_item_type/sidebar/frontend/item.js": {
+     "raw": 1829,
+     "gzipShare": 627.1070190935652
+    },
+    "frontend/src/recordPage/formJoin.ts": {
+     "raw": 1780,
+     "gzipShare": 610.3064483250663
+    },
+    "frontend/src/recordPage/dialog.ts": {
+     "raw": 1729,
+     "gzipShare": 592.8201399741795
+    },
+    "frontend/src/recordPage/formTabs.ts": {
+     "raw": 1716,
+     "gzipShare": 588.3628456886594
+    },
+    "frontend/src/contributions/registry.ts": {
+     "raw": 1619,
+     "gzipShare": 555.1045729428552
+    },
+    "frontend/src/recordPage/clientScripts.ts": {
+     "raw": 1604,
+     "gzipShare": 549.9615410749474
+    },
+    "frontend/src/recordPage/composer.ts": {
+     "raw": 1546,
+     "gzipShare": 530.0751511857036
+    },
+    "frontend/src/recordPage/formLayoutSource/useFormLayout.ts": {
+     "raw": 1344,
+     "gzipShare": 460.8156553645444
+    },
+    "frontend/src/recordPage/iconClasses.ts": {
+     "raw": 1278,
+     "gzipShare": 438.1863151457498
+    },
+    "frontend/src/recordPage/staging.ts": {
+     "raw": 1242,
+     "gzipShare": 425.84303866277094
+    },
+    "frontend/src/recordPage/readOnly.ts": {
+     "raw": 1198,
+     "gzipShare": 410.7568118502412
+    },
+    "frontend/src/recordPage/pageCompatibility.ts": {
+     "raw": 994,
+     "gzipShare": 340.8115784466943
+    },
+    "frontend/src/recordPage/flattenHandlers.ts": {
+     "raw": 854,
+     "gzipShare": 292.8099476795543
+    },
+    "frontend/src/recordPage/form.ts": {
+     "raw": 845,
+     "gzipShare": 289.7241285588095
+    },
+    "frontend/src/router/routeFor.ts": {
+     "raw": 805,
+     "gzipShare": 276.00937691105526
+    },
+    "frontend/src/recordPage/reportError.ts": {
+     "raw": 784,
+     "gzipShare": 268.8091322959842
+    },
+    "frontend/src/recordPage/frame.ts": {
+     "raw": 675,
+     "gzipShare": 231.43643405585377
+    },
+    "frontend/src/recordPage/commitChannel.ts": {
+     "raw": 670,
+     "gzipShare": 229.7220900998845
+    },
+    "frontend/src/recordPage/pagePermissions.ts": {
+     "raw": 624,
+     "gzipShare": 213.95012570496704
+    },
+    "frontend/node_modules/@framework/ui/src/composables/useDocPermissions.ts": {
+     "raw": 582,
+     "gzipShare": 199.54963647482504
+    },
+    "frontend/src/recordPage/drawnProps.ts": {
+     "raw": 575,
+     "gzipShare": 197.14955493646804
+    },
+    "frontend/src/recordPage/formLayoutSource/joinLayout.ts": {
+     "raw": 566,
+     "gzipShare": 194.0637358157233
+    },
+    "(unmapped)": {
+     "raw": 545,
+     "gzipShare": 186.8634912006523
+    },
+    "frontend/src/recordPage/types.ts": {
+     "raw": 516,
+     "gzipShare": 176.92029625603044
+    },
+    "frontend/src/recordPage/registry.ts": {
+     "raw": 406,
+     "gzipShare": 139.2047292247061
+    },
+    "frappe/desk/navigation_item_type/module_contents/frontend/item.js": {
+     "raw": 376,
+     "gzipShare": 128.9186654888904
+    },
+    "frontend/src/recordPage/evaluateClientScript.ts": {
+     "raw": 359,
+     "gzipShare": 123.08989603859482
+    },
+    "frontend/src/recordPage/formLayoutSource/chooseLayout.ts": {
+     "raw": 359,
+     "gzipShare": 123.08989603859482
+    },
+    "frontend/src/recordPage/context.ts": {
+     "raw": 288,
+     "gzipShare": 98.74621186383095
+    },
+    "frontend/src/recordPage/formLayoutSource/section.ts": {
+     "raw": 266,
+     "gzipShare": 91.20309845756609
+    },
+    "frappe/desk/navigation_item_type/page/frontend/item.js": {
+     "raw": 208,
+     "gzipShare": 71.31670856832235
+    },
+    "frappe/desk/navigation_item_type/module/frontend/item.js": {
+     "raw": 155,
+     "gzipShare": 53.1446626350479
+    },
+    "frontend/src/recordPage/formLayoutSource/fieldPatch.ts": {
+     "raw": 154,
+     "gzipShare": 52.80179384385405
+    },
+    "frontend/node_modules/@framework/ui/src/composables/useUserRoles.ts": {
+     "raw": 132,
+     "gzipShare": 45.258680437589184
+    },
+    "frontend/src/recordPage/formLayoutSource/fieldAccess.ts": {
+     "raw": 128,
+     "gzipShare": 43.88720527281375
+    },
+    "frontend/src/recordPage/clientScriptTypes.ts": {
+     "raw": 105,
+     "gzipShare": 36.00122307535503
+    },
+    "frappe/desk/navigation_item_type/record/frontend/item.js": {
+     "raw": 99,
+     "gzipShare": 33.94401032819189
+    },
+    "frappe/desk/navigation_item_type/doctype/frontend/item.js": {
+     "raw": 82,
+     "gzipShare": 28.115240877896312
+    },
+    "frappe/desk/navigation_item_type/link/frontend/item.js": {
+     "raw": 81,
+     "gzipShare": 27.772372086702454
+    },
+    "frappe/desk/navigation_item_type/section/frontend/item.js": {
+     "raw": 32,
+     "gzipShare": 10.971801318203438
+    }
+   }
+  },
+  "assets/useDoctypeMeta-BLkGMEYj.js": {
+   "raw": 4005,
+   "gzip": 1714,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/grouping.ts": {
+     "raw": 2687,
+     "gzipShare": 1149.9420724094882
+    },
+    "frontend/node_modules/@framework/ui/src/composables/useDoctypeMeta.ts": {
+     "raw": 929,
+     "gzipShare": 397.5795255930087
+    },
+    "frontend/node_modules/@framework/ui/src/utils/sharedState.ts": {
+     "raw": 201,
+     "gzipShare": 86.02097378277153
+    },
+    "(unmapped)": {
+     "raw": 137,
+     "gzipShare": 58.63121098626716
+    }
+   }
+  },
+  "assets/preload-helper-D0fOQXss.js": {
+   "raw": 1219,
+   "gzip": 690,
+   "sources": {
+    "(no source map)": {
+     "raw": 1219,
+     "gzipShare": 690
+    }
+   }
+  },
+  "assets/useActivityTimeline-D9Uiyl86.js": {
+   "raw": 13160,
+   "gzip": 5120,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/timelineStore.ts": {
+     "raw": 3124,
+     "gzipShare": 1215.4164133738602
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/utils.ts": {
+     "raw": 2545,
+     "gzipShare": 990.1519756838906
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/liveUpdates.ts": {
+     "raw": 2243,
+     "gzipShare": 872.6565349544073
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/pendingRows.ts": {
+     "raw": 2162,
+     "gzipShare": 841.1428571428571
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/useActivityTimeline.ts": {
+     "raw": 1794,
+     "gzipShare": 697.9696048632219
+    },
+    "frontend/node_modules/@framework/ui/src/socket.ts": {
+     "raw": 653,
+     "gzipShare": 254.0547112462006
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/storeCache.ts": {
+     "raw": 296,
+     "gzipShare": 115.16109422492401
+    },
+    "(unmapped)": {
+     "raw": 287,
+     "gzipShare": 111.65957446808511
+    }
+   }
+  },
+  "assets/writerContext-DZFD9aH_.js": {
+   "raw": 13272,
+   "gzip": 5259,
+   "sources": {
+    "frontend/src/pages/record/feed/recordFeeds.ts": {
+     "raw": 3042,
+     "gzipShare": 1205.385623869801
+    },
+    "frontend/src/shell/composer.ts": {
+     "raw": 1865,
+     "gzipShare": 739.002034358047
+    },
+    "frontend/src/pages/record/composer/emailDraft.ts": {
+     "raw": 1483,
+     "gzipShare": 587.6353978300181
+    },
+    "frontend/src/pages/record/composer/writerContext.ts": {
+     "raw": 1016,
+     "gzipShare": 402.5877034358047
+    },
+    "frontend/src/pages/record/composer/emailSeed.ts": {
+     "raw": 914,
+     "gzipShare": 362.17043399638334
+    },
+    "frontend/src/pages/record/feed/files.ts": {
+     "raw": 901,
+     "gzipShare": 357.0192133815552
+    },
+    "frontend/src/pages/record/composer/emailQuote.ts": {
+     "raw": 658,
+     "gzipShare": 260.7310126582278
+    },
+    "(unmapped)": {
+     "raw": 648,
+     "gzipShare": 256.76853526220617
+    },
+    "frontend/src/navigation/sectionMemory.ts": {
+     "raw": 636,
+     "gzipShare": 252.0135623869801
+    },
+    "frontend/src/pages/record/composer/commentDraft.ts": {
+     "raw": 593,
+     "gzipShare": 234.9749095840868
+    },
+    "frontend/src/pages/record/composer/emailPrefill.ts": {
+     "raw": 528,
+     "gzipShare": 209.21880650994575
+    },
+    "frontend/src/pages/record/panel/peopleActions.ts": {
+     "raw": 479,
+     "gzipShare": 189.8026672694394
+    },
+    "frontend/src/pages/record/composer/composerHost.ts": {
+     "raw": 390,
+     "gzipShare": 154.53661844484628
+    },
+    "frontend/src/recordPage/errorMessage.ts": {
+     "raw": 69,
+     "gzipShare": 27.34109403254973
+    }
+   }
+  },
+  "assets/upload-DIERqW7G.js": {
+   "raw": 2781,
+   "gzip": 1378,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/api/upload.ts": {
+     "raw": 2654,
+     "gzipShare": 1315.0708378281195
+    },
+    "(unmapped)": {
+     "raw": 84,
+     "gzipShare": 41.622437971952536
+    }
+   }
+  },
+  "assets/i18n-C5dYE5_P.js": {
+   "raw": 594,
+   "gzip": 404,
+   "sources": {
+    "frontend/src/i18n.ts": {
+     "raw": 443,
+     "gzipShare": 301.2996632996633
+    },
+    "(unmapped)": {
+     "raw": 110,
+     "gzipShare": 74.81481481481481
+    }
+   }
+  },
+  "assets/core-CQ-zN4iX.js": {
+   "raw": 10421,
+   "gzip": 4467,
+   "sources": {
+    "frontend/node_modules/@vueuse/core/index.mjs": {
+     "raw": 6745,
+     "gzipShare": 2891.2690720660207
+    },
+    "frontend/node_modules/@vueuse/core/node_modules/@vueuse/shared/index.mjs": {
+     "raw": 3411,
+     "gzipShare": 1462.1377027156702
+    },
+    "(unmapped)": {
+     "raw": 224,
+     "gzipShare": 96.01842433547644
+    }
+   }
+  },
+  "assets/useFileUpload-C1D_fJgc.js": {
+   "raw": 868,
+   "gzip": 521,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/useFileUpload.ts": {
+     "raw": 656,
+     "gzipShare": 393.7511520737327
+    },
+    "(unmapped)": {
+     "raw": 162,
+     "gzipShare": 97.23732718894009
+    }
+   }
+  },
+  "assets/LoadingStatus-B0uwT9VJ.js": {
+   "raw": 361,
+   "gzip": 277,
+   "sources": {
+    "(unmapped)": {
+     "raw": 259,
+     "gzipShare": 198.73407202216066
+    },
+    "frontend/src/shell/LoadingStatus.vue": {
+     "raw": 52,
+     "gzipShare": 39.90027700831025
+    }
+   }
+  },
+  "assets/Home-DNLrsYay.js": {
+   "raw": 2408,
+   "gzip": 1154,
+   "sources": {
+    "frontend/src/pages/Home.vue": {
+     "raw": 1545,
+     "gzipShare": 740.4194352159468
+    },
+    "(unmapped)": {
+     "raw": 822,
+     "gzipShare": 393.93189368770766
+    }
+   }
+  },
+  "assets/PageFrame-B58FLyPV.js": {
+   "raw": 1185,
+   "gzip": 592,
+   "sources": {
+    "frontend/src/shell/PageFrame.vue": {
+     "raw": 862,
+     "gzipShare": 430.6362869198312
+    },
+    "(unmapped)": {
+     "raw": 277,
+     "gzipShare": 138.3831223628692
+    }
+   }
+  },
+  "assets/PageHeaderTitle-B3k9nts6.js": {
+   "raw": 1502,
+   "gzip": 881,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/PageHeader/PageHeaderBase.vue": {
+     "raw": 761,
+     "gzipShare": 446.3655126498003
+    },
+    "frontend/node_modules/frappe-ui/src/components/PageHeader/PageHeader.vue": {
+     "raw": 303,
+     "gzipShare": 177.72503328894808
+    },
+    "(unmapped)": {
+     "raw": 292,
+     "gzipShare": 171.2729693741678
+    },
+    "frontend/node_modules/frappe-ui/src/components/PageHeader/PageHeaderTitle.vue": {
+     "raw": 94,
+     "gzipShare": 55.1358189081225
+    }
+   }
+  },
+  "assets/TileGridSkeleton-l7UCkwW9.js": {
+   "raw": 507,
+   "gzip": 365,
+   "sources": {
+    "(unmapped)": {
+     "raw": 352,
+     "gzipShare": 253.41222879684418
+    },
+    "frontend/src/pages/TileGridSkeleton.vue": {
+     "raw": 102,
+     "gzipShare": 73.4319526627219
+    }
+   }
+  },
+  "assets/List-Dcii7atC.js": {
+   "raw": 63321,
+   "gzip": 19313,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/experimental/List/List.vue": {
+     "raw": 5303,
+     "gzipShare": 1617.4229560493359
+    },
+    "frontend/node_modules/@framework/ui/src/components/QuickFilter/QuickFilterInputs.vue": {
+     "raw": 3748,
+     "gzipShare": 1143.1456230950237
+    },
+    "frontend/node_modules/@framework/ui/src/components/SortBy/SortBy.vue": {
+     "raw": 3401,
+     "gzipShare": 1037.3101024936434
+    },
+    "frontend/src/pages/list/DoctypeList.vue": {
+     "raw": 3322,
+     "gzipShare": 1013.2149839705627
+    },
+    "frontend/node_modules/@framework/ui/src/components/ColumnSettings/ColumnSettings.vue": {
+     "raw": 3045,
+     "gzipShare": 928.7295683896338
+    },
+    "frontend/src/list/useListPage.ts": {
+     "raw": 2968,
+     "gzipShare": 905.2444528671373
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/Filter.vue": {
+     "raw": 2641,
+     "gzipShare": 805.5089622716002
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/operators.ts": {
+     "raw": 2408,
+     "gzipShare": 734.4436127035265
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/valueControl.ts": {
+     "raw": 2397,
+     "gzipShare": 731.0885962003127
+    },
+    "frontend/src/list/useListRows.ts": {
+     "raw": 2165,
+     "gzipShare": 660.328248132531
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListRowBase.vue": {
+     "raw": 1888,
+     "gzipShare": 575.8428325516021
+    },
+    "frontend/node_modules/@framework/ui/src/components/QuickFilter/QuickFilterCustomize.vue": {
+     "raw": 1703,
+     "gzipShare": 519.4175549975522
+    },
+    "(unmapped)": {
+     "raw": 1594,
+     "gzipShare": 486.1723914657065
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListHeader.vue": {
+     "raw": 1476,
+     "gzipShare": 450.18221443123133
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListHeaderCellSort.vue": {
+     "raw": 1461,
+     "gzipShare": 445.60719192684894
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/List.vue": {
+     "raw": 1437,
+     "gzipShare": 438.287155919837
+    },
+    "frontend/src/list/query.ts": {
+     "raw": 1279,
+     "gzipShare": 390.0969188736754
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/ListFooter.vue": {
+     "raw": 1225,
+     "gzipShare": 373.62683785789864
+    },
+    "frontend/node_modules/@framework/ui/src/components/QuickFilter/quickFilters.ts": {
+     "raw": 1217,
+     "gzipShare": 371.1868258555613
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/filters.ts": {
+     "raw": 1188,
+     "gzipShare": 362.34178234708867
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/getFilterableFields.ts": {
+     "raw": 1151,
+     "gzipShare": 351.05672683627864
+    },
+    "frontend/src/pages/list/DeleteDialog.vue": {
+     "raw": 1125,
+     "gzipShare": 343.1266878286824
+    },
+    "frontend/node_modules/@framework/ui/src/components/SortBy/getSortOptions.ts": {
+     "raw": 1120,
+     "gzipShare": 341.60168032722163
+    },
+    "frontend/src/list/defaults.ts": {
+     "raw": 1009,
+     "gzipShare": 307.7465137947916
+    },
+    "frontend/src/list/storedSettings.ts": {
+     "raw": 1000,
+     "gzipShare": 305.0015002921622
+    },
+    "frontend/node_modules/@framework/ui/src/components/ColumnSettings/getColumnOptions.ts": {
+     "raw": 978,
+     "gzipShare": 298.2914672857346
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/valueControlComponents.ts": {
+     "raw": 966,
+     "gzipShare": 294.63144928222863
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/useColumnResize.ts": {
+     "raw": 942,
+     "gzipShare": 287.31141327521675
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/useVirtualRows.ts": {
+     "raw": 924,
+     "gzipShare": 281.8213862699578
+    },
+    "frontend/node_modules/@framework/ui/src/components/QuickFilter/QuickFilter.vue": {
+     "raw": 843,
+     "gzipShare": 257.1162647462927
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/MultiLinkInput.vue": {
+     "raw": 836,
+     "gzipShare": 254.98125424424757
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListRow.vue": {
+     "raw": 833,
+     "gzipShare": 254.0662497433711
+    },
+    "frontend/src/list/useScrollMemory.ts": {
+     "raw": 800,
+     "gzipShare": 244.00120023372972
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/ListBulkBar.vue": {
+     "raw": 696,
+     "gzipShare": 212.28104420334486
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/useRowSelection.ts": {
+     "raw": 509,
+     "gzipShare": 155.24576364871055
+    },
+    "frontend/node_modules/@framework/ui/src/components/Filter/MultiSelectInput.vue": {
+     "raw": 406,
+     "gzipShare": 123.83060911861783
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListHeaderCell.vue": {
+     "raw": 398,
+     "gzipShare": 121.39059711628055
+    },
+    "frontend/src/pages/List.vue": {
+     "raw": 370,
+     "gzipShare": 112.8505551081
+    },
+    "frontend/src/list/pageState.ts": {
+     "raw": 354,
+     "gzipShare": 107.9705311034254
+    },
+    "frontend/node_modules/@framework/ui/src/components/ColumnSettings/getDefaultColumns.ts": {
+     "raw": 342,
+     "gzipShare": 104.31051309991946
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/list-context.ts": {
+     "raw": 339,
+     "gzipShare": 103.39550859904297
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/list/ListCell.vue": {
+     "raw": 337,
+     "gzipShare": 102.78550559845864
+    },
+    "frontend/node_modules/@framework/ui/src/components/QuickFilter/getQuickFilterFields.ts": {
+     "raw": 277,
+     "gzipShare": 84.48541558092892
+    },
+    "frontend/node_modules/@framework/ui/src/components/ColumnSettings/columns.ts": {
+     "raw": 269,
+     "gzipShare": 82.04540357859162
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/columnTracks.ts": {
+     "raw": 223,
+     "gzipShare": 68.01533456515216
+    },
+    "frontend/node_modules/@framework/ui/src/components/SortBy/orderBy.ts": {
+     "raw": 217,
+     "gzipShare": 66.18532556339919
+    },
+    "frontend/node_modules/@framework/ui/src/experimental/List/headerSort.ts": {
+     "raw": 150,
+     "gzipShare": 45.75022504382432
+    }
+   }
+  },
+  "assets/TabButtons-RXMmS2eb.js": {
+   "raw": 10219,
+   "gzip": 3884,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/TabButtons/TabButtons.vue": {
+     "raw": 5069,
+     "gzipShare": 1926.6069086994814
+    },
+    "frontend/node_modules/reka-ui/dist/RadioGroup/Radio.js": {
+     "raw": 1531,
+     "gzipShare": 581.8968587924454
+    },
+    "frontend/node_modules/reka-ui/dist/RadioGroup/RadioGroupRoot.js": {
+     "raw": 1392,
+     "gzipShare": 529.0662491437519
+    },
+    "frontend/node_modules/reka-ui/dist/RadioGroup/RadioGroupItem.js": {
+     "raw": 1355,
+     "gzipShare": 515.0034249926607
+    },
+    "(unmapped)": {
+     "raw": 741,
+     "gzipShare": 281.63655935022996
+    },
+    "frontend/node_modules/reka-ui/dist/RadioGroup/utils.js": {
+     "raw": 84,
+     "gzipShare": 31.926411586260887
+    }
+   }
+  },
+  "assets/nativeElements-DgJLvAvB.js": {
+   "raw": 17332,
+   "gzip": 6441,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Rating/Rating.vue": {
+     "raw": 5712,
+     "gzipShare": 2122.7205169628432
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/tabs/styles.ts": {
+     "raw": 2390,
+     "gzipShare": 888.1831294714979
+    },
+    "frontend/node_modules/frappe-ui/src/components/Duration/duration.ts": {
+     "raw": 2082,
+     "gzipShare": 773.7227094391876
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/tabs/Pill.vue": {
+     "raw": 1800,
+     "gzipShare": 668.9245326563582
+    },
+    "frontend/node_modules/reka-ui/dist/RovingFocus/RovingFocusItem.js": {
+     "raw": 1586,
+     "gzipShare": 589.3968382183244
+    },
+    "frontend/node_modules/frappe-ui/src/components/Rating/RatingStar.vue": {
+     "raw": 1386,
+     "gzipShare": 515.0718901453959
+    },
+    "frontend/node_modules/frappe-ui/src/components/Duration/Duration.vue": {
+     "raw": 1352,
+     "gzipShare": 502.43664897299794
+    },
+    "(unmapped)": {
+     "raw": 694,
+     "gzipShare": 257.90756981306254
+    },
+    "frontend/node_modules/frappe-ui/src/components/shared/nativeElements.ts": {
+     "raw": 279,
+     "gzipShare": 103.68330256173552
+    }
+   }
+  },
+  "assets/Breadcrumbs-DbKrx_jK.js": {
+   "raw": 3180,
+   "gzip": 1281,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/components/Breadcrumbs/Breadcrumbs.vue": {
+     "raw": 2387,
+     "gzipShare": 961.5556603773584
+    },
+    "(unmapped)": {
+     "raw": 745,
+     "gzipShare": 300.10849056603774
+    }
+   }
+  },
+  "assets/vuedraggable.umd-081n_sxq.js": {
+   "raw": 192587,
+   "gzip": 65202,
+   "sources": {
+    "frontend/node_modules/@vue/compiler-core/dist/compiler-core.esm-bundler.js": {
+     "raw": 75144,
+     "gzipShare": 25440.65325281561
+    },
+    "frontend/node_modules/vuedraggable/dist/vuedraggable.umd.js": {
+     "raw": 50702,
+     "gzipShare": 17165.60206036752
+    },
+    "frontend/node_modules/sortablejs/modular/sortable.esm.js": {
+     "raw": 44497,
+     "gzipShare": 15064.845467243376
+    },
+    "frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.esm-bundler.js": {
+     "raw": 5673,
+     "gzipShare": 1920.6433767595943
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/formatNumber.ts": {
+     "raw": 3536,
+     "gzipShare": 1197.1434832049931
+    },
+    "frontend/node_modules/@framework/ui/src/components/Link/Link.vue": {
+     "raw": 3344,
+     "gzipShare": 1132.1402171486134
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/NumberField.vue": {
+     "raw": 1470,
+     "gzipShare": 497.68125574415717
+    },
+    "(unmapped)": {
+     "raw": 1259,
+     "gzipShare": 426.2453748176149
+    },
+    "frontend/node_modules/@framework/ui/src/composables/useLinkSearch.ts": {
+     "raw": 970,
+     "gzipShare": 328.4019170556683
+    },
+    "frontend/node_modules/vue/dist/vue.cjs.prod.js": {
+     "raw": 826,
+     "gzipShare": 279.64946751338357
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/resolveCurrency.ts": {
+     "raw": 694,
+     "gzipShare": 234.9597220996225
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/LinkField.vue": {
+     "raw": 659,
+     "gzipShare": 223.1101683914283
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/RatingField.vue": {
+     "raw": 562,
+     "gzipShare": 190.26997668586145
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/DateField.vue": {
+     "raw": 536,
+     "gzipShare": 181.46745107406002
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/DatetimeField.vue": {
+     "raw": 536,
+     "gzipShare": 181.46745107406002
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/SelectField.vue": {
+     "raw": 494,
+     "gzipShare": 167.24798662422697
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/DurationField.vue": {
+     "raw": 400,
+     "gzipShare": 135.42347095079108
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/formatDefaults.ts": {
+     "raw": 371,
+     "gzipShare": 125.60526930685872
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/types.ts": {
+     "raw": 342,
+     "gzipShare": 115.78706766292636
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/pickSiblingValue.ts": {
+     "raw": 276,
+     "gzipShare": 93.44219495604584
+    },
+    "frontend/node_modules/@framework/ui/src/components/Link/linkOption.ts": {
+     "raw": 159,
+     "gzipShare": 53.830829702939454
+    },
+    "frontend/node_modules/vue/index.js": {
+     "raw": 84,
+     "gzipShare": 28.438928899666124
+    }
+   }
+  },
+  "assets/Record-DhQu9oQO.js": {
+   "raw": 86104,
+   "gzip": 27848,
+   "sources": {
+    "frontend/src/pages/Record.vue": {
+     "raw": 12236,
+     "gzipShare": 3957.401839635789
+    },
+    "frontend/src/pages/record/panel/RecordImage.vue": {
+     "raw": 3431,
+     "gzipShare": 1109.6637554585152
+    },
+    "(unmapped)": {
+     "raw": 3197,
+     "gzipShare": 1033.9828114837871
+    },
+    "frontend/src/pages/record/RecordHeader.vue": {
+     "raw": 3093,
+     "gzipShare": 1000.3468363839079
+    },
+    "frontend/src/pages/record/feed/RecordFeed.vue": {
+     "raw": 3059,
+     "gzipShare": 989.3504599089473
+    },
+    "frontend/src/pages/record/dialogs/PageFormDialog.vue": {
+     "raw": 2764,
+     "gzipShare": 893.94072284679
+    },
+    "frontend/src/pages/record/tabs/RecordTabs.vue": {
+     "raw": 2456,
+     "gzipShare": 794.3264888971477
+    },
+    "frontend/src/pages/record/panel/QuickActions.vue": {
+     "raw": 2197,
+     "gzipShare": 710.5599739849484
+    },
+    "frontend/src/pages/record/tabs/recordTabs.ts": {
+     "raw": 2126,
+     "gzipShare": 687.5969525225308
+    },
+    "frontend/src/pages/record/feed/FilesTab.vue": {
+     "raw": 2049,
+     "gzipShare": 662.6933940351203
+    },
+    "frontend/src/pages/record/panel/PanelField.vue": {
+     "raw": 1975,
+     "gzipShare": 638.7601040602062
+    },
+    "frontend/src/pages/record/builtinActions.ts": {
+     "raw": 1955,
+     "gzipShare": 632.2916473102295
+    },
+    "frontend/src/pages/record/feed/TimelineFeed.vue": {
+     "raw": 1908,
+     "gzipShare": 617.0907739477841
+    },
+    "frontend/src/pages/record/body/BodyColumns.vue": {
+     "raw": 1875,
+     "gzipShare": 606.4178203103224
+    },
+    "frontend/src/pages/record/panel/TagPicker.vue": {
+     "raw": 1875,
+     "gzipShare": 606.4178203103224
+    },
+    "frontend/src/pages/record/panel/RecordIdentity.vue": {
+     "raw": 1847,
+     "gzipShare": 597.361980860355
+    },
+    "frontend/src/pages/record/panel/PanelSection.vue": {
+     "raw": 1737,
+     "gzipShare": 561.7854687354827
+    },
+    "frontend/src/recordPage/formDialogLayout.ts": {
+     "raw": 1605,
+     "gzipShare": 519.093654185636
+    },
+    "frontend/src/pages/record/body/ColumnEdge.vue": {
+     "raw": 1587,
+     "gzipShare": 513.2720431106569
+    },
+    "frontend/src/pages/record/RecordFavourite.vue": {
+     "raw": 1586,
+     "gzipShare": 512.948620273158
+    },
+    "frontend/src/pages/record/panel/AssigneePicker.vue": {
+     "raw": 1537,
+     "gzipShare": 497.10090123571496
+    },
+    "frontend/src/pages/record/panel/imageField.ts": {
+     "raw": 1535,
+     "gzipShare": 496.4540555607173
+    },
+    "frontend/src/pages/record/panel/PanelLayout.vue": {
+     "raw": 1515,
+     "gzipShare": 489.9855988107405
+    },
+    "frontend/src/pages/record/panel/ShareDialog.vue": {
+     "raw": 1513,
+     "gzipShare": 489.3387531357428
+    },
+    "frontend/src/pages/record/body/BodyColumn.vue": {
+     "raw": 1412,
+     "gzipShare": 456.6730465483601
+    },
+    "frontend/src/pages/record/composer/ComposerPill.vue": {
+     "raw": 1321,
+     "gzipShare": 427.2415683359658
+    },
+    "frontend/src/pages/record/panel/remoteSearch.ts": {
+     "raw": 1243,
+     "gzipShare": 402.0145870110564
+    },
+    "frontend/src/pages/record/liveDocinfo.ts": {
+     "raw": 1216,
+     "gzipShare": 393.28217039858777
+    },
+    "frontend/src/pages/record/panel/RecordPanel.vue": {
+     "raw": 1178,
+     "gzipShare": 380.9921025736319
+    },
+    "frontend/src/pages/record/panel/panelEntries.ts": {
+     "raw": 1164,
+     "gzipShare": 376.46418284864814
+    },
+    "frontend/src/pages/record/composer/RecordComposer.vue": {
+     "raw": 1156,
+     "gzipShare": 373.8768001486574
+    },
+    "frontend/src/pages/record/panel/RecordPeople.vue": {
+     "raw": 1097,
+     "gzipShare": 354.79485273622595
+    },
+    "frontend/src/pages/record/skeletons/PanelSkeleton.vue": {
+     "raw": 1041,
+     "gzipShare": 336.683173836291
+    },
+    "frontend/src/pages/record/panel/displayValue.ts": {
+     "raw": 1017,
+     "gzipShare": 328.9210257363189
+    },
+    "frontend/src/pages/record/panel/PeopleAvatars.vue": {
+     "raw": 768,
+     "gzipShare": 248.38873919910804
+    },
+    "frontend/src/pages/record/panel/people.ts": {
+     "raw": 741,
+     "gzipShare": 239.65632258663942
+    },
+    "frontend/src/pages/record/feed/useScrollEdges.ts": {
+     "raw": 734,
+     "gzipShare": 237.39236272414755
+    },
+    "frontend/src/pages/record/panel/context.ts": {
+     "raw": 724,
+     "gzipShare": 234.15813434915916
+    },
+    "frontend/src/pages/record/body/columnStore.ts": {
+     "raw": 696,
+     "gzipShare": 225.10229489919166
+    },
+    "frontend/src/pages/record/headerMenuOptions.ts": {
+     "raw": 666,
+     "gzipShare": 215.39960977422652
+    },
+    "frontend/src/pages/record/recordSource.ts": {
+     "raw": 617,
+     "gzipShare": 199.55189073678343
+    },
+    "frontend/src/pages/record/tabs/useRecordTabs.ts": {
+     "raw": 601,
+     "gzipShare": 194.377125336802
+    },
+    "frontend/src/pages/record/saveResponse.ts": {
+     "raw": 590,
+     "gzipShare": 190.81947412431478
+    },
+    "frontend/src/pages/record/skeletons/BodySkeleton.vue": {
+     "raw": 576,
+     "gzipShare": 186.29155439933103
+    },
+    "frontend/src/pages/record/feed/RecordUploadDialog.vue": {
+     "raw": 561,
+     "gzipShare": 181.44021183684848
+    },
+    "frontend/src/pages/record/dialogs/PageOpenDialog.vue": {
+     "raw": 560,
+     "gzipShare": 181.11678899934964
+    },
+    "frontend/src/pages/record/panel/PeopleRow.vue": {
+     "raw": 474,
+     "gzipShare": 153.3024249744495
+    },
+    "frontend/src/pages/record/skeletons/FormSkeleton.vue": {
+     "raw": 432,
+     "gzipShare": 139.71866579949827
+    },
+    "frontend/src/pages/record/skeletons/TabsSkeleton.vue": {
+     "raw": 432,
+     "gzipShare": 139.71866579949827
+    },
+    "frontend/src/pages/record/panel/disclosure.ts": {
+     "raw": 408,
+     "gzipShare": 131.95651769952616
+    },
+    "frontend/src/pages/record/panel/fittedActions.ts": {
+     "raw": 386,
+     "gzipShare": 124.8412152745517
+    },
+    "frontend/src/pages/record/formTabMemory.ts": {
+     "raw": 380,
+     "gzipShare": 122.90067824955867
+    },
+    "frontend/src/pages/record/refetchMerge.ts": {
+     "raw": 379,
+     "gzipShare": 122.57725541205984
+    },
+    "frontend/src/pages/record/composer/createMenu.ts": {
+     "raw": 345,
+     "gzipShare": 111.58087893709933
+    },
+    "frontend/src/pages/record/skeletons/HeaderSkeleton.vue": {
+     "raw": 344,
+     "gzipShare": 111.25745609960049
+    },
+    "frontend/src/pages/record/skeletons/PanelSectionsSkeleton.vue": {
+     "raw": 331,
+     "gzipShare": 107.05295921211558
+    },
+    "frontend/src/pages/record/metaSource.ts": {
+     "raw": 311,
+     "gzipShare": 100.58450246213881
+    },
+    "frontend/src/pages/record/liveClientScripts.ts": {
+     "raw": 227,
+     "gzipShare": 73.41698411223636
+    },
+    "frontend/src/pages/record/feed/ActivityTab.vue": {
+     "raw": 204,
+     "gzipShare": 65.97825884976308
+    },
+    "frontend/src/pages/record/favourites.ts": {
+     "raw": 202,
+     "gzipShare": 65.3314131747654
+    },
+    "frontend/src/recordPage/formLayoutSource/sectionName.ts": {
+     "raw": 200,
+     "gzipShare": 64.68456749976772
+    },
+    "frontend/src/pages/record/FrameBands.vue": {
+     "raw": 198,
+     "gzipShare": 64.03772182477005
+    },
+    "frontend/src/pages/record/dialogs/PageDialogs.vue": {
+     "raw": 192,
+     "gzipShare": 62.09718479977701
+    },
+    "frontend/src/pages/record/follow.ts": {
+     "raw": 165,
+     "gzipShare": 53.36476818730837
+    },
+    "frontend/src/pages/record/panel/builtins.ts": {
+     "raw": 114,
+     "gzipShare": 36.8702034748676
+    }
+   }
+  },
+  "assets/FormLayout-BjwzYa9u.js": {
+   "raw": 63207,
+   "gzip": 27873,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/Grid/Grid.vue": {
+     "raw": 6445,
+     "gzipShare": 2842.113769044568
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/GeolocationField.vue": {
+     "raw": 6353,
+     "gzipShare": 2801.5436423180977
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/TableField.vue": {
+     "raw": 5054,
+     "gzipShare": 2228.7110921258723
+    },
+    "frontend/node_modules/leaflet-draw/dist/images/spritesheet-2x.png?url": {
+     "raw": 4804,
+     "gzipShare": 2118.4661825430726
+    },
+    "frontend/node_modules/leaflet/dist/images/marker-icon-2x.png?url": {
+     "raw": 3316,
+     "gzipShare": 1462.288480706251
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/AttachField.vue": {
+     "raw": 3260,
+     "gzipShare": 1437.593620959704
+    },
+    "(unmapped)": {
+     "raw": 2846,
+     "gzipShare": 1255.028050690588
+    },
+    "frontend/node_modules/@framework/ui/src/components/TableMultiSelect/TableMultiSelect.vue": {
+     "raw": 2747,
+     "gzipShare": 1211.3710664957996
+    },
+    "frontend/node_modules/leaflet-draw/dist/images/spritesheet.png?url": {
+     "raw": 2572,
+     "gzipShare": 1134.19962978784
+    },
+    "frontend/node_modules/leaflet/dist/images/marker-icon.png?url": {
+     "raw": 1984,
+     "gzipShare": 874.9036024490958
+    },
+    "frontend/node_modules/leaflet/dist/images/layers-2x.png?url": {
+     "raw": 1708,
+     "gzipShare": 753.1932222696853
+    },
+    "frontend/node_modules/reka-ui/dist/Collapsible/CollapsibleContent.js": {
+     "raw": 1674,
+     "gzipShare": 738.1999145664246
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/FormLayout.vue": {
+     "raw": 1532,
+     "gzipShare": 675.5808059233946
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/FormLayoutSection.vue": {
+     "raw": 1466,
+     "gzipShare": 646.4761497935356
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/newRowValues.ts": {
+     "raw": 1326,
+     "gzipShare": 584.7390004271679
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/PhoneField.vue": {
+     "raw": 1234,
+     "gzipShare": 544.1688737006978
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/DynamicLinkField.vue": {
+     "raw": 1023,
+     "gzipShare": 451.12217001281505
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/fieldTypes.ts": {
+     "raw": 1022,
+     "gzipShare": 450.68119037448383
+    },
+    "frontend/node_modules/leaflet/dist/images/layers.png?url": {
+     "raw": 956,
+     "gzipShare": 421.5765342446248
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/ImageField.vue": {
+     "raw": 879,
+     "gzipShare": 387.6211020931226
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/FormLayoutColumn.vue": {
+     "raw": 870,
+     "gzipShare": 383.65228534814185
+    },
+    "frontend/node_modules/leaflet/dist/images/marker-shadow.png?url": {
+     "raw": 852,
+     "gzipShare": 375.7146518581803
+    },
+    "frontend/node_modules/reka-ui/dist/Collapsible/CollapsibleRoot.js": {
+     "raw": 836,
+     "gzipShare": 368.6589776448811
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/TableMultiSelectField.vue": {
+     "raw": 785,
+     "gzipShare": 346.16901608999
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/FormLayoutField.vue": {
+     "raw": 687,
+     "gzipShare": 302.9530115335327
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/useChildRowModel.ts": {
+     "raw": 667,
+     "gzipShare": 294.13341876690873
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/AutocompleteField.vue": {
+     "raw": 645,
+     "gzipShare": 284.43186672362236
+    },
+    "frontend/node_modules/reka-ui/dist/Collapsible/CollapsibleTrigger.js": {
+     "raw": 620,
+     "gzipShare": 273.40737576534247
+    },
+    "frontend/node_modules/@framework/ui/src/utils/scopedRegistry.ts": {
+     "raw": 591,
+     "gzipShare": 260.6189662537377
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/PasswordField.vue": {
+     "raw": 561,
+     "gzipShare": 247.3895771038018
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/TextareaField.vue": {
+     "raw": 560,
+     "gzipShare": 246.94859746547058
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/TextField.vue": {
+     "raw": 513,
+     "gzipShare": 226.22255446390432
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/CheckField.vue": {
+     "raw": 487,
+     "gzipShare": 214.75708386729318
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/TimeField.vue": {
+     "raw": 404,
+     "gzipShare": 178.1557738858038
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/FormLayoutPart.vue": {
+     "raw": 393,
+     "gzipShare": 173.3049978641606
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/HtmlField.vue": {
+     "raw": 295,
+     "gzipShare": 130.08899330770325
+    },
+    "frontend/node_modules/leaflet-draw/dist/images/spritesheet.svg?url": {
+     "raw": 294,
+     "gzipShare": 129.64801366937206
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/warnMissingCommit.ts": {
+     "raw": 226,
+     "gzipShare": 99.66139826285064
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/ButtonField.vue": {
+     "raw": 219,
+     "gzipShare": 96.57454079453225
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/types.ts": {
+     "raw": 175,
+     "gzipShare": 77.17143670795956
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/HeadingField.vue": {
+     "raw": 131,
+     "gzipShare": 57.76833262138687
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/fieldsToLayout.ts": {
+     "raw": 86,
+     "gzipShare": 37.924248896482986
+    },
+    "frontend/node_modules/@framework/ui/src/components/FormLayout/useFieldTypes.ts": {
+     "raw": 62,
+     "gzipShare": 27.340737576534245
+    }
+   }
+  },
+  "assets/Tabs-lBSDlIar.js": {
+   "raw": 23982,
+   "gzip": 8334,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/utils/keyboardShortcutCombo.ts": {
+     "raw": 4430,
+     "gzipShare": 1539.4721040780585
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tabs/Tabs.vue": {
+     "raw": 4067,
+     "gzipShare": 1413.3257443082312
+    },
+    "frontend/node_modules/frappe-ui/src/components/KeyboardShortcut/KeyboardShortcut.vue": {
+     "raw": 2863,
+     "gzipShare": 994.922942206655
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tabs/TabList.vue": {
+     "raw": 2571,
+     "gzipShare": 893.4498373780335
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tabs/TabTrigger.vue": {
+     "raw": 1906,
+     "gzipShare": 662.3552664498374
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/TabsTrigger.js": {
+     "raw": 1418,
+     "gzipShare": 492.7700775581686
+    },
+    "frontend/node_modules/frappe-ui/src/components/Password/Password.vue": {
+     "raw": 1375,
+     "gzipShare": 477.8271203402552
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/TabsRoot.js": {
+     "raw": 1108,
+     "gzipShare": 385.041781336002
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/TabsIndicator.js": {
+     "raw": 1051,
+     "gzipShare": 365.2336752564423
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/TabsContent.js": {
+     "raw": 1030,
+     "gzipShare": 357.93595196397297
+    },
+    "(unmapped)": {
+     "raw": 921,
+     "gzipShare": 320.0572929697273
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/TabsList.js": {
+     "raw": 589,
+     "gzipShare": 204.6837628221166
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tabs/context.ts": {
+     "raw": 191,
+     "gzipShare": 66.37453089817363
+    },
+    "frontend/node_modules/frappe-ui/src/components/FormLabel/FormLabel.vue": {
+     "raw": 175,
+     "gzipShare": 60.814360770577935
+    },
+    "frontend/node_modules/frappe-ui/src/components/Tabs/TabPanel.vue": {
+     "raw": 148,
+     "gzipShare": 51.43157368026019
+    },
+    "frontend/node_modules/reka-ui/dist/Tabs/utils.js": {
+     "raw": 98,
+     "gzipShare": 34.056042031523646
+    }
+   }
+  },
+  "assets/HoverCard-DPuJxixZ.js": {
+   "raw": 9355,
+   "gzip": 2960,
+   "sources": {
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardContentImpl.js": {
+     "raw": 2972,
+     "gzipShare": 940.3655799037948
+    },
+    "frontend/node_modules/frappe-ui/src/components/HoverCard/HoverCard.vue": {
+     "raw": 1351,
+     "gzipShare": 427.46766435061465
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardContent.js": {
+     "raw": 1316,
+     "gzipShare": 416.39337252805984
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardTrigger.js": {
+     "raw": 1263,
+     "gzipShare": 399.623730625334
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardRoot.js": {
+     "raw": 1029,
+     "gzipShare": 325.58417958311065
+    },
+    "(unmapped)": {
+     "raw": 460,
+     "gzipShare": 145.54783538214858
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardArrow.js": {
+     "raw": 354,
+     "gzipShare": 112.00855157669696
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/HoverCardPortal.js": {
+     "raw": 287,
+     "gzipShare": 90.80919294494923
+    },
+    "frontend/node_modules/reka-ui/dist/HoverCard/utils.js": {
+     "raw": 277,
+     "gzipShare": 87.64510956707643
+    }
+   }
+  },
+  "assets/ActivityTimeline-B8pcuTE_.js": {
+   "raw": 31515,
+   "gzip": 10448,
+   "sources": {
+    "(unmapped)": {
+     "raw": 3791,
+     "gzipShare": 1256.8100269712836
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/EmailContent.vue": {
+     "raw": 3123,
+     "gzipShare": 1035.3515468824369
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/VersionItem.vue": {
+     "raw": 3086,
+     "gzipShare": 1023.0851340631446
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/ActivityTimeline.vue": {
+     "raw": 3037,
+     "gzipShare": 1006.840425194352
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/AttachmentChip.vue": {
+     "raw": 1889,
+     "gzipShare": 626.2501031254958
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/icons.ts": {
+     "raw": 1799,
+     "gzipShare": 596.412882754244
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/CommentItem.vue": {
+     "raw": 1758,
+     "gzipShare": 582.8203712517849
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/EmailItem.vue": {
+     "raw": 1539,
+     "gzipShare": 510.2164683484055
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/LogItem.vue": {
+     "raw": 1458,
+     "gzipShare": 483.3629700142789
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/DotIcon.vue": {
+     "raw": 1346,
+     "gzipShare": 446.23220688561
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/TimelineSkeleton.vue": {
+     "raw": 1336,
+     "gzipShare": 442.91696017769317
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/ValueChange.vue": {
+     "raw": 1017,
+     "gzipShare": 337.1605901951452
+    },
+    "frontend/virtual:frappe-ui-lucide/lock": {
+     "raw": 715,
+     "gzipShare": 237.04013961605585
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/TimelineCard.vue": {
+     "raw": 678,
+     "gzipShare": 224.77372679676344
+    },
+    "frontend/virtual:frappe-ui-lucide/download": {
+     "raw": 647,
+     "gzipShare": 214.49646200222116
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/TimeAgo.vue": {
+     "raw": 436,
+     "gzipShare": 144.5447564651753
+    },
+    "frontend/virtual:frappe-ui-lucide/trash-2": {
+     "raw": 434,
+     "gzipShare": 143.88170712359195
+    },
+    "frontend/virtual:frappe-ui-lucide/pencil": {
+     "raw": 432,
+     "gzipShare": 143.21865778200856
+    },
+    "frontend/virtual:frappe-ui-lucide/users": {
+     "raw": 432,
+     "gzipShare": 143.21865778200856
+    },
+    "frontend/virtual:frappe-ui-lucide/heart": {
+     "raw": 431,
+     "gzipShare": 142.88713311121688
+    },
+    "frontend/virtual:frappe-ui-lucide/flag": {
+     "raw": 428,
+     "gzipShare": 141.89255909884182
+    },
+    "frontend/virtual:frappe-ui-lucide/eye": {
+     "raw": 415,
+     "gzipShare": 137.5827383785499
+    },
+    "frontend/virtual:frappe-ui-lucide/mail": {
+     "raw": 371,
+     "gzipShare": 122.99565286371569
+    },
+    "frontend/virtual:frappe-ui-lucide/git-branch": {
+     "raw": 365,
+     "gzipShare": 121.00650483896557
+    },
+    "frontend/virtual:frappe-ui-lucide/info": {
+     "raw": 345,
+     "gzipShare": 114.37601142313184
+    },
+    "frontend/node_modules/@framework/ui/src/components/ActivityTimeline/LoadMoreButton.vue": {
+     "raw": 154,
+     "gzipShare": 51.05479930191972
+    }
+   }
+  },
+  "assets/paperclip-DRhRrKbi.js": {
+   "raw": 947262,
+   "gzip": 283637,
+   "sources": {
+    "frontend/node_modules/prosemirror-view/dist/index.js": {
+     "raw": 98093,
+     "gzipShare": 29371.81502160965
+    },
+    "frontend/node_modules/@tiptap/core/dist/index.js": {
+     "raw": 84487,
+     "gzipShare": 25297.79429450353
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/emoji/emoji-extension.ts": {
+     "raw": 72998,
+     "gzipShare": 21857.66316605121
+    },
+    "frontend/node_modules/prosemirror-model/dist/index.js": {
+     "raw": 44757,
+     "gzipShare": 13401.510045795145
+    },
+    "frontend/node_modules/@tiptap/markdown/node_modules/marked/lib/marked.esm.js": {
+     "raw": 40861,
+     "gzipShare": 12234.937595934387
+    },
+    "frontend/node_modules/prosemirror-tables/dist/index.js": {
+     "raw": 34189,
+     "gzipShare": 10237.152332723153
+    },
+    "frontend/node_modules/prosemirror-transform/dist/index.js": {
+     "raw": 31182,
+     "gzipShare": 9336.771594342432
+    },
+    "frontend/node_modules/@tiptap/extension-list/dist/index.js": {
+     "raw": 20663,
+     "gzipShare": 6187.085865367765
+    },
+    "frontend/node_modules/highlight.js/lib/core.js": {
+     "raw": 20309,
+     "gzipShare": 6081.088265970766
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/lib/core.js": {
+     "raw": 20226,
+     "gzipShare": 6056.235721479379
+    },
+    "frontend/node_modules/@tiptap/markdown/dist/index.js": {
+     "raw": 19205,
+     "gzipShare": 5750.519481410634
+    },
+    "frontend/node_modules/linkifyjs/dist/linkify.mjs": {
+     "raw": 17834,
+     "gzipShare": 5340.003354932426
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/less.js": {
+     "raw": 13025,
+     "gzipShare": 3900.0529156664156
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/scss.js": {
+     "raw": 13022,
+     "gzipShare": 3899.154630925763
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/css.js": {
+     "raw": 11921,
+     "gzipShare": 3569.4841311062833
+    },
+    "frontend/node_modules/prosemirror-state/dist/index.js": {
+     "raw": 11777,
+     "gzipShare": 3526.3664635549617
+    },
+    "frontend/node_modules/@tiptap/extension-table/dist/index.js": {
+     "raw": 11532,
+     "gzipShare": 3453.006543068338
+    },
+    "frontend/node_modules/prosemirror-commands/dist/index.js": {
+     "raw": 9473,
+     "gzipShare": 2836.483782733816
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/arduino.js": {
+     "raw": 9336,
+     "gzipShare": 2795.4621129106836
+    },
+    "frontend/node_modules/@tiptap/suggestion/dist/index.js": {
+     "raw": 8893,
+     "gzipShare": 2662.815399540993
+    },
+    "frontend/node_modules/@tiptap/extensions/dist/index.js": {
+     "raw": 8729,
+     "gzipShare": 2613.7091670519876
+    },
+    "frontend/node_modules/@tiptap/extension-link/dist/index.js": {
+     "raw": 8446,
+     "gzipShare": 2528.9709731837656
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/swift.js": {
+     "raw": 8058,
+     "gzipShare": 2412.7928133927044
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/typescript.js": {
+     "raw": 7677,
+     "gzipShare": 2298.7106513298327
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/MediaNodeView.vue": {
+     "raw": 7196,
+     "gzipShare": 2154.6856645785433
+    },
+    "frontend/node_modules/@tiptap/vue-3/dist/index.js": {
+     "raw": 7129,
+     "gzipShare": 2134.6239720373032
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/javascript.js": {
+     "raw": 6390,
+     "gzipShare": 1913.346497589896
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/php.js": {
+     "raw": 6082,
+     "gzipShare": 1821.1225975495693
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/table/table-navigation.ts": {
+     "raw": 6073,
+     "gzipShare": 1818.4277433276116
+    },
+    "frontend/node_modules/prosemirror-history/dist/index.js": {
+     "raw": 5740,
+     "gzipShare": 1718.7181371151803
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/VideoControls.vue": {
+     "raw": 5724,
+     "gzipShare": 1713.9272851650335
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/sql.js": {
+     "raw": 5541,
+     "gzipShare": 1659.131915985229
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/cpp.js": {
+     "raw": 5408,
+     "gzipShare": 1619.3079591496335
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/ImageGroupUploadDialog.vue": {
+     "raw": 5129,
+     "gzipShare": 1535.7674782689478
+    },
+    "frontend/node_modules/@tiptap/extension-code-block/dist/index.js": {
+     "raw": 4499,
+     "gzipShare": 1347.1276827319157
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/perl.js": {
+     "raw": 4179,
+     "gzipShare": 1251.310643728979
+    },
+    "frontend/node_modules/@tiptap/extension-text-style/dist/index.js": {
+     "raw": 4093,
+     "gzipShare": 1225.5598144969397
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/c.js": {
+     "raw": 3907,
+     "gzipShare": 1169.8661605764826
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/csharp.js": {
+     "raw": 3829,
+     "gzipShare": 1146.5107573195166
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/ruby.js": {
+     "raw": 3776,
+     "gzipShare": 1130.6410602346552
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/IframeNodeView.vue": {
+     "raw": 3704,
+     "gzipShare": 1109.0822264589945
+    },
+    "frontend/node_modules/prosemirror-gapcursor/dist/index.js": {
+     "raw": 3551,
+     "gzipShare": 1063.2697046857152
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/ImageViewerModal.vue": {
+     "raw": 3493,
+     "gzipShare": 1045.902866366433
+    },
+    "frontend/node_modules/rope-sequence/dist/index.js": {
+     "raw": 3406,
+     "gzipShare": 1019.8526088875095
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/menu.ts": {
+     "raw": 3362,
+     "gzipShare": 1006.6777660246056
+    },
+    "frontend/node_modules/@tiptap/extension-typography/dist/index.js": {
+     "raw": 3351,
+     "gzipShare": 1003.3840553088797
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/EditorTableMenu.vue": {
+     "raw": 3331,
+     "gzipShare": 997.3954903711962
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/kotlin.js": {
+     "raw": 3307,
+     "gzipShare": 990.2092124459758
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useTouchHandler.ts": {
+     "raw": 3295,
+     "gzipShare": 986.6160734833658
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/ImageGroupNodeView.vue": {
+     "raw": 3289,
+     "gzipShare": 984.8195040020606
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframe-embed-utils.ts": {
+     "raw": 3268,
+     "gzipShare": 978.531510817493
+    },
+    "(unmapped)": {
+     "raw": 3249,
+     "gzipShare": 972.8423741266936
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/python.js": {
+     "raw": 3238,
+     "gzipShare": 969.5486634109676
+    },
+    "frontend/node_modules/prosemirror-dropcursor/dist/index.js": {
+     "raw": 3198,
+     "gzipShare": 957.5715335356005
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/commands.ts": {
+     "raw": 3122,
+     "gzipShare": 934.814986772403
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/useImageGroupDialog.ts": {
+     "raw": 3034,
+     "gzipShare": 908.4653010465953
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/ImageGroupGridCell.vue": {
+     "raw": 3031,
+     "gzipShare": 907.5670163059428
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/video/video-extension.ts": {
+     "raw": 3000,
+     "gzipShare": 898.2847406525333
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/r.js": {
+     "raw": 2886,
+     "gzipShare": 864.1499205077371
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/bash.js": {
+     "raw": 2815,
+     "gzipShare": 842.8905149789604
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/rust.js": {
+     "raw": 2745,
+     "gzipShare": 821.930537697068
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/slash-commands/slash-commands-extension.ts": {
+     "raw": 2664,
+     "gzipShare": 797.6768496994496
+    },
+    "frontend/node_modules/prosemirror-schema-list/dist/index.js": {
+     "raw": 2618,
+     "gzipShare": 783.9031503427774
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/java.js": {
+     "raw": 2615,
+     "gzipShare": 783.0048656021248
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/vbnet.js": {
+     "raw": 2594,
+     "gzipShare": 776.7168724175572
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/objectivec.js": {
+     "raw": 2582,
+     "gzipShare": 773.123733454947
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-upload-engine.ts": {
+     "raw": 2504,
+     "gzipShare": 749.7683301979811
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/LinkEditorPopup.vue": {
+     "raw": 2494,
+     "gzipShare": 746.7740477291394
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/MenuItems.vue": {
+     "raw": 2461,
+     "gzipShare": 736.8929155819615
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/image-group-commands.ts": {
+     "raw": 2407,
+     "gzipShare": 720.7237902502159
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/image-viewer/ImageViewerControlsBar.vue": {
+     "raw": 2393,
+     "gzipShare": 716.5317947938374
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image/image-extension.ts": {
+     "raw": 2281,
+     "gzipShare": 682.9958311428095
+    },
+    "frontend/node_modules/lowlight/lib/index.js": {
+     "raw": 2167,
+     "gzipShare": 648.8610109980132
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/AttachmentNodeView.vue": {
+     "raw": 2071,
+     "gzipShare": 620.1158992971322
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/markdown.js": {
+     "raw": 2051,
+     "gzipShare": 614.1273343594486
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/ImageGroupGrid.vue": {
+     "raw": 2045,
+     "gzipShare": 612.3307648781436
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/code-block/CodeBlockComponent.vue": {
+     "raw": 1963,
+     "gzipShare": 587.777648633641
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions.ts": {
+     "raw": 1959,
+     "gzipShare": 586.5799356461042
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframe-extension.ts": {
+     "raw": 1944,
+     "gzipShare": 582.0885119428416
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/TableContextMenu.vue": {
+     "raw": 1919,
+     "gzipShare": 574.6028057707372
+    },
+    "frontend/node_modules/@tiptap/extension-code-block-lowlight/dist/index.js": {
+     "raw": 1917,
+     "gzipShare": 574.0039492769688
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/kits.ts": {
+     "raw": 1898,
+     "gzipShare": 568.3148125861694
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/yaml.js": {
+     "raw": 1881,
+     "gzipShare": 563.2245323891384
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/xml.js": {
+     "raw": 1878,
+     "gzipShare": 562.3262476484858
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/attachment/attachment-extension.ts": {
+     "raw": 1864,
+     "gzipShare": 558.1342521921074
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/lua.js": {
+     "raw": 1854,
+     "gzipShare": 555.1399697232656
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/table/table-selection-overlay.ts": {
+     "raw": 1850,
+     "gzipShare": 553.9422567357288
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/mention/mention-extension.ts": {
+     "raw": 1764,
+     "gzipShare": 528.1914275036896
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/tag/tag-extension.ts": {
+     "raw": 1758,
+     "gzipShare": 526.3948580223845
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/MediaToolbar.vue": {
+     "raw": 1742,
+     "gzipShare": 521.6040060722377
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useFloatingPopup.ts": {
+     "raw": 1741,
+     "gzipShare": 521.3045778253535
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/color-palette.ts": {
+     "raw": 1700,
+     "gzipShare": 509.0280197031022
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/MediaResizeHandle.vue": {
+     "raw": 1693,
+     "gzipShare": 506.93202197491297
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/highlight/highlight-extension.ts": {
+     "raw": 1642,
+     "gzipShare": 491.6611813838199
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/attachment/attachment-engine.ts": {
+     "raw": 1620,
+     "gzipShare": 485.073759952368
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/table/drag-scroll.ts": {
+     "raw": 1609,
+     "gzipShare": 481.780049236642
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/media-drop/media-drop-extension.ts": {
+     "raw": 1606,
+     "gzipShare": 480.8817644959895
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/table/table-cell-color.ts": {
+     "raw": 1586,
+     "gzipShare": 474.8931995583059
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/wasm.js": {
+     "raw": 1549,
+     "gzipShare": 463.81435442359134
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/font-color/swatches.ts": {
+     "raw": 1540,
+     "gzipShare": 461.11950020163374
+    },
+    "frontend/node_modules/@tiptap/extension-blockquote/dist/index.js": {
+     "raw": 1537,
+     "gzipShare": 460.2212154609812
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/useEditor.ts": {
+     "raw": 1503,
+     "gzipShare": 450.04065506691916
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/IframeInsertDialog.vue": {
+     "raw": 1493,
+     "gzipShare": 447.0463725980774
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/suggestion/SuggestionList.vue": {
+     "raw": 1451,
+     "gzipShare": 434.47038622894195
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useNodeViewResize.ts": {
+     "raw": 1447,
+     "gzipShare": 433.27267324140524
+    },
+    "frontend/node_modules/orderedmap/dist/index.js": {
+     "raw": 1446,
+     "gzipShare": 432.97324499452105
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useZoomPan.ts": {
+     "raw": 1416,
+     "gzipShare": 423.99039758799574
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/go.js": {
+     "raw": 1383,
+     "gzipShare": 414.10926544081786
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/media-node-view-controller.ts": {
+     "raw": 1374,
+     "gzipShare": 411.41441121886027
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/useIframeDialog.ts": {
+     "raw": 1354,
+     "gzipShare": 405.4258462811767
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-commands.ts": {
+     "raw": 1352,
+     "gzipShare": 404.82698978740837
+    },
+    "frontend/node_modules/@tiptap/extension-bold/dist/index.js": {
+     "raw": 1313,
+     "gzipShare": 393.1492881589254
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/table-size-picker/TableSizePicker.vue": {
+     "raw": 1299,
+     "gzipShare": 388.9572927025469
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/suggestion-open.ts": {
+     "raw": 1272,
+     "gzipShare": 380.8727300366741
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/color-parse.ts": {
+     "raw": 1249,
+     "gzipShare": 373.985880358338
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-node-ops.ts": {
+     "raw": 1238,
+     "gzipShare": 370.6921696426121
+    },
+    "frontend/node_modules/@tiptap/extension-heading/dist/index.js": {
+     "raw": 1218,
+     "gzipShare": 364.7036047049285
+    },
+    "frontend/node_modules/prosemirror-keymap/dist/index.js": {
+     "raw": 1211,
+     "gzipShare": 362.60760697673925
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/EditorContent.vue": {
+     "raw": 1207,
+     "gzipShare": 361.40989398920254
+    },
+    "frontend/node_modules/@tiptap/extension-italic/dist/index.js": {
+     "raw": 1205,
+     "gzipShare": 360.8110374954342
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-popup-controller.ts": {
+     "raw": 1165,
+     "gzipShare": 348.8339076200671
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/toc-node/TocNodeView.vue": {
+     "raw": 1138,
+     "gzipShare": 340.74934495419427
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/list/list-join.ts": {
+     "raw": 1133,
+     "gzipShare": 339.25220371977343
+    },
+    "frontend/node_modules/@tiptap/extension-text-align/dist/index.js": {
+     "raw": 1131,
+     "gzipShare": 338.65334722600505
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/copy-styles/copy-styles-extension.ts": {
+     "raw": 1121,
+     "gzipShare": 335.65906475716326
+    },
+    "frontend/node_modules/@tiptap/extension-paragraph/dist/index.js": {
+     "raw": 1113,
+     "gzipShare": 333.26363878208986
+    },
+    "frontend/node_modules/@tiptap/extension-horizontal-rule/dist/index.js": {
+     "raw": 1098,
+     "gzipShare": 328.7722150788272
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-dimensions.ts": {
+     "raw": 1070,
+     "gzipShare": 320.3882241660702
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-plugin.ts": {
+     "raw": 1069,
+     "gzipShare": 320.08879591918605
+    },
+    "frontend/node_modules/@tiptap/extension-code/dist/index.js": {
+     "raw": 1059,
+     "gzipShare": 317.09451345034427
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/toc-node/toc-scroll-controller.ts": {
+     "raw": 1056,
+     "gzipShare": 316.1962287096917
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/suggestion-renderer.ts": {
+     "raw": 1049,
+     "gzipShare": 314.1002309815025
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/makefile.js": {
+     "raw": 1025,
+     "gzipShare": 306.9139530562822
+    },
+    "frontend/node_modules/@tiptap/extension-hard-break/dist/index.js": {
+     "raw": 1003,
+     "gzipShare": 300.3265316248303
+    },
+    "frontend/node_modules/@tiptap/extension-underline/dist/index.js": {
+     "raw": 980,
+     "gzipShare": 293.4396819464942
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useElementSize.ts": {
+     "raw": 947,
+     "gzipShare": 283.5585497993163
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/copy-styles/style-clipboard-utils.ts": {
+     "raw": 933,
+     "gzipShare": 279.36655434293783
+    },
+    "frontend/node_modules/@tiptap/extension-strike/dist/index.js": {
+     "raw": 918,
+     "gzipShare": 274.8751306396752
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/ini.js": {
+     "raw": 906,
+     "gzipShare": 271.28199167706504
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframe-commands.ts": {
+     "raw": 906,
+     "gzipShare": 271.28199167706504
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/suggestion/createSuggestionExtension.ts": {
+     "raw": 888,
+     "gzipShare": 265.89228323314984
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/media-node-view-utils.ts": {
+     "raw": 877,
+     "gzipShare": 262.5985725174239
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/table-color/tableCellColorController.ts": {
+     "raw": 871,
+     "gzipShare": 260.80200303611883
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/code-block/code-block.ts": {
+     "raw": 870,
+     "gzipShare": 260.50257478923464
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useNamedColorState.ts": {
+     "raw": 870,
+     "gzipShare": 260.50257478923464
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/toc-node/TocItem.vue": {
+     "raw": 862,
+     "gzipShare": 258.10714881416123
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/color-style.ts": {
+     "raw": 831,
+     "gzipShare": 248.82487316075174
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/font-color/fontColorController.ts": {
+     "raw": 820,
+     "gzipShare": 245.53116244502576
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/suggestion/SuggestionListItem.vue": {
+     "raw": 815,
+     "gzipShare": 244.0340212106049
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/content-paste/content-paste-extension.ts": {
+     "raw": 799,
+     "gzipShare": 239.24316926045805
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useObjectUrl.ts": {
+     "raw": 783,
+     "gzipShare": 234.4523173103112
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/heading/heading-ids.ts": {
+     "raw": 776,
+     "gzipShare": 232.35631958212196
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/image-group-extension.ts": {
+     "raw": 752,
+     "gzipShare": 225.17004165690167
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useScopedFileDrop.ts": {
+     "raw": 743,
+     "gzipShare": 222.47518743494408
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useTocActiveHeading.ts": {
+     "raw": 724,
+     "gzipShare": 216.78605074414472
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useTableCellColorState.ts": {
+     "raw": 709,
+     "gzipShare": 212.29462704088203
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframe-paste-handler.ts": {
+     "raw": 705,
+     "gzipShare": 211.09691405334533
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/heading-scope.ts": {
+     "raw": 699,
+     "gzipShare": 209.30034457204025
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/graphql.js": {
+     "raw": 689,
+     "gzipShare": 206.30606210319849
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/Editor.vue": {
+     "raw": 679,
+     "gzipShare": 203.3117796343567
+    },
+    "frontend/node_modules/@tiptap/core/dist/jsx-runtime/jsx-runtime.js": {
+     "raw": 676,
+     "gzipShare": 202.41349489370418
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/exit-link-on-space-plugin.ts": {
+     "raw": 660,
+     "gzipShare": 197.62264294355734
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/lowlight-languages.ts": {
+     "raw": 656,
+     "gzipShare": 196.4249299560206
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/color/color-extension.ts": {
+     "raw": 655,
+     "gzipShare": 196.12550170913644
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframeInsertDialogController.ts": {
+     "raw": 640,
+     "gzipShare": 191.63407800587376
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/iframe-allowlist.ts": {
+     "raw": 637,
+     "gzipShare": 190.73579326522125
+    },
+    "frontend/virtual:frappe-ui-lucide/paperclip": {
+     "raw": 637,
+     "gzipShare": 190.73579326522125
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/image-viewer/imageViewerKeymap.ts": {
+     "raw": 630,
+     "gzipShare": 188.639795537032
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/table-size-picker/tableSizePickerController.ts": {
+     "raw": 630,
+     "gzipShare": 188.639795537032
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/image-group-utils.ts": {
+     "raw": 627,
+     "gzipShare": 187.74151079637946
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/url-safety.ts": {
+     "raw": 616,
+     "gzipShare": 184.4478000806535
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/iframe/parseIframeEmbed.ts": {
+     "raw": 601,
+     "gzipShare": 179.95637637739082
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/content-paste/paste-html-utils.ts": {
+     "raw": 598,
+     "gzipShare": 179.0580916367383
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/content-paste/paste-image-controller.ts": {
+     "raw": 595,
+     "gzipShare": 178.15980689608577
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/json.js": {
+     "raw": 568,
+     "gzipShare": 170.07524423021297
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/toc-node/toc-render.ts": {
+     "raw": 566,
+     "gzipShare": 169.47638773644462
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/diff.js": {
+     "raw": 560,
+     "gzipShare": 167.67981825513954
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useSuggestionList.ts": {
+     "raw": 558,
+     "gzipShare": 167.08096176137119
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/font-color/ColorSwatchGrid.vue": {
+     "raw": 557,
+     "gzipShare": 166.78153351448702
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-extension.ts": {
+     "raw": 538,
+     "gzipShare": 161.09239682368764
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/node-view.ts": {
+     "raw": 537,
+     "gzipShare": 160.79296857680347
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/suggestion-helpers.ts": {
+     "raw": 533,
+     "gzipShare": 159.59525558926674
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/image-viewer/imageViewerDownload.ts": {
+     "raw": 520,
+     "gzipShare": 155.70268837977244
+    },
+    "frontend/node_modules/frappe-ui/src/utils/markdown.ts": {
+     "raw": 514,
+     "gzipShare": 153.90611889846738
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/EditorPopover.vue": {
+     "raw": 499,
+     "gzipShare": 149.4146951952047
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/editor-context.ts": {
+     "raw": 478,
+     "gzipShare": 143.12670201063696
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-paste-plugin.ts": {
+     "raw": 446,
+     "gzipShare": 133.54499811034327
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useFullscreen.ts": {
+     "raw": 443,
+     "gzipShare": 132.64671336969076
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/toc-node/toc-node-extension.ts": {
+     "raw": 435,
+     "gzipShare": 130.25128739461732
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/imageGroupDialogController.ts": {
+     "raw": 429,
+     "gzipShare": 128.45471791331227
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/code-block/code-block-indent.ts": {
+     "raw": 426,
+     "gzipShare": 127.55643317265972
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-viewer/imageViewerController.ts": {
+     "raw": 412,
+     "gzipShare": 123.36443771628124
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/slash-commands/SlashCommandsList.vue": {
+     "raw": 397,
+     "gzipShare": 118.87301401301858
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/php-template.js": {
+     "raw": 390,
+     "gzipShare": 116.77701628482933
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-upload-state.ts": {
+     "raw": 386,
+     "gzipShare": 115.57930329729261
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useTocAnchors.ts": {
+     "raw": 376,
+     "gzipShare": 112.58502082845084
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-click-plugin.ts": {
+     "raw": 371,
+     "gzipShare": 111.08787959402996
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-viewer/imageViewerStyle.ts": {
+     "raw": 360,
+     "gzipShare": 107.79416887830399
+    },
+    "frontend/node_modules/lowlight/lib/common.js": {
+     "raw": 355,
+     "gzipShare": 106.29702764388311
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/content-paste/media-src-utils.ts": {
+     "raw": 349,
+     "gzipShare": 104.50045816257804
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/link-shortcut-plugin.ts": {
+     "raw": 341,
+     "gzipShare": 102.10503218750462
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/link/clear-link-on-boundary-plugin.ts": {
+     "raw": 326,
+     "gzipShare": 97.61360848424195
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useControlsAutoHide.ts": {
+     "raw": 316,
+     "gzipShare": 94.61932601540018
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/heading-tree-utils.ts": {
+     "raw": 316,
+     "gzipShare": 94.61932601540018
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/emoji/EmojiList.vue": {
+     "raw": 301,
+     "gzipShare": 90.12790231213751
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-viewer/collectImages.ts": {
+     "raw": 294,
+     "gzipShare": 88.03190458394826
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-group/useStrayDropGuard.ts": {
+     "raw": 288,
+     "gzipShare": 86.23533510264319
+    },
+    "frontend/node_modules/frappe-ui/src/composables/useImageNavigation.ts": {
+     "raw": 286,
+     "gzipShare": 85.63647860887484
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/components/UploadProgressIndicator.vue": {
+     "raw": 248,
+     "gzipShare": 74.2582052272761
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/file-picker.ts": {
+     "raw": 224,
+     "gzipShare": 67.07192730205583
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/shell.js": {
+     "raw": 207,
+     "gzipShare": 61.9816471050248
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/python-repl.js": {
+     "raw": 197,
+     "gzipShare": 58.98736463618302
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image-viewer/image-viewer-extension.ts": {
+     "raw": 183,
+     "gzipShare": 54.79536917980453
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/collaboration.ts": {
+     "raw": 181,
+     "gzipShare": 54.19651268603618
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useNodeViewEditable.ts": {
+     "raw": 178,
+     "gzipShare": 53.298227945383644
+    },
+    "frontend/node_modules/frappe-ui/src/utils/file-to-base64.ts": {
+     "raw": 178,
+     "gzipShare": 53.298227945383644
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/composables/useScrollContainer.ts": {
+     "raw": 177,
+     "gzipShare": 52.99879969849947
+    },
+    "frontend/node_modules/@tiptap/core/dist/rolldown-runtime-D7D4PA-g.js": {
+     "raw": 152,
+     "gzipShare": 45.51309352639502
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/media-attributes.ts": {
+     "raw": 134,
+     "gzipShare": 40.12338508247982
+    },
+    "frontend/node_modules/@tiptap/extension-text/dist/index.js": {
+     "raw": 121,
+     "gzipShare": 36.23081787298551
+    },
+    "frontend/node_modules/@tiptap/extension-document/dist/index.js": {
+     "raw": 120,
+     "gzipShare": 35.931389626101335
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/toggle-code-shortcut.ts": {
+     "raw": 88,
+     "gzipShare": 26.349685725807642
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/shared/upload-id.ts": {
+     "raw": 88,
+     "gzipShare": 26.349685725807642
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/image/image-engine.ts": {
+     "raw": 86,
+     "gzipShare": 25.750829232039287
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/languages/plaintext.js": {
+     "raw": 85,
+     "gzipShare": 25.45140098515511
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/video/video-config.ts": {
+     "raw": 82,
+     "gzipShare": 24.553116244502576
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/extensions/content-paste/paste-markdown-utils.ts": {
+     "raw": 51,
+     "gzipShare": 15.270840591093066
+    },
+    "frontend/node_modules/lowlight/node_modules/highlight.js/es/core.js": {
+     "raw": 26,
+     "gzipShare": 7.785134418988622
+    },
+    "frontend/node_modules/highlight.js/es/core.js": {
+     "raw": 26,
+     "gzipShare": 7.785134418988622
+    },
+    "frontend/node_modules/@tiptap/extension-placeholder/dist/index.js": {
+     "raw": 6,
+     "gzipShare": 1.7965694813050666
+    },
+    "frontend/node_modules/@tiptap/extension-task-list/dist/index.js": {
+     "raw": 6,
+     "gzipShare": 1.7965694813050666
+    },
+    "frontend/node_modules/@tiptap/extension-task-item/dist/index.js": {
+     "raw": 6,
+     "gzipShare": 1.7965694813050666
+    }
+   }
+  },
+  "assets/warnDeprecated-CgRRuDHJ.js": {
+   "raw": 543,
+   "gzip": 375,
+   "sources": {
+    "frontend/node_modules/frappe-ui/src/utils/fileSize.ts": {
+     "raw": 349,
+     "gzipShare": 241.02209944751382
+    },
+    "frontend/node_modules/frappe-ui/src/utils/warnDeprecated.ts": {
+     "raw": 99,
+     "gzipShare": 68.37016574585635
+    },
+    "(unmapped)": {
+     "raw": 44,
+     "gzipShare": 30.386740331491712
+    }
+   }
+  },
+  "assets/w3c-keyname-BOAvb0qz.js": {
+   "raw": 1536,
+   "gzip": 834,
+   "sources": {
+    "frontend/node_modules/w3c-keyname/index.js": {
+     "raw": 1487,
+     "gzipShare": 807.39453125
+    },
+    "(unmapped)": {
+     "raw": 1,
+     "gzipShare": 0.54296875
+    }
+   }
+  },
+  "assets/marked.esm-CtaBI5gJ.js": {
+   "raw": 38305,
+   "gzip": 11481,
+   "sources": {
+    "frontend/node_modules/marked/lib/marked.esm.js": {
+     "raw": 38047,
+     "gzipShare": 11403.67072183788
+    },
+    "(unmapped)": {
+     "raw": 211,
+     "gzipShare": 63.24216159770265
+    }
+   }
+  },
+  "assets/FileUploadDialog-CPqI_Tgt.js": {
+   "raw": 19138,
+   "gzip": 7059,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/FileUploadDialog.vue": {
+     "raw": 8731,
+     "gzipShare": 3220.405946284878
+    },
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/useUploader.ts": {
+     "raw": 4623,
+     "gzipShare": 1705.1811579057373
+    },
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/uploadTray.ts": {
+     "raw": 2198,
+     "gzipShare": 810.7264081931236
+    },
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/sources/CameraSource.vue": {
+     "raw": 1841,
+     "gzipShare": 679.0479151426481
+    },
+    "(unmapped)": {
+     "raw": 1397,
+     "gzipShare": 515.2797052983593
+    },
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/sources/index.ts": {
+     "raw": 295,
+     "gzipShare": 108.80995924339011
+    }
+   }
+  },
+  "assets/Module-CTKCjhwD.js": {
+   "raw": 1504,
+   "gzip": 877,
+   "sources": {
+    "frontend/src/pages/Module.vue": {
+     "raw": 832,
+     "gzipShare": 485.1489361702128
+    },
+    "(unmapped)": {
+     "raw": 629,
+     "gzipShare": 366.7772606382979
+    }
+   }
+  },
+  "assets/NotFound-TCBiWP5o.js": {
+   "raw": 622,
+   "gzip": 422,
+   "sources": {
+    "frontend/src/shell/NotFound.vue": {
+     "raw": 419,
+     "gzipShare": 284.2733118971061
+    },
+    "(unmapped)": {
+     "raw": 158,
+     "gzipShare": 107.19614147909968
+    }
+   }
+  },
+  "assets/Composer-D4tndrj_.js": {
+   "raw": 100,
+   "gzip": 92,
+   "sources": {
+    "(no source map)": {
+     "raw": 100,
+     "gzipShare": 92
+    }
+   }
+  },
+  "assets/CommentComposer-D2YRaMI6.js": {
+   "raw": 39709,
+   "gzip": 12361,
+   "sources": {
+    "frontend/node_modules/frappe-ui/experimental/MultiEmailInput/MultiEmailInput.vue": {
+     "raw": 7990,
+     "gzipShare": 2487.2041602659347
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/ComposerEditor.vue": {
+     "raw": 6140,
+     "gzipShare": 1911.3183409302676
+    },
+    "frontend/node_modules/reka-ui/dist/TagsInput/TagsInputRoot.js": {
+     "raw": 3422,
+     "gzipShare": 1065.2331209549473
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/EmailComposer/HeaderFields.vue": {
+     "raw": 3337,
+     "gzipShare": 1038.7735022287138
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/EmailComposer/RecipientSelect.vue": {
+     "raw": 2802,
+     "gzipShare": 872.2335490694804
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/EmailComposer/EmailComposer.vue": {
+     "raw": 2322,
+     "gzipShare": 722.8145256742804
+    },
+    "(unmapped)": {
+     "raw": 2101,
+     "gzipShare": 654.0195169860737
+    },
+    "frontend/node_modules/reka-ui/dist/TagsInput/TagsInputInput.js": {
+     "raw": 2000,
+     "gzipShare": 622.579264146667
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/CommentComposer/CommentComposer.vue": {
+     "raw": 966,
+     "gzipShare": 300.7057845828402
+    },
+    "frontend/node_modules/reka-ui/dist/TagsInput/TagsInputItem.js": {
+     "raw": 858,
+     "gzipShare": 267.08650431892016
+    },
+    "frontend/node_modules/reka-ui/dist/TagsInput/TagsInputItemDelete.js": {
+     "raw": 842,
+     "gzipShare": 262.1058702057468
+    },
+    "frontend/node_modules/@framework/ui/src/components/Composer/EmailComposer/HeaderRow.vue": {
+     "raw": 792,
+     "gzipShare": 246.54138860208013
+    },
+    "frontend/node_modules/frappe-ui/experimental/MultiEmailInput/utils.ts": {
+     "raw": 780,
+     "gzipShare": 242.80591301720014
+    },
+    "frontend/node_modules/@framework/ui/src/utils/sanitize.ts": {
+     "raw": 580,
+     "gzipShare": 180.54798660253343
+    },
+    "frontend/virtual:frappe-ui-lucide/x": {
+     "raw": 563,
+     "gzipShare": 175.25606285728676
+    },
+    "frontend/virtual:frappe-ui-lucide/file-video": {
+     "raw": 541,
+     "gzipShare": 168.40769095167343
+    },
+    "frontend/virtual:frappe-ui-lucide/file-audio": {
+     "raw": 521,
+     "gzipShare": 162.18189831020675
+    },
+    "frontend/virtual:frappe-ui-lucide/file-image": {
+     "raw": 520,
+     "gzipShare": 161.8706086781334
+    },
+    "frontend/virtual:frappe-ui-lucide/file-archive": {
+     "raw": 517,
+     "gzipShare": 160.93673978191342
+    },
+    "frontend/virtual:frappe-ui-lucide/file-spreadsheet": {
+     "raw": 510,
+     "gzipShare": 158.7577123574001
+    },
+    "frontend/virtual:frappe-ui-lucide/file-code": {
+     "raw": 493,
+     "gzipShare": 153.4657886121534
+    },
+    "frontend/virtual:frappe-ui-lucide/file-text": {
+     "raw": 490,
+     "gzipShare": 152.5319197159334
+    },
+    "frontend/virtual:frappe-ui-lucide/file": {
+     "raw": 428,
+     "gzipShare": 133.23196252738674
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/editor/EditorFixedMenu.vue": {
+     "raw": 142,
+     "gzipShare": 44.20312775441336
+    }
+   }
+  },
+  "assets/leaflet-src-CDDm9Yo8.js": {
+   "raw": 148886,
+   "gzip": 43020,
+   "sources": {
+    "frontend/node_modules/leaflet/dist/leaflet-src.js": {
+     "raw": 148768,
+     "gzipShare": 42985.90438321938
+    },
+    "(unmapped)": {
+     "raw": 70,
+     "gzipShare": 20.226213344438026
+    }
+   }
+  },
+  "assets/leaflet.draw-lpeKTWFs.js": {
+   "raw": 67064,
+   "gzip": 14201,
+   "sources": {
+    "frontend/node_modules/leaflet-draw/dist/leaflet.draw.js": {
+     "raw": 67013,
+     "gzipShare": 14190.200599427413
+    },
+    "(unmapped)": {
+     "raw": 2,
+     "gzipShare": 0.42350590480734823
+    }
+   }
+  },
+  "assets/L.Control.Locate.esm-DEgmOFX2.js": {
+   "raw": 13969,
+   "gzip": 4211,
+   "sources": {
+    "frontend/node_modules/leaflet.locatecontrol/dist/L.Control.Locate.esm.js": {
+     "raw": 13855,
+     "gzipShare": 4176.6343331662965
+    },
+    "(unmapped)": {
+     "raw": 57,
+     "gzipShare": 17.1828334168516
+    }
+   }
+  },
+  "assets/CodeEditorField-BV4JNTZT.js": {
+   "raw": 56612,
+   "gzip": 19143,
+   "sources": {
+    "frontend/node_modules/@codemirror/commands/dist/index.js": {
+     "raw": 22923,
+     "gzipShare": 7751.2716208577685
+    },
+    "frontend/node_modules/@codemirror/search/dist/index.js": {
+     "raw": 19931,
+     "gzipShare": 6739.5452024305805
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/CodeEditorField.vue": {
+     "raw": 3681,
+     "gzipShare": 1244.70753550484
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/languages.ts": {
+     "raw": 2201,
+     "gzipShare": 744.2546279940649
+    },
+    "(unmapped)": {
+     "raw": 1637,
+     "gzipShare": 553.5414929696884
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/extensions.ts": {
+     "raw": 1258,
+     "gzipShare": 425.38497138415886
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/useCodeEditor.ts": {
+     "raw": 1077,
+     "gzipShare": 364.18093337101675
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/CodeEditorContent.vue": {
+     "raw": 994,
+     "gzipShare": 336.1149932876422
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/fieldtypeToLanguage.ts": {
+     "raw": 879,
+     "gzipShare": 297.22844979862924
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/kit.ts": {
+     "raw": 764,
+     "gzipShare": 258.3419063096163
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/CodeEditor.vue": {
+     "raw": 460,
+     "gzipShare": 155.54617395605172
+    },
+    "frontend/node_modules/frappe-ui/src/molecules/code-editor/code-editor-context.ts": {
+     "raw": 426,
+     "gzipShare": 144.04928283756095
+    },
+    "frontend/node_modules/@framework/ui/src/components/Fields/CodePreview.vue": {
+     "raw": 329,
+     "gzipShare": 111.2493287642196
+    }
+   }
+  },
+  "assets/dist-BJUODPX4.js": {
+   "raw": 59963,
+   "gzip": 20362,
+   "sources": {
+    "frontend/node_modules/@lezer/common/dist/index.js": {
+     "raw": 27425,
+     "gzipShare": 9312.873772159499
+    },
+    "frontend/node_modules/@codemirror/language/dist/index.js": {
+     "raw": 25371,
+     "gzipShare": 8615.38452045428
+    },
+    "frontend/node_modules/@lezer/highlight/dist/index.js": {
+     "raw": 6972,
+     "gzipShare": 2367.5243733635743
+    },
+    "(unmapped)": {
+     "raw": 154,
+     "gzipShare": 52.294715074295816
+    }
+   }
+  },
+  "assets/dist-bQsZEMtF.js": {
+   "raw": 244840,
+   "gzip": 77602,
+   "sources": {
+    "frontend/node_modules/@codemirror/view/dist/index.js": {
+     "raw": 193247,
+     "gzipShare": 61249.60665740892
+    },
+    "frontend/node_modules/@codemirror/state/dist/index.js": {
+     "raw": 46319,
+     "gzipShare": 14680.799861133803
+    },
+    "frontend/node_modules/@marijn/find-cluster-break/src/index.js": {
+     "raw": 2294,
+     "gzipShare": 727.0829439634047
+    },
+    "frontend/node_modules/style-mod/src/style-mod.js": {
+     "raw": 2185,
+     "gzipShare": 692.5354108805751
+    },
+    "frontend/node_modules/crelt/index.js": {
+     "raw": 607,
+     "gzipShare": 192.38855579153733
+    },
+    "(unmapped)": {
+     "raw": 147,
+     "gzipShare": 46.59162718510047
+    }
+   }
+  },
+  "assets/dist-cBxjZfhv.js": {
+   "raw": 35079,
+   "gzip": 12276,
+   "sources": {
+    "frontend/node_modules/@codemirror/autocomplete/dist/index.js": {
+     "raw": 34782,
+     "gzipShare": 12172.063969896519
+    },
+    "(unmapped)": {
+     "raw": 256,
+     "gzipShare": 89.58795860771401
+    }
+   }
+  },
+  "assets/ImageCropper-iQ97l2an.js": {
+   "raw": 2651,
+   "gzip": 1371,
+   "sources": {
+    "frontend/node_modules/@framework/ui/src/components/FileUpload/ImageCropper.vue": {
+     "raw": 1800,
+     "gzipShare": 930.8940022632969
+    },
+    "(unmapped)": {
+     "raw": 802,
+     "gzipShare": 414.7649943417578
+    }
+   }
+  }
+ },
+ "dynamicFromRecord": [
+  "assets/List-Dcii7atC.js",
+  "assets/TabButtons-RXMmS2eb.js",
+  "assets/Home-DNLrsYay.js",
+  "assets/TileGridSkeleton-l7UCkwW9.js",
+  "assets/Module-CTKCjhwD.js",
+  "assets/NotFound-TCBiWP5o.js",
+  "assets/Composer-D4tndrj_.js",
+  "assets/CommentComposer-D2YRaMI6.js",
+  "assets/leaflet-src-CDDm9Yo8.js",
+  "assets/leaflet.draw-lpeKTWFs.js",
+  "assets/L.Control.Locate.esm-DEgmOFX2.js",
+  "assets/CodeEditorField-BV4JNTZT.js",
+  "assets/dist-BJUODPX4.js",
+  "assets/dist-bQsZEMtF.js",
+  "assets/dist-cBxjZfhv.js",
+  "assets/ImageCropper-iQ97l2an.js"
+ ],
+ "manifest": {
+  "_ActivityTimeline-B8pcuTE_.js": {
+   "file": "assets/ActivityTimeline-B8pcuTE_.js",
+   "name": "ActivityTimeline",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Badge-q1Pa0NDc.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_Dialog-Cef2BNUo.js",
+    "_paperclip-DRhRrKbi.js",
+    "_useActivityTimeline-D9Uiyl86.js",
+    "_useDoctypeMeta-BLkGMEYj.js"
+   ],
+   "css": [
+    "assets/ActivityTimeline-Deh8hq_2.css"
+   ]
+  },
+  "_ActivityTimeline-Deh8hq_2.css": {
+   "file": "assets/ActivityTimeline-Deh8hq_2.css",
+   "src": "_ActivityTimeline-Deh8hq_2.css"
+  },
+  "_Badge-q1Pa0NDc.js": {
+   "file": "assets/Badge-q1Pa0NDc.js",
+   "name": "Badge",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js"
+   ]
+  },
+  "_Breadcrumbs-DbKrx_jK.js": {
+   "file": "assets/Breadcrumbs-DbKrx_jK.js",
+   "name": "Breadcrumbs",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_vue-router-BnJskh84.js",
+    "_Skeleton-lfR_5kK7.js"
+   ]
+  },
+  "_Button-BVkV0Lbx.css": {
+   "file": "assets/Button-BVkV0Lbx.css",
+   "src": "_Button-BVkV0Lbx.css"
+  },
+  "_Button-BnkxjjGL.js": {
+   "file": "assets/Button-BnkxjjGL.js",
+   "name": "Button",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js"
+   ],
+   "css": [
+    "assets/Button-BVkV0Lbx.css"
+   ]
+  },
+  "_Combobox-BrTEh7hv.js": {
+   "file": "assets/Combobox-BrTEh7hv.js",
+   "name": "Combobox",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js"
+   ],
+   "css": [
+    "assets/Combobox-D6GIgyY4.css"
+   ]
+  },
+  "_Combobox-D6GIgyY4.css": {
+   "file": "assets/Combobox-D6GIgyY4.css",
+   "src": "_Combobox-D6GIgyY4.css"
+  },
+  "_CommentComposer-D2YRaMI6.js": {
+   "file": "assets/CommentComposer-D2YRaMI6.js",
+   "name": "CommentComposer",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_paperclip-DRhRrKbi.js",
+    "_core-CQ-zN4iX.js"
+   ],
+   "css": [
+    "assets/CommentComposer-IVQYwefl.css"
+   ]
+  },
+  "_CommentComposer-IVQYwefl.css": {
+   "file": "assets/CommentComposer-IVQYwefl.css",
+   "src": "_CommentComposer-IVQYwefl.css"
+  },
+  "_DateTimePicker-BVET8bUW.css": {
+   "file": "assets/DateTimePicker-BVET8bUW.css",
+   "src": "_DateTimePicker-BVET8bUW.css"
+  },
+  "_DateTimePicker-vGi1phZ3.js": {
+   "file": "assets/DateTimePicker-vGi1phZ3.js",
+   "name": "DateTimePicker",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js"
+   ],
+   "css": [
+    "assets/DateTimePicker-BVET8bUW.css"
+   ]
+  },
+  "_Dialog-Cef2BNUo.js": {
+   "file": "assets/Dialog-Cef2BNUo.js",
+   "name": "Dialog",
+   "imports": [
+    "_ItemListRow-BOfCMz8Z.js"
+   ]
+  },
+  "_Dropdown-B1tZgOiP.css": {
+   "file": "assets/Dropdown-B1tZgOiP.css",
+   "src": "_Dropdown-B1tZgOiP.css"
+  },
+  "_Dropdown-CN1CG0VL.js": {
+   "file": "assets/Dropdown-CN1CG0VL.js",
+   "name": "Dropdown",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js",
+    "_RovingFocusGroup-D9kr1kX6.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js"
+   ],
+   "css": [
+    "assets/Dropdown-B1tZgOiP.css"
+   ]
+  },
+  "_ErrorMessage-BcibnkOO.js": {
+   "file": "assets/ErrorMessage-BcibnkOO.js",
+   "name": "ErrorMessage",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_purify.es-tvBDqVuI.js"
+   ]
+  },
+  "_FileUploadDialog-CPqI_Tgt.js": {
+   "file": "assets/FileUploadDialog-CPqI_Tgt.js",
+   "name": "FileUploadDialog",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_ErrorMessage-BcibnkOO.js",
+    "_Dialog-Cef2BNUo.js",
+    "_types-DHMNlwcF.js",
+    "_preload-helper-D0fOQXss.js"
+   ],
+   "dynamicImports": [
+    "_useFileUpload-C1D_fJgc.js",
+    "node_modules/@framework/ui/src/components/FileUpload/ImageCropper.vue"
+   ]
+  },
+  "_FormLayout-51qEZB2B.css": {
+   "file": "assets/FormLayout-51qEZB2B.css",
+   "src": "_FormLayout-51qEZB2B.css"
+  },
+  "_FormLayout-BjwzYa9u.js": {
+   "file": "assets/FormLayout-BjwzYa9u.js",
+   "name": "FormLayout",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_Tabs-lBSDlIar.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js",
+    "_Dialog-Cef2BNUo.js",
+    "_tabIdentity-BluexJgo.js",
+    "_preload-helper-D0fOQXss.js",
+    "_vuedraggable.umd-081n_sxq.js"
+   ],
+   "dynamicImports": [
+    "_FileUploadDialog-CPqI_Tgt.js",
+    "node_modules/leaflet/dist/leaflet-src.js",
+    "node_modules/leaflet-draw/dist/leaflet.draw.js",
+    "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.esm.js",
+    "_FormLayout-BjwzYa9u.js",
+    "node_modules/@framework/ui/src/components/Fields/CodeEditorField.vue"
+   ],
+   "css": [
+    "assets/FormLayout-51qEZB2B.css"
+   ],
+   "assets": [
+    "assets/spritesheet-DpIxuf5L.svg"
+   ]
+  },
+  "_HoverCard-DPuJxixZ.js": {
+   "file": "assets/HoverCard-DPuJxixZ.js",
+   "name": "HoverCard",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "_Icon-BHseh8IW.js": {
+   "file": "assets/Icon-BHseh8IW.js",
+   "name": "Icon",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "_ItemListRow-BOfCMz8Z.js": {
+   "file": "assets/ItemListRow-BOfCMz8Z.js",
+   "name": "ItemListRow",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js"
+   ],
+   "css": [
+    "assets/ItemListRow-C-Jv5HzQ.css"
+   ]
+  },
+  "_ItemListRow-C-Jv5HzQ.css": {
+   "file": "assets/ItemListRow-C-Jv5HzQ.css",
+   "src": "_ItemListRow-C-Jv5HzQ.css"
+  },
+  "_LoadingStatus-B0uwT9VJ.js": {
+   "file": "assets/LoadingStatus-B0uwT9VJ.js",
+   "name": "LoadingStatus",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_i18n-C5dYE5_P.js"
+   ]
+  },
+  "_PageFrame-B58FLyPV.js": {
+   "file": "assets/PageFrame-B58FLyPV.js",
+   "name": "PageFrame",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_target-BwBDc4Oo.js",
+    "_PageHeaderTitle-B3k9nts6.js"
+   ]
+  },
+  "_PageHeaderTitle-B3k9nts6.js": {
+   "file": "assets/PageHeaderTitle-B3k9nts6.js",
+   "name": "PageHeaderTitle",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_target-BwBDc4Oo.js"
+   ]
+  },
+  "_RovingFocusGroup-D9kr1kX6.js": {
+   "file": "assets/RovingFocusGroup-D9kr1kX6.js",
+   "name": "RovingFocusGroup",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "_Skeleton-lfR_5kK7.js": {
+   "file": "assets/Skeleton-lfR_5kK7.js",
+   "name": "Skeleton",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js"
+   ]
+  },
+  "_TabButtons-RXMmS2eb.js": {
+   "file": "assets/TabButtons-RXMmS2eb.js",
+   "name": "TabButtons",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_RovingFocusGroup-D9kr1kX6.js",
+    "_nativeElements-DgJLvAvB.js",
+    "_vue-router-BnJskh84.js"
+   ]
+  },
+  "_Tabs-lBSDlIar.js": {
+   "file": "assets/Tabs-lBSDlIar.js",
+   "name": "Tabs",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js",
+    "_RovingFocusGroup-D9kr1kX6.js",
+    "_nativeElements-DgJLvAvB.js",
+    "_vue-router-BnJskh84.js",
+    "_purify.es-tvBDqVuI.js",
+    "_Tooltip-BjFFX0uN.js"
+   ]
+  },
+  "_TileGridSkeleton-l7UCkwW9.js": {
+   "file": "assets/TileGridSkeleton-l7UCkwW9.js",
+   "name": "TileGridSkeleton",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_LoadingStatus-B0uwT9VJ.js"
+   ]
+  },
+  "_Tooltip-BjFFX0uN.js": {
+   "file": "assets/Tooltip-BjFFX0uN.js",
+   "name": "Tooltip",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "_TooltipProvider-CZd0Yb9Y.js": {
+   "file": "assets/TooltipProvider-CZd0Yb9Y.js",
+   "name": "TooltipProvider",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "__plugin-vue_export-helper-BDNMzG2s.js": {
+   "file": "assets/_plugin-vue_export-helper-BDNMzG2s.js",
+   "name": "_plugin-vue_export-helper"
+  },
+  "_api-FZuFhq0H.js": {
+   "file": "assets/api-FZuFhq0H.js",
+   "name": "api",
+   "imports": [
+    "_feed-C-5CFqhS.js"
+   ]
+  },
+  "_core-CQ-zN4iX.js": {
+   "file": "assets/core-CQ-zN4iX.js",
+   "name": "core",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js"
+   ]
+  },
+  "_dist-B-Fw6a5W.js": {
+   "file": "assets/dist-B-Fw6a5W.js",
+   "name": "dist",
+   "imports": [
+    "_dist-BJUODPX4.js"
+   ]
+  },
+  "_dist-BIb5b0Pu.js": {
+   "file": "assets/dist-BIb5b0Pu.js",
+   "name": "dist",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-bQsZEMtF.js",
+    "_dist-cBxjZfhv.js"
+   ]
+  },
+  "_dist-BJUODPX4.js": {
+   "file": "assets/dist-BJUODPX4.js",
+   "name": "dist",
+   "imports": [
+    "_dist-bQsZEMtF.js"
+   ]
+  },
+  "_dist-CPSqvyap.js": {
+   "file": "assets/dist-CPSqvyap.js",
+   "name": "dist",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js"
+   ]
+  },
+  "_dist-bQsZEMtF.js": {
+   "file": "assets/dist-bQsZEMtF.js",
+   "name": "dist",
+   "imports": [
+    "_w3c-keyname-BOAvb0qz.js"
+   ]
+  },
+  "_dist-cBxjZfhv.js": {
+   "file": "assets/dist-cBxjZfhv.js",
+   "name": "dist",
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-bQsZEMtF.js"
+   ]
+  },
+  "_feed-C-5CFqhS.js": {
+   "file": "assets/feed-C-5CFqhS.js",
+   "name": "feed",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js"
+   ]
+  },
+  "_i18n-C5dYE5_P.js": {
+   "file": "assets/i18n-C5dYE5_P.js",
+   "name": "i18n",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_api-FZuFhq0H.js"
+   ]
+  },
+  "_marked.esm-CtaBI5gJ.js": {
+   "file": "assets/marked.esm-CtaBI5gJ.js",
+   "name": "marked.esm"
+  },
+  "_nativeElements-DXFj9f7H.css": {
+   "file": "assets/nativeElements-DXFj9f7H.css",
+   "src": "_nativeElements-DXFj9f7H.css"
+  },
+  "_nativeElements-DgJLvAvB.js": {
+   "file": "assets/nativeElements-DgJLvAvB.js",
+   "name": "nativeElements",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Button-BnkxjjGL.js",
+    "_RovingFocusGroup-D9kr1kX6.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js",
+    "_Icon-BHseh8IW.js"
+   ],
+   "css": [
+    "assets/nativeElements-DXFj9f7H.css"
+   ]
+  },
+  "_paperclip-BUU9lMXo.css": {
+   "file": "assets/paperclip-BUU9lMXo.css",
+   "src": "_paperclip-BUU9lMXo.css"
+  },
+  "_paperclip-DRhRrKbi.js": {
+   "file": "assets/paperclip-DRhRrKbi.js",
+   "name": "paperclip",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_ErrorMessage-BcibnkOO.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_warnDeprecated-CgRRuDHJ.js",
+    "_w3c-keyname-BOAvb0qz.js",
+    "_marked.esm-CtaBI5gJ.js"
+   ],
+   "css": [
+    "assets/paperclip-BUU9lMXo.css"
+   ]
+  },
+  "_preload-helper-D0fOQXss.js": {
+   "file": "assets/preload-helper-D0fOQXss.js",
+   "name": "preload-helper"
+  },
+  "_purify.es-tvBDqVuI.js": {
+   "file": "assets/purify.es-tvBDqVuI.js",
+   "name": "purify.es",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js"
+   ]
+  },
+  "_registry-8PUyZu2f.js": {
+   "file": "assets/registry-8PUyZu2f.js",
+   "name": "registry",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_target-BwBDc4Oo.js",
+    "_toast-CwsIcQnc.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_preload-helper-D0fOQXss.js"
+   ]
+  },
+  "_rolldown-runtime-CNC7AqOf.js": {
+   "file": "assets/rolldown-runtime-CNC7AqOf.js",
+   "name": "rolldown-runtime"
+  },
+  "_tabIdentity-BluexJgo.js": {
+   "file": "assets/tabIdentity-BluexJgo.js",
+   "name": "tabIdentity",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_feed-C-5CFqhS.js",
+    "_api-FZuFhq0H.js"
+   ]
+  },
+  "_target-BwBDc4Oo.js": {
+   "file": "assets/target-BwBDc4Oo.js",
+   "name": "target",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_ErrorMessage-BcibnkOO.js"
+   ]
+  },
+  "_toast-CwsIcQnc.js": {
+   "file": "assets/toast-CwsIcQnc.js",
+   "name": "toast",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_purify.es-tvBDqVuI.js"
+   ]
+  },
+  "_types-DHMNlwcF.js": {
+   "file": "assets/types-DHMNlwcF.js",
+   "name": "types"
+  },
+  "_upload-DIERqW7G.js": {
+   "file": "assets/upload-DIERqW7G.js",
+   "name": "upload",
+   "imports": [
+    "_feed-C-5CFqhS.js"
+   ]
+  },
+  "_useActivityTimeline-D9Uiyl86.js": {
+   "file": "assets/useActivityTimeline-D9Uiyl86.js",
+   "name": "useActivityTimeline",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_api-FZuFhq0H.js",
+    "_useDoctypeMeta-BLkGMEYj.js"
+   ]
+  },
+  "_useColorScheme-BB6Plrht.css": {
+   "file": "assets/useColorScheme-BB6Plrht.css",
+   "src": "_useColorScheme-BB6Plrht.css"
+  },
+  "_useColorScheme-BaMKsZCL.js": {
+   "file": "assets/useColorScheme-BaMKsZCL.js",
+   "name": "useColorScheme",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_target-BwBDc4Oo.js",
+    "_vue-router-BnJskh84.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Badge-q1Pa0NDc.js",
+    "_Icon-BHseh8IW.js",
+    "_Tooltip-BjFFX0uN.js"
+   ],
+   "css": [
+    "assets/useColorScheme-BB6Plrht.css"
+   ]
+  },
+  "_useDoctypeMeta-BLkGMEYj.js": {
+   "file": "assets/useDoctypeMeta-BLkGMEYj.js",
+   "name": "useDoctypeMeta",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_api-FZuFhq0H.js"
+   ]
+  },
+  "_useFileUpload-C1D_fJgc.js": {
+   "file": "assets/useFileUpload-C1D_fJgc.js",
+   "name": "useFileUpload",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_upload-DIERqW7G.js"
+   ]
+  },
+  "_vue-router-BnJskh84.js": {
+   "file": "assets/vue-router-BnJskh84.js",
+   "name": "vue-router",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js"
+   ]
+  },
+  "_vue.runtime.esm-bundler-B0srrsnN.js": {
+   "file": "assets/vue.runtime.esm-bundler-B0srrsnN.js",
+   "name": "vue.runtime.esm-bundler",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js"
+   ]
+  },
+  "_vuedraggable.umd-081n_sxq.js": {
+   "file": "assets/vuedraggable.umd-081n_sxq.js",
+   "name": "vuedraggable.umd",
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_nativeElements-DgJLvAvB.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js"
+   ]
+  },
+  "_w3c-keyname-BOAvb0qz.js": {
+   "file": "assets/w3c-keyname-BOAvb0qz.js",
+   "name": "w3c-keyname"
+  },
+  "_warnDeprecated-CgRRuDHJ.js": {
+   "file": "assets/warnDeprecated-CgRRuDHJ.js",
+   "name": "warnDeprecated",
+   "imports": [
+    "_Combobox-BrTEh7hv.js"
+   ]
+  },
+  "_writerContext-DZFD9aH_.js": {
+   "file": "assets/writerContext-DZFD9aH_.js",
+   "name": "writerContext",
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_toast-CwsIcQnc.js",
+    "_upload-DIERqW7G.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js",
+    "_registry-8PUyZu2f.js",
+    "_useActivityTimeline-D9Uiyl86.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_i18n-C5dYE5_P.js",
+    "_core-CQ-zN4iX.js"
+   ]
+  },
+  "index.html": {
+   "file": "assets/index-CTmPHUfY.js",
+   "name": "index",
+   "src": "index.html",
+   "isEntry": true,
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_useColorScheme-BaMKsZCL.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_target-BwBDc4Oo.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_Dialog-Cef2BNUo.js",
+    "_feed-C-5CFqhS.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js",
+    "_types-DHMNlwcF.js",
+    "_registry-8PUyZu2f.js",
+    "_useActivityTimeline-D9Uiyl86.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_preload-helper-D0fOQXss.js",
+    "_writerContext-DZFD9aH_.js",
+    "_i18n-C5dYE5_P.js",
+    "_useFileUpload-C1D_fJgc.js",
+    "_core-CQ-zN4iX.js",
+    "_LoadingStatus-B0uwT9VJ.js"
+   ],
+   "dynamicImports": [
+    "src/pages/List.vue",
+    "src/pages/Record.vue",
+    "src/pages/Home.vue",
+    "src/pages/Module.vue",
+    "src/shell/NotFound.vue",
+    "node_modules/@framework/ui/src/components/Composer/index.ts"
+   ],
+   "css": [
+    "assets/index-CBT93XRL.css"
+   ],
+   "assets": [
+    "assets/Inter.var-C9xDBOS3.woff2",
+    "assets/Inter-Italic.var-BGHziHgI.woff2"
+   ]
+  },
+  "node_modules/@codemirror/lang-html/dist/index.js": {
+   "file": "assets/dist-Cx3WYoqL.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-html/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-CPSqvyap.js",
+    "_dist-bQsZEMtF.js",
+    "_dist-BIb5b0Pu.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-json/dist/index.js": {
+   "file": "assets/dist-DZXdGPvz.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-json/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-markdown/dist/index.js": {
+   "file": "assets/dist-DPEvLrTd.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-markdown/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-bQsZEMtF.js",
+    "_dist-cBxjZfhv.js",
+    "node_modules/@codemirror/lang-html/dist/index.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-python/dist/index.js": {
+   "file": "assets/dist-CJn6SzP2.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-python/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-cBxjZfhv.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-sass/dist/index.js": {
+   "file": "assets/dist-DHkJ7jtF.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-sass/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-CPSqvyap.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-sql/dist/index.js": {
+   "file": "assets/dist-pS90HT9B.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-sql/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-cBxjZfhv.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-xml/dist/index.js": {
+   "file": "assets/dist-DLaLM-oc.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-xml/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js",
+    "_dist-bQsZEMtF.js"
+   ]
+  },
+  "node_modules/@codemirror/lang-yaml/dist/index.js": {
+   "file": "assets/dist-Bf_ya0n5.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lang-yaml/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-BJUODPX4.js",
+    "_dist-B-Fw6a5W.js"
+   ]
+  },
+  "node_modules/@codemirror/lint/dist/index.js": {
+   "file": "assets/dist-DBFncQ9I.js",
+   "name": "dist",
+   "src": "node_modules/@codemirror/lint/dist/index.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_dist-bQsZEMtF.js"
+   ]
+  },
+  "node_modules/@framework/ui/src/components/Composer/index.ts": {
+   "file": "assets/Composer-D4tndrj_.js",
+   "name": "Composer",
+   "src": "node_modules/@framework/ui/src/components/Composer/index.ts",
+   "isDynamicEntry": true,
+   "imports": [
+    "_CommentComposer-D2YRaMI6.js"
+   ]
+  },
+  "node_modules/@framework/ui/src/components/Fields/CodeEditorField.vue": {
+   "file": "assets/CodeEditorField-BV4JNTZT.js",
+   "name": "CodeEditorField",
+   "src": "node_modules/@framework/ui/src/components/Fields/CodeEditorField.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js",
+    "_marked.esm-CtaBI5gJ.js",
+    "_preload-helper-D0fOQXss.js",
+    "_dist-BJUODPX4.js",
+    "_dist-bQsZEMtF.js",
+    "_dist-cBxjZfhv.js"
+   ],
+   "dynamicImports": [
+    "node_modules/@codemirror/lang-json/dist/index.js",
+    "node_modules/@codemirror/lang-html/dist/index.js",
+    "_dist-BIb5b0Pu.js",
+    "node_modules/@codemirror/lang-python/dist/index.js",
+    "node_modules/@codemirror/lang-sql/dist/index.js",
+    "node_modules/@codemirror/lang-markdown/dist/index.js",
+    "_dist-CPSqvyap.js",
+    "node_modules/@codemirror/lang-sass/dist/index.js",
+    "node_modules/@codemirror/lang-yaml/dist/index.js",
+    "node_modules/@codemirror/lang-xml/dist/index.js",
+    "node_modules/@codemirror/lint/dist/index.js"
+   ],
+   "css": [
+    "assets/CodeEditorField-BTWfC855.css"
+   ]
+  },
+  "node_modules/@framework/ui/src/components/FileUpload/ImageCropper.vue": {
+   "file": "assets/ImageCropper-iQ97l2an.js",
+   "name": "ImageCropper",
+   "src": "node_modules/@framework/ui/src/components/FileUpload/ImageCropper.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Button-BnkxjjGL.js",
+    "_preload-helper-D0fOQXss.js"
+   ],
+   "dynamicImports": [
+    "node_modules/cropperjs/dist/cropper.esm.raw.js"
+   ]
+  },
+  "node_modules/cropperjs/dist/cropper.esm.raw.js": {
+   "file": "assets/cropper.esm.raw-N35VYFf1.js",
+   "name": "cropper.esm.raw",
+   "src": "node_modules/cropperjs/dist/cropper.esm.raw.js",
+   "isDynamicEntry": true
+  },
+  "node_modules/frappe-ui/src/fonts/Inter/Inter-Italic.var.woff2": {
+   "file": "assets/Inter-Italic.var-BGHziHgI.woff2",
+   "src": "node_modules/frappe-ui/src/fonts/Inter/Inter-Italic.var.woff2"
+  },
+  "node_modules/frappe-ui/src/fonts/Inter/Inter.var.woff2": {
+   "file": "assets/Inter.var-C9xDBOS3.woff2",
+   "src": "node_modules/frappe-ui/src/fonts/Inter/Inter.var.woff2"
+  },
+  "node_modules/leaflet-draw/dist/images/spritesheet.svg": {
+   "file": "assets/spritesheet-DpIxuf5L.svg",
+   "src": "node_modules/leaflet-draw/dist/images/spritesheet.svg"
+  },
+  "node_modules/leaflet-draw/dist/leaflet.draw.css": {
+   "file": "assets/leaflet-BbGQfpeq.css",
+   "src": "node_modules/leaflet-draw/dist/leaflet.draw.css"
+  },
+  "node_modules/leaflet-draw/dist/leaflet.draw.js": {
+   "file": "assets/leaflet.draw-lpeKTWFs.js",
+   "name": "leaflet.draw",
+   "src": "node_modules/leaflet-draw/dist/leaflet.draw.js",
+   "isDynamicEntry": true
+  },
+  "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.esm.js": {
+   "file": "assets/L.Control.Locate.esm-DEgmOFX2.js",
+   "name": "L.Control.Locate.esm",
+   "src": "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.esm.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "node_modules/leaflet/dist/leaflet-src.js"
+   ]
+  },
+  "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.min.css": {
+   "file": "assets/L.Control.Locate-C-imx2w4.css",
+   "src": "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.min.css"
+  },
+  "node_modules/leaflet/dist/leaflet-src.js": {
+   "file": "assets/leaflet-src-CDDm9Yo8.js",
+   "name": "leaflet-src",
+   "src": "node_modules/leaflet/dist/leaflet-src.js",
+   "isDynamicEntry": true,
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js"
+   ]
+  },
+  "node_modules/leaflet/dist/leaflet.css": {
+   "file": "assets/leaflet-CcXJxNtP.css",
+   "src": "node_modules/leaflet/dist/leaflet.css"
+  },
+  "published:@framework/ui": {
+   "file": "assets/published-framework-ui-CtmeZs3b.js",
+   "name": "published-framework-ui",
+   "src": "published:@framework/ui",
+   "isEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_FormLayout-BjwzYa9u.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_HoverCard-DPuJxixZ.js",
+    "_TabButtons-RXMmS2eb.js",
+    "_CommentComposer-D2YRaMI6.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Badge-q1Pa0NDc.js",
+    "_Breadcrumbs-DbKrx_jK.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_Dialog-Cef2BNUo.js",
+    "_feed-C-5CFqhS.js",
+    "_upload-DIERqW7G.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js",
+    "_types-DHMNlwcF.js",
+    "_ActivityTimeline-B8pcuTE_.js",
+    "_useActivityTimeline-D9Uiyl86.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_preload-helper-D0fOQXss.js",
+    "_core-CQ-zN4iX.js",
+    "_vuedraggable.umd-081n_sxq.js"
+   ],
+   "css": [
+    "assets/published-framework-ui-V2TQEaiu.css"
+   ]
+  },
+  "published:frappe-ui": {
+   "file": "assets/published-frappe-ui-N3650tGV.js",
+   "name": "published-frappe-ui",
+   "src": "published:frappe-ui",
+   "isEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_useColorScheme-BaMKsZCL.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_nativeElements-DgJLvAvB.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_HoverCard-DPuJxixZ.js",
+    "_TabButtons-RXMmS2eb.js",
+    "_target-BwBDc4Oo.js",
+    "_Tabs-lBSDlIar.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_purify.es-tvBDqVuI.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_ErrorMessage-BcibnkOO.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Badge-q1Pa0NDc.js",
+    "_Breadcrumbs-DbKrx_jK.js",
+    "_Icon-BHseh8IW.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_warnDeprecated-CgRRuDHJ.js",
+    "_Dialog-Cef2BNUo.js",
+    "_PageHeaderTitle-B3k9nts6.js"
+   ],
+   "css": [
+    "assets/published-frappe-ui-G7JwVGia.css"
+   ]
+  },
+  "published:frappe/i18n": {
+   "file": "assets/published-frappe-i18n-OLD_Naw_.js",
+   "name": "published-frappe-i18n",
+   "src": "published:frappe/i18n",
+   "isEntry": true,
+   "imports": [
+    "_i18n-C5dYE5_P.js"
+   ]
+  },
+  "published:vue": {
+   "file": "assets/published-vue-CxYSN-32.js",
+   "name": "published-vue",
+   "src": "published:vue",
+   "isEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js"
+   ]
+  },
+  "published:vue-router": {
+   "file": "assets/published-vue-router-DkRmr1Jl.js",
+   "name": "published-vue-router",
+   "src": "published:vue-router",
+   "isEntry": true,
+   "imports": [
+    "_vue-router-BnJskh84.js"
+   ]
+  },
+  "src/pages/Home.vue": {
+   "file": "assets/Home-DNLrsYay.js",
+   "name": "Home",
+   "src": "src/pages/Home.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_vue-router-BnJskh84.js",
+    "_registry-8PUyZu2f.js",
+    "index.html",
+    "_PageFrame-B58FLyPV.js",
+    "_TileGridSkeleton-l7UCkwW9.js"
+   ]
+  },
+  "src/pages/List.vue": {
+   "file": "assets/List-Dcii7atC.js",
+   "name": "List",
+   "src": "src/pages/List.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_rolldown-runtime-CNC7AqOf.js",
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_ItemListRow-BOfCMz8Z.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_TabButtons-RXMmS2eb.js",
+    "_target-BwBDc4Oo.js",
+    "_vue-router-BnJskh84.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_toast-CwsIcQnc.js",
+    "_Breadcrumbs-DbKrx_jK.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_Dialog-Cef2BNUo.js",
+    "_api-FZuFhq0H.js",
+    "_registry-8PUyZu2f.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_core-CQ-zN4iX.js",
+    "index.html",
+    "_vuedraggable.umd-081n_sxq.js",
+    "_PageFrame-B58FLyPV.js"
+   ],
+   "css": [
+    "assets/List-ol2M8H3_.css"
+   ]
+  },
+  "src/pages/Module.vue": {
+   "file": "assets/Module-CTKCjhwD.js",
+   "name": "Module",
+   "src": "src/pages/Module.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_vue-router-BnJskh84.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_registry-8PUyZu2f.js",
+    "index.html",
+    "_PageFrame-B58FLyPV.js",
+    "_TileGridSkeleton-l7UCkwW9.js"
+   ]
+  },
+  "src/pages/Record.vue": {
+   "file": "assets/Record-DhQu9oQO.js",
+   "name": "Record",
+   "src": "src/pages/Record.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "_Combobox-BrTEh7hv.js",
+    "_Button-BnkxjjGL.js",
+    "_Dropdown-CN1CG0VL.js",
+    "_FormLayout-BjwzYa9u.js",
+    "_DateTimePicker-vGi1phZ3.js",
+    "_HoverCard-DPuJxixZ.js",
+    "_target-BwBDc4Oo.js",
+    "_Tabs-lBSDlIar.js",
+    "_vue-router-BnJskh84.js",
+    "_Skeleton-lfR_5kK7.js",
+    "_ErrorMessage-BcibnkOO.js",
+    "_toast-CwsIcQnc.js",
+    "_TooltipProvider-CZd0Yb9Y.js",
+    "_Breadcrumbs-DbKrx_jK.js",
+    "_Tooltip-BjFFX0uN.js",
+    "_Dialog-Cef2BNUo.js",
+    "_feed-C-5CFqhS.js",
+    "_api-FZuFhq0H.js",
+    "_tabIdentity-BluexJgo.js",
+    "_registry-8PUyZu2f.js",
+    "_ActivityTimeline-B8pcuTE_.js",
+    "_useActivityTimeline-D9Uiyl86.js",
+    "_useDoctypeMeta-BLkGMEYj.js",
+    "_preload-helper-D0fOQXss.js",
+    "_writerContext-DZFD9aH_.js",
+    "_i18n-C5dYE5_P.js",
+    "_FileUploadDialog-CPqI_Tgt.js",
+    "_useFileUpload-C1D_fJgc.js",
+    "_core-CQ-zN4iX.js",
+    "_LoadingStatus-B0uwT9VJ.js",
+    "_vuedraggable.umd-081n_sxq.js",
+    "_PageFrame-B58FLyPV.js"
+   ],
+   "dynamicImports": [
+    "_FileUploadDialog-CPqI_Tgt.js"
+   ]
+  },
+  "src/shell/NotFound.vue": {
+   "file": "assets/NotFound-TCBiWP5o.js",
+   "name": "NotFound",
+   "src": "src/shell/NotFound.vue",
+   "isDynamicEntry": true,
+   "imports": [
+    "_vue.runtime.esm-bundler-B0srrsnN.js",
+    "__plugin-vue_export-helper-BDNMzG2s.js"
+   ]
+  }
+ }
+}

@@ -1,0 +1,21 @@
+diff --git a/ui/src/components/Fields/fieldTypes.ts b/ui/src/components/Fields/fieldTypes.ts
+index c951db5e5a..841811a493 100644
+--- a/ui/src/components/Fields/fieldTypes.ts
++++ b/ui/src/components/Fields/fieldTypes.ts
+@@ -18,7 +18,6 @@ import PasswordField from "./PasswordField.vue";
+ import PhoneField from "./PhoneField.vue";
+ import RatingField from "./RatingField.vue";
+ import SelectField from "./SelectField.vue";
+-import TableField from "./TableField.vue";
+ import TableMultiSelectField from "./TableMultiSelectField.vue";
+ import TextField from "./TextField.vue";
+ import TextareaField from "./TextareaField.vue";
+@@ -119,7 +118,7 @@ registerFieldType("Geolocation", GeolocationField);
+ registerFieldType("Button", ButtonField);
+ 
+ // Grid cells reuse this same registry, so app field overrides apply inside too.
+-registerFieldType("Table", TableField);
++registerFieldType("Table", defineAsyncComponent(() => import("./TableField.vue")));
+ 
+ registerFieldType("Table MultiSelect", TableMultiSelectField);
+ 
