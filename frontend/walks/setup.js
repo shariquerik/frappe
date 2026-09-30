@@ -65,7 +65,7 @@ export async function logIn(request) {
 	if (!response.ok()) throw new Error(`Login failed with ${response.status()}`);
 }
 
-async function deskBoot(request) {
+export async function deskBoot(request) {
 	const index = await getMethod(request, "frappe.shell.boot.get_boot", { path: "/apps" });
 	const desk = index.apps.find((entry) => entry.app === "frappe");
 	const boot = await getMethod(request, "frappe.shell.boot.get_boot", { path: desk.route });
@@ -99,7 +99,7 @@ async function firstWithRows(request, doctypes) {
 	throw new Error("No doctype in the navigation has rows; set DOCTYPE.");
 }
 
-function listPathOf(desk, doctype) {
+export function listPathOf(desk, doctype) {
 	const address = desk.addresses.doctypes[doctype];
 	if (!address) throw new Error(`DOCTYPE ${doctype} has no desk address`);
 	const [slug, moduleSlug] = address;

@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "walk": "node returnVisit.js"
+    "walk": "node returnVisit.js",
+    "memory": "node --max-old-space-size=8192 cacheMemory.js"
   },
   "devDependencies": {
     "playwright": "1.62.1"
