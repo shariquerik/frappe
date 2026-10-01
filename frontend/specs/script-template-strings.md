@@ -1,7 +1,13 @@
 # Spec: `template:` strings in Desk v2 scripts
 
-Status: draft, for the owner to accept on the spec ticket,
+Status: accepted by the owner on 2026-10-01, on the spec ticket
 [write the spec for `template:` strings](https://github.com/frappe/frappe/issues/43718).
+Amended the same day by the owner's rulings on the [whole-desk review](https://github.com/frappe/frappe/issues/42061#issuecomment-5929963074) at the map's close:
+
+| Amendment | Ruling | Where |
+| --- | --- | --- |
+| `__` and `__n` are global in every template | `app.config.globalProperties` makes them global in every component template in the desk, `ui/` included, not only in script templates. The text for `ARCHITECTURE.md` now says so. | Appendix C, C2 and C10 |
+| One new CI check for the server caller | A Python test fails if any Python file other than `client_script.py` names `frontend/templateCompiler`. The rule that `main.ts` imports only the names file stays checked by review. | Sections 5, 10 and 13 |
 
 This spec collects the decisions of the closed tickets on the map
 [Desk v2: components in scripts without h()](https://github.com/frappe/frappe/issues/43692).
@@ -148,7 +154,7 @@ Where it lives, from [compiler home](https://github.com/frappe/frappe/issues/437
 | Why there | Node looks for packages upward from the file. From this folder it finds `frontend/node_modules` first, so it gets Vue 3.5.41, the page's version. From `ui/` it would find the root copy, Vue 3.3.9. |
 | What it may use | Its own files and the npm packages in `frontend/node_modules` only. Nothing from a layer or from the build. |
 | Who uses it | Three new edges. The build imports it for app files. The framework server runs it with `node`, from `client_script.py` only. `main.ts` imports only its names file. The folder change is a move, not an edge, because no code exists there yet. |
-| Checks | No new CI check. The JS layer check cannot see a Python `node` call, so `ARCHITECTURE.md` names the one caller and review checks it. The check works per folder, so it cannot limit `main.ts` to the names file either. |
+| Checks | The JS layer check cannot see a Python `node` call. So a Python test, written like `frappe/tests/test_desk_server_layer.py`, fails if any Python file other than `client_script.py` names `frontend/templateCompiler`. The JS check works per folder, so it cannot limit `main.ts` to the names file. That rule is checked by review. The ticket ruled no new CI check, and the owner amended that on the [whole-desk review](https://github.com/frappe/frappe/issues/42061#issuecomment-5929963074). |
 | Docs | The same PR updates `ARCHITECTURE.md`, `frontend/architecture/layers.json` and the `Client Script` entry of `frontend/CONTEXT.md`. Appendix C holds the text. |
 
 What it does, in order:
@@ -346,7 +352,8 @@ each part of appendix C lands with the code it describes. Section 13 gives the s
 - No new fields on `Client Script`.
 - A stored script still runs as a blob-URL module through the import map.
 - No new direct dependency in `frontend/package.base.json`.
-- No new permission check, and no new CI check.
+- No new permission check. One new CI check, a Python test for the server caller, from
+  the owner's ruling on the [whole-desk review](https://github.com/frappe/frappe/issues/42061#issuecomment-5929963074).
   ([open points](https://github.com/frappe/frappe/issues/43722),
   [compiler home](https://github.com/frappe/frappe/issues/43720))
 
@@ -406,13 +413,14 @@ This order is a plan for the builder. No ticket ruled it.
 3. `TemplateNamesKey`, exported from `ui/src/components/Fields/`. In
    `frontend/src/main.ts`: `__` and `__n` on `app.config.globalProperties`, after
    `createApp` at line 63, and `app.provide(TemplateNamesKey, ...)` with the component
-   names from the names file. Appendix C: C2, C6, and `templateCompiler` in the `main`
-   entry's `mayUse` from C8.
+   names from the names file. Appendix C: C2, C6, C10, and `templateCompiler` in the
+   `main` entry's `mayUse` from C8.
 4. The server compile, called from `client_script.py` only: the `node` call with the
    source as JSON on stdin and `--disallow-code-generation-from-strings`, the Redis cache
    and its key, the cache write at save and for failed compiles, the save check in
    `validate`, logging for fixtures and Package Import, and compile on fetch in
-   `get_client_scripts` with the `error` row. Appendix C: C5, C7 and C9.
+   `get_client_scripts` with the `error` row. A Python test that fails if any other
+   Python file names `frontend/templateCompiler`. Appendix C: C5, C7 and C9.
 5. The page loader: a row with `error` and `script: ""` goes to `reportFailure`.
 6. The structured error: `TemplateCompileError` with `code_errors`, `ApiError.codeErrors`,
    the dialog in `Record.vue`, and the diagnostics input and lint marks on the Code field.
@@ -588,6 +596,8 @@ Accepted by the owner on
 [compiler home](https://github.com/frappe/frappe/issues/43720#issuecomment-5929382677).
 Line numbers are the same at `005b121651` and `59bd673cbf`. The build PR adds the
 compile module's exported function name to the table in C4.
+C2 was amended and C10 was added by the owner's rulings on the
+[whole-desk review](https://github.com/frappe/frappe/issues/42061#issuecomment-5929963074).
 
 **C1. `frontend/ARCHITECTURE.md:57`.** "Two things sit outside the nine layers:" becomes "Three things sit outside the nine layers:". Add this bullet after the build bullet:
 
@@ -595,7 +605,7 @@ compile module's exported function name to the table in C4.
 
 **C2. "Outside the layers", the `main.ts` table.** The row "What the desk hands `ui/`" becomes:
 
-> | What the desk hands `ui/` | The session, the CSRF token, the socket, upload limits, the invite address, and the component names a template can use with no `components:` entry |
+> | What the desk hands `ui/` | The session, the CSRF token, the socket, upload limits, the invite address, the component names a template can use with no `components:` entry, and `__` and `__n` as globals in every component template |
 
 **C3. "Outside the layers", the build table.** Add:
 
@@ -633,3 +643,8 @@ compile module's exported function name to the table in C4.
 **C9. `frontend/CONTEXT.md`, the `Client Script` entry.** Add after its first sentence:
 
 > A script with a `template:` string runs as the server's compiled copy. The stored text stays the author's text.
+
+**C10. Layer 9 table, the `frappe/i18n` row.** Added by the owner's ruling on the
+[whole-desk review](https://github.com/frappe/frappe/issues/42061#issuecomment-5929963074). The row becomes:
+
+> | `frappe/i18n` | `__` and `__n`. A script imports them. A `template:` string, and every other component template, gets both with no import |
