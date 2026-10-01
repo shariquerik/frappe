@@ -300,8 +300,13 @@ ticket directs. The `SCRIPTING.md` section links to its anchor,
 
 ## 11. Out of scope
 
-- **TypeScript in scripts.** Owner ruling on the map. See section 12 for the open
-  question on stripping types later.
+- **TypeScript in scripts.** Owner ruling on the map. The map asks whether the chosen
+  compiler could strip types later. It can: strip first, then run the JavaScript path.
+  Node's own `module.stripTypeScriptTypes` adds 0 bytes, keeps every line and column, and
+  adds about 28 ms to a fresh `node` run. It refuses `enum`, a `namespace` with code and
+  parameter properties. A stored script would need a new field to say it is TypeScript.
+  App files need nothing new, because vite strips types before the plugin runs.
+  ([strip TypeScript types](https://github.com/frappe/frappe/issues/43721))
 - **SFC text in stored scripts.** One SFC holds one component, so it needs a new record
   type or a new export shape, a second compile path and a second cache key.
   ([which syntax](https://github.com/frappe/frappe/issues/43697))
@@ -312,8 +317,8 @@ ticket directs. The `SCRIPTING.md` section links to its anchor,
 
 These need a ruling before or during the build. This spec does not decide them.
 
-1. **Stripping types later.** The map asks the spec to record whether the chosen
-   compiler could strip TypeScript types later. No ticket answered this.
+1. **Stripping types later.** Answered by
+   [strip TypeScript types](https://github.com/frappe/frappe/issues/43721). See section 11.
 2. **Where the names file lives.** The [editor](https://github.com/frappe/frappe/issues/43715)
    default puts it beside the compile module in `frontend/plugin/`, and the editor in
    `ui/` reads it. `frontend/ARCHITECTURE.md` says `ui/` never uses `frontend/`, and the
@@ -343,9 +348,7 @@ These need a ruling before or during the build. This spec does not decide them.
 
 These points have tickets on the map:
 [where the compile module and names file live](https://github.com/frappe/frappe/issues/43720)
-holds points 2 and 3,
-[could the compile path strip TypeScript types](https://github.com/frappe/frappe/issues/43721)
-holds point 1, and
+holds points 2 and 3, and
 [the open names, fields and docs text](https://github.com/frappe/frappe/issues/43722)
 holds points 4 to 10.
 
