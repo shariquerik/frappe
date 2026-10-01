@@ -82,7 +82,7 @@ Why each part holds in both tiers:
 | `__(...)` with no import | `__` and `__n` become global values for templates. | [names](https://github.com/frappe/frappe/issues/43714) |
 | A backtick string with no `${}` | The compile module can find and compile it in both tiers. | [which syntax](https://github.com/frappe/frappe/issues/43697) |
 | `props: { page: Object }` | A header component receives `{ ...item.props, page }`. The comment at `frontend/SCRIPTING.md:464` says so. | existing doc |
-| Palette classes only | All seven classes are in `frontend/palette.txt`, so the text looks the same in both tiers. | [docs](https://github.com/frappe/frappe/issues/43717) |
+| Palette classes only | All five classes are in `frontend/palette.txt`, so the text looks the same in both tiers. | [docs](https://github.com/frappe/frappe/issues/43717) |
 | `export default { onRefresh }` | Both tiers take a handlers object. The check is in `frontend/src/recordPage/evaluateClientScript.ts:27-31`. | [which syntax](https://github.com/frappe/frappe/issues/43697) |
 
 ## 3. Costs
@@ -115,11 +115,12 @@ full Vue build, or 29.1 kB on demand, and would need `unsafe-eval`.
 | Plain data | A quoted `"template":` key is plain data, for example `args: { "template": name }`. | [stored path](https://github.com/frappe/frappe/issues/43698) |
 | Components | A template can use a component only if its own `components:` lists it. Import each frappe-ui component and list it. No entry is needed for the component's own `name`, `RouterLink`, `RouterView` or Vue's built-ins such as `Transition`. | [names](https://github.com/frappe/frappe/issues/43714) |
 | Values | Props, the keys of the object `setup()` returns, `data()`, `computed:`, `methods:`, `inject:`, Vue's `$` names, and the globals `__` and `__n`. A `setup()` return named `__` wins over the global. | [names](https://github.com/frappe/frappe/issues/43714) |
-| Unknown names | An unknown component or value name is a compile error with line and column. If `components:` or a value list is a variable or a spread, that component is not checked. | [names](https://github.com/frappe/frappe/issues/43714) |
+| Unknown names | An unknown component or value name is a compile error with line and column. If `components:` or a value list is a variable or a spread, that component is not checked. |
+| Name clashes | Only `RouterLink` and `RouterView` are global, and nobody else can add one. If a script lists its own `RouterLink`, the local one wins, as in standard Vue. | [names](https://github.com/frappe/frappe/issues/43714) |
 | Script values | A template reads script values through props or what `setup()` returns, with `{{ }}` or a `:` binding. A top-level `ref` lets a handler and a component share a value. | [which syntax](https://github.com/frappe/frappe/issues/43697) |
 | Styles | A stored script can rely on frappe-ui components, `style` attributes and the palette classes. The build scans an app file, so any class works there. | [docs](https://github.com/frappe/frappe/issues/43717) |
 | `h()` | Stays valid. Use a render function when code builds the markup, for example tags that differ by row. | [docs](https://github.com/frappe/frappe/issues/43717) |
-| SFC text | An app file can import a `.vue` file, as today. A stored script cannot hold SFC text. | [which syntax](https://github.com/frappe/frappe/issues/43697) |
+| SFC text | An app file can import a `.vue` file, as today. SFC text in a stored script is out of scope for this map. A later effort can add it. | [which syntax](https://github.com/frappe/frappe/issues/43697) |
 
 ## 5. The shared compile module
 
@@ -132,8 +133,11 @@ vite plugin with its own rules was rejected because the two tiers could drift ap
 What it does, in order:
 
 1. A plain text search for `template:`. A file without it passes through unchanged,
-   with no parse. This keeps the build cost at 12 to 14 ms; parsing every file costs 91
-   to 102 ms. ([app-file path](https://github.com/frappe/frappe/issues/43699))
+   with no parse. On the server the search runs before the `node` call
+   ([stored path](https://github.com/frappe/frappe/issues/43698)). In the vite plugin it
+   keeps the build cost at 12 to 14 ms, and parsing every file costs 91 to 102 ms
+   ([app-file path](https://github.com/frappe/frappe/issues/43699)). Whether the module
+   repeats the search is a build detail.
 2. A JavaScript parser reads the file and finds every unquoted `template:` key. It
    checks the value against the literal-string rule.
    ([stored path](https://github.com/frappe/frappe/issues/43698))
@@ -157,10 +161,11 @@ Other points:
   ([stored path](https://github.com/frappe/frappe/issues/43698)) The prototype that
   measured the build used `@babel/parser`.
   ([app-file path](https://github.com/frappe/frappe/issues/43699))
-- **Names file.** The fixed names live in one JSON file beside the compile module. The
-  compile module and the editor both read it, so they cannot disagree. It joins the
-  cache key. This is a default the [editor](https://github.com/frappe/frappe/issues/43715)
-  ticket filled in without asking the owner.
+- **Names file.** The fixed names live in one file. The compile module and the editor
+  both read it, so they cannot disagree. It joins the cache key. This is the owner's
+  ruling on the [editor](https://github.com/frappe/frappe/issues/43715) ticket. That
+  ticket filled in, without asking the owner, that it is a JSON file beside the compile
+  module. Section 12 lists where it lives as open.
 - **Parity.** In the prototype, the server path and the vite path gave identical output
   for the same 43-line example: 2,943 bytes each, in build and in dev.
   ([app-file path](https://github.com/frappe/frappe/issues/43699))
@@ -171,7 +176,7 @@ Other points:
 | --- | --- | --- |
 | Which scripts | Record-view scripts whose text contains `template:`. Every other script, including every `h()` script, goes to the page unchanged and never needs `node`. | [stored path](https://github.com/frappe/frappe/issues/43698) |
 | Who compiles, and when | The server, with `node` and the compile module. It compiles at save, to check, and at fetch on a cache miss. | [stored path](https://github.com/frappe/frappe/issues/43698) |
-| Where the compiler comes from | `frontend/node_modules`, which `bench build` installs. `build_shell` in `frappe/bundler.py:125-168` runs `yarn install` at line 144. No frappe_docker or Frappe Cloud image deletes it. | [stored path](https://github.com/frappe/frappe/issues/43698) |
+| Where the compiler comes from | `frontend/node_modules`, which `bench build` installs. `build_shell` in `frappe/bundler.py:125-168` runs `yarn install` at line 144. No frappe_docker or Frappe Cloud image deletes it. frappe_docker does not build Desk v2 yet, so this was read from its scripts, not tested. | [stored path](https://github.com/frappe/frappe/issues/43698) |
 | What is stored | The source only. No new fields on `Client Script`. The compiled text lives in the Redis cache. A stored output column was rejected: a Vue update makes it old, a fetch would write to the database, and fixtures would carry compiled text. | [stored path](https://github.com/frappe/frappe/issues/43698) |
 | Cache key | See section 3. | [stored path](https://github.com/frappe/frappe/issues/43698) |
 | What invalidates it | A source change, a Vue update, a change to the compile script or its options, or a cache clear. The next fetch compiles again. The `client_script_changed` realtime event, sent on save by `notify_record_pages` in `client_script.py:75-80`, already makes open pages fetch again. | [stored path](https://github.com/frappe/frappe/issues/43698) |
@@ -227,7 +232,7 @@ Facts:
 | Completion | Inside templates only. Tag names come from the script's own `components:` keys, read from the editor's syntax tree, plus the fixed names from the names file. Attributes offer Vue's `v-` words. JavaScript completion stays off: `autocompletion: false` at `ui/src/components/Fields/CodeEditorField.vue:164`. | [editor](https://github.com/frappe/frappe/issues/43715) |
 | Check while typing | None. A browser check would add 29.0 kB and could disagree with the server. | [editor](https://github.com/frappe/frappe/issues/43715) |
 | Save error | For this error type the record page shows the dialog in place of today's toast. It passes the entries to the Code field with that field name. | [editor](https://github.com/frappe/frappe/issues/43715) |
-| Lint marks | A gutter icon, an underline at the column, and the text on hover. The cursor moves to the first error. Marks move with edits and clear on the next save. Marks work for any Code field; only the template compile sends them for now. | [editor](https://github.com/frappe/frappe/issues/43715) |
+| Lint marks | A gutter icon, an underline at the column, and the text on hover. The cursor moves to the first error. Marks move with edits and clear on the next save. | [editor](https://github.com/frappe/frappe/issues/43715) |
 
 Code at `005b121651` that this changes:
 
@@ -247,6 +252,7 @@ without asking the owner. The owner can change them when accepting this spec:
 - The error class is `TemplateCompileError`.
 - The entries travel in the error response under one new key, and `ApiError` gains a
   matching optional field.
+- Lint marks work for any Code field. Only the template compile sends them for now.
 
 ## 9. Documentation changes
 
@@ -264,8 +270,7 @@ without asking the owner. The owner can change them when accepting this spec:
 
 The `StageBadge` range starts with the comment line
 `// A component in each zone. Each receives { ...item.props, page }.` The replacement
-text has no such line. This spec reads the edit as replacing the object at 465-468 and
-keeping the comment, because the example in section 2 relies on what it says.
+text has no such line. No ticket says whether the comment stays. Section 12 lists it.
 
 `SCRIPTING.md` has no `h()` calls today, so no `h()` example stays beside a template one.
 The ticket's "13 lines" were `onRefresh(page) {` lines.
@@ -329,8 +334,24 @@ These need a ruling before or during the build. This spec does not decide them.
    the Redis cache, or only checks it.
 8. **`@vue/compiler-dom` as a dependency.** The parser becomes a direct dependency. The
    compiler arrives today only through `vue`. No ticket says whether it becomes direct.
+9. **The `StageBadge` comment.** The [docs](https://github.com/frappe/frappe/issues/43717)
+   edit replaces a range that starts with a comment, and its new text has none. Section 2
+   relies on what that comment says. No ticket says whether it stays.
+10. **The permission check.** The map requires a new path to state its permission check.
+    No ticket states one for the compile at save or at fetch. Today `get_client_scripts`
+    checks read permission at `client_script.py:87`.
+
+These points have tickets on the map:
+[where the compile module and names file live](https://github.com/frappe/frappe/issues/43720)
+holds points 2 and 3,
+[could the compile path strip TypeScript types](https://github.com/frappe/frappe/issues/43721)
+holds point 1, and
+[the open names, fields and docs text](https://github.com/frappe/frappe/issues/43722)
+holds points 4 to 10.
 
 ## 13. Build work, in order
+
+This order is a plan for the builder. No ticket ruled it.
 
 1. The shared compile module and the names file in `frontend/plugin/`, with the parser
    as a direct dependency. Tests: the literal-string rule, the names check, kept line
@@ -437,7 +458,7 @@ app file can also import a `.vue` file. The item is the same.
 ```
 
 **A5. The body example.** Lines 285-290 become the lines below. The four `page.body`
-calls stay. The path uses the `custom` form from line 833, because Lead belongs to
+calls stay. The path uses the `custom` form from line 839, because Lead belongs to
 another app.
 
 ```js
