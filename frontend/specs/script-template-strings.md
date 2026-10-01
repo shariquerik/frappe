@@ -285,10 +285,11 @@ Code at `005b121651` that this changes:
   `exception`, `indicator` and `status`. It gains the optional field `codeErrors`, with
   the same entries as `code_errors`.
 
-The [editor](https://github.com/frappe/frappe/issues/43715) ticket filled in four
-defaults without asking the owner. The owner accepted all four on
-[open points](https://github.com/frappe/frappe/issues/43722): a JSON names file, the class `TemplateCompileError`, one
-new key for the entries, and lint marks on any Code field.
+The [editor](https://github.com/frappe/frappe/issues/43715) ticket filled in its
+defaults without asking the owner. On
+[open points](https://github.com/frappe/frappe/issues/43722) the owner ruled that three
+stand: a JSON names file, the class `TemplateCompileError`, and lint marks on any Code
+field. The same ticket named the key for the entries `code_errors`.
 
 ## 9. Documentation changes
 
@@ -299,12 +300,12 @@ new key for the entries, and lint marks on any Code field.
 | Edit | Lines now | Lines in the ticket |
 | --- | --- | --- |
 | New section "Writing a component", after "Where a script runs" and before "The frame: `page.frame`" at line 157 | new | new |
-| `StageBadge` in the header section, rewritten with `template:`. The comment above it stays. | 465-468 | 455-458 |
+| `StageBadge` in the header section, rewritten with `template:`. The comment above it stays. | 465-468 | 454-458 |
 | The paragraph after the header example, which suggests `h()` or a string | 476-481 | 466-471 |
 | `Note` in the panel section, rewritten with `template:` | 594-597 | 584-587 |
 | The body example's first lines: an app file with relative `.vue` imports and `onRefresh` | 284-297, first lines 285-290 | 274-287 |
 
-The `StageBadge` range starts with the comment line
+The ticket's `StageBadge` range starts with the comment line
 `// A component in each zone. Each receives { ...item.props, page }.` The comment stays,
 on the line above the new `StageBadge`, so the replacement covers lines 465-468 only.
 ([open points](https://github.com/frappe/frappe/issues/43722))
@@ -325,8 +326,10 @@ lines 482-483, gets new text, because `__` and `__n` are now global inside a tem
 ([open points](https://github.com/frappe/frappe/issues/43722))
 
 `frontend/ARCHITECTURE.md`, `frontend/architecture/layers.json` and the `Client Script`
-entry of `frontend/CONTEXT.md` change in the same PR that adds
-`frontend/templateCompiler/`. The accepted text is in appendix C. ([compiler home](https://github.com/frappe/frappe/issues/43720))
+entry of `frontend/CONTEXT.md` also change. The accepted text is in appendix C.
+([compiler home](https://github.com/frappe/frappe/issues/43720)) `AGENTS.md` requires a
+new concept or a new edge between layers to update `ARCHITECTURE.md` in the same PR. So
+each part of appendix C lands with the code it describes. Section 13 gives the split.
 
 ## 10. What does not change
 
@@ -393,25 +396,28 @@ This order is a plan for the builder. No ticket ruled it.
 
 1. The folder `frontend/templateCompiler/` with the compile module and the names file.
    It imports `babelParse` and `compileTemplate` from `vue/compiler-sfc`, with
-   `hoistStatic: false`. In the same PR: the `layers.json` entry, the `ARCHITECTURE.md`
-   text and the `CONTEXT.md` sentence from appendix C. Tests: the literal-string rule,
+   `hoistStatic: false`. Appendix C: C1, C4 and the new `layers.json` entry in C8.
+   Tests: the literal-string rule,
    the names check, kept line numbers, error positions, and the `process.pid` template
    that pins `hoistStatic: false`.
 2. The vite plugin in `frontend/vite.config.js`, with source maps. A parity test: the
-   same text gives the same output through the plugin and through `node`.
-3. In `frontend/src/main.ts`: `__` and `__n` on `app.config.globalProperties`, after
+   same text gives the same output through the plugin and through `node`. Appendix C: C3,
+   and `templateCompiler` in the `build` entry's `mayUse` from C8.
+3. `TemplateNamesKey`, exported from `ui/src/components/Fields/`. In
+   `frontend/src/main.ts`: `__` and `__n` on `app.config.globalProperties`, after
    `createApp` at line 63, and `app.provide(TemplateNamesKey, ...)` with the component
-   names from the names file.
+   names from the names file. Appendix C: C2, C6, and `templateCompiler` in the `main`
+   entry's `mayUse` from C8.
 4. The server compile, called from `client_script.py` only: the `node` call with the
    source as JSON on stdin and `--disallow-code-generation-from-strings`, the Redis cache
    and its key, the cache write at save and for failed compiles, the save check in
    `validate`, logging for fixtures and Package Import, and compile on fetch in
-   `get_client_scripts` with the `error` row.
+   `get_client_scripts` with the `error` row. Appendix C: C5, C7 and C9.
 5. The page loader: a row with `error` and `script: ""` goes to `reportFailure`.
 6. The structured error: `TemplateCompileError` with `code_errors`, `ApiError.codeErrors`,
    the dialog in `Record.vue`, and the diagnostics input and lint marks on the Code field.
-7. The editor: `@codemirror/lang-vue` nested under `template:`, completion inside
-   templates, and `TemplateNamesKey` exported from `ui/src/components/Fields/`.
+7. The editor: `@codemirror/lang-vue` nested under `template:`, and completion inside
+   templates from `TemplateNamesKey`.
 8. The docs: appendix A into `SCRIPTING.md` and appendix B into `COMPATIBILITY.md`.
 
 ## Appendix A: text for `frontend/SCRIPTING.md`
