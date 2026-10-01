@@ -1,0 +1,80 @@
+{
+  "vue runtime-only (what desk v2 loads)": {
+    "min": 109722,
+    "gzip5": 41692,
+    "gzip9": 41355,
+    "note": ""
+  },
+  "vue full build (runtime + compiler)": {
+    "min": 171457,
+    "gzip5": 62984,
+    "gzip9": 62426,
+    "note": ""
+  },
+  "@vue/compiler-dom alone": {
+    "min": 82655,
+    "gzip5": 29139,
+    "gzip9": 28928,
+    "note": "inlines its own copy of @vue/shared"
+  },
+  "htm": {
+    "min": 1207,
+    "gzip5": 646,
+    "gzip9": 646,
+    "note": ""
+  },
+  "htm/mini": {
+    "min": 852,
+    "gzip5": 483,
+    "gzip9": 483,
+    "note": "no template cache"
+  },
+  "@babel/standalone": {
+    "min": 3141115,
+    "gzip5": 668592,
+    "gzip9": 655878,
+    "note": "UMD; all Babel plugins and presets"
+  },
+  "esbuild-wasm JS API": {
+    "min": 52913,
+    "gzip5": 15087,
+    "gzip9": 15013,
+    "note": ""
+  },
+  "esbuild-wasm binary (esbuild.wasm)": {
+    "min": 13978850,
+    "gzip5": 3868145,
+    "gzip9": 3726180,
+    "note": ""
+  },
+  "vue/jsx-runtime": {
+    "min": 265,
+    "gzip5": 185,
+    "gzip9": 185,
+    "note": "as published, unminified; imports h and Fragment from vue"
+  },
+  "sucrase (jsx transform only)": {
+    "min": 206119,
+    "gzip5": 48520,
+    "gzip9": 47315,
+    "note": "bundled from the npm package; esbuild cannot drop the unused TS/Flow/imports transforms"
+  },
+  "@vue/compiler-sfc": {
+    "min": 801342,
+    "gzip5": 250754,
+    "gzip9": 247540,
+    "note": "the shipped esm-browser build, minified here; it is not minified as published"
+  },
+  "@babel/core + @vue/babel-plugin-jsx": {
+    "min": 1939810,
+    "gzip5": 536776,
+    "gzip9": 527818,
+    "note": "bundled with esbuild; Node built-ins stubbed; includes @vue/babel-plugin-resolve-type, which pulls in @vue/compiler-sfc"
+  },
+  "@babel/core + @vue/babel-plugin-jsx, no type resolver": {
+    "min": 1232047,
+    "gzip5": 317300,
+    "gzip9": 312091,
+    "note": "as above, with @vue/babel-plugin-resolve-type aliased to an empty module"
+  }
+}

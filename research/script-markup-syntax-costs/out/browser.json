@@ -1,0 +1,405 @@
+{
+  "browser": "Chrome 154.0.8037.58",
+  "runs": 7,
+  "timing": {
+    "jsx/esbuild-wasm": {
+      "loadMs": 31.9,
+      "firstMs": 112.4,
+      "warmMs": 2.1,
+      "stable": true,
+      "sha256": "c223d63deab55d1fa32582221ee2148b15eb853aff3cbc381974a3f5c44369b6"
+    },
+    "jsx/sucrase": {
+      "loadMs": 5.9,
+      "firstMs": 3,
+      "warmMs": 0.1,
+      "stable": true,
+      "sha256": "a0560796c3e0f1eb203e28184d7403cc8fde3ce1756ed75d555636998de1bf41"
+    },
+    "jsx/babel-standalone": {
+      "loadMs": 81.9,
+      "firstMs": 9.9,
+      "warmMs": 0.8,
+      "stable": true,
+      "sha256": "198fd101dff24a408b54d5587339394f5f30c5e9f088e506210459b03715c845"
+    },
+    "vue-jsx/babel": {
+      "loadMs": 32.9,
+      "firstMs": 25.5,
+      "warmMs": 0.8,
+      "stable": true,
+      "sha256": "8773b3218f3f7a060f7182c8a484ff6294b4b33c2be99918d927d294c96abbba"
+    },
+    "template/compiler-dom": {
+      "loadMs": 10.5,
+      "firstMs": 3.7,
+      "warmMs": 0.1,
+      "stable": true,
+      "sha256": "4c43962f8f58c9f171d730d93384377449501ae5ad4189caed6c23816f9e3c87"
+    },
+    "sfc/compiler-sfc": {
+      "loadMs": 15.3,
+      "firstMs": 13.2,
+      "warmMs": 0.6,
+      "stable": true,
+      "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16"
+    },
+    "sfc/compiler-sfc-nomap": {
+      "loadMs": 15.6,
+      "firstMs": 10.2,
+      "warmMs": 0.3,
+      "stable": true,
+      "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16"
+    },
+    "htm/runtime": {
+      "firstMs": 0.6,
+      "warmMs": 0
+    },
+    "h/runtime": {
+      "firstMs": 0.3,
+      "warmMs": 0
+    }
+  },
+  "checks": {
+    "jsx/esbuild-wasm": {
+      "none": {
+        "sha256": "c223d63deab55d1fa32582221ee2148b15eb853aff3cbc381974a3f5c44369b6",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "error": "WebAssembly.instantiateStreaming(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: \"script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".",
+        "stack": "CompileError: WebAssembly.instantiateStreaming(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: \"script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".\n    at tryToInstantiateModule (blob:http://127.0.0.1:49816/eb55ec63-f830-4c81-b1f9-18c30cbc1981:8:908)",
+        "violations": [],
+        "console": []
+      },
+      "strict-wasm": {
+        "sha256": "c223d63deab55d1fa32582221ee2148b15eb853aff3cbc381974a3f5c44369b6",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "jsx/sucrase": {
+      "none": {
+        "sha256": "a0560796c3e0f1eb203e28184d7403cc8fde3ce1756ed75d555636998de1bf41",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "sha256": "a0560796c3e0f1eb203e28184d7403cc8fde3ce1756ed75d555636998de1bf41",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "sha256": "a0560796c3e0f1eb203e28184d7403cc8fde3ce1756ed75d555636998de1bf41",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "jsx/babel-standalone": {
+      "none": {
+        "sha256": "198fd101dff24a408b54d5587339394f5f30c5e9f088e506210459b03715c845",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "sha256": "198fd101dff24a408b54d5587339394f5f30c5e9f088e506210459b03715c845",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "sha256": "198fd101dff24a408b54d5587339394f5f30c5e9f088e506210459b03715c845",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "vue-jsx/babel": {
+      "none": {
+        "sha256": "8773b3218f3f7a060f7182c8a484ff6294b4b33c2be99918d927d294c96abbba",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "sha256": "8773b3218f3f7a060f7182c8a484ff6294b4b33c2be99918d927d294c96abbba",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "sha256": "8773b3218f3f7a060f7182c8a484ff6294b4b33c2be99918d927d294c96abbba",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "template/compiler-dom": {
+      "none": {
+        "sha256": "4c43962f8f58c9f171d730d93384377449501ae5ad4189caed6c23816f9e3c87",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "error": "Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".\n",
+        "stack": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".\n\n    at new Function (<anonymous>)\n    at compile (http://127.0.0.1:49816/candidates.mjs:42:7)\n    at main (http://127.0.0.1:49816/bench.mjs:94:22)",
+        "violations": [
+          "script-src blocked eval"
+        ],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "error": "Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE=' 'wasm-unsafe-eval'\".\n",
+        "stack": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE=' 'wasm-unsafe-eval'\".\n\n    at new Function (<anonymous>)\n    at compile (http://127.0.0.1:49816/candidates.mjs:42:7)\n    at main (http://127.0.0.1:49816/bench.mjs:94:22)",
+        "violations": [
+          "script-src blocked eval"
+        ],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "sfc/compiler-sfc": {
+      "none": {
+        "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "error": "Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".\n",
+        "stack": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE='\".\n\n    at new Function (<anonymous>)\n    at t (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:22264)\n    at Yv.fo.quickSort (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:22383)\n    at d (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:27465)",
+        "violations": [
+          "script-src blocked eval"
+        ],
+        "console": []
+      },
+      "strict-wasm": {
+        "error": "Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE=' 'wasm-unsafe-eval'\".\n",
+        "stack": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' blob: 'sha256-r0hnXiPh5qTzusrGhmu74dCAGmPBimTCxIaSqTBaUTE=' 'wasm-unsafe-eval'\".\n\n    at new Function (<anonymous>)\n    at t (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:22264)\n    at Yv.fo.quickSort (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:22383)\n    at d (http://127.0.0.1:49816/out/browser/compiler-sfc.js:13:27465)",
+        "violations": [
+          "script-src blocked eval"
+        ],
+        "console": []
+      }
+    },
+    "sfc/compiler-sfc-nomap": {
+      "none": {
+        "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "sha256": "fafd524aa06cbe3a5069a9fc0628045793e5a29935020adee020c856f1cf2d16",
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "htm/runtime": {
+      "none": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    },
+    "h/runtime": {
+      "none": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      },
+      "strict-wasm": {
+        "closed": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul></div>",
+        "opened": "<div class=\"flex flex-col gap-2 p-3\"><div class=\"flex items-center justify-between\"><span data-badge=\"green\">Won</span><button data-variant=\"subtle\">Add note</button></div><ul class=\"text-sm\"><li>Ada Lovelace (ada@example.com)</li><li>Alan Turing (alan@example.com)</li></ul><section data-dialog=\"Add note\"><textarea class=\"w-full\" rows=\"4\" value=\"\"></textarea><footer><button data-variant=\"solid\">Save</button></footer></section></div>",
+        "saved": "hello",
+        "closedAfterSave": true,
+        "warnings": [],
+        "errors": [],
+        "violations": [],
+        "console": [
+          "info: You are running a development build of Vue.\nMake sure to use the production build (*.prod.js) when deploying for production."
+        ]
+      }
+    }
+  }
+}

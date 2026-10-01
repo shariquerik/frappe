@@ -1,0 +1,80 @@
+{
+  "node": "v24.9.0",
+  "runs": 7,
+  "compiles": {
+    "jsx/esbuild": {
+      "loadMs": 0.1,
+      "firstMs": 6.88,
+      "warmMs": 0.291,
+      "outBytes": 1872,
+      "stable": true,
+      "sha256": "c223d63deab55d1fa32582221ee2148b15eb853aff3cbc381974a3f5c44369b6"
+    },
+    "jsx/esbuild-wasm": {
+      "loadMs": 4.3,
+      "firstMs": 139.46,
+      "warmMs": 3.258,
+      "outBytes": 1872,
+      "stable": true,
+      "sha256": "c223d63deab55d1fa32582221ee2148b15eb853aff3cbc381974a3f5c44369b6"
+    },
+    "jsx/sucrase": {
+      "loadMs": 16.5,
+      "firstMs": 4.24,
+      "warmMs": 0.155,
+      "outBytes": 2010,
+      "stable": true,
+      "sha256": "a0560796c3e0f1eb203e28184d7403cc8fde3ce1756ed75d555636998de1bf41"
+    },
+    "jsx/babel-standalone": {
+      "loadMs": 110.5,
+      "firstMs": 12.16,
+      "warmMs": 1.102,
+      "outBytes": 1970,
+      "stable": true,
+      "sha256": "198fd101dff24a408b54d5587339394f5f30c5e9f088e506210459b03715c845"
+    },
+    "vue-jsx/babel": {
+      "loadMs": 123.7,
+      "firstMs": 25.78,
+      "warmMs": 0.945,
+      "outBytes": 2032,
+      "stable": true,
+      "sha256": "8773b3218f3f7a060f7182c8a484ff6294b4b33c2be99918d927d294c96abbba"
+    },
+    "template/compiler-dom": {
+      "loadMs": 31.7,
+      "firstMs": 7.37,
+      "warmMs": 0.172,
+      "outBytes": 2637,
+      "stable": true,
+      "sha256": "ac41efe219f450620d8a5414ce6e104c35621411c3008ff6b248a4c134292a58"
+    },
+    "sfc/compiler-sfc": {
+      "loadMs": 53.3,
+      "firstMs": 16.01,
+      "warmMs": 0.678,
+      "outBytes": 2909,
+      "stable": true,
+      "sha256": "321e7ee2d52eb8087535c92510d895abbe0caa630bb655cda68a4aa8a95dea75"
+    },
+    "sfc/compiler-sfc-nomap": {
+      "loadMs": 55,
+      "firstMs": 12.71,
+      "warmMs": 0.422,
+      "outBytes": 2909,
+      "stable": true,
+      "sha256": "321e7ee2d52eb8087535c92510d895abbe0caa630bb655cda68a4aa8a95dea75"
+    }
+  },
+  "renders": {
+    "htm/runtime": {
+      "firstRenderMs": 0.631,
+      "warmRenderMs": 0.0083
+    },
+    "h/runtime": {
+      "firstRenderMs": 0.464,
+      "warmRenderMs": 0.006
+    }
+  }
+}
