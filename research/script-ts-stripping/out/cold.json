@@ -1,0 +1,65 @@
+{
+  "runs": 30,
+  "variants": {
+    "js": {
+      "median_ms": 48.8,
+      "p10_ms": 47.9,
+      "p90_ms": 50.2,
+      "added_vs_js_ms": 0.0
+    },
+    "node-builtin": {
+      "median_ms": 76.6,
+      "p10_ms": 75.2,
+      "p90_ms": 79.2,
+      "added_vs_js_ms": 27.8
+    },
+    "babel-parser-blank": {
+      "median_ms": 51.0,
+      "p10_ms": 50.2,
+      "p90_ms": 52.8,
+      "added_vs_js_ms": 2.1
+    },
+    "oxc-rolldown": {
+      "median_ms": 52.8,
+      "p10_ms": 51.9,
+      "p90_ms": 55.6,
+      "added_vs_js_ms": 4.0
+    },
+    "sucrase": {
+      "median_ms": 64.6,
+      "p10_ms": 64.1,
+      "p90_ms": 68.9,
+      "added_vs_js_ms": 15.8
+    },
+    "amaro-npm": {
+      "median_ms": 93.6,
+      "p10_ms": 82.0,
+      "p90_ms": 97.7,
+      "added_vs_js_ms": 44.8
+    },
+    "esbuild": {
+      "median_ms": 73.3,
+      "p10_ms": 72.3,
+      "p90_ms": 80.5,
+      "added_vs_js_ms": 24.5
+    },
+    "ts-blank-space": {
+      "median_ms": 206.7,
+      "p10_ms": 203.7,
+      "p90_ms": 218.5,
+      "added_vs_js_ms": 157.9
+    },
+    "babel": {
+      "median_ms": 126.3,
+      "p10_ms": 125.1,
+      "p90_ms": 133.7,
+      "added_vs_js_ms": 77.5
+    },
+    "typescript": {
+      "median_ms": 147.6,
+      "p10_ms": 145.7,
+      "p90_ms": 156.3,
+      "added_vs_js_ms": 98.8
+    }
+  }
+}

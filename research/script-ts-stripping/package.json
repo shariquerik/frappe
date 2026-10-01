@@ -1,0 +1,14 @@
+{
+  "name": "script-ts-stripping",
+  "version": "1.0.0",
+  "description": "Measurements for frappe/frappe#43721: could the template compile path strip TypeScript types",
+  "private": true,
+  "type": "module",
+  "comment": "Only the tools not already in frontend/node_modules. sucrase, typescript, rolldown, @babel/parser and @vue/compiler-dom resolve from frontend/; esbuild from the repo root.",
+  "dependencies": {
+    "@babel/core": "7.29.7",
+    "@babel/plugin-transform-typescript": "7.29.9",
+    "amaro": "1.2.1",
+    "ts-blank-space": "0.9.0"
+  }
+}

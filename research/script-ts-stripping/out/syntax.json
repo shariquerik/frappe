@@ -1,0 +1,200 @@
+{
+  "annotations, interface, type alias": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "ok",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "generics on calls and arrows": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "ok",
+    "esbuild": "ok",
+    "typescript": "ok"
+  },
+  "as, satisfies, non-null !": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "ok",
+    "esbuild": "ok",
+    "typescript": "ok"
+  },
+  "import type / export type": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "ok",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "declare const / declare module": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "ok",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "class: implements, abstract, modifiers": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: class member modifiers (sketch does not handle them)",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "class parameter properties": {
+    "node-builtin": "error: TypeScript parameter property is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript parameter property is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: parameter property",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "enum": {
+    "node-builtin": "error: TypeScript enum is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript enum is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: enum",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "const enum": {
+    "node-builtin": "error: TypeScript enum is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript enum is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: enum",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "namespace with code": {
+    "node-builtin": "error: TypeScript namespace declaration is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript namespace declaration is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: namespace with runtime code",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "namespace types only": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: namespace with runtime code",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "import x = require()": {
+    "node-builtin": "error: TypeScript import equals declaration is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript import equals declaration is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "error: /Users/shariq/.claude/jobs/db51d051/tmp/tsstrip/script.ts: `import fs = require(...);` is ",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "error: import alias (import x = ...)",
+    "esbuild": "ok",
+    "typescript": "moved"
+  },
+  "export =": {
+    "node-builtin": "error: TypeScript export assignment is not supported in strip-only mode",
+    "amaro-npm": "error: TypeScript export assignment is not supported in strip-only mode",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "error: /Users/shariq/.claude/jobs/db51d051/tmp/tsstrip/script.ts: `export = <value>;` is only sup",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "error: export =",
+    "esbuild": "moved",
+    "typescript": "moved"
+  },
+  "angle-bracket assertion <T>x": {
+    "node-builtin": "error: The angle-bracket syntax for type assertions, `<T>expr`, is not supported in type strip mo",
+    "amaro-npm": "error: The angle-bracket syntax for type assertions, `<T>expr`, is not supported in type strip mo",
+    "ts-blank-space": "error: Cannot read properties of undefined (reading 'text')",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "ok",
+    "esbuild": "ok",
+    "typescript": "ok"
+  },
+  "legacy decorator": {
+    "node-builtin": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "amaro-npm": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "ts-blank-space": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "sucrase": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "babel": "error: /Users/shariq/.claude/jobs/db51d051/tmp/tsstrip/script.ts: Support for the experimental sy",
+    "oxc-rolldown": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "babel-parser-blank": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "esbuild": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat",
+    "typescript": "error: This experimental syntax requires enabling one of the following parser plugin(s): \"decorat"
+  },
+  "function overloads": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "ok",
+    "esbuild": "ok",
+    "typescript": "moved"
+  },
+  "this parameter": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "ok",
+    "babel-parser-blank": "error: Unexpected keyword 'this'. (1:11)",
+    "esbuild": "moved",
+    "typescript": "ok"
+  },
+  "arrow return type across lines": {
+    "node-builtin": "ok",
+    "amaro-npm": "ok",
+    "ts-blank-space": "ok",
+    "sucrase": "ok",
+    "babel": "ok",
+    "oxc-rolldown": "moved",
+    "babel-parser-blank": "error: Unexpected token (2:11)",
+    "esbuild": "moved",
+    "typescript": "moved"
+  }
+}

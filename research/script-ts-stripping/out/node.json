@@ -1,0 +1,273 @@
+{
+  "runs": 7,
+  "versions": {
+    "node": "24.9.0",
+    "node-builtin (amaro)": "1.1.2",
+    "amaro-npm": "1.2.1",
+    "ts-blank-space": "0.9.0",
+    "typescript (for ts-blank-space)": "6.0.3",
+    "sucrase": "3.35.1",
+    "@babel/core": "7.29.7",
+    "@babel/plugin-transform-typescript": "7.29.9",
+    "rolldown": "1.1.5",
+    "esbuild": "0.28.1",
+    "typescript (frontend)": "5.9.3",
+    "@babel/parser (frontend)": "7.29.8",
+    "@vue/compiler-dom (frontend)": "3.5.41"
+  },
+  "platform": "darwin-arm64",
+  "tools": {
+    "node-builtin": {
+      "where": "built into node (module.stripTypeScriptTypes, Amaro/SWC inside)",
+      "loadMs": 0.028,
+      "firstStripMs": 28.084,
+      "warmStripMs": 0.073,
+      "linesKept": true,
+      "columnsKept": true,
+      "inputLines": 51,
+      "outputLines": 51,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": []
+    },
+    "amaro-npm": {
+      "where": "npm amaro (same SWC wasm as node, as a package)",
+      "loadMs": 39.477,
+      "firstStripMs": 7.37,
+      "warmStripMs": 0.054,
+      "linesKept": true,
+      "columnsKept": true,
+      "inputLines": 51,
+      "outputLines": 51,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": []
+    },
+    "ts-blank-space": {
+      "where": "npm ts-blank-space + typescript",
+      "loadMs": 154.984,
+      "firstStripMs": 5.02,
+      "warmStripMs": 0.065,
+      "linesKept": true,
+      "columnsKept": true,
+      "inputLines": 51,
+      "outputLines": 51,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": []
+    },
+    "sucrase": {
+      "where": "frontend/node_modules (via tailwindcss 3)",
+      "loadMs": 14.668,
+      "firstStripMs": 4.222,
+      "warmStripMs": 0.047,
+      "linesKept": true,
+      "columnsKept": false,
+      "inputLines": 51,
+      "outputLines": 51,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": [
+        {
+          "marker": "last_note",
+          "from": {
+            "line": 22,
+            "column": 22
+          },
+          "to": {
+            "line": 22,
+            "column": 21
+          }
+        }
+      ]
+    },
+    "babel": {
+      "where": "npm @babel/core + @babel/plugin-transform-typescript",
+      "loadMs": 55.596,
+      "firstStripMs": 26.925,
+      "warmStripMs": 0.517,
+      "linesKept": true,
+      "columnsKept": false,
+      "inputLines": 51,
+      "outputLines": 50,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": [
+        {
+          "marker": "last_note",
+          "from": {
+            "line": 22,
+            "column": 22
+          },
+          "to": {
+            "line": 22,
+            "column": 21
+          }
+        }
+      ]
+    },
+    "oxc-rolldown": {
+      "where": "frontend/node_modules rolldown/utils (vite 8's own Oxc)",
+      "loadMs": 5.046,
+      "firstStripMs": 0.226,
+      "warmStripMs": 0.024,
+      "linesKept": false,
+      "columnsKept": false,
+      "inputLines": 51,
+      "outputLines": 53,
+      "templateKeyLine": [
+        28
+      ],
+      "moved": [
+        {
+          "marker": "const Contacts",
+          "from": {
+            "line": 13,
+            "column": 0
+          },
+          "to": {
+            "line": 4,
+            "column": 0
+          }
+        },
+        {
+          "marker": "setup(",
+          "from": {
+            "line": 16,
+            "column": 2
+          },
+          "to": {
+            "line": 11,
+            "column": 1
+          }
+        },
+        {
+          "marker": "const open",
+          "from": {
+            "line": 17,
+            "column": 4
+          },
+          "to": {
+            "line": 12,
+            "column": 2
+          }
+        }
+      ]
+    },
+    "babel-parser-blank": {
+      "where": "frontend @babel/parser (already parsed by the compile module) + own blanking code",
+      "loadMs": 5.49,
+      "firstStripMs": 6.752,
+      "warmStripMs": 0.112,
+      "linesKept": true,
+      "columnsKept": true,
+      "inputLines": 51,
+      "outputLines": 51,
+      "templateKeyLine": [
+        27
+      ],
+      "moved": []
+    },
+    "esbuild": {
+      "where": "repo-root node_modules (desk v1 build), not frontend/",
+      "loadMs": 3.588,
+      "firstStripMs": 22.164,
+      "warmStripMs": 0.206,
+      "linesKept": false,
+      "columnsKept": false,
+      "inputLines": 51,
+      "outputLines": 40,
+      "templateKeyLine": [
+        17
+      ],
+      "moved": [
+        {
+          "marker": "const Contacts",
+          "from": {
+            "line": 13,
+            "column": 0
+          },
+          "to": {
+            "line": 3,
+            "column": 0
+          }
+        },
+        {
+          "marker": "setup(",
+          "from": {
+            "line": 16,
+            "column": 2
+          },
+          "to": {
+            "line": 6,
+            "column": 2
+          }
+        },
+        {
+          "marker": "const open",
+          "from": {
+            "line": 17,
+            "column": 4
+          },
+          "to": {
+            "line": 7,
+            "column": 4
+          }
+        }
+      ]
+    },
+    "typescript": {
+      "where": "frontend/node_modules (via @typescript-eslint)",
+      "loadMs": 78.606,
+      "firstStripMs": 21.049,
+      "warmStripMs": 0.417,
+      "linesKept": false,
+      "columnsKept": false,
+      "inputLines": 51,
+      "outputLines": 41,
+      "templateKeyLine": [
+        18
+      ],
+      "moved": [
+        {
+          "marker": "const Contacts",
+          "from": {
+            "line": 13,
+            "column": 0
+          },
+          "to": {
+            "line": 4,
+            "column": 0
+          }
+        },
+        {
+          "marker": "setup(",
+          "from": {
+            "line": 16,
+            "column": 2
+          },
+          "to": {
+            "line": 7,
+            "column": 4
+          }
+        },
+        {
+          "marker": "const open",
+          "from": {
+            "line": 17,
+            "column": 4
+          },
+          "to": {
+            "line": 8,
+            "column": 8
+          }
+        }
+      ]
+    }
+  }
+}

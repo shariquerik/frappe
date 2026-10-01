@@ -1,0 +1,19 @@
+snippet                                  node-bui amaro-np ts-blank sucrase  babel    oxc-roll babel-pa esbuild  typescri
+annotations, interface, type alias       ok       ok       ok       ok       ok       moved    ok       moved    moved   
+generics on calls and arrows             ok       ok       ok       ok       ok       ok       ok       ok       ok      
+as, satisfies, non-null !                ok       ok       ok       ok       ok       ok       ok       ok       ok      
+import type / export type                ok       ok       ok       ok       ok       moved    ok       moved    moved   
+declare const / declare module           ok       ok       ok       ok       ok       moved    ok       moved    moved   
+class: implements, abstract, modifiers   ok       ok       ok       ok       ok       moved    ERR      moved    moved   
+class parameter properties               ERR      ERR      ERR      ok       ok       moved    ERR      moved    moved   
+enum                                     ERR      ERR      ERR      ok       ok       moved    ERR      moved    moved   
+const enum                               ERR      ERR      ERR      ok       ok       moved    ERR      moved    moved   
+namespace with code                      ERR      ERR      ERR      ok       ok       moved    ERR      moved    moved   
+namespace types only                     ok       ok       ok       ok       ok       moved    ERR      moved    moved   
+import x = require()                     ERR      ERR      ERR      ok       ERR      ok       ERR      ok       moved   
+export =                                 ERR      ERR      ERR      ok       ERR      ok       ERR      moved    moved   
+angle-bracket assertion <T>x             ERR      ERR      ERR      ok       ok       ok       ok       ok       ok      
+legacy decorator                         ERR      ERR      ERR      ERR      ERR      ERR      ERR      ERR      ERR     
+function overloads                       ok       ok       ok       ok       ok       moved    ok       ok       moved   
+this parameter                           ok       ok       ok       ok       ok       ok       ERR      moved    ok      
+arrow return type across lines           ok       ok       ok       ok       ok       moved    ERR      moved    moved   
