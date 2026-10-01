@@ -1,0 +1,15 @@
+{
+	"name": "prototype-script-markup-syntax",
+	"private": true,
+	"type": "module",
+	"description": "PROTOTYPE, throwaway. One Record-page script written four ways. See README.md.",
+	"scripts": {
+		"start": "node check.mjs && node page.mjs"
+	},
+	"dependencies": {
+		"esbuild": "0.28.1",
+		"happy-dom": "*",
+		"htm": "3.1.1",
+		"vue": "3.5.41"
+	}
+}
