@@ -79,18 +79,6 @@
 					<template #prefix>
 						<LucideSearch class="size-4 text-ink-gray-5" />
 					</template>
-					<template v-if="place === 'inside'" #suffix>
-						<PrototypeUserMenu v-slot="{ user }" side="bottom" align="end">
-							<button
-								type="button"
-								class="-mr-1 flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
-								:aria-label="user.full_name"
-								@mousedown.prevent
-							>
-								<Avatar :image="user.user_image" :label="user.full_name" size="md" />
-							</button>
-						</PrototypeUserMenu>
-					</template>
 				</TextInput>
 
 				<div
@@ -159,7 +147,7 @@ const filterBox = ref(null);
 const { apps, loading, query, matches, onKeydown } = useIndex(boot, filterBox);
 
 const route = useRoute();
-const PLACES = ["corner", "rail", "inline", "above", "inside"] as const;
+const PLACES = ["corner", "rail", "inline", "above"] as const;
 const place = computed(() => {
 	const asked = route.query.avatar as (typeof PLACES)[number];
 	return PLACES.includes(asked) ? asked : "rail";
@@ -175,6 +163,6 @@ const boxWidth = computed(() => {
 	return `${columns * TILE + (columns - 1) * GAP - (TILE - LOGO)}px`;
 });
 
-const MENU_SIDE = { corner: "bottom", rail: "right", inline: "bottom", above: "bottom", inside: "bottom" } as const;
-const MENU_ALIGN = { corner: "end", rail: "end", inline: "end", above: "center", inside: "end" } as const;
+const MENU_SIDE = { corner: "bottom", rail: "right", inline: "bottom", above: "bottom" } as const;
+const MENU_ALIGN = { corner: "end", rail: "end", inline: "end", above: "center" } as const;
 </script>
