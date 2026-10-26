@@ -17,8 +17,9 @@ const props = withDefaults(
 		side?: "bottom" | "top" | "right" | "left";
 		align?: "start" | "center" | "end";
 		extra?: { label: string; icon: string; onClick: () => void }[];
+		notices?: { label: string; icon: string; onClick: () => void }[];
 	}>(),
-	{ side: "bottom", align: "end", extra: () => [] }
+	{ side: "bottom", align: "end", extra: () => [], notices: () => [] }
 );
 
 const boot = inject<Boot>("boot")!;
@@ -32,6 +33,7 @@ const SCHEMES = [
 
 const menu = computed<DropdownOptions>(() => [
 	{ group: "", hideLabel: true, options: [profileHeader()] },
+	...(props.notices.length ? [{ group: "", hideLabel: true, options: props.notices }] : []),
 	{
 		group: "",
 		hideLabel: true,

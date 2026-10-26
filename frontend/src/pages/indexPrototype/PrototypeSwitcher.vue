@@ -15,6 +15,20 @@
 		>
 			{{ label }}
 		</button>
+		<template v-if="extras.has('setup') || extras.has('news')">
+			<span class="mx-1 h-4 w-px bg-white/20" />
+			<span class="px-1 text-white/60">alerts</span>
+			<button
+				v-for="place in ['corner', 'avatar', 'below']"
+				:key="place"
+				type="button"
+				class="rounded-full px-2 py-1"
+				:class="(route.query.alerts ?? 'corner') === place ? 'bg-white text-gray-900' : 'hover:bg-white/10'"
+				@click="set({ alerts: place === 'corner' ? undefined : place })"
+			>
+				{{ place }}
+			</button>
+		</template>
 	</div>
 	<div
 		class="flex items-center gap-1 rounded-full bg-gray-900 py-1 pl-1 pr-3 text-sm text-white shadow-xl ring-1 ring-white/10"

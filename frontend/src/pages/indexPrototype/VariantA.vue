@@ -7,30 +7,47 @@
 	<div class="relative flex h-full flex-col bg-surface-base">
 		<!-- Where the rail draws it inside every app: 50px column, 11px side padding, 12px from the foot. -->
 		<div class="absolute bottom-3 left-[11px] z-10">
-			<PrototypeUserMenu v-slot="{ user }" side="right" align="end" :extra="menuExtra">
+			<PrototypeUserMenu
+				v-slot="{ user }"
+				side="right"
+				align="end"
+				:extra="menuExtra"
+				:notices="alertPlace === 'avatar' ? noticeRows : []"
+			>
 				<button
 					type="button"
-					class="flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
+					class="relative flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
 					:aria-label="user.full_name"
 				>
 					<Avatar :image="user.user_image" :label="user.full_name" size="lg" />
+					<!-- Something waits in the menu. -->
+					<span
+						v-if="alertPlace === 'avatar' && notices.length"
+						class="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-surface-gray-7 shadow-[0_0_0_2px_var(--surface-base)]"
+					/>
 				</button>
 			</PrototypeUserMenu>
 		</div>
 
+		<!-- Notices in the free corner, away from the launcher. -->
+		<div
+			v-if="alertPlace === 'corner' && notices.length"
+			class="absolute bottom-3 right-3 z-10 flex w-80 flex-col gap-2"
+		>
+			<Alert
+				v-for="notice in notices"
+				:key="notice.key"
+				class="shadow-lg ring-1 ring-outline-gray-1"
+				:title="notice.title"
+				:description="notice.description"
+				:primary-action="{ label: notice.action, onClick: () => {} }"
+				dismissible
+				@dismiss="dismiss(notice.key)"
+			/>
+		</div>
+
 		<ScrollArea class="min-h-0 flex-1">
 			<div class="mx-auto flex max-w-4xl flex-col items-center px-6 pb-24 pt-[18vh]">
-				<Alert
-					v-if="has('news') && !newsDismissed"
-					class="mb-6 w-full"
-					:style="{ maxWidth: boxWidth }"
-					title="Desk v2 is here"
-					description="Apps now open on the page you work in, not on a module page."
-					:primary-action="{ label: 'What\'s new', onClick: () => {} }"
-					dismissible
-					@dismiss="newsDismissed = true"
-				/>
-
 				<TextInput
 					ref="filterBox"
 					v-model="query"
@@ -45,20 +62,6 @@
 						<LucideSearch class="size-4 text-ink-gray-5" />
 					</template>
 				</TextInput>
-
-				<!-- With arrow keys on, say so: the highlight alone is easy to miss. -->
-				<p
-					v-if="has('keys') && apps.length"
-					class="mt-3 flex items-center gap-1.5 text-sm text-ink-gray-5"
-				>
-					<KeyboardShortcut combo="ArrowLeft" bg use-icons />
-					<KeyboardShortcut combo="ArrowRight" bg use-icons />
-					<KeyboardShortcut combo="ArrowUp" bg use-icons />
-					<KeyboardShortcut combo="ArrowDown" bg use-icons />
-					<span class="ml-1">to move,</span>
-					<KeyboardShortcut combo="Enter" bg use-icons />
-					<span>to open</span>
-				</p>
 
 				<!-- Quick create: what the query names as a doctype, under the box. -->
 				<ul
@@ -87,16 +90,6 @@
 						</ItemListRow>
 					</li>
 				</ul>
-
-				<Alert
-					v-if="has('setup')"
-					class="mt-6 w-full"
-					:style="{ maxWidth: boxWidth }"
-					theme="gray"
-					title="Finish setting up ERPNext"
-					description="3 of 7 steps done: your company, chart of accounts and first item."
-					:primary-action="{ label: 'Continue setup', onClick: () => {} }"
-				/>
 
 				<!-- Arrange mode's own bar: what you can do, and the way out. -->
 				<div
@@ -170,13 +163,7 @@
 							<a
 								:href="app.href"
 								class="group flex flex-col items-center gap-2 rounded-5 p-2 outline-none transition hover:bg-surface-gray-2 focus-visible:focus-ring"
-								:class="
-									index === selected
-										? has('keys')
-											? 'bg-surface-gray-2 ring-1 ring-inset ring-outline-gray-3'
-											: 'bg-surface-gray-2'
-										: ''
-								"
+								:class="index === selected ? 'bg-surface-gray-2' : ''"
 							>
 								<span class="relative">
 									<AppLogo
@@ -235,6 +222,30 @@
 					</li>
 				</ul>
 
+				<ul
+					v-if="alertPlace === 'below' && notices.length && !query && !editing"
+					class="mt-12 flex w-full flex-col gap-1"
+					:style="{ maxWidth: boxWidth }"
+				>
+					<li
+						v-for="notice in notices"
+						:key="notice.key"
+						class="flex items-center gap-2 text-sm text-ink-gray-6"
+					>
+						<component :is="notice.icon" class="size-4 shrink-0 text-ink-gray-5" />
+						<span class="truncate">{{ notice.title }}</span>
+						<a href="#" class="shrink-0 font-medium text-ink-gray-8 hover:underline">{{ notice.action }}</a>
+						<button
+							type="button"
+							class="ml-auto flex size-5 shrink-0 items-center justify-center rounded-2 text-ink-gray-5 hover:bg-surface-gray-2"
+							aria-label="Dismiss"
+							@click="dismiss(notice.key)"
+						>
+							<LucideX class="size-3.5" />
+						</button>
+					</li>
+				</ul>
+
 				<section
 					v-if="has('pinned') && !query && !editing"
 					class="mt-14 w-full"
@@ -284,13 +295,13 @@
 
 <script setup lang="ts">
 import { computed, inject, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import {
 	Alert,
 	Avatar,
 	Button,
 	Dropdown,
 	ItemListRow,
-	KeyboardShortcut,
 	ScrollArea,
 	Skeleton,
 	TextInput,
@@ -303,6 +314,9 @@ import type { Boot } from "@/boot";
 import LucideEllipsis from "~icons/lucide/ellipsis";
 import LucideEye from "~icons/lucide/eye";
 import LucideEyeOff from "~icons/lucide/eye-off";
+import LucideListChecks from "~icons/lucide/list-checks";
+import LucideSparkles from "~icons/lucide/sparkles";
+import LucideX from "~icons/lucide/x";
 import LucidePlus from "~icons/lucide/plus";
 import LucideSearch from "~icons/lucide/search";
 import LucideStar from "~icons/lucide/star";
@@ -318,7 +332,48 @@ const { apps, loading, query } = useIndex(boot, filterBox);
 const extras = useExtras();
 const has = (extra: Extra) => extras.value.has(extra);
 
-const newsDismissed = ref(false);
+// Where the setup nudge and what's new go: `?alerts=corner|avatar|below`.
+const route = useRoute();
+const ALERT_PLACES = ["corner", "avatar", "below"] as const;
+const alertPlace = computed(() => {
+	const asked = route.query.alerts as (typeof ALERT_PLACES)[number];
+	return ALERT_PLACES.includes(asked) ? asked : "corner";
+});
+const dismissed = ref(new Set<string>());
+function dismiss(key: string) {
+	dismissed.value = new Set([...dismissed.value, key]);
+}
+const notices = computed(() =>
+	[
+		has("setup") && {
+			key: "setup",
+			icon: LucideListChecks,
+			title: "Finish setting up ERPNext",
+			description: "3 of 7 steps done.",
+			action: "Continue",
+		},
+		has("news") && {
+			key: "news",
+			icon: LucideSparkles,
+			title: "Desk v2 is here",
+			description: "Apps now open on the page you work in.",
+			action: "What's new",
+		},
+	].filter((notice) => notice && !dismissed.value.has(notice.key)) as {
+		key: string;
+		icon: unknown;
+		title: string;
+		description: string;
+		action: string;
+	}[]
+);
+const noticeRows = computed(() =>
+	notices.value.map((notice) => ({
+		label: notice.title,
+		icon: notice.key === "setup" ? "lucide-list-checks" : "lucide-sparkles",
+		onClick: () => {},
+	}))
+);
 
 // The arrangement is in memory: persistence is a layer question the map has not settled.
 const order = ref<string[]>([]);
