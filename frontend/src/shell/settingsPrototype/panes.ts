@@ -44,6 +44,7 @@ export interface PaneGroup {
 const sessionUser: BindingSpec = { type: "Record", doctype: "User", resolver: "session_user" };
 const systemSettings: BindingSpec = { type: "Single", doctype: "System Settings" };
 const fcrmSettings: BindingSpec = { type: "Single", doctype: "FCRM Settings" };
+const sellingSettings: BindingSpec = { type: "Single", doctype: "Selling Settings" };
 
 const AppearanceBlock = defineAsyncComponent(() => import("./blocks/AppearanceBlock.vue"));
 const BrandingBlock = defineAsyncComponent(() => import("./blocks/BrandingBlock.vue"));
@@ -236,6 +237,35 @@ export const GROUPS: PaneGroup[] = [
 						save: "auto",
 						component: BrandingBlock,
 						bindings: { settings: fcrmSettings },
+					},
+				],
+			},
+			{
+				key: "erpnext",
+				label: "ERPNext",
+				icon: "lucide-building-2",
+				description: "ERPNext's selling defaults, as CRM chooses to show them.",
+				blocks: [
+					{
+						key: "new-customers",
+						app: "crm",
+						label: "New customers",
+						description: "Used when a won deal creates a customer in ERPNext.",
+						save: "auto",
+						binding: sellingSettings,
+						fields: ["customer_group", "territory", "selling_price_list"],
+					},
+					{
+						key: "prices",
+						app: "crm",
+						label: "Prices",
+						save: "auto",
+						binding: sellingSettings,
+						fields: [
+							"fallback_to_default_price_list",
+							"editable_price_list_rate",
+							"validate_selling_price",
+						],
 					},
 				],
 			},
