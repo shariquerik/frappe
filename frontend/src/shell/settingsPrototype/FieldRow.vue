@@ -27,7 +27,7 @@
 		</template>
 		<SettingsRow v-else :title="field.label ?? field.fieldname" :description="field.description">
 			<div class="flex items-center gap-2">
-				<StatusMark v-if="rowMarks" :status="markStatus" />
+				<StatusMark :status="markStatus" />
 				<Switch
 					v-if="field.fieldtype === 'Check'"
 					:model-value="!!binding.doc[field.fieldname]"
@@ -63,8 +63,6 @@ import StatusMark from "./StatusMark.vue";
 const props = defineProps<{
 	field: FieldMeta;
 	binding: BindingState;
-	/** Variant C: each row shows its own Saving / Saved mark. */
-	rowMarks?: boolean;
 	blockStatus?: BlockStatus;
 	dirty?: boolean;
 }>();

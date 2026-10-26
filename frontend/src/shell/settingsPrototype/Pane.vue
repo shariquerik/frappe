@@ -1,4 +1,4 @@
-<!-- PROTOTYPE variant C: each row shows its own save mark; a doctype's tabs are a tab strip;
+<!-- PROTOTYPE: a pane. Each row shows its own save mark, a doctype's tabs are a tab strip, and
      button blocks get a floating Save. The pane does not link to the record. -->
 <template>
 	<SettingsHeader>
@@ -18,8 +18,6 @@
 				:pane="state"
 				:prefix="prefix"
 				:pane-key="pane.key"
-				tabs
-				row-marks
 			/>
 		</section>
 	</SettingsBody>
@@ -56,9 +54,9 @@
 
 <script setup lang="ts">
 import { Button, SettingsBody, SettingsHeader } from "frappe-ui";
-import type { PaneSpec } from "../panes";
-import type { PaneState } from "../bindings";
-import BlockRows from "../BlockRows.vue";
+import type { PaneSpec } from "./panes";
+import type { PaneState } from "./bindings";
+import BlockRows from "./BlockRows.vue";
 
 defineProps<{ pane: PaneSpec; prefix: string; state: PaneState }>();
 </script>

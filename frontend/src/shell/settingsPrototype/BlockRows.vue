@@ -1,5 +1,4 @@
-<!-- PROTOTYPE: a block's content, generated or component. Tabs are headings, or a tab strip
-     when `tabs` is set (variant C). -->
+<!-- PROTOTYPE: a block's content, generated or component. A doctype's tabs are a tab strip. -->
 <template>
 	<div ref="root" :data-block="block.key">
 	<div v-if="block.component">
@@ -19,19 +18,13 @@
 			>
 				No {{ binding.doctype }} for you yet. The first change creates it.
 			</div>
-			<div v-if="tabs && groups.length > 1" class="mb-2 mt-1 w-0 min-w-full overflow-x-auto">
+			<div v-if="groups.length > 1" class="mb-2 mt-1 w-0 min-w-full overflow-x-auto">
 				<TabButtons
 					v-model="activeGroup"
 					:options="groups.map((group) => ({ label: group.label ?? 'General', value: group.name }))"
 				/>
 			</div>
 			<template v-for="group in shownGroups" :key="group.name">
-				<h4
-					v-if="group.label && !tabs"
-					class="mt-6 border-b border-outline-gray-2 pb-1.5 text-sm font-semibold uppercase tracking-wide text-ink-gray-5 first:mt-2"
-				>
-					{{ group.label }}
-				</h4>
 				<template v-for="section in group.sections" :key="section.name">
 					<h5 v-if="section.label" class="mt-5 text-base font-medium text-ink-gray-6">
 						{{ section.label }}
@@ -41,7 +34,6 @@
 						:key="field.fieldname"
 						:field="field"
 						:binding="binding"
-						:row-marks="rowMarks"
 						:block-status="pane.blocks[block.key].status"
 						@commit="pane.commit(block, [field.fieldname])"
 					/>
@@ -66,8 +58,6 @@ const props = defineProps<{
 	pane: PaneState;
 	prefix: string;
 	paneKey: string;
-	tabs?: boolean;
-	rowMarks?: boolean;
 }>();
 const root = ref<HTMLElement | null>(null);
 
@@ -77,7 +67,7 @@ const groups = computed(() =>
 );
 const activeGroup = ref("");
 const shownGroups = computed(() => {
-	if (!props.tabs || groups.value.length < 2) return groups.value;
+	if (groups.value.length < 2) return groups.value;
 	const name = activeGroup.value || groups.value[0].name;
 	return groups.value.filter((group) => group.name === name);
 });

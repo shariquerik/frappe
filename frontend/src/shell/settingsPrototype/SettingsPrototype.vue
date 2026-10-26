@@ -1,5 +1,4 @@
-<!-- PROTOTYPE (throwaway): the settings dialog at `#settings/<prefix>/<pane>`, with the pane drawn
-     by one of three variants picked by `?variant=`. Saves are stubbed. -->
+<!-- PROTOTYPE (throwaway): the settings dialog at `#settings/<prefix>/<pane>`. Saves are stubbed. -->
 <template>
 	<SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl" :keyboard-shortcut="false">
 		<SettingsSidebar>
@@ -39,19 +38,16 @@
 					<PaneHost
 						:pane="pane"
 						:prefix="group.prefix"
-						:variant="variant"
 						:session-user="boot.session.user.name"
 					/>
 				</SettingsPanel>
 			</template>
-			<PrototypeSwitcher :variants="VARIANTS" />
 		</SettingsContent>
 	</SettingsDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, provide, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import {
 	Avatar,
 	SettingsContent,
@@ -66,18 +62,10 @@ import type { Boot } from "@/boot";
 import { useHashDialog } from "../useHashDialog";
 import { findPane, groupsFor, hasGroup } from "./panes";
 import PaneHost from "./PaneHost.vue";
-import PrototypeSwitcher from "./PrototypeSwitcher.vue";
 import SettingsSearch from "./SettingsSearch.vue";
 import { searchTarget, type SearchHit } from "./search";
 
-const VARIANTS = [
-	{ key: "A", name: "Headings, Save bar at the foot" },
-	{ key: "B", name: "Cards, Save in the header" },
-	{ key: "C", name: "Marks per row, tabs, floating Save" },
-];
-
 const boot = inject<Boot>("boot")!;
-const route = useRoute();
 const hash = useHashDialog("settings");
 provide(RecordLinkKey, null);
 
@@ -97,8 +85,6 @@ function pick(hit: SearchHit) {
 	};
 	hash.write(hit.prefix, hit.pane.key);
 }
-
-const variant = computed(() => String(route.query.variant ?? "A"));
 
 const open = computed({
 	get: () => hash.open.value,
