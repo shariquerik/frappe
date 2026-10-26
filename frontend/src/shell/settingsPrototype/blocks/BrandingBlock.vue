@@ -1,20 +1,20 @@
 <!-- PROTOTYPE: a component block with one named binding (`settings`, FCRM Settings). It edits
      the shared draft and calls commit() when a value is final; it never sends the save. -->
 <template>
-	<div v-if="settings.state.loading" class="h-32 animate-pulse rounded-lg bg-surface-gray-2" />
+	<div v-if="settings.state.loading" class="h-32 animate-pulse rounded-4 bg-surface-gray-2" />
 	<div v-else class="flex gap-6 py-3">
 		<div
-			class="flex w-56 shrink-0 flex-col items-center justify-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-4"
+			class="flex w-56 shrink-0 flex-col items-center justify-center gap-2 rounded-4 border border-outline-gray-2 bg-surface-gray-1 p-4"
 		>
 			<img
 				v-if="doc.brand_logo"
 				:src="doc.brand_logo"
-				class="size-10 rounded object-contain"
+				class="size-10 rounded-1 object-contain"
 				alt=""
 			/>
 			<span
 				v-else
-				class="flex size-10 items-center justify-center rounded bg-surface-gray-4 text-lg font-semibold text-ink-gray-7"
+				class="flex size-10 items-center justify-center rounded-1 bg-surface-gray-4 text-lg font-semibold text-ink-gray-7"
 			>
 				{{ (doc.brand_name || "CRM").slice(0, 1) }}
 			</span>

@@ -7,7 +7,7 @@
 	</div>
 	<template v-else-if="binding">
 		<div v-if="binding.loading" class="space-y-3 py-3">
-			<div v-for="n in 3" :key="n" class="h-7 animate-pulse rounded bg-surface-gray-2" />
+			<div v-for="n in 3" :key="n" class="h-7 animate-pulse rounded-1 bg-surface-gray-2" />
 		</div>
 		<div v-else-if="binding.error" class="py-3 text-base text-ink-red-4">
 			Could not read {{ binding.doctype }}: {{ binding.error }}
@@ -15,7 +15,7 @@
 		<template v-else>
 			<div
 				v-if="binding.isNew"
-				class="mb-1 rounded bg-surface-gray-2 px-3 py-2 text-sm text-ink-gray-6"
+				class="mb-1 rounded-1 bg-surface-gray-2 px-3 py-2 text-sm text-ink-gray-6"
 			>
 				No {{ binding.doctype }} for you yet. The first change creates it.
 			</div>

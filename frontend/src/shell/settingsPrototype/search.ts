@@ -98,4 +98,4 @@ function fieldsOf(block: BlockSpec): RawMetaField[] {
 
 /** The rounded layer a search pick flashes, a little wider than its row and behind its content. */
 export const FLASH =
-	"pointer-events-none absolute -inset-x-3 inset-y-0.5 -z-10 rounded-lg bg-surface-amber-2 opacity-0";
+	"pointer-events-none absolute -inset-x-3 inset-y-1 -z-10 rounded-4 bg-surface-gray-3 opacity-0";

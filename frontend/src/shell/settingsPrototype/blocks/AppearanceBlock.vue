@@ -6,7 +6,7 @@
 			v-for="scheme in SCHEMES"
 			:key="scheme.value"
 			type="button"
-			class="flex flex-col items-center gap-2 rounded-lg border p-3 text-base text-ink-gray-8 transition hover:bg-surface-gray-1"
+			class="flex flex-col items-center gap-2 rounded-4 border p-3 text-base text-ink-gray-8 transition hover:bg-surface-gray-1"
 			:class="
 				colorScheme === scheme.value
 					? 'border-outline-gray-5 ring-1 ring-outline-gray-5'
@@ -15,11 +15,11 @@
 			@click="setColorScheme(scheme.value)"
 		>
 			<span
-				class="flex h-14 w-full items-end justify-start gap-1 rounded-md p-2"
+				class="flex h-14 w-full items-end justify-start gap-1 rounded-3 p-2"
 				:class="scheme.preview"
 			>
-				<span class="h-2 w-8 rounded-sm bg-current opacity-40" />
-				<span class="h-2 w-4 rounded-sm bg-current opacity-20" />
+				<span class="h-2 w-8 rounded-1 bg-current opacity-40" />
+				<span class="h-2 w-4 rounded-1 bg-current opacity-20" />
 			</span>
 			<span class="flex items-center gap-1.5">
 				<span :class="scheme.icon" class="size-4" />
