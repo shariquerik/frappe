@@ -12,10 +12,14 @@ import { Avatar, Dropdown, useColorScheme, type DropdownOptions } from "frappe-u
 import type { Boot } from "@/boot";
 import LogoutDialog from "@/shell/LogoutDialog.vue";
 
-withDefaults(defineProps<{ side?: "bottom" | "top" | "right" | "left"; align?: "start" | "center" | "end" }>(), {
-	side: "bottom",
-	align: "end",
-});
+const props = withDefaults(
+	defineProps<{
+		side?: "bottom" | "top" | "right" | "left";
+		align?: "start" | "center" | "end";
+		extra?: { label: string; icon: string; onClick: () => void }[];
+	}>(),
+	{ side: "bottom", align: "end", extra: () => [] }
+);
 
 const boot = inject<Boot>("boot")!;
 const confirmingLogout = ref(false);
@@ -47,6 +51,7 @@ const menu = computed<DropdownOptions>(() => [
 					onClick: () => setColorScheme(scheme.value),
 				})),
 			},
+			...props.extra,
 		],
 	},
 	{
