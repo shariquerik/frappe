@@ -46,6 +46,20 @@
 					</template>
 				</TextInput>
 
+				<!-- With arrow keys on, say so: the highlight alone is easy to miss. -->
+				<p
+					v-if="has('keys') && apps.length"
+					class="mt-3 flex items-center gap-1.5 text-sm text-ink-gray-5"
+				>
+					<KeyboardShortcut combo="ArrowLeft" bg use-icons />
+					<KeyboardShortcut combo="ArrowRight" bg use-icons />
+					<KeyboardShortcut combo="ArrowUp" bg use-icons />
+					<KeyboardShortcut combo="ArrowDown" bg use-icons />
+					<span class="ml-1">to move,</span>
+					<KeyboardShortcut combo="Enter" bg use-icons />
+					<span>to open</span>
+				</p>
+
 				<!-- Quick create: what the query names as a doctype, under the box. -->
 				<ul
 					v-if="creates.length"
@@ -156,7 +170,13 @@
 							<a
 								:href="app.href"
 								class="group flex flex-col items-center gap-2 rounded-5 p-2 outline-none transition hover:bg-surface-gray-2 focus-visible:focus-ring"
-								:class="index === selected ? 'bg-surface-gray-2' : ''"
+								:class="
+									index === selected
+										? has('keys')
+											? 'bg-surface-gray-2 ring-1 ring-inset ring-outline-gray-3'
+											: 'bg-surface-gray-2'
+										: ''
+								"
 							>
 								<span class="relative">
 									<AppLogo
@@ -270,6 +290,7 @@ import {
 	Button,
 	Dropdown,
 	ItemListRow,
+	KeyboardShortcut,
 	ScrollArea,
 	Skeleton,
 	TextInput,
