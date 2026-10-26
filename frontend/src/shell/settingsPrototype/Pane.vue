@@ -30,7 +30,7 @@
 	>
 		<div
 			v-if="state.hasButtonBlocks && (state.buttonDirtyCount.value || state.buttonErrorCount.value)"
-			class="absolute bottom-14 right-8 z-40 flex items-center gap-3 rounded-4 border border-outline-gray-2 bg-surface-elevation-3 py-2 pl-4 pr-2 shadow-xl"
+			class="absolute bottom-6 right-6 z-40 flex items-center gap-3 rounded-4 border border-outline-gray-2 bg-surface-elevation-3 py-2 pl-4 pr-2 shadow-xl"
 		>
 			<span
 				class="text-base"
