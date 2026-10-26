@@ -1,0 +1,96 @@
+// PROTOTYPE: search over every pane, block and field. The field labels come from each bound
+// doctype's meta, read once when the search box is first focused.
+
+import { computed, effectScope, ref, shallowRef, type ComputedRef } from "vue";
+import { useDoctypeMeta } from "@framework/ui/composables/useDoctypeMeta";
+import type { RawMetaField } from "@framework/ui/components/FormLayout/types";
+import { GROUPS, type BlockSpec, type PaneGroup, type PaneSpec } from "./panes";
+import { dataFields } from "./rows";
+
+export interface SearchHit {
+	prefix: string;
+	appLabel: string;
+	pane: PaneSpec;
+	block?: BlockSpec;
+	fieldname?: string;
+	title: string;
+	path: string;
+}
+
+/** The field a search result asked for; the pane scrolls to it and flashes it. */
+export const searchTarget = ref<{
+	prefix: string;
+	pane: string;
+	block?: string;
+	fieldname?: string;
+} | null>(null);
+
+const metas = shallowRef<Record<string, ComputedRef<RawMetaField[]>>>({});
+let started = false;
+
+/** Reads every bound doctype's meta; a no-op after the first call. */
+export function warmIndex() {
+	if (started) return;
+	started = true;
+	const doctypes = new Set(
+		GROUPS.flatMap((group) =>
+			group.panes.flatMap((pane) =>
+				pane.blocks.flatMap((block) => [
+					...(block.binding ? [block.binding.doctype] : []),
+					...Object.values(block.bindings ?? {}).map((spec) => spec.doctype),
+				])
+			)
+		)
+	);
+	effectScope(true).run(() => {
+		const entries: Record<string, ComputedRef<RawMetaField[]>> = {};
+		for (const doctype of doctypes) {
+			const { meta } = useDoctypeMeta(doctype);
+			entries[doctype] = computed(() => (meta.value?.fields ?? []) as RawMetaField[]);
+		}
+		metas.value = entries;
+	});
+}
+
+export function search(query: string, groups: PaneGroup[]): SearchHit[] {
+	const needle = query.trim().toLowerCase();
+	if (!needle) return [];
+	const matches = (...texts: (string | undefined)[]) =>
+		texts.some((text) => text?.toLowerCase().includes(needle));
+
+	return groups.flatMap((group) =>
+		group.panes.flatMap((pane) => {
+			const appLabel = GROUPS.find((other) => other.prefix === group.prefix)!.label;
+			const base = { prefix: group.prefix, appLabel, pane };
+			const hits: SearchHit[] = [];
+			if (matches(pane.label, pane.description))
+				hits.push({ ...base, title: pane.label, path: appLabel });
+			for (const block of pane.blocks) {
+				const where = block.label ? `${pane.label} › ${block.label}` : pane.label;
+				if (block.label && matches(block.label, block.description, ...(block.keywords ?? [])))
+					hits.push({ ...base, block, title: block.label, path: pane.label });
+				else if (!block.label && matches(...(block.keywords ?? [])))
+					hits.push({ ...base, block, title: pane.label, path: appLabel });
+				for (const field of fieldsOf(block)) {
+					if (matches(field.label, field.description))
+						hits.push({
+							...base,
+							block,
+							fieldname: field.fieldname,
+							title: field.label ?? field.fieldname,
+							path: where,
+						});
+				}
+			}
+			return hits;
+		})
+	);
+}
+
+function fieldsOf(block: BlockSpec): RawMetaField[] {
+	if (!block.binding) return [];
+	const meta = metas.value[block.binding.doctype]?.value ?? [];
+	const names = block.fields?.length ? block.fields : dataFields(meta);
+	const byName = new Map(meta.map((field) => [field.fieldname, field]));
+	return names.map((name) => byName.get(name)).filter((field): field is RawMetaField => !!field);
+}

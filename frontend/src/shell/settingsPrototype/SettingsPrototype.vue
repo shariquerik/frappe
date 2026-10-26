@@ -3,8 +3,10 @@
 <template>
 	<SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl" :keyboard-shortcut="false">
 		<SettingsSidebar>
+			<SettingsSearch v-model="query" :groups="groups" @pick="pick" />
 			<SettingsNavGroup
 				v-for="group in groups"
+				v-show="!query.trim()"
 				:key="group.prefix"
 				:label="group.label || undefined"
 			>
@@ -31,6 +33,7 @@
 				<SettingsPanel
 					v-for="pane in group.panes"
 					:key="pane.key"
+					class="min-w-0"
 					:value="`${group.prefix}/${pane.key}`"
 				>
 					<PaneHost
@@ -47,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, provide, watch } from "vue";
+import { computed, inject, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
 	Avatar,
@@ -64,6 +67,8 @@ import { useHashDialog } from "../useHashDialog";
 import { findPane, groupsFor, hasGroup } from "./panes";
 import PaneHost from "./PaneHost.vue";
 import PrototypeSwitcher from "./PrototypeSwitcher.vue";
+import SettingsSearch from "./SettingsSearch.vue";
+import { searchTarget, type SearchHit } from "./search";
 
 const VARIANTS = [
 	{ key: "A", name: "Headings, Save bar at the foot" },
@@ -81,6 +86,18 @@ const currentPrefix = computed(() => {
 	return hasGroup(prefix) ? prefix : "desk";
 });
 const groups = computed(() => groupsFor(currentPrefix.value, hash.segments.value[0]));
+const query = ref("");
+
+function pick(hit: SearchHit) {
+	searchTarget.value = {
+		prefix: hit.prefix,
+		pane: hit.pane.key,
+		block: hit.block?.key,
+		fieldname: hit.fieldname,
+	};
+	hash.write(hit.prefix, hit.pane.key);
+}
+
 const variant = computed(() => String(route.query.variant ?? "A"));
 
 const open = computed({

@@ -67,7 +67,7 @@
 					{{ block.description }}
 				</p>
 				<div class="px-4">
-					<BlockRows :block="block" :pane="state" />
+					<BlockRows :block="block" :pane="state" :prefix="prefix" :pane-key="pane.key" />
 				</div>
 			</section>
 		</div>

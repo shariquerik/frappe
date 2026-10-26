@@ -13,7 +13,14 @@
 				{{ block.label }}
 			</h3>
 			<p v-if="block.description" class="text-sm text-ink-gray-5">{{ block.description }}</p>
-			<BlockRows :block="block" :pane="state" tabs row-marks />
+			<BlockRows
+				:block="block"
+				:pane="state"
+				:prefix="prefix"
+				:pane-key="pane.key"
+				tabs
+				row-marks
+			/>
 		</section>
 	</SettingsBody>
 	<Transition

@@ -25,6 +25,8 @@ export interface BlockSpec {
 	/** A component block, with its named bindings. */
 	component?: Component;
 	bindings?: Record<string, BindingSpec>;
+	/** Words search matches; a component block has no fields to match. */
+	keywords?: string[];
 }
 
 export interface PaneSpec {
@@ -73,6 +75,7 @@ export const GROUPS: PaneGroup[] = [
 						label: "Appearance",
 						save: "auto",
 						component: AppearanceBlock,
+						keywords: ["theme", "dark mode", "light mode", "colour scheme"],
 					},
 					{
 						key: "notifications",
@@ -236,6 +239,7 @@ export const GROUPS: PaneGroup[] = [
 						app: "crm",
 						save: "auto",
 						component: BrandingBlock,
+						keywords: ["brand name", "logo", "branding"],
 						bindings: { settings: fcrmSettings },
 					},
 				],

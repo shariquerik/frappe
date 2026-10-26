@@ -19,7 +19,7 @@
 				/>
 			</div>
 			<p v-if="block.description" class="text-sm text-ink-gray-5">{{ block.description }}</p>
-			<BlockRows :block="block" :pane="state" />
+			<BlockRows :block="block" :pane="state" :prefix="prefix" :pane-key="pane.key" />
 		</section>
 	</SettingsBody>
 	<div

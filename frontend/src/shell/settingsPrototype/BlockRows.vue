@@ -1,6 +1,7 @@
 <!-- PROTOTYPE: a block's content, generated or component. Tabs are headings, or a tab strip
      when `tabs` is set (variant C). -->
 <template>
+	<div ref="root" :data-block="block.key">
 	<div v-if="block.component">
 		<component :is="block.component" :bindings="componentBindings" />
 	</div>
@@ -18,12 +19,12 @@
 			>
 				No {{ binding.doctype }} for you yet. The first change creates it.
 			</div>
-			<TabButtons
-				v-if="tabs && groups.length > 1"
-				v-model="activeGroup"
-				class="mb-2 mt-1"
-				:options="groups.map((group) => ({ label: group.label ?? 'General', value: group.name }))"
-			/>
+			<div v-if="tabs && groups.length > 1" class="mb-2 mt-1 w-0 min-w-full overflow-x-auto">
+				<TabButtons
+					v-model="activeGroup"
+					:options="groups.map((group) => ({ label: group.label ?? 'General', value: group.name }))"
+				/>
+			</div>
 			<template v-for="group in shownGroups" :key="group.name">
 				<h4
 					v-if="group.label && !tabs"
@@ -48,22 +49,27 @@
 			</template>
 		</template>
 	</template>
+</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { TabButtons } from "frappe-ui";
 import type { BlockSpec } from "./panes";
 import type { PaneState } from "./bindings";
 import { rowGroups } from "./rows";
 import FieldRow from "./FieldRow.vue";
+import { searchTarget } from "./search";
 
 const props = defineProps<{
 	block: BlockSpec;
 	pane: PaneState;
+	prefix: string;
+	paneKey: string;
 	tabs?: boolean;
 	rowMarks?: boolean;
 }>();
+const root = ref<HTMLElement | null>(null);
 
 const binding = computed(() => props.pane.bindingOf(props.block));
 const groups = computed(() =>
@@ -88,5 +94,39 @@ const componentBindings = computed(() =>
 			},
 		])
 	)
+);
+
+// A search result for this block: show its tab, then scroll to it and flash it once it has loaded.
+watch(
+	() => [searchTarget.value, binding.value?.loading] as const,
+	async ([target, loading]) => {
+		if (!target || loading) return;
+		if (target.prefix !== props.prefix || target.pane !== props.paneKey) return;
+		if (target.block !== props.block.key) return;
+		const group = groups.value.find((candidate) =>
+			candidate.sections.some((section) =>
+				section.fields.some((field) => field.fieldname === target.fieldname)
+			)
+		);
+		if (group) activeGroup.value = group.name;
+		searchTarget.value = null;
+		await nextTick();
+		const element = target.fieldname
+			? root.value?.querySelector<HTMLElement>(`[data-fieldname="${target.fieldname}"]`)
+			: root.value;
+		const viewport = element?.closest<HTMLElement>("[data-reka-scroll-area-viewport]");
+		if (element && viewport) {
+			const offset = element.getBoundingClientRect().top - viewport.getBoundingClientRect().top;
+			viewport.scrollTo({
+				top: viewport.scrollTop + offset - viewport.clientHeight / 3,
+				behavior: "smooth",
+			});
+		}
+		element?.animate(
+			[{ backgroundColor: "var(--surface-amber-2, #fde68a)" }, { backgroundColor: "transparent" }],
+			{ duration: 1800, easing: "ease-out" }
+		);
+	},
+	{ immediate: true }
 );
 </script>
