@@ -98,9 +98,9 @@ const LONG = new Set([
 
 const stacked = computed(() => LONG.has(props.field.fieldtype));
 const isTable = computed(() => props.field.fieldtype === "Table");
-// PROTOTYPE comparison: `?table=link` (default), `count` or `grid`.
+// PROTOTYPE comparison: `?table=link` , `count` or `grid` (default).
 const route = useRoute();
-const tableMode = computed(() => String(route.query.table ?? "link"));
+const tableMode = computed(() => String(route.query.table ?? "grid"));
 const rows = computed(() => (props.binding.doc[props.field.fieldname] ?? []).length);
 const shown = computed(() => evaluateDependsOn(props.field.dependsOn, props.binding.doc));
 const control = computed(() => getFieldComponent(props.field.fieldtype));
