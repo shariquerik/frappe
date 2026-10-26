@@ -1,6 +1,7 @@
 <!-- PROTOTYPE: a block's content, generated or component. A doctype's tabs are a tab strip. -->
 <template>
-	<div ref="root" :data-block="block.key">
+	<div ref="root" :data-block="block.key" class="relative isolate">
+	<span data-flash aria-hidden="true" :class="FLASH" />
 	<div v-if="block.component">
 		<component :is="block.component" :bindings="componentBindings" />
 	</div>
@@ -51,7 +52,7 @@ import type { BlockSpec } from "./panes";
 import type { PaneState } from "./bindings";
 import { rowGroups } from "./rows";
 import FieldRow from "./FieldRow.vue";
-import { searchTarget } from "./search";
+import { FLASH, searchTarget } from "./search";
 
 const props = defineProps<{
 	block: BlockSpec;
@@ -112,10 +113,12 @@ watch(
 				behavior: "smooth",
 			});
 		}
-		element?.animate(
-			[{ backgroundColor: "var(--surface-amber-2, #fde68a)" }, { backgroundColor: "transparent" }],
-			{ duration: 1800, easing: "ease-out" }
-		);
+		element
+			?.querySelector(":scope > [data-flash]")
+			?.animate(
+				[{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],
+				{ duration: 2000, easing: "ease-out" }
+			);
 	},
 	{ immediate: true }
 );

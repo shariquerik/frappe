@@ -1,7 +1,12 @@
 <!-- PROTOTYPE: one field as a settings row. A Check is a toggle row; a long field stacks its
      control under the title; everything else puts the control on the right. -->
 <template>
-	<div v-if="shown" :data-fieldname="field.fieldname" class="border-b border-outline-gray-1 last:border-b-0">
+	<div
+		v-if="shown"
+		:data-fieldname="field.fieldname"
+		class="relative isolate border-b border-outline-gray-1 last:border-b-0"
+	>
+		<span data-flash aria-hidden="true" :class="FLASH" />
 		<template v-if="stacked">
 			<div class="py-3.5">
 				<div class="text-base-medium text-ink-gray-8">{{ field.label }}</div>
@@ -59,6 +64,7 @@ import type { FieldMeta } from "@framework/ui/components/FormLayout/types";
 import { routeFor } from "@/router/routeFor";
 import type { BindingState, BlockStatus } from "./bindings";
 import StatusMark from "./StatusMark.vue";
+import { FLASH } from "./search";
 
 const props = defineProps<{
 	field: FieldMeta;
