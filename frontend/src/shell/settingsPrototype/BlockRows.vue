@@ -66,12 +66,17 @@ const binding = computed(() => props.pane.bindingOf(props.block));
 const groups = computed(() =>
 	binding.value ? rowGroups(binding.value.meta, props.block.fields, binding.value.childMetas) : []
 );
-const activeGroup = ref("");
-const shownGroups = computed(() => {
-	if (groups.value.length < 2) return groups.value;
-	const name = activeGroup.value || groups.value[0].name;
-	return groups.value.filter((group) => group.name === name);
+const chosenGroup = ref("");
+// The first tab until one is chosen, so the strip always marks the tab it shows.
+const activeGroup = computed({
+	get: () => chosenGroup.value || groups.value[0]?.name || "",
+	set: (name: string) => (chosenGroup.value = name),
 });
+const shownGroups = computed(() =>
+	groups.value.length < 2
+		? groups.value
+		: groups.value.filter((group) => group.name === activeGroup.value)
+);
 
 // A component gets one handle per named binding: the shared draft and `commit()`.
 const componentBindings = computed(() =>
