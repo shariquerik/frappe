@@ -25,6 +25,8 @@ export default {
 		join(here, "../ui/src/**/*.{vue,js,ts,jsx,tsx}"),
 		join(here, "node_modules/frappe-ui/src/**/*.{vue,js,ts,jsx,tsx}"),
 		join(here, "node_modules/frappe-ui/frappe/**/*.{vue,js,ts,jsx,tsx}"),
+		// PROTOTYPE (#45263): the palette's parts ship outside `src/`, and draw with classes nothing else uses.
+		join(here, "node_modules/frappe-ui/experimental/CommandPalette/**/*.vue"),
 		...appContent(manifest),
 	],
 	theme: { extend: {} },

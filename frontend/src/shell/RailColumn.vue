@@ -24,6 +24,27 @@
 			</Dropdown>
 		</div>
 
+		<!-- PROTOTYPE (#45263), trigger option "rail": a search cell under the app tile. -->
+		<div v-if="trigger === 'rail'" class="mb-3 flex shrink-0 items-center justify-center">
+			<Tooltip side="right">
+				<template #content>
+					<span class="flex items-center gap-2">
+						Search <KeyboardShortcut combo="Mod+K" class="!text-ink-gray-4" />
+					</span>
+				</template>
+				<button
+					type="button"
+					data-key="palette-trigger"
+					:class="[CELL, 'hover:bg-surface-gray-4']"
+					aria-label="Search"
+					aria-keyshortcuts="Meta+K"
+					@click="openPalette"
+				>
+					<span class="lucide-search size-4 text-ink-gray-7" aria-hidden="true" />
+				</button>
+			</Tooltip>
+		</div>
+
 		<!-- Stretched over `SidebarRail`'s own padding, so the scrollbar sits on the rail's edge. -->
 		<ScrollArea class="-mx-[11px] min-h-0 flex-1 self-stretch" viewportClass="px-[11px]">
 			<nav class="flex flex-col items-center gap-3" :aria-label="appTitle">
@@ -91,6 +112,7 @@ import type { RouteLocationRaw } from "vue-router";
 import {
 	Avatar,
 	Dropdown,
+	KeyboardShortcut,
 	SidebarRail,
 	SidebarRailItem,
 	ScrollArea,
@@ -107,6 +129,7 @@ import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
 import LogoutDialog from "./LogoutDialog.vue";
 import { OpenSettingsKey } from "./openSettings";
+import { openPalette, trigger } from "./palettePrototype/state";
 
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }

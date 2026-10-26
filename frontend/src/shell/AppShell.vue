@@ -56,6 +56,9 @@
 			:request="request"
 		/>
 
+		<!-- PROTOTYPE (#45263): the command palette's look, on Mod+K. -->
+		<PalettePrototype />
+
 		<ToastProvider />
 		<!-- frappe-ui's imperative dialog stack; `page.dialog.confirm` and `danger` render here. -->
 		<Dialogs />
@@ -63,9 +66,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, inject, onUnmounted, provide, ref, watch } from "vue";
+import {
+	computed,
+	defineAsyncComponent,
+	inject,
+	onMounted,
+	onUnmounted,
+	provide,
+	ref,
+	watch,
+} from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
-import { DesktopShell, Dialogs, ToastProvider } from "frappe-ui";
+import { DesktopShell, Dialogs, ToastProvider, useKeyboardShortcut } from "frappe-ui";
 import { keepInHistory } from "@framework/ui/utils";
 import type { Addresses } from "@/addresses";
 import type { Boot, Navigation, NavigationItem } from "@/boot";
@@ -82,6 +94,8 @@ import ComposerWindow from "./ComposerWindow.vue";
 import { closeCreates, createDialog, createRequests } from "./create";
 import CustomizeSidebarDialog, { type CustomizeTarget } from "./CustomizeSidebarDialog.vue";
 import { OpenSettingsKey } from "./openSettings";
+import PalettePrototype from "./palettePrototype/PalettePrototype.vue";
+import { openPalette, openPinned } from "./palettePrototype/state";
 import RailColumn from "./RailColumn.vue";
 import SidebarPanel from "./SidebarPanel.vue";
 import { useHashDialog } from "./useHashDialog";
@@ -244,6 +258,20 @@ provide(OpenSettingsKey, (...segments) =>
 // Loaded on the first open, then kept, so a close plays the dialog's leave transition.
 const settingsOpened = ref(false);
 watch(settings.open, (isOpen) => isOpen && (settingsOpened.value = true), { immediate: true });
+
+// PROTOTYPE (#45263): desk v2 owns Mod+K on `/apps/*`, except inside the rich-text editor.
+useKeyboardShortcut({
+	combo: "Mod+K",
+	description: "Search or run an action",
+	allowInInput: true,
+	allowInDialog: true,
+	handler: (event) => {
+		if ((event.target as HTMLElement | null)?.closest?.(".ProseMirror")) return;
+		event.preventDefault();
+		openPalette();
+	},
+});
+onMounted(openPinned);
 
 function replace(next: Navigation) {
 	navigation.value = next;
