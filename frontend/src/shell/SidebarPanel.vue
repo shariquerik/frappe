@@ -28,23 +28,6 @@
 				/>
 			</div>
 
-			<!-- PROTOTYPE (#45263), trigger option "sidebar": a field-shaped button that opens the palette. -->
-			<div v-if="trigger === 'sidebar'" class="shrink-0 px-2 pb-2">
-				<button
-					type="button"
-					data-key="palette-trigger"
-					class="flex h-7 w-full items-center gap-2 rounded-4 border border-outline-gray-2 bg-surface-white px-2 text-base text-ink-gray-5 transition-colors hover:border-outline-gray-3 focus-visible:ring-0 focus-visible:focus-ring"
-					@click="openPalette"
-				>
-					<span
-						class="lucide-search size-4 shrink-0 text-ink-gray-5"
-						aria-hidden="true"
-					/>
-					<span class="truncate">Search</span>
-					<KeyboardShortcut class="ml-auto" combo="Mod+K" />
-				</button>
-			</div>
-
 			<!-- `pt-0.5`: the first row's shadow is otherwise clipped on the viewport's top edge. -->
 			<ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pb-2 pt-0.5">
 				<nav class="flex flex-col gap-0.5" :aria-label="title">
@@ -66,13 +49,12 @@
 
 <script setup lang="ts">
 import { inject, ref, watch } from "vue";
-import { Button, KeyboardShortcut, ScrollArea, Sidebar } from "frappe-ui";
+import { Button, ScrollArea, Sidebar } from "frappe-ui";
 import { browserMemory } from "@/browserMemory";
 import type { Boot, NavigationItem } from "@/boot";
 import type { SectionMemory } from "@/navigation/sectionMemory";
 import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
-import { openPalette, trigger } from "./palettePrototype/state";
 import SidebarEdge from "./SidebarEdge.vue";
 import SidebarRow from "./SidebarRow.vue";
 

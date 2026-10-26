@@ -24,25 +24,29 @@
 			</Dropdown>
 		</div>
 
-		<!-- PROTOTYPE (#45263), trigger option "rail": a search cell under the app tile. -->
-		<div v-if="trigger === 'rail'" class="mb-3 flex shrink-0 items-center justify-center">
+		<!-- PROTOTYPE (#45263): the palette's trigger, between two rules under the app tile. The
+		     rules sit on the same 12px rhythm as the cells below. -->
+		<div class="mb-3 flex shrink-0 flex-col items-center gap-3 self-stretch">
+			<div class="w-full border-t border-outline-gray-2" aria-hidden="true" />
 			<Tooltip side="right">
 				<template #content>
 					<span class="flex items-center gap-2">
 						Search <KeyboardShortcut combo="Mod+K" class="!text-ink-gray-4" />
 					</span>
 				</template>
+				<!-- `SidebarRailItem`'s `ghost` cell; the item itself draws its tooltip on two lines. -->
 				<button
 					type="button"
 					data-key="palette-trigger"
-					:class="[CELL, 'hover:bg-surface-gray-4']"
+					class="relative flex size-7 shrink-0 items-center justify-center rounded-4 bg-transparent text-base text-ink-gray-8 transition hover:bg-surface-gray-3 focus-visible:ring-0 focus-visible:focus-ring"
 					aria-label="Search"
 					aria-keyshortcuts="Meta+K"
 					@click="openPalette"
 				>
-					<span class="lucide-search size-4 text-ink-gray-7" aria-hidden="true" />
+					<span class="lucide-search size-4" aria-hidden="true" />
 				</button>
 			</Tooltip>
+			<div class="w-full border-t border-outline-gray-2" aria-hidden="true" />
 		</div>
 
 		<!-- Stretched over `SidebarRail`'s own padding, so the scrollbar sits on the rail's edge. -->
@@ -129,7 +133,7 @@ import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
 import LogoutDialog from "./LogoutDialog.vue";
 import { OpenSettingsKey } from "./openSettings";
-import { openPalette, trigger } from "./palettePrototype/state";
+import { openPalette } from "./palettePrototype/state";
 
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }

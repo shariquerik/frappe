@@ -1,15 +1,14 @@
 // PROTOTYPE (#45263): the palette's in-page state, and the review switches read off the address.
 //   ?palette=empty | deal | searching | scoped | assign | nomatch   opens the palette in that state
-//   ?trigger=sidebar | rail | none                                  which visible trigger the shell draws
+//   ?find=A | B | C   the "Find" row: last in Records (A), first in Records (B), pinned above Ask Flow (C)
 
 import { ref } from "vue";
 
-export type Trigger = "sidebar" | "rail" | "none";
 export type Step = { kind: "scope"; doctype: string } | { kind: "argument"; act: string; icon: string };
 
 const params = new URLSearchParams(window.location.search);
 
-export const trigger = ref<Trigger>(readTrigger());
+export const findPlacement = readFind();
 export const open = ref(false);
 export const query = ref("");
 export const step = ref<Step | null>(null);
@@ -18,9 +17,9 @@ export const searching = ref(false);
 /** The review state the address asked for, held so Records keep "Searching…" for the screenshot. */
 export const pinned = params.get("palette");
 
-function readTrigger(): Trigger {
-	const asked = params.get("trigger");
-	return asked === "rail" || asked === "none" ? asked : "sidebar";
+function readFind(): "A" | "B" | "C" {
+	const asked = params.get("find");
+	return asked === "B" || asked === "C" ? asked : "A";
 }
 
 export function openPalette() {

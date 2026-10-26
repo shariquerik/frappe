@@ -49,6 +49,7 @@
 							v-for="row in argumentRows"
 							:key="row.id"
 							:value="row"
+							:disabled="ALREADY_ASSIGNED.has(row.id)"
 							class="gap-2.5"
 						>
 							<template #prefix>
@@ -73,43 +74,25 @@
 						:key="group.label"
 						:label="group.label"
 					>
+						<PaletteRow v-for="row in group.rows" :key="row.id" :row="row" />
+					</CommandPaletteGroup>
+				</template>
+			</CommandPaletteList>
+
+			<!-- Pinned below the scrolling list, above the footer: it never scrolls away. A second
+			     list, because frappe-ui's palette has no pinned slot and an item needs a listbox. -->
+			<CommandPaletteList
+				v-if="pinned.length"
+				data-slot="palette-pinned"
+				class="shrink-0 border-t border-outline-gray-1 py-2 dark:border-outline-gray-2"
+			>
+				<CommandPaletteGroup class="!my-0">
+					<template v-for="row in pinned" :key="row.id">
 						<CommandPaletteItem
-							v-for="row in group.rows"
-							:key="row.id"
-							:value="row"
-							:disabled="row.id === 'searching'"
+							v-if="row === ASK_FLOW"
+							:value="ASK_FLOW"
 							class="gap-2.5"
 						>
-							<template #prefix>
-								<LoadingIndicator
-									v-if="row.id === 'searching'"
-									class="size-4 shrink-0 text-ink-gray-5"
-								/>
-								<span
-									v-else
-									:class="[row.icon, 'size-4 shrink-0 text-ink-gray-6']"
-									aria-hidden="true"
-								/>
-							</template>
-							{{ row.label }}
-							<span
-								v-if="row.description"
-								class="pl-1.5 font-normal text-ink-gray-5"
-								>{{ row.description }}</span
-							>
-							<template v-if="row.combo" #suffix>
-								<!-- `flex` and `leading-none`, or its key boxes sit on a text line and make the row 2px taller. -->
-								<KeyboardShortcut :combo="row.combo" class="!flex leading-none" />
-							</template>
-						</CommandPaletteItem>
-					</CommandPaletteGroup>
-
-					<!-- Always last, after a rule and with no heading: it leaves the desk for Flow. -->
-					<CommandPaletteGroup
-						v-if="query.trim()"
-						class="!mt-2 border-t border-outline-gray-1 pt-2 dark:border-outline-gray-2"
-					>
-						<CommandPaletteItem :value="ASK_FLOW" class="gap-2.5">
 							<template #prefix>
 								<span
 									class="lucide-sparkles size-4 shrink-0 text-ink-gray-6"
@@ -124,8 +107,9 @@
 								>
 							</template>
 						</CommandPaletteItem>
-					</CommandPaletteGroup>
-				</template>
+						<PaletteRow v-else :row="row" />
+					</template>
+				</CommandPaletteGroup>
 			</CommandPaletteList>
 
 			<CommandPaletteEmpty v-slot="{ query: text }">
@@ -163,7 +147,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from "vue";
-import { Avatar, KeyboardShortcut, LoadingIndicator, toast } from "frappe-ui";
+import { Avatar, KeyboardShortcut, toast } from "frappe-ui";
 import {
 	CommandPalette,
 	CommandPaletteEmpty,
@@ -189,7 +173,8 @@ import {
 	users,
 	type SampleRow,
 } from "./sampleRows";
-import { open, pinned, query, searching, step } from "./state";
+import PaletteRow from "./PaletteRow.vue";
+import { findPlacement, open, pinned as pinnedState, query, searching, step } from "./state";
 
 const ASK_FLOW: SampleRow = { id: "ask-flow", icon: "lucide-sparkles", label: "Ask Flow" };
 
@@ -214,20 +199,28 @@ function find(text: string, doctype: string): SampleRow {
 
 const SEARCHING: SampleRow = { id: "searching", icon: "", label: "Searching…" };
 
+/** The pinned "Find" row, or none: on a list or record page, once something is typed. */
+const findRow = computed(() => {
+	const text = query.value.trim();
+	if (!text || step.value?.kind === "argument") return null;
+	return find(text, step.value?.kind === "scope" ? step.value.doctype : CURRENT_DOCTYPE);
+});
+
+/** Records from the server, with the Find row first (B) or last (A) unless it is pinned (C). */
+function withFind(results: SampleRow[]): SampleRow[] {
+	const row = findRow.value;
+	if (!row || findPlacement === "C") return results;
+	return findPlacement === "B" ? [row, ...results] : [...results, row];
+}
+
 // The ruled order: Recent and This page on an empty query; then This page, Desk, Go to, Create,
 // Records. An empty group is dropped, heading and all.
 const groups = computed(() => {
 	const text = query.value.trim();
+	const results = searching.value ? [SEARCHING] : text.length >= 2 ? null : [];
 	if (step.value?.kind === "scope") {
-		const found = text.length >= 2 ? matching(scopedRecords, text, 10) : [];
 		return [
-			{
-				label: "Records",
-				rows: [
-					...(searching.value ? [SEARCHING] : found),
-					...(text ? [find(text, step.value.doctype)] : []),
-				],
-			},
+			{ label: "Records", rows: withFind(results ?? matching(scopedRecords, text, 10)) },
 		];
 	}
 	if (!text) {
@@ -241,19 +234,15 @@ const groups = computed(() => {
 		{ label: "Desk", rows: matching(desk, text) },
 		{ label: "Go to", rows: matching(goTo, text, 8) },
 		{ label: "Create", rows: matching(create, text, 5) },
-		{
-			label: "Records",
-			rows: [
-				...(searching.value
-					? [SEARCHING]
-					: text.length >= 2
-					? matching(records, text, 10)
-					: []),
-				find(text, CURRENT_DOCTYPE),
-			],
-		},
+		{ label: "Records", rows: withFind(results ?? matching(records, text, 10)) },
 	];
 	return found.filter((group) => group.rows.length);
+});
+
+// Below the scrolling list: Ask Flow always, and Find too in variant C.
+const pinned = computed<SampleRow[]>(() => {
+	if (!findRow.value) return [];
+	return findPlacement === "C" ? [findRow.value, ASK_FLOW] : [ASK_FLOW];
 });
 
 const argumentRows = computed(() => matching(users, query.value));
@@ -261,7 +250,7 @@ const argumentRows = computed(() => matching(users, query.value));
 // A stand-in for the 200 ms debounce and the server's reply. A pinned review state holds still.
 let reply: ReturnType<typeof setTimeout> | undefined;
 watch(query, (text) => {
-	if (pinned) return;
+	if (pinnedState) return;
 	clearTimeout(reply);
 	searching.value = text.trim().length >= 2;
 	if (searching.value) reply = setTimeout(() => (searching.value = false), 700);
