@@ -99,3 +99,17 @@ function fieldsOf(block: BlockSpec): RawMetaField[] {
 /** The rounded layer a search pick flashes, a little wider than its row and behind its content. */
 export const FLASH =
 	"pointer-events-none absolute -inset-x-3 inset-y-1 -z-10 rounded-4 bg-surface-gray-3 opacity-0";
+
+/** The same layer around a pane's title, which has no divider to keep clear of. */
+export const TITLE_FLASH =
+	"pointer-events-none absolute -inset-x-3 -inset-y-2 -z-10 rounded-4 bg-surface-gray-3 opacity-0";
+
+/** Fades an element's own flash layer in and out. */
+export function flash(element: Element | null | undefined) {
+	element
+		?.querySelector(":scope > [data-flash]")
+		?.animate(
+			[{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],
+			{ duration: 2000, easing: "ease-out" }
+		);
+}

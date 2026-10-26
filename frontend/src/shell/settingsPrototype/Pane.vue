@@ -2,7 +2,8 @@
      button blocks get a floating Save. The pane does not link to the record. -->
 <template>
 	<SettingsHeader>
-		<div class="flex flex-col gap-1">
+		<div ref="title" class="relative isolate flex flex-col gap-1">
+			<span data-flash aria-hidden="true" :class="TITLE_FLASH" />
 			<h2 class="text-lg font-semibold text-ink-gray-8">{{ pane.label }}</h2>
 			<p v-if="pane.description" class="text-base text-ink-gray-6">{{ pane.description }}</p>
 		</div>
@@ -53,10 +54,26 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick, ref, watch } from "vue";
 import { Button, SettingsBody, SettingsHeader } from "frappe-ui";
 import type { PaneSpec } from "./panes";
 import type { PaneState } from "./bindings";
 import BlockRows from "./BlockRows.vue";
+import { TITLE_FLASH, flash, searchTarget } from "./search";
 
-defineProps<{ pane: PaneSpec; prefix: string; state: PaneState }>();
+const props = defineProps<{ pane: PaneSpec; prefix: string; state: PaneState }>();
+const title = ref<HTMLElement | null>(null);
+
+// A search result for the pane itself, not one of its blocks: flash the title.
+watch(
+	searchTarget,
+	async (target) => {
+		if (!target || target.block) return;
+		if (target.prefix !== props.prefix || target.pane !== props.pane.key) return;
+		searchTarget.value = null;
+		await nextTick();
+		flash(title.value);
+	},
+	{ immediate: true }
+);
 </script>

@@ -52,7 +52,7 @@ import type { BlockSpec } from "./panes";
 import type { PaneState } from "./bindings";
 import { rowGroups } from "./rows";
 import FieldRow from "./FieldRow.vue";
-import { FLASH, searchTarget } from "./search";
+import { FLASH, flash, searchTarget } from "./search";
 
 const props = defineProps<{
 	block: BlockSpec;
@@ -113,12 +113,7 @@ watch(
 				behavior: "smooth",
 			});
 		}
-		element
-			?.querySelector(":scope > [data-flash]")
-			?.animate(
-				[{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],
-				{ duration: 2000, easing: "ease-out" }
-			);
+		flash(element);
 	},
 	{ immediate: true }
 );
