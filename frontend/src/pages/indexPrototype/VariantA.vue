@@ -4,9 +4,21 @@
 -->
 <template>
 	<div class="relative flex h-full flex-col bg-surface-base">
-		<!-- No bar: the person's menu alone, pinned to the corner. -->
-		<div class="absolute right-5 top-4 z-10">
-			<PrototypeUserMenu v-slot="{ user }">
+		<!-- No bar. `?avatar=` places the person's menu: the corner, the rail's foot, or around the box. -->
+		<div v-if="place === 'corner'" class="absolute right-5 top-4 z-10">
+			<PrototypeUserMenu v-slot="{ user }" :side="MENU_SIDE[place]" :align="MENU_ALIGN[place]">
+				<button
+					type="button"
+					class="flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
+					:aria-label="user.full_name"
+				>
+					<Avatar :image="user.user_image" :label="user.full_name" size="lg" />
+				</button>
+			</PrototypeUserMenu>
+		</div>
+		<!-- Where the rail draws it inside every app: 50px column, 11px side padding, 12px from the foot. -->
+		<div v-else-if="place === 'rail'" class="absolute bottom-3 left-[11px] z-10">
+			<PrototypeUserMenu v-slot="{ user }" :side="MENU_SIDE[place]" :align="MENU_ALIGN[place]">
 				<button
 					type="button"
 					class="flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
@@ -19,7 +31,42 @@
 
 		<ScrollArea class="min-h-0 flex-1">
 			<div class="mx-auto flex max-w-4xl flex-col items-center px-6 pb-16 pt-[18vh]">
+				<PrototypeUserMenu v-if="place === 'above'" v-slot="{ user }" side="bottom" align="center">
+					<button
+						type="button"
+						class="mb-6 flex flex-col items-center gap-2 rounded-5 px-3 py-2 transition hover:bg-surface-gray-2 focus-visible:ring-0 focus-visible:focus-ring"
+					>
+						<Avatar :image="user.user_image" :label="user.full_name" size="3xl" />
+						<span class="text-base font-medium text-ink-gray-8">{{ user.full_name }}</span>
+					</button>
+				</PrototypeUserMenu>
+
+				<div v-if="place === 'inline'" class="flex w-full max-w-md items-center gap-3">
+					<TextInput
+						ref="filterBox"
+						v-model="query"
+						size="lg"
+						variant="subtle"
+						class="min-w-0 flex-1"
+						placeholder="Find an app"
+						@keydown="onKeydown"
+					>
+						<template #prefix>
+							<LucideSearch class="size-4 text-ink-gray-5" />
+						</template>
+					</TextInput>
+					<PrototypeUserMenu v-slot="{ user }" side="bottom" align="end">
+						<button
+							type="button"
+							class="flex shrink-0 rounded-full focus-visible:ring-0 focus-visible:focus-ring"
+							:aria-label="user.full_name"
+						>
+							<Avatar :image="user.user_image" :label="user.full_name" size="2xl" />
+						</button>
+					</PrototypeUserMenu>
+				</div>
 				<TextInput
+					v-else
 					ref="filterBox"
 					v-model="query"
 					size="lg"
@@ -85,7 +132,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { computed, inject, ref } from "vue";
+import { useRoute } from "vue-router";
 import { Avatar, Button, ScrollArea, Skeleton, TextInput } from "frappe-ui";
 import type { Boot } from "@/boot";
 import LucideSearch from "~icons/lucide/search";
@@ -96,4 +144,13 @@ import { useIndex } from "./useIndex";
 const boot = inject<Boot>("boot")!;
 const filterBox = ref(null);
 const { apps, loading, query, matches, onKeydown } = useIndex(boot, filterBox);
+
+const route = useRoute();
+const PLACES = ["corner", "rail", "inline", "above"] as const;
+const place = computed(() => {
+	const asked = route.query.avatar as (typeof PLACES)[number];
+	return PLACES.includes(asked) ? asked : "corner";
+});
+const MENU_SIDE = { corner: "bottom", rail: "right", inline: "bottom", above: "bottom" } as const;
+const MENU_ALIGN = { corner: "end", rail: "end", inline: "end", above: "center" } as const;
 </script>

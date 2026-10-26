@@ -12,7 +12,7 @@ import { Avatar, Dropdown, useColorScheme, type DropdownOptions } from "frappe-u
 import type { Boot } from "@/boot";
 import LogoutDialog from "@/shell/LogoutDialog.vue";
 
-withDefaults(defineProps<{ side?: "bottom" | "top"; align?: "start" | "end" }>(), {
+withDefaults(defineProps<{ side?: "bottom" | "top" | "right" | "left"; align?: "start" | "center" | "end" }>(), {
 	side: "bottom",
 	align: "end",
 });
