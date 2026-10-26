@@ -1,14 +1,11 @@
 <!--
-  PROTOTYPE (#45253) variant A, "Launcher": a slim bar, a large centred filter box, and large
+  PROTOTYPE (#45253) variant A, "Launcher": no bar, a large centred filter box, and large
   borderless tiles centred on the page, as on a phone's home screen or desk v1's apps screen.
 -->
 <template>
-	<div class="flex h-full flex-col bg-surface-base">
-		<header class="flex h-14 shrink-0 items-center justify-between px-5">
-			<div class="flex items-center gap-2 text-base font-medium text-ink-gray-8">
-				<img :src="FRAMEWORK_LOGO" class="size-6" alt="" />
-				{{ siteName }}
-			</div>
+	<div class="relative flex h-full flex-col bg-surface-base">
+		<!-- No bar: the person's menu alone, pinned to the corner. -->
+		<div class="absolute right-5 top-4 z-10">
 			<PrototypeUserMenu v-slot="{ user }">
 				<button
 					type="button"
@@ -18,10 +15,10 @@
 					<Avatar :image="user.user_image" :label="user.full_name" size="lg" />
 				</button>
 			</PrototypeUserMenu>
-		</header>
+		</div>
 
 		<ScrollArea class="min-h-0 flex-1">
-			<div class="mx-auto flex max-w-4xl flex-col items-center px-6 pb-16 pt-[12vh]">
+			<div class="mx-auto flex max-w-4xl flex-col items-center px-6 pb-16 pt-[18vh]">
 				<TextInput
 					ref="filterBox"
 					v-model="query"
@@ -99,6 +96,4 @@ import { useIndex } from "./useIndex";
 const boot = inject<Boot>("boot")!;
 const filterBox = ref(null);
 const { apps, loading, query, matches, onKeydown } = useIndex(boot, filterBox);
-const siteName = window.location.hostname;
-const FRAMEWORK_LOGO = "/assets/frappe/images/frappe-framework-logo.svg";
 </script>
