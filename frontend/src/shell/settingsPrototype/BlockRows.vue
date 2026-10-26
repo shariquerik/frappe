@@ -64,7 +64,7 @@ const root = ref<HTMLElement | null>(null);
 
 const binding = computed(() => props.pane.bindingOf(props.block));
 const groups = computed(() =>
-	binding.value ? rowGroups(binding.value.meta, props.block.fields) : []
+	binding.value ? rowGroups(binding.value.meta, props.block.fields, binding.value.childMetas) : []
 );
 const activeGroup = ref("");
 const shownGroups = computed(() => {

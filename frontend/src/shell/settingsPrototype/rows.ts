@@ -19,7 +19,12 @@ export interface RowGroup {
 const SKIPPED = new Set(["Column Break", "HTML", "Button", "Heading", "Fold", "Image"]);
 
 /** A field list gives one unlabelled group; no list gives the doctype's whole layout. */
-export function rowGroups(meta: RawMetaField[], fieldnames?: string[]): RowGroup[] {
+export function rowGroups(
+	meta: RawMetaField[],
+	fieldnames?: string[],
+	childMetas: Record<string, RawMetaField[]> = {}
+): RowGroup[] {
+	const toRow = (field: RawMetaField) => mapField(field, childMetas);
 	if (fieldnames?.length) {
 		const byName = new Map(meta.map((field) => [field.fieldname, field]));
 		const fields = fieldnames
@@ -28,17 +33,17 @@ export function rowGroups(meta: RawMetaField[], fieldnames?: string[]): RowGroup
 			.map(toRow);
 		return [{ name: "fields", sections: [{ name: "fields", fields }] }];
 	}
-	return walkLayout(meta);
+	return walkLayout(meta, toRow);
 }
 
 /** The fieldnames a whole-layout block edits. */
 export function dataFields(meta: RawMetaField[]): string[] {
-	return walkLayout(meta).flatMap((group) =>
+	return walkLayout(meta, (field) => mapField(field, {})).flatMap((group) =>
 		group.sections.flatMap((section) => section.fields.map((field) => field.fieldname))
 	);
 }
 
-function walkLayout(meta: RawMetaField[]): RowGroup[] {
+function walkLayout(meta: RawMetaField[], toRow: (field: RawMetaField) => FieldMeta): RowGroup[] {
 	const groups: RowGroup[] = [{ name: "first", sections: [{ name: "first", fields: [] }] }];
 	const lastGroup = () => groups[groups.length - 1];
 	const lastSection = () => lastGroup().sections[lastGroup().sections.length - 1];
@@ -61,8 +66,4 @@ function walkLayout(meta: RawMetaField[]): RowGroup[] {
 			sections: group.sections.filter((section) => section.fields.length),
 		}))
 		.filter((group) => group.sections.length);
-}
-
-function toRow(field: RawMetaField): FieldMeta {
-	return mapField(field, {});
 }

@@ -2,9 +2,9 @@
 <template>
 	<SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl" :keyboard-shortcut="false">
 		<SettingsSidebar>
-			<SettingsSearch v-model="query" :groups="groups" @pick="pick" />
+			<SettingsSearch v-model="query" :groups="navGroups" @pick="pick" />
 			<SettingsNavGroup
-				v-for="group in groups"
+				v-for="group in navGroups"
 				v-show="!query.trim()"
 				:key="group.prefix"
 				:label="group.label || undefined"
@@ -28,7 +28,7 @@
 			</SettingsNavGroup>
 		</SettingsSidebar>
 		<SettingsContent class="relative">
-			<template v-for="group in groups" :key="group.prefix">
+			<template v-for="group in panelGroups" :key="group.prefix">
 				<SettingsPanel
 					v-for="pane in group.panes"
 					:key="pane.key"
@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { computed, inject, provide, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import {
 	Avatar,
 	SettingsContent,
@@ -58,6 +59,8 @@ import {
 	SettingsSidebar,
 } from "frappe-ui";
 import { RecordLinkKey } from "@framework/ui/components/Fields/types";
+import { getFieldComponent } from "@framework/ui/components/FormLayout";
+import { ResolveFieldKey } from "@framework/ui/components/FormLayout/types";
 import type { Boot } from "@/boot";
 import { useHashDialog } from "../useHashDialog";
 import { findPane, groupsFor, hasGroup } from "./panes";
@@ -68,12 +71,38 @@ import { searchTarget, type SearchHit } from "./search";
 const boot = inject<Boot>("boot")!;
 const hash = useHashDialog("settings");
 provide(RecordLinkKey, null);
+provide(ResolveFieldKey, getFieldComponent);
+const route = useRoute();
 
 const currentPrefix = computed(() => {
 	const prefix = boot.shell_base.split("/").pop() ?? "";
 	return hasGroup(prefix) ? prefix : "desk";
 });
-const groups = computed(() => groupsFor(currentPrefix.value, hash.segments.value[0]));
+
+// PROTOTYPE comparison for an address into another app's pane: `?foreign=show` (default) lists
+// that app's group too, `hide` opens the pane unlisted, `switch` opens as if from that app.
+const foreignMode = computed(() => String(route.query.foreign ?? "show"));
+const context = ref(currentPrefix.value);
+watch(
+	() => [hash.open.value, hash.segments.value[0]] as const,
+	([isOpen, prefix]) => {
+		if (!isOpen) context.value = currentPrefix.value;
+		else if (foreignMode.value === "switch" && prefix && prefix !== "desk" && hasGroup(prefix))
+			context.value = prefix;
+	},
+	{ immediate: true }
+);
+const navGroups = computed(() => {
+	if (foreignMode.value === "hide") return groupsFor(currentPrefix.value);
+	if (foreignMode.value === "switch") return groupsFor(context.value);
+	return groupsFor(currentPrefix.value, hash.segments.value[0]);
+});
+const panelGroups = computed(() =>
+	groupsFor(
+		foreignMode.value === "switch" ? context.value : currentPrefix.value,
+		hash.segments.value[0]
+	)
+);
 const query = ref("");
 
 function pick(hit: SearchHit) {
@@ -103,7 +132,7 @@ watch(
 		if (!hash.open.value) return;
 		const [prefix, pane] = hash.segments.value;
 		if (prefix && pane && findPane(prefix, pane)) return;
-		const first = groups.value.find((group) => group.prefix === currentPrefix.value)!;
+		const first = navGroups.value.find((group) => group.prefix === currentPrefix.value)!;
 		hash.write(first.prefix, first.panes[0].key);
 	},
 	{ immediate: true }

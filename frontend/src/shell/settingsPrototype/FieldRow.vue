@@ -13,11 +13,17 @@
 				<div v-if="field.description" class="mt-1 text-base text-ink-gray-6">
 					{{ field.description }}
 				</div>
-				<div v-if="isTable" class="mt-2 flex items-center gap-2 text-base text-ink-gray-6">
-					{{ rows }} {{ rows === 1 ? "row" : "rows" }} ·
-					<RouterLink :to="recordRoute" class="text-ink-gray-8 underline">
-						Edit in the record
-					</RouterLink>
+				<div
+					v-if="isTable && tableMode !== 'grid'"
+					class="mt-2 flex items-center gap-2 text-base text-ink-gray-6"
+				>
+					{{ rows }} {{ rows === 1 ? "row" : "rows" }}
+					<template v-if="tableMode === 'link'">
+						·
+						<RouterLink :to="recordRoute" class="text-ink-gray-8 underline">
+							Edit in the record
+						</RouterLink>
+					</template>
 				</div>
 				<component
 					:is="control"
@@ -56,7 +62,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRoute } from "vue-router";
 import { SettingsRow, Switch } from "frappe-ui";
 import { getFieldComponent } from "@framework/ui/components/FormLayout";
 import { evaluateDependsOn } from "@framework/ui/components/FormLayout/dependsOn";
@@ -92,6 +98,9 @@ const LONG = new Set([
 
 const stacked = computed(() => LONG.has(props.field.fieldtype));
 const isTable = computed(() => props.field.fieldtype === "Table");
+// PROTOTYPE comparison: `?table=link` (default), `count` or `grid`.
+const route = useRoute();
+const tableMode = computed(() => String(route.query.table ?? "link"));
 const rows = computed(() => (props.binding.doc[props.field.fieldname] ?? []).length);
 const shown = computed(() => evaluateDependsOn(props.field.dependsOn, props.binding.doc));
 const control = computed(() => getFieldComponent(props.field.fieldtype));

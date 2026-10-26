@@ -21,6 +21,8 @@ export interface BindingState {
 	fieldErrors: Record<string, string>;
 	/** Unwrapped by `reactive`: the meta's raw fields. */
 	meta: RawMetaField[];
+	/** Child doctype → its raw fields, for a Table field's columns. */
+	childMetas: Record<string, RawMetaField[]>;
 }
 
 export type BlockStatus = "idle" | "saving" | "saved" | "error";
@@ -181,7 +183,7 @@ function identityOf(spec: BindingSpec, sessionUser: string): string {
 }
 
 function load(spec: BindingSpec, name: string, identity: string): BindingState {
-	const { meta } = useDoctypeMeta(spec.doctype);
+	const { meta, metas } = useDoctypeMeta(spec.doctype);
 	const binding = reactive({
 		identity,
 		doctype: spec.doctype,
@@ -194,6 +196,11 @@ function load(spec: BindingSpec, name: string, identity: string): BindingState {
 		isNew: false,
 		fieldErrors: {},
 		meta: computed(() => (meta.value?.fields ?? []) as RawMetaField[]),
+		childMetas: computed(() =>
+			Object.fromEntries(
+				Object.entries(metas.value).map(([name, child]) => [name, child.fields as RawMetaField[]])
+			)
+		),
 	}) as unknown as BindingState;
 
 	getDocument(spec.doctype, name)
