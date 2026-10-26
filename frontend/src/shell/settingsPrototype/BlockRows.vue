@@ -1,0 +1,92 @@
+<!-- PROTOTYPE: a block's content, generated or component. Tabs are headings, or a tab strip
+     when `tabs` is set (variant C). -->
+<template>
+	<div v-if="block.component">
+		<component :is="block.component" :bindings="componentBindings" />
+	</div>
+	<template v-else-if="binding">
+		<div v-if="binding.loading" class="space-y-3 py-3">
+			<div v-for="n in 3" :key="n" class="h-7 animate-pulse rounded bg-surface-gray-2" />
+		</div>
+		<div v-else-if="binding.error" class="py-3 text-base text-ink-red-4">
+			Could not read {{ binding.doctype }}: {{ binding.error }}
+		</div>
+		<template v-else>
+			<div
+				v-if="binding.isNew"
+				class="mb-1 rounded bg-surface-gray-2 px-3 py-2 text-sm text-ink-gray-6"
+			>
+				No {{ binding.doctype }} for you yet. The first change creates it.
+			</div>
+			<TabButtons
+				v-if="tabs && groups.length > 1"
+				v-model="activeGroup"
+				class="mb-2 mt-1"
+				:options="groups.map((group) => ({ label: group.label ?? 'General', value: group.name }))"
+			/>
+			<template v-for="group in shownGroups" :key="group.name">
+				<h4
+					v-if="group.label && !tabs"
+					class="mt-6 border-b border-outline-gray-2 pb-1.5 text-sm font-semibold uppercase tracking-wide text-ink-gray-5 first:mt-2"
+				>
+					{{ group.label }}
+				</h4>
+				<template v-for="section in group.sections" :key="section.name">
+					<h5 v-if="section.label" class="mt-5 text-base font-medium text-ink-gray-6">
+						{{ section.label }}
+					</h5>
+					<FieldRow
+						v-for="field in section.fields"
+						:key="field.fieldname"
+						:field="field"
+						:binding="binding"
+						:row-marks="rowMarks"
+						:block-status="pane.blocks[block.key].status"
+						@commit="pane.commit(block, [field.fieldname])"
+					/>
+				</template>
+			</template>
+		</template>
+	</template>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { TabButtons } from "frappe-ui";
+import type { BlockSpec } from "./panes";
+import type { PaneState } from "./bindings";
+import { rowGroups } from "./rows";
+import FieldRow from "./FieldRow.vue";
+
+const props = defineProps<{
+	block: BlockSpec;
+	pane: PaneState;
+	tabs?: boolean;
+	rowMarks?: boolean;
+}>();
+
+const binding = computed(() => props.pane.bindingOf(props.block));
+const groups = computed(() =>
+	binding.value ? rowGroups(binding.value.meta, props.block.fields) : []
+);
+const activeGroup = ref("");
+const shownGroups = computed(() => {
+	if (!props.tabs || groups.value.length < 2) return groups.value;
+	const name = activeGroup.value || groups.value[0].name;
+	return groups.value.filter((group) => group.name === name);
+});
+
+// A component gets one handle per named binding: the shared draft and `commit()`.
+const componentBindings = computed(() =>
+	Object.fromEntries(
+		Object.entries(props.pane.namedBindings(props.block)).map(([key, state]) => [
+			key,
+			{
+				state,
+				status: props.pane.blocks[props.block.key],
+				commit: (fieldnames: string[]) => props.pane.commit(props.block, fieldnames),
+			},
+		])
+	)
+);
+</script>

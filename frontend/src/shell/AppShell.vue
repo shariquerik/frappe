@@ -45,6 +45,9 @@
 			@close="customize.close()"
 		/>
 
+		<!-- PROTOTYPE: the settings dialog, `#settings/<prefix>/<pane>`. -->
+		<SettingsPrototype />
+
 		<!-- The open writer, here so a floating one outlives the page it was opened on. -->
 		<ComposerWindow :user="boot.session.user" />
 
@@ -84,6 +87,7 @@ import CustomizeSidebarDialog, { type CustomizeTarget } from "./CustomizeSidebar
 import PageLoadError from "./PageLoadError.vue";
 import RailColumn from "./RailColumn.vue";
 import SidebarPanel from "./SidebarPanel.vue";
+import SettingsPrototype from "./settingsPrototype/SettingsPrototype.vue";
 import { useHashDialog } from "./useHashDialog";
 
 const boot = inject<Boot>("boot")!;

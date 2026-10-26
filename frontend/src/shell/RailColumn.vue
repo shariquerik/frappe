@@ -106,6 +106,7 @@ import type { ItemNode } from "@/navigation/tree";
 import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
 import LogoutDialog from "./LogoutDialog.vue";
+import { useHashDialog } from "./useHashDialog";
 
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }
@@ -185,8 +186,8 @@ const SCHEMES = [
 ] as const;
 
 const confirmingLogout = ref(false);
+const settings = useHashDialog("settings");
 
-// Workaround: the settings dialog has no profile pane yet, so *My settings* opens v1's User form.
 const userMenu = computed<DropdownOptions>(() => [
 	{ group: "", hideLabel: true, options: [profileHeader()] },
 	{
@@ -196,7 +197,12 @@ const userMenu = computed<DropdownOptions>(() => [
 			{
 				label: "My settings",
 				icon: "lucide-circle-user",
-				onClick: () => leave(`/app/user/${encodeURIComponent(boot.session.user.name)}`),
+				onClick: () => settings.write("desk", "profile"),
+			},
+			{
+				label: "Settings",
+				icon: "lucide-settings",
+				onClick: () => settings.write(),
 			},
 			{
 				label: "Theme",
