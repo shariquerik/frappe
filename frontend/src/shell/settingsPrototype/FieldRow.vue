@@ -32,7 +32,7 @@
 		</template>
 		<SettingsRow v-else :title="field.label ?? field.fieldname" :description="field.description">
 			<div class="flex items-center gap-2">
-				<StatusMark :status="markStatus" />
+				<span class="flex w-20 justify-end"><StatusMark :status="markStatus" /></span>
 				<Switch
 					v-if="field.fieldtype === 'Check'"
 					:model-value="!!binding.doc[field.fieldname]"

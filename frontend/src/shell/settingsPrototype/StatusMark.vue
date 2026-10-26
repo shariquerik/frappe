@@ -2,7 +2,7 @@
 <template>
 	<span
 		v-if="status !== 'idle'"
-		class="inline-flex items-center gap-1 text-sm"
+		class="inline-flex items-center gap-1 whitespace-nowrap text-sm"
 		:class="status === 'error' ? 'text-ink-red-4' : 'text-ink-gray-5'"
 	>
 		<LoadingIndicator v-if="status === 'saving'" class="size-3" />
