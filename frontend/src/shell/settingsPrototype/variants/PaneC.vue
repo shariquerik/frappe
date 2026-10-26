@@ -1,24 +1,10 @@
-<!-- PROTOTYPE variant C: the header says where the values are stored and links there; each row
-     shows its own save mark; a doctype's tabs are a tab strip; button blocks get a floating Save. -->
+<!-- PROTOTYPE variant C: each row shows its own save mark; a doctype's tabs are a tab strip;
+     button blocks get a floating Save. The pane does not link to the record. -->
 <template>
 	<SettingsHeader>
 		<div class="flex flex-col gap-1">
 			<h2 class="text-lg font-semibold text-ink-gray-8">{{ pane.label }}</h2>
 			<p v-if="pane.description" class="text-base text-ink-gray-6">{{ pane.description }}</p>
-			<p v-if="stored.length" class="flex flex-wrap items-center gap-1 text-sm text-ink-gray-5">
-				Stored in
-				<template v-for="(spec, index) in stored" :key="spec.doctype">
-					<RouterLink
-						v-if="spec.type === 'Single'"
-						:to="routeFor(spec.doctype)"
-						class="inline-flex items-center gap-0.5 text-ink-gray-7 underline decoration-outline-gray-3 underline-offset-2 hover:text-ink-gray-9"
-					>
-						{{ spec.doctype }}<span class="lucide-arrow-up-right size-3" />
-					</RouterLink>
-					<span v-else class="text-ink-gray-7">{{ bindingLabel(spec) }}</span>
-					<span v-if="index < stored.length - 1">·</span>
-				</template>
-			</p>
 		</div>
 	</SettingsHeader>
 	<SettingsBody>
@@ -62,15 +48,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { RouterLink } from "vue-router";
 import { Button, SettingsBody, SettingsHeader } from "frappe-ui";
-import { routeFor } from "@/router/routeFor";
-import { bindingLabel, paneBindings, type PaneSpec } from "../panes";
+import type { PaneSpec } from "../panes";
 import type { PaneState } from "../bindings";
 import BlockRows from "../BlockRows.vue";
 
-const props = defineProps<{ pane: PaneSpec; prefix: string; state: PaneState }>();
-
-const stored = computed(() => paneBindings(props.pane));
+defineProps<{ pane: PaneSpec; prefix: string; state: PaneState }>();
 </script>

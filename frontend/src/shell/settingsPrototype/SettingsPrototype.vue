@@ -3,7 +3,11 @@
 <template>
 	<SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl" :keyboard-shortcut="false">
 		<SettingsSidebar>
-			<SettingsNavGroup v-for="group in groups" :key="group.prefix" :label="group.label">
+			<SettingsNavGroup
+				v-for="group in groups"
+				:key="group.prefix"
+				:label="group.label || undefined"
+			>
 				<SettingsNavItem
 					v-for="pane in group.panes"
 					:key="pane.key"
@@ -57,7 +61,7 @@ import {
 import { RecordLinkKey } from "@framework/ui/components/Fields/types";
 import type { Boot } from "@/boot";
 import { useHashDialog } from "../useHashDialog";
-import { findPane, groupsFor } from "./panes";
+import { findPane, groupsFor, hasGroup } from "./panes";
 import PaneHost from "./PaneHost.vue";
 import PrototypeSwitcher from "./PrototypeSwitcher.vue";
 
@@ -74,9 +78,9 @@ provide(RecordLinkKey, null);
 
 const currentPrefix = computed(() => {
 	const prefix = boot.shell_base.split("/").pop() ?? "";
-	return groupsFor(prefix)[0].prefix === prefix ? prefix : "desk";
+	return hasGroup(prefix) ? prefix : "desk";
 });
-const groups = computed(() => groupsFor(currentPrefix.value));
+const groups = computed(() => groupsFor(currentPrefix.value, hash.segments.value[0]));
 const variant = computed(() => String(route.query.variant ?? "A"));
 
 const open = computed({
@@ -89,14 +93,14 @@ const tab = computed({
 	set: (value) => value && hash.write(...String(value).split("/")),
 });
 
-// A short or unknown address opens the current prefix's first pane and is rewritten to it.
+// A short or unknown address opens the current app's first pane and is rewritten to it.
 watch(
 	() => [hash.open.value, hash.segments.value.join("/")],
 	() => {
 		if (!hash.open.value) return;
 		const [prefix, pane] = hash.segments.value;
 		if (prefix && pane && findPane(prefix, pane)) return;
-		const first = groups.value[0];
+		const first = groups.value.find((group) => group.prefix === currentPrefix.value)!;
 		hash.write(first.prefix, first.panes[0].key);
 	},
 	{ immediate: true }

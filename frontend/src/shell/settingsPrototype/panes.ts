@@ -154,6 +154,60 @@ export const GROUPS: PaneGroup[] = [
 		],
 	},
 	{
+		prefix: "erpnext",
+		label: "ERPNext",
+		panes: [
+			{
+				key: "accounts",
+				label: "Accounts",
+				icon: "lucide-landmark",
+				description: "How invoices, payments and the ledger behave.",
+				blocks: [
+					{
+						key: "ledger",
+						app: "erpnext",
+						save: "auto",
+						binding: { type: "Single", doctype: "Accounts Settings" },
+						fields: [
+							"unlink_payment_on_cancellation_of_invoice",
+							"unlink_advance_payment_on_cancelation_of_order",
+							"delete_linked_ledger_entries",
+							"enable_immutable_ledger",
+							"check_supplier_invoice_uniqueness",
+							"automatically_fetch_payment_terms",
+						],
+					},
+				],
+			},
+			{
+				key: "stock",
+				label: "Stock",
+				icon: "lucide-package",
+				blocks: [
+					{
+						key: "stock-settings",
+						app: "erpnext",
+						save: "button",
+						binding: { type: "Single", doctype: "Stock Settings" },
+					},
+				],
+			},
+			{
+				key: "selling",
+				label: "Selling",
+				icon: "lucide-tag",
+				blocks: [
+					{
+						key: "selling-settings",
+						app: "erpnext",
+						save: "button",
+						binding: { type: "Single", doctype: "Selling Settings" },
+					},
+				],
+			},
+		],
+	},
+	{
 		prefix: "crm",
 		label: "CRM",
 		panes: [
@@ -189,10 +243,20 @@ export const GROUPS: PaneGroup[] = [
 	},
 ];
 
-/** The current prefix's group first, the rest in run order. */
-export function groupsFor(prefix: string): PaneGroup[] {
-	const own = GROUPS.filter((group) => group.prefix === prefix);
-	return [...own, ...GROUPS.filter((group) => group.prefix !== prefix)];
+/** Desk's panes on top, unheaded; then the current app's; then an addressed foreign app's. */
+export function groupsFor(current: string, addressed?: string): PaneGroup[] {
+	const desk = GROUPS.find((group) => group.prefix === "desk")!;
+	const others = [current, addressed].filter(
+		(prefix, index, list) => prefix && prefix !== "desk" && list.indexOf(prefix) === index
+	);
+	const shown = others
+		.map((prefix) => GROUPS.find((group) => group.prefix === prefix))
+		.filter((group): group is PaneGroup => !!group);
+	return [{ ...desk, label: "" }, ...shown];
+}
+
+export function hasGroup(prefix: string): boolean {
+	return GROUPS.some((group) => group.prefix === prefix);
 }
 
 export function findPane(prefix: string, key: string): PaneSpec | undefined {
