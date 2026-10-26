@@ -11,14 +11,14 @@
 		>
 			<template #prefix><span class="lucide-search size-4 text-ink-gray-5" /></template>
 			<template v-if="query" #suffix>
-				<Button
-					variant="ghost"
-					size="sm"
-					icon="lucide-x"
+				<button
+					type="button"
 					aria-label="Clear search"
-					class="-mr-1"
+					class="grid size-4 place-items-center rounded-1 text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 					@click="query = ''"
-				/>
+				>
+					<span class="lucide-x size-3.5" />
+				</button>
 			</template>
 		</TextInput>
 	</div>
@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, ref, watch, type PropType } from "vue";
-import { Button, ItemListRow, TextInput } from "frappe-ui";
+import { ItemListRow, TextInput } from "frappe-ui";
 import { GROUPS, type PaneGroup } from "./panes";
 import { search, warmIndex, type SearchHit } from "./search";
 
