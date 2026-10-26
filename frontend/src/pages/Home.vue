@@ -2,7 +2,8 @@
   Three things behind one route: the index at `/apps`, an app's home, and a modular app's module list.
 -->
 <template>
-	<PageFrame :title="boot.app ?? 'Apps'">
+	<IndexPrototype v-if="!boot.app" />
+	<PageFrame v-else :title="boot.app ?? 'Apps'">
 		<div v-if="boot.app" class="py-5">
 			<p class="text-sm text-ink-gray-6">
 				Served by the framework shell at <code>{{ boot.shell_base }}</code
@@ -65,6 +66,7 @@ import type { Addresses } from "@/addresses";
 import { routeFor, routeForModule, isModular } from "@/router/routeFor";
 import { useContents } from "@/contents";
 import PageFrame from "@/shell/PageFrame.vue";
+import IndexPrototype from "./indexPrototype/IndexPrototype.vue";
 import TileGridSkeleton from "./TileGridSkeleton.vue";
 
 const boot = inject<Boot>("boot")!;

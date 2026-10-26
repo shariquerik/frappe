@@ -3,7 +3,14 @@
   because a save replaces the whole `{rail, sidebars}`, and the open sidebar is a fact about the address.
 -->
 <template>
+	<!-- PROTOTYPE (#45253): the index draws its own full page, with no rail. -->
+	<div v-if="!boot.app" class="h-screen w-screen">
+		<RouterView />
+		<ToastProvider />
+		<Dialogs />
+	</div>
 	<DesktopShell
+		v-else
 		:scroll="false"
 		class="desk-shell relative h-screen w-screen bg-surface-base text-ink-gray-9"
 	>
