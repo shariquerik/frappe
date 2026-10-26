@@ -2,79 +2,121 @@
 <template>
 	<div class="mb-2 px-0.5">
 		<TextInput
-			ref="input"
 			v-model="query"
-			type="search"
 			placeholder="Search settings"
 			@focus="warmIndex()"
-			@keydown.enter.prevent="hits[0] && emit('pick', hits[0])"
+			@keydown.down.prevent="move(1)"
+			@keydown.up.prevent="move(-1)"
+			@keydown.enter.prevent="hits[active] && emit('pick', hits[active])"
 		>
 			<template #prefix><span class="lucide-search size-4 text-ink-gray-5" /></template>
+			<template v-if="query" #suffix>
+				<Button
+					variant="ghost"
+					size="sm"
+					icon="lucide-x"
+					aria-label="Clear search"
+					class="-mr-1"
+					@click="query = ''"
+				/>
+			</template>
 		</TextInput>
 	</div>
 	<div v-if="query.trim()" class="flex flex-col gap-3">
-		<div v-if="!own.length && !foreign.length" class="px-2 text-base text-ink-gray-5">
+		<div v-if="!hits.length" class="px-2 text-base text-ink-gray-5">
 			No settings match “{{ query.trim() }}”.
 		</div>
-		<ResultList :hits="own" @pick="(hit) => emit('pick', hit)" />
+		<div v-if="own.length" class="flex flex-col gap-0.5">
+			<ItemListRow
+				v-for="(hit, index) in own"
+				:key="key(hit)"
+				as="button"
+				type="button"
+				class="w-full text-left"
+				:active="active === index"
+				@mouseenter="active = index"
+				@click="emit('pick', hit)"
+			>
+				<template #prefix>
+					<span :class="hit.pane.icon" class="size-4 shrink-0 text-ink-gray-6" />
+				</template>
+				<HitLabel :hit="hit" />
+			</ItemListRow>
+		</div>
 		<div v-if="foreign.length">
 			<div class="flex h-7 items-center px-2 text-base text-ink-gray-5">In other apps</div>
-			<ResultList :hits="foreign" show-app @pick="(hit) => emit('pick', hit)" />
+			<div class="flex flex-col gap-0.5">
+				<ItemListRow
+					v-for="(hit, index) in foreign"
+					:key="key(hit)"
+					as="button"
+					type="button"
+					class="w-full text-left"
+					:active="active === own.length + index"
+					@mouseenter="active = own.length + index"
+					@click="emit('pick', hit)"
+				>
+					<template #prefix>
+						<span :class="hit.pane.icon" class="size-4 shrink-0 text-ink-gray-6" />
+					</template>
+					<HitLabel :hit="hit" show-app />
+				</ItemListRow>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, type PropType } from "vue";
-import { TextInput } from "frappe-ui";
+import { computed, defineComponent, h, ref, watch, type PropType } from "vue";
+import { Button, ItemListRow, TextInput } from "frappe-ui";
 import { GROUPS, type PaneGroup } from "./panes";
 import { search, warmIndex, type SearchHit } from "./search";
+
+const LIMIT = 30;
 
 const props = defineProps<{ groups: PaneGroup[] }>();
 const emit = defineEmits<{ pick: [hit: SearchHit] }>();
 const query = defineModel<string>({ default: "" });
 
 const shown = computed(() => new Set(props.groups.map((group) => group.prefix)));
-const own = computed(() => search(query.value, props.groups));
+const own = computed(() => search(query.value, props.groups).slice(0, LIMIT));
 const foreign = computed(() =>
 	search(
 		query.value,
 		GROUPS.filter((group) => !shown.value.has(group.prefix))
-	)
+	).slice(0, LIMIT)
 );
 const hits = computed(() => [...own.value, ...foreign.value]);
 
-const ResultList = defineComponent({
+const active = ref(0);
+watch(query, () => (active.value = 0));
+
+function move(by: number) {
+	if (!hits.value.length) return;
+	active.value = (active.value + by + hits.value.length) % hits.value.length;
+}
+
+function key(hit: SearchHit) {
+	return [hit.prefix, hit.pane.key, hit.block?.key, hit.fieldname].join("/");
+}
+
+const HitLabel = defineComponent({
 	props: {
-		hits: { type: Array as PropType<SearchHit[]>, required: true },
+		hit: { type: Object as PropType<SearchHit>, required: true },
 		showApp: Boolean,
 	},
-	emits: ["pick"],
-	setup(listProps, { emit: emitPick }) {
+	setup(labelProps) {
 		return () =>
-			h(
-				"div",
-				{ class: "flex flex-col gap-0.5" },
-				listProps.hits.slice(0, 30).map((hit) =>
-					h(
-						"button",
-						{
-							type: "button",
-							class:
-								"flex w-full flex-col rounded px-2 py-1.5 text-left hover:bg-surface-gray-2 focus-visible:focus-ring",
-							onClick: () => emitPick("pick", hit),
-						},
-						[
-							h("span", { class: "truncate text-base text-ink-gray-8" }, hit.title),
-							h(
-								"span",
-								{ class: "truncate text-sm text-ink-gray-5" },
-								listProps.showApp ? `${hit.appLabel} › ${hit.path}` : hit.path
-							),
-						]
-					)
-				)
-			);
+			h("span", { class: "flex min-w-0 flex-col" }, [
+				h("span", { class: "truncate text-ink-gray-8" }, labelProps.hit.title),
+				h(
+					"span",
+					{ class: "truncate text-sm text-ink-gray-5" },
+					labelProps.showApp
+						? `${labelProps.hit.appLabel} › ${labelProps.hit.path}`
+						: labelProps.hit.path
+				),
+			]);
 	},
 });
 </script>
