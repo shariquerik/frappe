@@ -63,15 +63,16 @@ export function search(query: string, groups: PaneGroup[]): SearchHit[] {
 			const appLabel = GROUPS.find((other) => other.prefix === group.prefix)!.label;
 			const base = { prefix: group.prefix, appLabel, pane };
 			const hits: SearchHit[] = [];
-			const paneMatched = matches(pane.label, pane.description);
-			if (paneMatched) hits.push({ ...base, title: pane.label, path: appLabel });
+			if (matches(pane.label, pane.description))
+				hits.push({ ...base, title: pane.label, path: appLabel });
 			for (const block of pane.blocks) {
 				const where = block.label ? `${pane.label} › ${block.label}` : pane.label;
-				if (block.label && matches(block.label, block.description, ...(block.keywords ?? [])))
+				if (block.label && matches(block.label, block.description))
 					hits.push({ ...base, block, title: block.label, path: pane.label });
-				// A block with no heading reads as its pane, so it only stands in when the pane did not match.
-				else if (!block.label && !paneMatched && matches(...(block.keywords ?? [])))
-					hits.push({ ...base, block, title: pane.label, path: appLabel });
+				for (const setting of block.settings ?? []) {
+					if (matches(setting.label, ...(setting.keywords ?? [])))
+						hits.push({ ...base, block, title: setting.label, path: where });
+				}
 				for (const field of fieldsOf(block)) {
 					if (matches(field.label, field.description))
 						hits.push({
