@@ -41,7 +41,7 @@
 					</button>
 				</PrototypeUserMenu>
 
-				<div v-if="place === 'inline'" class="flex w-full max-w-md items-center gap-3">
+				<div v-if="place === 'inline'" class="flex w-full items-center gap-3" :style="{ maxWidth: boxWidth }">
 					<TextInput
 						ref="filterBox"
 						v-model="query"
@@ -71,12 +71,25 @@
 					v-model="query"
 					size="lg"
 					variant="subtle"
-					class="w-full max-w-md"
+					class="w-full"
+					:style="{ maxWidth: boxWidth }"
 					placeholder="Find an app"
 					@keydown="onKeydown"
 				>
 					<template #prefix>
 						<LucideSearch class="size-4 text-ink-gray-5" />
+					</template>
+					<template v-if="place === 'inside'" #suffix>
+						<PrototypeUserMenu v-slot="{ user }" side="bottom" align="end">
+							<button
+								type="button"
+								class="-mr-1 flex rounded-full focus-visible:ring-0 focus-visible:focus-ring"
+								:aria-label="user.full_name"
+								@mousedown.prevent
+							>
+								<Avatar :image="user.user_image" :label="user.full_name" size="md" />
+							</button>
+						</PrototypeUserMenu>
 					</template>
 				</TextInput>
 
@@ -146,11 +159,22 @@ const filterBox = ref(null);
 const { apps, loading, query, matches, onKeydown } = useIndex(boot, filterBox);
 
 const route = useRoute();
-const PLACES = ["corner", "rail", "inline", "above"] as const;
+const PLACES = ["corner", "rail", "inline", "above", "inside"] as const;
 const place = computed(() => {
 	const asked = route.query.avatar as (typeof PLACES)[number];
-	return PLACES.includes(asked) ? asked : "corner";
+	return PLACES.includes(asked) ? asked : "rail";
 });
-const MENU_SIDE = { corner: "bottom", rail: "right", inline: "bottom", above: "bottom" } as const;
-const MENU_ALIGN = { corner: "end", rail: "end", inline: "end", above: "center" } as const;
+// From the first logo's left edge to the last one's right edge: a tile is 112px with its 56px logo
+// centred, so 28px in on each side. Never under three columns' span, so one or two apps still get a
+// usable box. Off every app, not the matches, so typing does not resize the box under the cursor.
+const TILE = 112;
+const LOGO = 56;
+const GAP = 16;
+const boxWidth = computed(() => {
+	const columns = Math.max(3, Math.min(apps.value.length, 6));
+	return `${columns * TILE + (columns - 1) * GAP - (TILE - LOGO)}px`;
+});
+
+const MENU_SIDE = { corner: "bottom", rail: "right", inline: "bottom", above: "bottom", inside: "bottom" } as const;
+const MENU_ALIGN = { corner: "end", rail: "end", inline: "end", above: "center", inside: "end" } as const;
 </script>
