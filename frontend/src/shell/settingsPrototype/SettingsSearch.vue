@@ -1,8 +1,9 @@
 <!-- PROTOTYPE: the search box above the pane list, and its results in place of the list. -->
 <template>
-	<div class="mb-2 px-0.5">
+	<div class="-mb-2 px-0.5">
 		<TextInput
 			v-model="query"
+			variant="outline"
 			placeholder="Search settings"
 			@focus="warmIndex()"
 			@keydown.down.prevent="move(1)"
