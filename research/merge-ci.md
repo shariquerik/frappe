@@ -50,7 +50,7 @@ So every v1 test runs with the setting off, which is the state a develop site ge
 | Default JS bundle size (`Compare`) | every PR | no | every PR | no | n/a | pass on #45428 |
 | Individual (`run-indinvidual-tests.yml`) | manual only | no | no | no | - | not run on either branch |
 
-Hourly history on desk-v2 today: Server failed at `f7424371aa` and `03b4c8edb9` (two desk-v2-only tests in `frappe/tests/test_shell_navigation.py::TestBootBudget`, `KeyError: 'setup_complete'` in `frappe/shell/boot.py`, not v1), then passed at `edf88d6c87` and `e826529a61`. On the tip (`8c96392df6`), every test job of runs 40499838779 (Server) and 40499847589 (UI) passed. At the time of writing, their `Server Success` / `UI Success` gate jobs were still queued for a runner. UI passed on every hourly run today. develop's latest hourly Server and UI runs (`2d2094c252`) pass.
+Hourly history on desk-v2 today: Server failed at `f7424371aa` and `03b4c8edb9` (two desk-v2-only tests in `frappe/tests/test_shell_navigation.py::TestBootBudget`, `KeyError: 'setup_complete'` in `frappe/shell/boot.py`, not v1), then passed at `edf88d6c87` and `e826529a61`. On the tip (`8c96392df6`), every test job of runs 40499838779 (Server) and 40499847589 (UI) passed. Their `Server Success` and `UI Success` gate jobs passed too. GitHub shows both runs as "cancelled" only because the `Update Develop Status` job was cancelled by its `develop-status-all` concurrency group. The helper that `develop-status.yml` runs is develop's copy, and it does not count that job (`STATUS_JOB`). UI passed on every hourly run today. develop's latest hourly Server and UI runs (`2d2094c252`) pass.
 
 ## v1 tests changed on desk-v2
 
