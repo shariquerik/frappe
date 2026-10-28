@@ -506,7 +506,6 @@ function insertRow(index: number, row = freshRow()): boolean {
 	return true;
 }
 
-// Without `canAddRows` only Edit is left, as v1's row form drops its insert buttons.
 function rowMenu(row: Record<string, any>, index: number) {
 	const edit = {
 		label: __("Edit"),
@@ -627,9 +626,7 @@ function cellErrorLines(row: Record<string, any>, column: T): string[] {
 	return [props.cellError?.(row, column) ?? []].flat().filter(Boolean);
 }
 
-// In a read-only grid a row click opens the dialog (a cell's content is inert,
-// so the click reaches the row). Editable grids keep inline editing — only the row
-// menu's Edit opens the dialog there.
+// A read-only grid's cells are inert, so a row click opens the dialog.
 function onRowClick(row: Record<string, any>, index: number) {
 	if (props.disabled) emit("edit", { row, index });
 }
