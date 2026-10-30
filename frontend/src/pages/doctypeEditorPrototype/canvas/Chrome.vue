@@ -16,8 +16,8 @@
 		<slot />
 		<div
 			v-if="$slots.tools"
-			class="absolute -top-3 right-1 z-10 hidden items-center gap-0.5 rounded-3 bg-surface-base px-0.5 shadow-sm ring-1 ring-outline-gray-2"
-			:class="[TOOLS[kind], selected && '!flex']"
+			class="absolute z-10 hidden items-center gap-0.5 rounded-3 bg-surface-base px-0.5 shadow-sm ring-1 ring-outline-gray-2"
+			:class="[TOOLS[kind], POSITION[kind], selected && '!flex']"
 			@click.stop
 		>
 			<slot name="tools" />
@@ -38,6 +38,12 @@ const TOOLS = {
 	section: "group-hover/section:flex",
 	column: "group-hover/column:flex",
 	field: "group-hover/field:flex",
+};
+// A field's one tool is "+ below", so it sits on the field's bottom edge.
+const POSITION = {
+	section: "-top-3 right-1",
+	column: "-top-3 right-1",
+	field: "-bottom-4 left-1/2 -translate-x-1/2",
 };
 defineEmits<{ select: [] }>();
 </script>

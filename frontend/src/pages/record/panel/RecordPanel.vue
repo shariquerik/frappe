@@ -18,6 +18,8 @@
 			@toggle="disclosure.toggle"
 			@expand="emit('expand', $event)"
 		/>
+		<!-- PROTOTYPE (#45867): the panel's "Edit panel". -->
+		<slot v-if="!collapsed" name="after" />
 	</div>
 </template>
 

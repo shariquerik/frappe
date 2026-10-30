@@ -1,10 +1,13 @@
-// PROTOTYPE (#45867), throwaway: the DocType editor's state and acts, in memory only.
-// Nothing here saves. Every edit runs through `act`, which logs it the way `page.run` would.
+// PROTOTYPE (#45867), throwaway: one layout's edit state and acts, in memory only.
+// Each surface that renders a layout makes its own editor for that one layout (the DocType
+// page for Details, the Create dialog for Quick Entry, the record page for its row and its
+// panel). Nothing here saves. Every edit runs through `act`, which logs it as `page.run` would.
 
 import { reactive, computed } from "vue";
 import { runMethod } from "@framework/ui/api";
 import { DROPPED_FIELDTYPES } from "@framework/ui/FormLayout";
 import { joinLayout } from "@/recordPage/formLayoutSource/joinLayout";
+import { matchesCondition } from "@/recordPage/formLayoutSource/chooseLayout";
 import type {
 	FormLayoutsResponse,
 	LayoutTree,
@@ -34,11 +37,20 @@ export const MORE_FIELDS = "__more_fields__";
 let counter = 0;
 const newKey = (kind: string) => `${kind}-new-${++counter}`;
 
-export function createEditor(doctype: string, mode: Mode) {
+export interface LoadOptions {
+	/** The record the surface shows: its conditional row wins, as on the record page. */
+	doc?: Record<string, any>;
+	/** PROTOTYPE: pretend the doctype has a conditional row with this condition (none exist here). */
+	fakeCondition?: string;
+}
+
+export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "details") {
 	const state = reactive({
 		doctype,
 		mode,
-		layout: "details" as LayoutKey,
+		layout,
+		// The row being edited: its condition, or none for the default row.
+		row: { condition: "" as string, isNew: false },
 		loading: true,
 		fields: [] as EditorField[],
 		trees: {} as Record<LayoutKey, LayoutTree>,
@@ -51,23 +63,34 @@ export function createEditor(doctype: string, mode: Mode) {
 		dragging: null as null | "field" | "column" | "section",
 	});
 
-	async function load(meta: { fields: RawMetaField[] }) {
+	async function load(meta: { fields: RawMetaField[] }, options: LoadOptions = {}) {
 		state.fields = meta.fields.map((field, idx) => ({ ...field, idx }));
-		await Promise.all(
-			LAYOUTS.map(async ({ key, type }) => {
-				const { data } = await runMethod<FormLayoutsResponse>(
-					"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
-					{ dt: doctype, type },
-					{ http: "GET" }
-				);
-				const row = data.layouts.find((one) => !one.condition);
-				const tree = row?.layout ?? (key === "side-panel" ? [] : data.fallback);
-				state.trees[key] = keyed(structuredClone(tree ?? []));
-				state.omitted[key] = [];
-				state.source[key] = row ? "row" : key === "side-panel" ? "none" : "fallback";
-				state.forked[key] = false;
-			})
+		const key = state.layout;
+		const type = LAYOUTS.find((one) => one.key === key)!.type;
+		const { data } = await runMethod<FormLayoutsResponse>(
+			"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
+			{ dt: doctype, type },
+			{ http: "GET" }
 		);
+		const rows = data.layouts.slice();
+		if (options.fakeCondition) {
+			const base = rows.find((one) => !one.condition);
+			rows.unshift({
+				name: "proto-conditional",
+				condition: options.fakeCondition,
+				layout: structuredClone(base?.layout ?? data.fallback ?? []),
+			} as any);
+		}
+		const conditional = options.doc
+			? rows.find((one) => one.condition && matchesCondition(one.condition, options.doc!))
+			: undefined;
+		const row = conditional ?? rows.find((one) => !one.condition);
+		const tree = row?.layout ?? (key === "side-panel" ? [] : data.fallback);
+		state.row = { condition: row?.condition ?? "", isNew: !row };
+		state.trees[key] = keyed(structuredClone(tree ?? []));
+		state.omitted[key] = [];
+		state.source[key] = row ? "row" : key === "side-panel" ? "none" : "fallback";
+		state.forked[key] = false;
 		state.loading = false;
 	}
 
@@ -154,6 +177,12 @@ export function createEditor(doctype: string, mode: Mode) {
 			state.source["side-panel"] = "row";
 	}
 
+	// #45865: placing or moving a field on Details or New Record never forks (an anchor, or
+	// `field_order` on the breaks); on the Side Panel and Quick Entry any placement does.
+	function placeOnly() {
+		if (state.layout === "side-panel" || state.layout === "quick-entry") touchContainer();
+	}
+
 	const acts = {
 		moveField(fieldname: string, toColumn: string, index: number) {
 			const from = columnOf(fieldname);
@@ -166,7 +195,7 @@ export function createEditor(doctype: string, mode: Mode) {
 				column.fields.splice(index, 0, fieldname);
 				act(from ? "move_field" : "place_field", { fieldname, column: toColumn, index });
 			}
-			touchContainer();
+			placeOnly();
 			state.selection = { kind: "field", fieldname };
 		},
 		moveContainer(key: string, toParent: string, index: number) {
@@ -249,7 +278,7 @@ export function createEditor(doctype: string, mode: Mode) {
 			state.omitted[state.layout] = state.omitted[state.layout].filter((one) => one !== fieldname);
 			act("restore_field", { fieldname });
 		},
-		addField(fieldtype: string, column?: string) {
+		addField(fieldtype: string, column?: string, index?: number) {
 			const label = `New ${fieldtype}`;
 			const fieldname = `${state.mode === "customize" ? "custom_" : ""}new_${fieldtype.toLowerCase().replace(/ /g, "_")}_${++counter}`;
 			state.fields.push({
@@ -257,8 +286,10 @@ export function createEditor(doctype: string, mode: Mode) {
 				custom: state.mode === "customize", idx: state.fields.length,
 			});
 			const target = column ?? defaultColumn();
-			if (target) (find(target)?.node as LayoutTreeColumn).fields.push(fieldname);
-			act(state.mode === "customize" ? "add_custom_field" : "add_field", { fieldtype, column: target });
+			const fields = (find(target!)?.node as LayoutTreeColumn).fields;
+			fields.splice(index ?? fields.length, 0, fieldname);
+			act(state.mode === "customize" ? "add_custom_field" : "add_field", { fieldtype, column: target, index: index ?? fields.length - 1 });
+			placeOnly();
 			state.selection = { kind: "field", fieldname };
 		},
 		deleteField(fieldname: string) {
@@ -294,7 +325,7 @@ export function createEditor(doctype: string, mode: Mode) {
 	}
 
 	return {
-		state, tree, schema, placed, omitted, unplaced, autoFields, hasMoreFields, dataFields,
+		state, tree, schema, edits: computed(() => state.log.length), placed, omitted, unplaced, autoFields, hasMoreFields, dataFields,
 		load, find, field, columnOf, acts, can,
 	};
 }

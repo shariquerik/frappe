@@ -9,8 +9,16 @@
 		</template>
 
 		<template v-if="frame.header && (!painted || !isEmptyHeader(header))" #header>
+			<!-- PROTOTYPE (#45867): an edit mode can take the header's place. -->
+			<EditBar
+				v-if="painted && editMode.editing.value && editMode.editor.value && tweaks.bar === 'header'"
+				:editor="editMode.editor.value"
+				placement="header"
+				@done="editMode.close(true)"
+				@cancel="editMode.close(false)"
+			/>
 			<RecordHeader
-				v-if="painted"
+				v-else-if="painted"
 				:projection="header"
 				:page="painted.page"
 				:dirty="true"
@@ -35,8 +43,16 @@
 				<template #form>
 					<!-- Locked while a save runs, so the reply never lands over an edit. -->
 					<div ref="formRoot" data-record-form :inert="painted.isSaving.value">
+						<!-- PROTOTYPE (#45867): "Edit layout" edits the New Record layout in place. -->
+						<InPlaceEditor
+							v-if="editMode.editing.value === 'layout'"
+							:doctype="doctype"
+							layout="new-record"
+							:class="FORM_CLASSES"
+							@ready="editMode.editor.value = $event"
+						/>
 						<FormLayout
-							v-if="form.length"
+							v-else-if="form.length"
 							v-model:doc="doc"
 							v-model:sections="formSections"
 							:layout="form"
@@ -56,6 +72,15 @@
 
 		<FrameBands v-if="painted" :bands="frame.after" :page="painted.page" />
 
+		<EditBar
+			v-if="editMode.editing.value && editMode.editor.value && tweaks.bar === 'floating'"
+			:editor="editMode.editor.value"
+			placement="floating"
+			@done="editMode.close(true)"
+			@cancel="editMode.close(false)"
+		/>
+		<TweakPanel v-if="editMode.editing.value" :show="['bar']" :class="tweaks.bar === 'floating' && '!bottom-[76px]'" />
+
 		<PageDialogs v-if="controller" :controller="controller" />
 	</PageFrame>
 </template>
@@ -69,6 +94,11 @@ import {
 	type LocationQuery,
 } from "vue-router";
 import { toast } from "frappe-ui";
+import EditBar from "@/pages/doctypeEditorPrototype/EditBar.vue";
+import InPlaceEditor from "@/pages/doctypeEditorPrototype/InPlaceEditor.vue";
+import TweakPanel from "@/pages/doctypeEditorPrototype/TweakPanel.vue";
+import { useEditMode } from "@/pages/doctypeEditorPrototype/editMode";
+import { tweaks } from "@/pages/doctypeEditorPrototype/tweaks";
 import { createDocument, isApiError } from "@framework/ui/api";
 import { FormLayout } from "@framework/ui/FormLayout";
 import {
@@ -279,6 +309,8 @@ function buildController() {
 	return created;
 }
 
+const editMode = useEditMode();
+
 function headerBuiltins(): HeaderItem[] {
 	return [
 		{
@@ -298,6 +330,8 @@ function headerBuiltins(): HeaderItem[] {
 			key: "Mod+S",
 			run: save,
 		},
+		// PROTOTYPE (#45867): the New Record layout, edited in place.
+		{ name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", run: () => editMode.open("layout") },
 	];
 }
 

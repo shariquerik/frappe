@@ -10,8 +10,16 @@
 
 		<!-- No slot when a script emptied or hid the row: the frame then draws no row at all. -->
 		<template v-if="doctype && frame.header && (!painted || !isEmptyHeader(header))" #header>
+			<!-- PROTOTYPE (#45867): an edit mode can take the header's place. -->
+			<EditBar
+				v-if="painted && editMode.editing.value && editMode.editor.value && tweaks.bar === 'header'"
+				:editor="editMode.editor.value"
+				placement="header"
+				@done="editMode.close(true)"
+				@cancel="editMode.close(false)"
+			/>
 			<RecordHeader
-				v-if="painted"
+				v-else-if="painted"
 				:projection="header"
 				:page="painted.page"
 				:dirty="dirty"
@@ -49,8 +57,18 @@
 					>
 						<template #details>
 							<div ref="formRoot" data-record-form>
+								<!-- PROTOTYPE (#45867): "Edit layout" edits the row this record uses, in place. -->
+								<InPlaceEditor
+									v-if="editMode.editing.value === 'layout'"
+									:doctype="doctype"
+									layout="details"
+									:doc="saved"
+									:fake-condition="editMode.fakeCondition.value"
+									:class="FORM_CLASSES"
+									@ready="editMode.editor.value = $event"
+								/>
 								<FormLayout
-									v-if="form.length"
+									v-else-if="form.length"
 									v-model:doc="doc"
 									v-model:sections="formSections"
 									:layout="form"
@@ -73,7 +91,16 @@
 				</template>
 
 				<template #panel="{ collapsed }">
+					<!-- PROTOTYPE (#45867): "Edit panel" edits the Side Panel layout where it renders. -->
+					<InPlaceEditor
+						v-if="editMode.editing.value === 'panel' && !collapsed"
+						:doctype="doctype"
+						layout="side-panel"
+						properties="left-of-panel"
+						@ready="editMode.editor.value = $event"
+					/>
 					<RecordPanel
+						v-else
 						v-model:doc="doc"
 						:doctype="doctype"
 						:docname="docname"
@@ -89,7 +116,13 @@
 						:whileOnRecord="visitCheck"
 						:onDetails="(fieldname: string) => !!tabOf(form, fieldname)"
 						@expand="expand"
-					/>
+					>
+						<template v-if="!editMode.editing.value" #after>
+							<div class="px-2.5 py-3">
+								<Button variant="ghost" size="sm" icon-left="lucide-pencil-ruler" label="Edit panel" @click="editMode.open('panel')" />
+							</div>
+						</template>
+					</RecordPanel>
 				</template>
 			</BodyColumns>
 
@@ -101,6 +134,15 @@
 		</template>
 
 		<FrameBands v-if="painted" :bands="frame.after" :page="painted.page" />
+
+		<EditBar
+			v-if="editMode.editing.value && editMode.editor.value && tweaks.bar === 'floating'"
+			:editor="editMode.editor.value"
+			placement="floating"
+			@done="editMode.close(true)"
+			@cancel="editMode.close(false)"
+		/>
+		<TweakPanel v-if="editMode.editing.value" :show="['bar']" :class="tweaks.bar === 'floating' && '!bottom-[76px]'" />
 
 		<PageDialogs v-if="controller" :controller="controller" />
 		<RecordUploadDialog v-if="controller" :page="controller.page" />
@@ -116,7 +158,12 @@ import {
 	useRouter,
 	type LocationQuery,
 } from "vue-router";
-import { toast } from "frappe-ui";
+import { Button, toast } from "frappe-ui";
+import EditBar from "./doctypeEditorPrototype/EditBar.vue";
+import InPlaceEditor from "./doctypeEditorPrototype/InPlaceEditor.vue";
+import TweakPanel from "./doctypeEditorPrototype/TweakPanel.vue";
+import { useEditMode } from "./doctypeEditorPrototype/editMode";
+import { tweaks } from "./doctypeEditorPrototype/tweaks";
 import {
 	addFavourite,
 	addFollow,
@@ -229,6 +276,7 @@ const router = useRouter();
 
 const doc = ref<Record<string, any>>({});
 const saved = ref<Record<string, any>>({});
+const editMode = useEditMode();
 const meta = ref<any>(null);
 const docinfo = ref<DocInfo | null>(null);
 const linkTitles = ref<Record<string, string>>({});
@@ -403,7 +451,7 @@ function headerBuiltins(): HeaderItem[] {
 			key: "Mod+S",
 			run: saveFromHeader,
 		},
-		...headerMenuBuiltins(
+		...withEditLayout(headerMenuBuiltins(
 			docinfo.value?.permissions ?? {},
 			{ favourited: favourited.value, toggle: toggleFavourite },
 			{
@@ -411,9 +459,16 @@ function headerBuiltins(): HeaderItem[] {
 				follow: follow.value,
 				assign: { assignees: assigneesOf(docinfo.value), assign: assignUser },
 			}
-		)
+		))
 	);
 	return items;
+}
+
+// PROTOTYPE (#45867): "Edit layout" edits the record's own row in place; it sits just above Delete.
+function withEditLayout(items: HeaderItem[]) {
+	const edit = { name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", group: "layout_band", run: () => editMode.open("layout") };
+	const at = items.findIndex((item) => item.group === "danger");
+	return at < 0 ? [...items, edit] : [...items.slice(0, at), edit, ...items.slice(at)];
 }
 
 // Turns run in the order queued, so each reads the state the one before it left (two quick

@@ -1,21 +1,11 @@
 <!-- PROTOTYPE (#45867): the Side Panel drawn with the panel's own `PanelSection` and
      `PanelField`, through the section's existing default slot. The built-ins stay put. -->
 <template>
-	<div class="mx-auto flex w-full max-w-[880px] overflow-hidden rounded-6 ring-1 ring-outline-gray-2">
-		<div class="flex-1 bg-surface-gray-1 p-5">
-			<div class="h-3 w-40 rounded-full bg-surface-gray-3" />
-			<div class="mt-4 h-2.5 w-64 rounded-full bg-surface-gray-2" />
-			<div class="mt-2 h-2.5 w-56 rounded-full bg-surface-gray-2" />
-			<p class="mt-8 text-sm text-ink-gray-5">The record's tabs render here. Switch to Details to lay them out.</p>
+	<div class="py-1">
+		<!-- The panel's built-ins stay where they are: they are not part of the layout. -->
+		<div class="flex items-center gap-2 px-4 py-3 text-sm text-ink-gray-5">
+			<span class="lucide-lock size-3.5" aria-hidden="true" /> Name, image and people are built in
 		</div>
-		<aside class="w-[320px] shrink-0 border-l border-outline-gray-2 bg-surface-base py-1">
-			<div class="flex items-center gap-2 px-4 py-3 opacity-60" title="Built in: not part of the layout">
-				<div class="size-8 rounded-full bg-surface-gray-3" />
-				<div>
-					<div class="text-base-medium text-ink-gray-8">{{ editor.state.doctype }} name</div>
-					<div class="text-sm text-ink-gray-5">Built-in identity</div>
-				</div>
-			</div>
 			<Draggable
 				:model-value="sections"
 				item-key="name"
@@ -62,8 +52,13 @@
 										</div>
 									</template>
 									<template #footer>
-										<div v-if="!section.fields.length" class="pointer-events-none flex h-10 items-center justify-center rounded-4 border border-dashed border-outline-gray-2 text-sm text-ink-gray-4">
-											Drag fields here
+										<div
+											class="flex items-center"
+											:class="section.fields.length ? '-mt-1 h-7 opacity-0 transition-opacity group-hover/section:opacity-100 [&:has([aria-expanded=true])]:opacity-100' : 'h-10 justify-center rounded-4 border border-dashed border-outline-gray-2'"
+										>
+											<AddField :column="section.column">
+												<Button variant="ghost" size="sm" icon-left="lucide-plus" label="Add field" class="text-ink-gray-5" />
+											</AddField>
 										</div>
 									</template>
 								</Draggable>
@@ -85,10 +80,6 @@
 					<span class="lucide-plus size-4" aria-hidden="true" /> Add section
 				</button>
 			</div>
-			<div class="border-t border-outline-gray-1 px-4 py-3 text-sm text-ink-gray-5 opacity-60">
-				Built-in: people, tags, quick actions
-			</div>
-		</aside>
 	</div>
 </template>
 
@@ -102,6 +93,7 @@ import { CommitKey, DocKey, NO_COMMIT, ResolveFieldKey, UpdateKey } from "@frame
 import PanelSection from "@/pages/record/panel/PanelSection.vue";
 import PanelField from "@/pages/record/panel/PanelField.vue";
 import { EditorKey, onDrop } from "../context";
+import AddField from "./AddField.vue";
 import Chrome from "./Chrome.vue";
 
 const editor = inject(EditorKey)!;

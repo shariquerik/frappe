@@ -19,7 +19,7 @@
 					<slot name="section" :section="section" :index="index" />
 					<div
 						v-if="!section.label || section.hideLabel"
-						class="pointer-events-none absolute -top-2.5 left-2 hidden bg-surface-base px-1 text-xs text-ink-gray-5 group-hover/section:block"
+						class="pointer-events-none absolute -top-6 left-0 hidden text-xs text-ink-gray-5 group-hover/section:block"
 						:class="{ '!block': isSelected(section.name) }"
 					>
 						Section

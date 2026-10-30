@@ -16,6 +16,7 @@
 					<div class="truncate font-mono text-sm text-ink-gray-5">{{ field.fieldname }}</div>
 				</div>
 				<Badge v-if="customize" :label="field.custom ? 'Custom field' : 'Standard field'" theme="gray" />
+				<Button v-if="closable" class="-mr-1.5 -mt-1" variant="ghost" icon="lucide-x" label="Close" @click="editor.state.selection = null" />
 			</header>
 			<div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4">
 				<div v-if="warning" class="flex gap-2 rounded-4 bg-surface-amber-1 p-2.5 text-sm text-ink-amber-4">
@@ -98,6 +99,7 @@
 					<div class="truncate text-base-medium text-ink-gray-9">{{ container.node.label || `Unnamed ${container.kind}` }}</div>
 					<div class="text-sm capitalize text-ink-gray-5">{{ container.kind }} · {{ layoutLabel }} layout</div>
 				</div>
+				<Button v-if="closable" class="-mr-1.5" variant="ghost" icon="lucide-x" label="Close" @click="editor.state.selection = null" />
 			</header>
 			<div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4">
 				<p v-if="forkPending" class="flex gap-2 rounded-4 bg-surface-gray-2 p-2.5 text-sm text-ink-gray-7">
@@ -137,6 +139,7 @@ import { isMandatory, LAYOUTS, MORE_FIELDS } from "./editor";
 import { FIELDTYPES, iconOf } from "./fieldtypes";
 import { conditionalHome } from "./warnings";
 
+defineProps<{ closable?: boolean }>();
 const editor = inject(EditorKey)!;
 const selection = computed(() => editor.state.selection);
 const customize = computed(() => editor.state.mode === "customize");

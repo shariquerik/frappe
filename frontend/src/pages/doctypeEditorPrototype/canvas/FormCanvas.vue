@@ -1,29 +1,13 @@
-<!-- PROTOTYPE (#45867): Details, New Record and Quick Entry drawn by the record page's own
-     `FormLayout`, with the edit seam injected. Quick Entry sits in a dialog-sized frame. -->
+<!-- PROTOTYPE (#45867): Details, New Record and Quick Entry drawn by the surface's own
+     `FormLayout`, with the edit seam injected. The surface draws its own frame around it. -->
 <template>
-	<div
-		:class="
-			frame === 'dialog'
-				? 'mx-auto w-full max-w-xl rounded-6 bg-surface-base p-5 shadow-xl ring-1 ring-outline-gray-1'
-				: 'w-full'
-		"
-	>
-		<div v-if="frame === 'dialog'" class="mb-5 flex items-center justify-between">
-			<span class="text-xl-semibold text-ink-gray-9">New {{ editor.state.doctype }}</span>
-			<span class="lucide-x size-4 text-ink-gray-5" aria-hidden="true" />
-		</div>
-		<div class="relative" @click.capture="selectTab">
-			<FormLayout v-model:doc="doc" v-model:tab="tab" :layout="editor.schema.value" @update:active-tab="active = $event" />
-		</div>
-		<div v-if="frame === 'dialog'" class="mt-6 flex justify-end">
-			<Button variant="solid" label="Create" disabled />
-		</div>
+	<div class="relative" @click.capture="selectTab">
+		<FormLayout v-model:doc="doc" v-model:tab="tab" :layout="editor.schema.value" @update:active-tab="active = $event" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, provide, ref, watch } from "vue";
-import { Button } from "frappe-ui";
 import { FormLayout, identifyTabs } from "@framework/ui/FormLayout";
 import { CommitKey, LayoutEditKey, NO_COMMIT } from "@framework/ui/FormLayout/types";
 import { EditorKey } from "../context";
@@ -31,11 +15,11 @@ import EditColumns from "./EditColumns.vue";
 import EditFields from "./EditFields.vue";
 import EditSections from "./EditSections.vue";
 
-defineProps<{ frame?: "page" | "dialog" }>();
 const editor = inject(EditorKey)!;
 
-// The canvas fills nothing in: the controls draw empty.
-const doc = ref<Record<string, any>>({});
+// In place, the canvas shows the record's own values, inert; on the DocType page it draws empty.
+const props = defineProps<{ values?: Record<string, any> }>();
+const doc = ref<Record<string, any>>({ ...(props.values ?? {}) });
 const tab = ref("");
 const active = ref("");
 

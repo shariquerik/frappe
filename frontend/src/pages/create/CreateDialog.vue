@@ -5,14 +5,22 @@
 		v-if="shown"
 		v-model:open="isOpen"
 		:title="__('New {0}', [__(doctype)])"
-		:dismissible="!saving"
-		:show-close-button="!saving"
-		size="xl"
+		:dismissible="!saving && !editing"
+		:show-close-button="!saving && !editing"
+		:size="editing ? '4xl' : 'xl'"
 		@after-leave="request.dismiss()"
 	>
 		<div ref="body">
+			<!-- PROTOTYPE (#45867): "Edit layout" puts this dialog's Quick Entry layout in edit mode. -->
+			<InPlaceEditor
+				v-if="editing"
+				:doctype="doctype"
+				layout="quick-entry"
+				properties="inline"
+				@ready="editor = $event"
+			/>
 			<FormLayout
-				v-if="layout.length"
+				v-else-if="layout.length"
 				v-model:doc="doc"
 				v-model:tab="formTab"
 				:layout="layout"
@@ -22,13 +30,29 @@
 			<ErrorMessage v-if="error" class="mt-2" :message="error" />
 		</div>
 		<template #actions>
-			<div class="flex items-center justify-between gap-2">
-				<Button
-					variant="subtle"
-					:label="__('Edit full form')"
-					:disabled="saving"
-					@click="editFullForm"
-				/>
+			<EditBar
+				v-if="editing && editor"
+				:editor="editor"
+				placement="header"
+				@done="stopEditing(true)"
+				@cancel="stopEditing(false)"
+			/>
+			<div v-else class="flex items-center justify-between gap-2">
+				<div class="flex items-center gap-2">
+					<Button
+						variant="subtle"
+						:label="__('Edit full form')"
+						:disabled="saving"
+						@click="editFullForm"
+					/>
+					<Button
+						variant="ghost"
+						icon-left="lucide-pencil-ruler"
+						label="Edit layout"
+						class="text-ink-gray-5"
+						@click="editing = true"
+					/>
+				</div>
 				<Button
 					variant="solid"
 					:label="__('Save')"
@@ -42,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, provide, ref, useTemplateRef, watch } from "vue";
+import { computed, nextTick, provide, ref, shallowRef, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useEventListener } from "@vueuse/core";
 import { Button, Dialog, ErrorMessage, toast } from "frappe-ui";
@@ -57,6 +81,9 @@ import { FieldErrors, missingRequired, useFormLayout } from "@/recordPage";
 import { errorMessage } from "@/recordPage/errorMessage";
 import { formData, initialDoc } from "@/recordPage/formDialogLayout";
 import { landOnFirstMarked } from "@/pages/record/landOnField";
+import EditBar from "@/pages/doctypeEditorPrototype/EditBar.vue";
+import InPlaceEditor from "@/pages/doctypeEditorPrototype/InPlaceEditor.vue";
+import type { Editor } from "@/pages/doctypeEditorPrototype/editor";
 import { routeForNew } from "@/router/routeFor";
 import type { CreateRequest } from "@/shell/create";
 import {
@@ -98,6 +125,16 @@ const doc = ref<Record<string, any>>({ ...values });
 const typed = ref(false);
 const formTab = ref("");
 let saved: Record<string, any> | null = null;
+
+// PROTOTYPE (#45867): the dialog's edit mode; nothing saves.
+const editing = ref(false);
+const editor = shallowRef<Editor | null>(null);
+function stopEditing(done: boolean) {
+	const count = editor.value?.edits.value ?? 0;
+	editing.value = false;
+	editor.value = null;
+	if (done && count) toast.success(`Prototype: ${count} edit${count === 1 ? "" : "s"} would save`);
+}
 
 const layout = computed<FormLayoutSchema>(() =>
 	withNameField(quickEntry.layout.value, meta.value)
