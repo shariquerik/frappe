@@ -3,7 +3,12 @@
 		<div v-if="column.label && !column.hideLabel" class="text-ink-gray-9 max-w-fit text-base">
 			{{ column.label }}
 		</div>
-		<template v-for="entry in entries" :key="entry.key">
+		<component :is="edit.fields" v-if="edit" :column="column">
+			<template #field="{ field }">
+				<FormLayoutField :field="field" />
+			</template>
+		</component>
+		<template v-else v-for="entry in entries" :key="entry.key">
 			<FormLayoutPart v-if="entry.part" :part="entry.part" />
 			<FormLayoutField v-else-if="entry.field" :field="entry.field" />
 		</template>
@@ -11,12 +16,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import FormLayoutField from "./FormLayoutField.vue";
 import FormLayoutPart from "./FormLayoutPart.vue";
+import { LayoutEditKey } from "./types";
 import type { Column, ColumnPart, FieldNode } from "./types";
 
 const props = defineProps<{ column: Column }>();
+const edit = inject(LayoutEditKey, null);
 
 type Entry = { key: string; name: string; field?: FieldNode; part?: ColumnPart };
 

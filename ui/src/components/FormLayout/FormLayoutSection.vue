@@ -22,6 +22,14 @@
 				/>
 			</CollapsibleTrigger>
 
+			<p
+				v-if="section.description"
+				class="mt-1 text-p-sm text-ink-gray-5"
+				:class="{ 'px-3 sm:px-5': hasTabs }"
+			>
+				{{ section.description }}
+			</p>
+
 			<CollapsibleContent
 				class="form-section-content"
 				:class="{ 'is-animated': animate, animating }"
@@ -38,6 +46,11 @@
 						:class="{ 'mt-6': showHeader }"
 						class="w-full"
 					/>
+					<component :is="edit.columns" v-else-if="edit" :section="section">
+						<template #column="{ column }">
+							<FormLayoutColumn :class="{ 'mt-6': showHeader }" :column="column" />
+						</template>
+					</component>
 					<FormLayoutColumn
 						v-else
 						v-for="(column, index) in section.columns"
@@ -56,7 +69,7 @@ import { computed, inject, ref, watch } from "vue";
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from "reka-ui";
 import FormLayoutColumn from "./FormLayoutColumn.vue";
 import FormLayoutPart from "./FormLayoutPart.vue";
-import { HasTabsKey } from "./types";
+import { HasTabsKey, LayoutEditKey } from "./types";
 import type { Section } from "./types";
 
 // `undefined`, not Vue's `false` for a missing boolean: absent means the layout decides.
@@ -67,11 +80,14 @@ const props = withDefaults(defineProps<{ section: Section; open?: boolean }>(), 
 const emit = defineEmits<{ "update:open": [open: boolean] }>();
 
 const hasTabs = inject(HasTabsKey);
+const edit = inject(LayoutEditKey, null);
 
 const showHeader = computed(() => !props.section.hideLabel && !!props.section.label);
 
 // A section can only collapse when it has a header to toggle from.
-const collapsible = computed(() => showHeader.value && (props.section.collapsible ?? true));
+const collapsible = computed(
+	() => !edit && showHeader.value && (props.section.collapsible ?? true)
+);
 
 // The host's state when it holds one, else the section's own, starting where the layout says.
 const own = ref(props.section.opened ?? true);

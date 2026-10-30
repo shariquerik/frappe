@@ -150,6 +150,8 @@ export interface Section {
   label?: string;
   hideLabel?: boolean;
   hideBorder?: boolean;
+  /** Text under the section's label (new to the renderer; PROTOTYPE #45867). */
+  description?: string;
   opened?: boolean;
   collapsible?: boolean;
   hidden?: boolean;
@@ -209,3 +211,20 @@ export const HasTabsKey: InjectionKey<Ref<boolean>> =
 /** The fieldname `FormLayout` marks `[autofocus]`, or `""` for none. */
 export const AutofocusKey: InjectionKey<Ref<string>> =
   Symbol("FormLayoutAutofocus");
+
+/**
+ * PROTOTYPE (#45867): a layout editor's hook into the renderer. With it injected, each
+ * container list is drawn by the editor's component, which gets the list and a slot that
+ * draws one item the record page's way; conditions are not resolved and nothing is hidden.
+ * Absent, the record page renders exactly as before.
+ */
+export interface LayoutEdit {
+  /** Props `{ tab }`, slot `#section="{ section, index }"`. */
+  sections: Component;
+  /** Props `{ section }`, slot `#column="{ column }"`. */
+  columns: Component;
+  /** Props `{ column, section }`, slot `#field="{ field }"`. */
+  fields: Component;
+}
+
+export const LayoutEditKey: InjectionKey<LayoutEdit> = Symbol("FormLayoutEdit");

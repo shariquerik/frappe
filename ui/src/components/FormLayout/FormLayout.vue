@@ -21,8 +21,22 @@
 				/>
 			</template>
 			<template #tab-panel="{ tab }">
-				<div :ref="untabPanel" class="sections" :class="{ 'my-4 sm:my-5': hasTabs }">
+				<div
+					:ref="untabPanel"
+					class="sections"
+					:class="{ 'my-4 sm:my-5': hasTabs, editing: edit }"
+				>
+					<component :is="edit.sections" v-if="edit" :tab="tab">
+						<template #section="{ section, index }">
+							<FormLayoutSection
+								:section="section"
+								:open="true"
+								:data-section-key="sectionKey(tab, section, index)"
+							/>
+						</template>
+					</component>
 					<template
+						v-else
 						v-for="(section, index) in tab.sections"
 						:key="sectionKey(tab, section, index)"
 					>
@@ -54,6 +68,7 @@ import {
 	DocKey,
 	HasTabsKey,
 	ParentDocKey,
+	LayoutEditKey,
 	ResolveFieldKey,
 	UpdateKey,
 } from "./types";
@@ -90,9 +105,11 @@ const sections = defineModel<Record<string, boolean>>("sections", { default: () 
 // against the parent. Absent at top level → `parent` falls back to `doc`.
 const parentDoc = inject(ParentDocKey, null);
 
-// Re-resolves conditional visibility/mandatory/read-only as the user edits.
+const edit = inject(LayoutEditKey, null);
+
+// Re-resolves conditional visibility/mandatory/read-only as the user edits; an editor sees every container.
 const resolvedLayout = computed(() =>
-	resolveLayout(props.layout, doc.value, parentDoc?.value ?? doc.value)
+	edit ? props.layout : resolveLayout(props.layout, doc.value, parentDoc?.value ?? doc.value)
 );
 
 const visibleTabs = computed(() => {
@@ -106,13 +123,13 @@ const visibleTabs = computed(() => {
 	// what lets it lift one.
 	const tabs = identifyTabs(resolvedLayout.value)
 		.map((tab) => ({ ...tab, ...applyTabOverride(tab) }))
-		.filter((tab) => !tab.hidden);
+		.filter((tab) => edit || !tab.hidden);
 	const multipleTabs = tabs.length > 1;
 	return tabs.map((tab) => ({
 		...tab,
 		value: tab.identity,
 		label: tabStripLabel(tab.label, multipleTabs),
-		sections: tab.sections.filter((section) => !section.hidden),
+		sections: tab.sections.filter((section) => edit || !section.hidden),
 	}));
 });
 
@@ -219,13 +236,14 @@ provide(AutofocusKey, autofocusField);
 </script>
 
 <style scoped>
-/* Hide sections that render no fields and no parts. */
-.section:not(:has(.field, .part)) {
+/* Hide sections that render no fields and no parts; an editor shows them to drop into. */
+.sections:not(.editing) .section:not(:has(.field, .part)) {
 	display: none;
 }
 
 /* The first section with content sits flush under the tab strip. */
-.section:has(.field, .part):nth-child(1 of .section:has(.field, .part)) {
+.sections:not(.editing) .section:has(.field, .part):nth-child(1 of .section:has(.field, .part)),
+.sections.editing [data-container-key]:first-child .section {
 	border-top: none;
 	margin-top: 0;
 	padding-top: 0;

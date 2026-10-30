@@ -21,6 +21,17 @@ export function createShellRouter(boot: Boot, addresses: Addresses) {
 	const router = createRouter({
 		history: createWebHistory(boot.shell_base),
 		routes: [
+			// PROTOTYPE (#45867): the DocType editor's address, ahead of DocType's own record route.
+			...(boot.app
+				? [
+						{
+							path: "/doctype/:name",
+							name: "doctype-editor-prototype",
+							component: () =>
+								import("@/pages/doctypeEditorPrototype/DoctypeEditorPrototype.vue"),
+						},
+					]
+				: []),
 			// Contributed pages match before generated routes: `/deals` must beat `/:doctype`.
 			...contributedRoutes(boot.app, modular, addresses),
 			...(boot.app ? generatedRoutes(modular) : indexRoutes()),
