@@ -58,6 +58,7 @@
 
 		<!-- The open writer, here so a floating one outlives the page it was opened on. -->
 		<ComposerWindow :user="boot.session.user" />
+		<StandingWindowPrototype v-if="standingPrototype" />
 
 		<component
 			:is="createDialog()"
@@ -94,6 +95,7 @@ import { sidebarMemory } from "@/navigation/sidebarMemory";
 import { sectionMemory } from "@/navigation/sectionMemory";
 import type { OpenArgument } from "./actKeys";
 import ComposerWindow from "./ComposerWindow.vue";
+import StandingWindowPrototype from "./StandingWindowPrototype.vue";
 import { closeCreates, createDialog, createRequests } from "./create";
 import CustomizeSidebarDialog, { type CustomizeTarget } from "./CustomizeSidebarDialog.vue";
 import LogoutDialog from "./LogoutDialog.vue";
@@ -116,6 +118,8 @@ const ShellPalette = defineAsyncComponent(() =>
 );
 
 const boot = inject<Boot>("boot")!;
+// PROTOTYPE (#46025): dev only.
+const standingPrototype = import.meta.env.DEV && new URLSearchParams(location.search).has("proto");
 const addresses = inject<Addresses>("addresses")!;
 const router = useRouter();
 const route = useRoute();
