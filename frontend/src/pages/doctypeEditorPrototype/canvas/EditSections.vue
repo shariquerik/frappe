@@ -18,7 +18,7 @@
 				>
 					<slot name="section" :section="section" :index="index" />
 					<div
-						v-if="!section.label || section.hideLabel"
+						v-if="!draft && (!section.label || section.hideLabel)"
 						class="pointer-events-none absolute -top-6 left-0 hidden text-xs text-ink-gray-5 group-hover/section:block"
 						:class="{ '!block': isSelected(section.name) }"
 					>
@@ -47,7 +47,11 @@
 					</span>
 				</Chrome>
 			</div>
+			<div v-if="draft" class="mt-6 border-t border-outline-gray-1 pt-3">
+				<Button variant="ghost" icon-left="lucide-plus" label="Add section" class="-ml-2 text-ink-gray-6" @click.stop="editor.acts.addSection(tab.name)" />
+			</div>
 			<button
+				v-else
 				type="button"
 				class="mt-5 flex h-9 w-full items-center justify-center gap-1.5 rounded-4 border border-dashed border-outline-gray-2 text-base text-ink-gray-5 hover:border-outline-gray-3 hover:text-ink-gray-7"
 				@click.stop="editor.acts.addSection(tab.name)"
@@ -67,9 +71,12 @@ import type { Tab } from "@framework/ui/FormLayout/types";
 import { EditorKey, onDrop } from "../context";
 import { MORE_FIELDS } from "../editor";
 import Chrome from "./Chrome.vue";
+import { DraftUiKey } from "../create/draftUi";
 
 const props = defineProps<{ tab: Tab }>();
 const editor = inject(EditorKey)!;
+// PROTOTYPE: the new-DocType draft page draws "Add section" as a plain button.
+const draft = Boolean(inject(DraftUiKey, null));
 
 const sortable = computed(() => props.tab.sections.filter((s) => s.name !== MORE_FIELDS));
 const automatic = computed(() => props.tab.sections.filter((s) => s.name === MORE_FIELDS));

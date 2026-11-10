@@ -1,6 +1,7 @@
 // The one way to open Create for a doctype. `main.ts` registers the dialog, which picks
 // itself or the full-page new record; the shell keeps the open requests above any page.
 import { markRaw, readonly, shallowRef, type Component } from "vue";
+import { openNewDoctype } from "@/pages/doctypeEditorPrototype/create/newDoctype";
 
 export type CreatedDoc = Record<string, any>;
 
@@ -43,6 +44,11 @@ export function openCreate(
 	doctype: string,
 	options: CreateOptions = {}
 ): Promise<CreatedDoc | null> {
+	// PROTOTYPE (#45867): a new DocType starts with the new-DocType dialog, not a record form.
+	if (doctype === "DocType") {
+		openNewDoctype();
+		return Promise.resolve(null);
+	}
 	if (!dialog) throw new Error("openCreate was called before the Create dialog was registered");
 	return new Promise((resolve) => {
 		const id = nextId++;

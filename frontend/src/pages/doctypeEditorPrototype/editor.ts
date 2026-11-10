@@ -94,6 +94,16 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		state.loading = false;
 	}
 
+	/** A new DocType's draft: its fields and one Details tree, nothing read from the server. */
+	function loadDraft(fields: EditorField[], tree: LayoutTree) {
+		state.fields = fields.map((one, idx) => ({ ...one, idx }));
+		state.trees.details = keyed(tree);
+		state.omitted.details = [];
+		state.source.details = "row";
+		state.forked.details = false;
+		state.loading = false;
+	}
+
 	const tree = computed(() => state.trees[state.layout] ?? []);
 	const dataFields = computed(() =>
 		state.fields.filter((field) => !DROPPED_FIELDTYPES.has(field.fieldtype))
@@ -292,6 +302,17 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			placeOnly();
 			state.selection = { kind: "field", fieldname };
 		},
+		/** Label first, as the new-DocType flow adds a field: the type is the guess or the chip's choice. */
+		addLabelled(field: { label: string; fieldtype: string; options?: string }, column: string, index?: number) {
+			let fieldname = field.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "field";
+			const taken = new Set(state.fields.map((one) => one.fieldname));
+			for (let n = 2; taken.has(fieldname); n++) fieldname = `${fieldname.replace(/_\d+$/, "")}_${n}`;
+			state.fields.push({ ...field, fieldname, added: true, idx: state.fields.length });
+			const fields = (find(column)?.node as LayoutTreeColumn).fields;
+			fields.splice(index ?? fields.length, 0, fieldname);
+			act("add_field", { label: field.label, fieldtype: field.fieldtype, options: field.options, column, index: index ?? fields.length - 1 });
+			return fieldname;
+		},
 		deleteField(fieldname: string) {
 			const column = columnOf(fieldname);
 			if (column) column.fields = column.fields.filter((entry) => nameOf(entry) !== fieldname);
@@ -326,7 +347,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 
 	return {
 		state, tree, schema, edits: computed(() => state.log.length), placed, omitted, unplaced, autoFields, hasMoreFields, dataFields,
-		load, find, field, columnOf, acts, can,
+		load, loadDraft, find, field, columnOf, acts, can,
 	};
 }
 

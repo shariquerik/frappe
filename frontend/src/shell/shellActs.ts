@@ -9,6 +9,7 @@ import { doctypeRight } from "@/acts/doctypeRight";
 import type { Boot } from "@/boot";
 import { __ } from "@/i18n";
 import { useAppActs } from "./appActs";
+import { openNewDoctype } from "@/pages/doctypeEditorPrototype/create/newDoctype";
 import { openCreate, type CreatedDoc, type CreateOptions } from "./create";
 import { shellDialog, type ShellDialog } from "./dialog";
 
@@ -135,6 +136,8 @@ function shellItems(
 		openSettingsItem(host.boot),
 		...personItems(host, setColorScheme),
 		createItem(),
+		// PROTOTYPE (#45867): the palette's way into the new-DocType flow.
+		{ name: "new_doctype", label: __("New DocType"), icon: "lucide-box", run: () => openNewDoctype() },
 	];
 }
 

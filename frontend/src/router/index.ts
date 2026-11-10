@@ -28,7 +28,7 @@ export function createShellRouter(boot: Boot, addresses: Addresses) {
 							path: "/doctype/:name",
 							name: "doctype-editor-prototype",
 							component: () =>
-								import("@/pages/doctypeEditorPrototype/DoctypeEditorPrototype.vue"),
+								import("@/pages/doctypeEditorPrototype/DoctypeRoute.vue"),
 						},
 					]
 				: []),

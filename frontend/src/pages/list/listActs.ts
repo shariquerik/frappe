@@ -59,7 +59,8 @@ function listEntries(host: ListActsHost): ActEntry[] {
     {
       item: {
         name: "create",
-        label: __("Create"),
+        // PROTOTYPE (#45867): the DocType list's Create opens the new-DocType dialog.
+        label: host.doctype === "DocType" ? __("New DocType") : __("Create"),
         icon: "lucide-plus",
         right: "create",
         run: () => host.create(),

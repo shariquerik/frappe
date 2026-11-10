@@ -69,6 +69,16 @@ export class Addresses {
 			: null;
 	}
 
+	/** PROTOTYPE (#45867): every addressable doctype's name, for the editor's Link guess. */
+	doctypeNames(): string[] {
+		return Object.keys(this.payload.doctypes);
+	}
+
+	/** PROTOTYPE (#45867): every module's name, for the new-DocType dialog. */
+	moduleNames(): string[] {
+		return Object.values(this.payload.modules).sort();
+	}
+
 	hasModule(slug: string): boolean {
 		return Object.hasOwn(this.payload.modules, slug);
 	}

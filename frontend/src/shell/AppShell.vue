@@ -66,6 +66,9 @@
 			:request="request"
 		/>
 
+		<!-- PROTOTYPE (#45867): the new-DocType dialog, opened from the DocType list or the palette. -->
+		<NewDoctypeDialog />
+
 		<ActKeys :open-argument="openArgument" />
 		<PaletteKey />
 		<ToastProvider />
@@ -95,6 +98,7 @@ import { sectionMemory } from "@/navigation/sectionMemory";
 import type { OpenArgument } from "./actKeys";
 import ComposerWindow from "./ComposerWindow.vue";
 import { closeCreates, createDialog, createRequests } from "./create";
+import NewDoctypeDialog from "@/pages/doctypeEditorPrototype/create/NewDoctypeDialog.vue";
 import CustomizeSidebarDialog, { type CustomizeTarget } from "./CustomizeSidebarDialog.vue";
 import LogoutDialog from "./LogoutDialog.vue";
 import { openArgumentStep, paletteOpen } from "./palette";

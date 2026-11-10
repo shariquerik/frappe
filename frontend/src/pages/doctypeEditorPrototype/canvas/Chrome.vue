@@ -11,7 +11,7 @@
 			automatic && 'outline-dashed !outline-outline-gray-3',
 		]"
 		:data-selected="selected || undefined"
-		@click.stop="$emit('select')"
+		@click.stop="$emit('select', $event.currentTarget)"
 	>
 		<slot />
 		<div
@@ -45,5 +45,5 @@ const POSITION = {
 	column: "-top-3 right-1",
 	field: "-bottom-4 left-1/2 -translate-x-1/2",
 };
-defineEmits<{ select: [] }>();
+defineEmits<{ select: [element: Element] }>();
 </script>
