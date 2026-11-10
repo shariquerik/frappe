@@ -23,7 +23,7 @@
 				</div>
 			</section>
 
-			<section v-if="kind !== 'child'" class="flex flex-col gap-3 py-5" :class="kind === 'single' && '!pt-0'">
+			<section v-if="kind !== 'child'" class="flex flex-col gap-3 py-5" :class="kind === 'single' && '!py-0'">
 				<h3 class="text-base-medium text-ink-gray-9">Permissions</h3>
 				<div class="overflow-hidden rounded-4 ring-1 ring-outline-gray-2">
 					<table class="w-full text-base">
@@ -37,7 +37,7 @@
 							<tr class="border-t border-outline-gray-1">
 								<td class="whitespace-nowrap px-3 py-2 text-ink-gray-8">System Manager</td>
 								<td v-for="right in rights" :key="right" class="px-1 py-2 text-center">
-									<span class="lucide-check inline-block size-4 text-ink-gray-7" aria-label="Allowed" />
+									<span class="lucide-check inline-block size-4 align-middle text-ink-gray-7" aria-label="Allowed" />
 								</td>
 							</tr>
 						</tbody>
@@ -46,7 +46,7 @@
 				<p class="text-sm text-ink-gray-5">Full access for System Manager. Add roles once the form works.</p>
 			</section>
 
-			<section class="flex flex-col gap-3 pt-5">
+			<section v-if="kind !== 'single'" class="flex flex-col gap-3 pt-5">
 				<h3 class="text-base-medium text-ink-gray-9">{{ kind === "child" ? "Rows" : "Search and list" }}</h3>
 				<dl class="grid grid-cols-[140px_1fr] gap-x-4 gap-y-2 text-base">
 					<template v-for="row in defaults" :key="row[0]">
@@ -76,13 +76,15 @@ const open = defineModel<boolean>("open", { required: true });
 const rights = computed(() =>
 	props.kind === "submittable"
 		? ["Read", "Write", "Create", "Delete", "Submit", "Cancel", "Amend"]
-		: ["Read", "Write", "Create", "Delete"]
+		: props.kind === "single"
+			? ["Read", "Write"]
+			: ["Read", "Write", "Create", "Delete"]
 );
 
 const defaults = computed(() => {
 	if (props.kind === "child") return [["Shown in the grid", "The first mandatory fields, up to four"], ["Row form", "This layout"]];
 	const rows = [["Title", props.title || "The record's ID"], ["Search by", props.title || "ID"]];
-	if (props.kind !== "single") rows.push(["Sort", "Last updated first"]);
+	rows.push(["Sort", "Last updated first"]);
 	if (props.kind === "submittable") rows.push(["Amended from", "Added on save, for amendments"]);
 	return rows;
 });

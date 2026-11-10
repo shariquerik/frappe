@@ -5,9 +5,8 @@
 		class="relative rounded-3 outline outline-1 transition-[outline-color]"
 		:class="[
 			GROUP[kind],
-			selected
-				? 'outline-outline-gray-4 outline-offset-4'
-				: 'outline-transparent outline-offset-4 hover:outline-outline-gray-2',
+			kind === 'field' ? 'outline-offset-8' : 'outline-offset-4',
+			selected ? 'outline-outline-gray-4' : 'outline-transparent hover:outline-outline-gray-2',
 			automatic && 'outline-dashed !outline-outline-gray-3',
 		]"
 		:data-selected="selected || undefined"

@@ -70,7 +70,7 @@
 		</Popover>
 
 		<DraftSettings v-if="current" v-model:open="settings" :name="current.name" :kind="current.kind" :title="titleLabel" />
-		<Dialog v-model="explained" :options="{ title: explainTitle, message: explainMessage }" />
+		<Dialog v-model="explained" :title="explainTitle" :message="explainMessage" />
 	</PageFrame>
 </template>
 

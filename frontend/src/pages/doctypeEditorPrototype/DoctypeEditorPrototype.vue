@@ -46,7 +46,7 @@
 
 		<ActLog v-if="tweaks.acts" />
 		<SettingsDialog v-model:open="settings" :meta="meta" :mode="mode" />
-		<Dialog v-model="saved" :options="{ title: 'Prototype', message: saveMessage }" />
+		<Dialog v-model="saved" title="Prototype" :message="saveMessage" />
 		<TweakPanel :show="['properties']" :class="tweaks.properties === 'pane' ? '!right-[336px]' : editor.state.selection && 'opacity-0 pointer-events-none'" />
 	</PageFrame>
 </template>

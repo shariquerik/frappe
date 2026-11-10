@@ -64,7 +64,7 @@ function edit(fieldname: string, element: Element) {
 <style>
 /* The title field's mark sits after its label, inside the record page's own control. */
 .dte-title-field label[data-slot="label"]::after {
-	content: "· Title field";
+	content: "\00b7\2002Title field";
 	margin-left: 6px;
 	color: var(--ink-gray-5);
 }

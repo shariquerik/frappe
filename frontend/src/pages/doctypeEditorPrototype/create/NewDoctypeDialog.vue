@@ -7,9 +7,9 @@
 			<div class="flex flex-col gap-1.5">
 				<FormControl v-model="typed" label="Name" placeholder="Support Ticket" autocomplete="off" autofocus />
 				<p class="text-sm text-ink-gray-5">
-					<template v-if="error"><span class="text-ink-red-4">{{ error }}</span></template>
+					<template v-if="error"><span class="text-ink-red-7">{{ error }}</span></template>
 					<template v-else-if="name">
-						Saved as <span class="text-ink-gray-8">{{ name }}</span><template v-if="kind === 'child'">. Its rows live inside a parent, with no address.</template>
+						Saved as <span class="text-ink-gray-8">{{ name }}</span><template v-if="kind === 'child'">, with no address of its own.</template>
 						<template v-else>, at <span class="font-mono text-ink-gray-7">{{ address }}</span></template>
 					</template>
 					<template v-else>Hard to change later: a rename moves its table and every link to it.</template>
