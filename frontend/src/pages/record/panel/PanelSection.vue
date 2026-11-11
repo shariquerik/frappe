@@ -3,8 +3,9 @@
 <template>
 	<div
 		v-if="headerIndex !== null"
-		class="group/section sticky flex cursor-pointer select-none items-center gap-1.5 bg-surface-base px-4 after:pointer-events-none after:absolute after:inset-x-0 after:top-[calc(100%+1px)] after:h-2.5 after:bg-gradient-to-b after:from-surface-base after:to-transparent after:content-['']"
-		:class="index ? 'border-t border-outline-gray-1' : ''"
+		class="group/section sticky flex cursor-pointer select-none items-center gap-1.5 bg-surface-base px-4 after:pointer-events-none after:absolute after:inset-x-0 after:top-[calc(100%+1px)] after:h-2.5 after:bg-gradient-to-b after:from-surface-base after:to-transparent after:transition-opacity after:content-['']"
+		ref="header"
+		:class="[index ? 'border-t border-outline-gray-1' : '', under ? 'after:opacity-100' : 'after:opacity-0']"
 		:style="{ top: `${headerIndex * HEIGHT}px`, height: `${HEIGHT}px` }"
 		:data-section="name"
 		@click="$emit('toggle')"
@@ -33,6 +34,7 @@
 
 	<div
 		v-if="headerIndex === null || open"
+		ref="body"
 		class="flex flex-col gap-2.5 px-4 empty:hidden"
 		:class="[
 			headerIndex === null ? 'py-3' : 'pt-1 pb-3',
@@ -52,8 +54,31 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import type { FieldNode } from "@framework/ui/FormLayout/types";
 import PanelField from "./PanelField.vue";
+
+// PROTOTYPE (#46965): the fade under a pinned header softens rows scrolling beneath it, so
+// it shows only once they do; drawn always, it greyed the top of the first row's fill.
+const header = ref<HTMLElement | null>(null);
+const body = ref<HTMLElement | null>(null);
+const under = ref(false);
+let scroller: HTMLElement | null = null;
+
+function measure() {
+	if (!header.value || !body.value) return (under.value = false);
+	under.value =
+		body.value.getBoundingClientRect().top < header.value.getBoundingClientRect().bottom - 0.5;
+}
+
+onMounted(() => {
+	let node = header.value?.parentElement ?? null;
+	while (node && !/(auto|scroll)/.test(getComputedStyle(node).overflowY)) node = node.parentElement;
+	scroller = node;
+	scroller?.addEventListener("scroll", measure, { passive: true });
+	measure();
+});
+onBeforeUnmount(() => scroller?.removeEventListener("scroll", measure));
 
 // Headers stack, each pinned below the ones before it; a fixed height makes the offset
 // knowable without measuring.
