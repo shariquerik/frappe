@@ -6,8 +6,30 @@
 			{{ field.label }}
 		</span>
 
+		<!-- PROTOTYPE (#46965): a Check or a Rating draws its control in every state, so a
+		     click toggles or sets it and saves at once; there is no edit state to swap to. -->
 		<div
-			v-if="editing"
+			v-if="oneClick"
+			class="proto-oneclick flex h-7 min-w-0 items-center rounded-4 px-2"
+			:class="field.readOnly ? '' : 'cursor-pointer hover:bg-surface-gray-2'"
+			:data-proto="protoFocus"
+			:data-ring="protoRing"
+			:data-fieldname="field.fieldname"
+			@click="toggleCheck"
+		>
+			<component
+				:is="resolved"
+				:field="controlField"
+				:modelValue="doc[field.fieldname]"
+				:error="error"
+				@update:modelValue="(value: any) => update(field.fieldname, value)"
+				@change="(value: any) => commit.commit(field.fieldname, value)"
+				@click.stop
+			/>
+		</div>
+
+		<div
+			v-else-if="editing"
 			ref="cell"
 			class="field proto-cell min-w-0"
 			:data-proto="protoFocus"
@@ -178,6 +200,17 @@ const summary = computed(
 );
 const interactive = computed(() => summary.value || !props.field.readOnly);
 const resolved = computed(() => resolveField(props.field.fieldtype));
+const oneClick = computed(
+	() => ["Check", "Rating"].includes(props.field.fieldtype) && !props.field.ui?.component
+);
+
+// A press anywhere in a Check row toggles it, not only a press on the box.
+function toggleCheck() {
+	if (props.field.fieldtype !== "Check" || props.field.readOnly) return;
+	const next = doc.value[props.field.fieldname] ? 0 : 1;
+	update(props.field.fieldname, next);
+	commit.commit(props.field.fieldname, next);
+}
 
 const placeholder = computed(() =>
 	interactive.value && !summary.value ? `Add ${props.field.label}...` : ""
@@ -287,7 +320,7 @@ function onPointerdownOutside(event: PointerEvent) {
 .proto-cell
 	:deep(
 		:is(
-				input[data-slot="control"],
+				input[data-slot="control"]:not([type="checkbox"]),
 				textarea[data-slot="control"],
 				[data-slot="trigger"][class*="min-h-7"]
 			)
@@ -335,5 +368,26 @@ function onPointerdownOutside(event: PointerEvent) {
 /* The Link control's own input sits inside its trigger box. */
 .proto-cell :deep(input[data-slot="input"]) {
 	line-height: 28px;
+}
+/* A focused Check or Rating takes the row's focused look; the control keeps its own size. */
+.proto-oneclick:focus-within {
+	background: var(--proto-fill);
+	box-shadow: inset 0 0 0 1px var(--proto-ring);
+}
+.proto-oneclick[data-ring="3"] {
+	--proto-ring: var(--outline-gray-3);
+}
+.proto-oneclick[data-ring="4"] {
+	--proto-ring: var(--outline-gray-4);
+}
+.proto-oneclick[data-proto="a"] {
+	--proto-fill: var(--surface-gray-2);
+}
+.proto-oneclick[data-proto="b"] {
+	--proto-fill: var(--surface-base);
+}
+.proto-oneclick :deep(:focus-visible) {
+	outline: none;
+	box-shadow: none;
 }
 </style>
