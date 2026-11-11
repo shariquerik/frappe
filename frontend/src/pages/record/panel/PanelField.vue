@@ -251,7 +251,7 @@ function onFocusout(event: FocusEvent) {
 	const next = event.relatedTarget as HTMLElement | null;
 	if (!next) return;
 	if (cell.value?.contains(next)) return;
-	if (next.closest('[role="dialog"],[role="listbox"],[role="menu"]')) return;
+	if (next.closest(POPOVER)) return;
 	editing.value = false;
 }
 
@@ -261,8 +261,23 @@ watch(editing, async (on, _previous, onCleanup) => {
 	onCleanup(() => stop());
 	await nextTick();
 	grow();
-	if (cell.value) stop = focusField(cell.value);
+	const stopFocus = cell.value ? focusField(cell.value) : () => {};
+	// PROTOTYPE (#46965): a press on a blank part of the page moves focus to nothing, so
+	// `focusout` has no `relatedTarget` and cannot tell it from a press in a popover.
+	document.addEventListener("pointerdown", onPointerdownOutside, true);
+	stop = () => {
+		stopFocus();
+		document.removeEventListener("pointerdown", onPointerdownOutside, true);
+	};
 });
+
+const POPOVER = '[role="dialog"],[role="listbox"],[role="menu"],[data-reka-popper-content-wrapper]';
+
+function onPointerdownOutside(event: PointerEvent) {
+	const target = event.target as HTMLElement | null;
+	if (!target || cell.value?.contains(target) || target.closest(POPOVER)) return;
+	editing.value = false;
+}
 </script>
 
 <style scoped>
