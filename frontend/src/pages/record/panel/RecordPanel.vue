@@ -19,6 +19,7 @@
 			@toggle="disclosure.toggle"
 			@expand="emit('expand', $event)"
 		/>
+		<ProtoFocusBar />
 	</div>
 </template>
 
@@ -29,6 +30,7 @@ import type { QuickAction, RecordPageController } from "@/recordPage";
 import { PanelContextKey, type DocInfo } from "./context";
 import type { Disclosure } from "./disclosure";
 import PanelLayout from "./PanelLayout.vue";
+import ProtoFocusBar from "./ProtoFocusBar.vue";
 import type { LayoutSection } from "./panelEntries";
 import QuickActions from "./QuickActions.vue";
 

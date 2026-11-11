@@ -1,15 +1,19 @@
 <!-- One panel row: the label in a fixed column, the value in the flexible one. -->
 <template>
-	<div class="grid grid-cols-[130px_1fr] items-center gap-2">
-		<span class="truncate text-base text-ink-gray-5" :title="field.label">
+	<!-- PROTOTYPE (#46965): rows align to the top, and the label sits on the first 28px line. -->
+	<div class="grid grid-cols-[130px_1fr] items-start gap-2">
+		<span class="h-7 truncate text-base leading-7 text-ink-gray-5" :title="field.label">
 			{{ field.label }}
 		</span>
 
 		<div
 			v-if="editing"
 			ref="cell"
-			class="field min-w-0"
+			class="field proto-cell min-w-0"
+			:data-proto="protoFocus"
+			:data-ring="protoRing"
 			:data-fieldname="field.fieldname"
+			@input="grow"
 			@focusout="onFocusout"
 			@keydown.escape="cancel"
 		>
@@ -29,13 +33,13 @@
 
 		<div
 			v-else
-			class="group flex min-w-0 flex-wrap items-center gap-x-1.5 rounded px-1.5 py-1"
+			class="group flex min-h-7 min-w-0 flex-wrap items-center gap-x-1.5 rounded-4 px-2"
 			:class="interactive ? 'cursor-pointer hover:bg-surface-gray-2' : ''"
 			:data-fieldname="field.fieldname"
 			@click="open"
 		>
 			<span
-				class="flex min-w-0 flex-1 items-center text-base"
+				class="flex min-w-0 flex-1 items-center text-base leading-7"
 				:class="error ? 'text-ink-red-4' : display ? 'text-ink-gray-8' : 'text-ink-gray-4'"
 			>
 				<!-- An editable row's click opens its editor, so its address waits on the arrow. -->
@@ -120,6 +124,7 @@ import {
 import { isSummaryField, useFieldDisplay } from "@framework/ui/FormLayout";
 import { __ } from "@/i18n";
 import { PanelContextKey } from "./context";
+import { protoFocus, protoRing } from "./protoFocus";
 
 const props = defineProps<{ field: FieldNode }>();
 const emit = defineEmits<{ expand: [field: FieldNode] }>();
@@ -174,12 +179,29 @@ const summary = computed(
 const interactive = computed(() => summary.value || !props.field.readOnly);
 const resolved = computed(() => resolveField(props.field.fieldtype));
 
-// The label already occupies its own column, so the control must not render a second one.
-const controlField = computed(() => ({ ...props.field, label: undefined }));
-
 const placeholder = computed(() =>
 	interactive.value && !summary.value ? `Add ${props.field.label}...` : ""
 );
+
+// The label already occupies its own column, so the control must not render a second one.
+// PROTOTYPE (#46965): the row's placeholder in every state, and no description under the row.
+const controlField = computed(() => ({
+	...props.field,
+	label: undefined,
+	description: undefined,
+	placeholder: placeholder.value,
+}));
+
+// PROTOTYPE (#46965): a multi-line field opens one line tall and grows with its text,
+// up to the max-height in the style block, then scrolls.
+const MAX_TEXT_HEIGHT = 128;
+function grow(event?: Event) {
+	const area = (event?.target ?? cell.value?.querySelector("textarea")) as HTMLElement | null;
+	if (!(area instanceof HTMLTextAreaElement)) return;
+	area.rows = 1;
+	area.style.height = "0px";
+	area.style.height = `${Math.min(area.scrollHeight, MAX_TEXT_HEIGHT)}px`;
+}
 
 const display = computed(() =>
 	displayField(props.field, doc.value[props.field.fieldname], { doc: doc.value })
@@ -238,6 +260,65 @@ watch(editing, async (on, _previous, onCleanup) => {
 	let stop = () => {};
 	onCleanup(() => stop());
 	await nextTick();
+	grow();
 	if (cell.value) stop = focusField(cell.value);
 });
 </script>
+
+<style scoped>
+/* PROTOTYPE (#46965): every control draws the rest row's box (28px, text at +8, 8px radius,
+   the full value column); only the fill and the ring change. The editing cell only exists
+   while the row is focused, so the focused look applies without a :focus selector. */
+.proto-cell
+	:deep(
+		:is(
+				input[data-slot="control"],
+				textarea[data-slot="control"],
+				[data-slot="trigger"][class*="min-h-7"]
+			)
+	) {
+	width: 100%;
+	height: 28px;
+	min-height: 28px;
+	padding-top: 0;
+	padding-bottom: 0;
+	padding-inline-start: 8px;
+	border: 0 !important;
+	border-radius: 8px;
+	outline: none !important;
+	color: var(--ink-gray-8);
+	transition: none;
+	box-shadow: inset 0 0 0 1px var(--proto-ring) !important;
+	background: var(--proto-fill) !important;
+}
+.proto-cell[data-ring="3"] {
+	--proto-ring: var(--outline-gray-3);
+}
+.proto-cell[data-ring="4"] {
+	--proto-ring: var(--outline-gray-4);
+}
+.proto-cell[data-proto="a"] {
+	--proto-fill: var(--surface-gray-2);
+}
+.proto-cell[data-proto="b"] {
+	--proto-fill: var(--surface-base);
+}
+.proto-cell :deep(textarea[data-slot="control"]) {
+	max-height: 128px;
+	padding-top: 4px !important;
+	padding-bottom: 4px !important;
+	font-size: 14px;
+	letter-spacing: 0.02em;
+	line-height: 20px;
+	resize: none;
+	overflow-y: auto;
+}
+/* Date draws its chevron in the text colour; Select's is gray-4. One chevron for both. */
+.proto-cell :deep([data-slot="chevron"]) {
+	color: var(--ink-gray-4);
+}
+/* The Link control's own input sits inside its trigger box. */
+.proto-cell :deep(input[data-slot="input"]) {
+	line-height: 28px;
+}
+</style>
