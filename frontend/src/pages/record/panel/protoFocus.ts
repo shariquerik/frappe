@@ -15,3 +15,6 @@ export function setProto(key: "focus" | "ring", value: string) {
 	if (key === "focus") protoFocus.value = value as "a" | "b";
 	else protoRing.value = value as "3" | "4";
 }
+
+// PROTOTYPE (#46977): `?err=<fieldname>` shows the error look on that row.
+export const protoError = query().get("err") ?? "";
