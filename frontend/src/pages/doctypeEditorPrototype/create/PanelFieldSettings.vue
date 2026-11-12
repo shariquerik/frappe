@@ -41,11 +41,12 @@
 		</PanelRow>
 		<PanelRow v-if="anchor !== undefined" label="Placed after" :box="false">
 			<div class="flex min-h-7 flex-col justify-center px-2">
-				<div class="flex h-7 items-center gap-1.5 text-base text-ink-gray-8">
+				<div class="flex h-7 items-center text-base text-ink-gray-8">
 					<span class="min-w-0 truncate">{{ anchor ? anchor.label : "The start of the form" }}</span>
-					<span v-if="anchor" class="shrink-0 font-mono text-sm text-ink-gray-5">{{ anchor.fieldname }}</span>
 				</div>
-				<p class="pb-1 text-p-sm text-ink-gray-5">Drag it to move it. It keeps this place when {{ customize!.app }} adds fields.</p>
+				<p class="pb-1 text-p-sm text-ink-gray-5">
+					<template v-if="anchor"><code class="font-mono">{{ anchor.fieldname }}</code>. </template>Drag it to move it. It keeps this place when {{ customize!.app }} adds fields.
+				</p>
 			</div>
 		</PanelRow>
 		<PanelRow v-if="tabMenu.length > 1" label="Tab">

@@ -121,7 +121,7 @@ function addTyped(type: FieldType, column?: string, index?: number) {
 	const label = typeLabel(type.fieldtype, type.options);
 	const fieldname = editor.acts.addLabelled({ label, fieldtype: type.fieldtype, options: type.options }, target, index);
 	ui.focusLabel(fieldname);
-	requestAnimationFrame(() => document.querySelector(`[data-editor-canvas] [data-fieldname="${fieldname}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+	requestAnimationFrame(() => document.querySelector(`[data-editor-canvas] [data-fieldname="${fieldname}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
 }
 
 // One drag at a time: a canvas field (with the bin) or a panel type (without).

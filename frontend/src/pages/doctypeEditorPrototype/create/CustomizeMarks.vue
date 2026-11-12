@@ -1,6 +1,6 @@
 <!-- PROTOTYPE (#47096), throwaway: what a field on the canvas shows in Customize mode, in its label
      row. A field the site added says "Custom"; a standard one the site changed gets a dot (its
-     tooltip names what changed); a hidden one an eye. Variant B also locks every standard field. -->
+     tooltip names what changed); a hidden one an eye. Variant B's lock is in EditorField. -->
 <template>
 	<template v-if="ui">
 		<Tooltip v-if="field.hidden" text="Hidden on the form">
@@ -12,15 +12,11 @@
 				<span class="size-1.5 rounded-full bg-surface-gray-7" />
 			</span>
 		</Tooltip>
-		<Tooltip v-if="variant === 'B' && ui.isStandard(field.fieldname)" :text="`Standard field from ${ui.app}. Change its properties; it cannot be removed.`">
-			<span class="lucide-lock size-3.5 shrink-0 text-ink-gray-4" aria-label="Standard field" />
-		</Tooltip>
 	</template>
 </template>
 
 <script setup lang="ts">
 import { computed, inject } from "vue";
-import { useRoute } from "vue-router";
 import { Badge, Tooltip } from "frappe-ui";
 import type { EditorField } from "../editor";
 import { CustomizeKey } from "./customize";
@@ -34,6 +30,5 @@ const LABELS: Record<string, string> = {
 const props = defineProps<{ field: EditorField }>();
 const key = inject(CustomizeKey, null);
 const ui = computed(() => key?.value ?? null);
-const variant = computed(() => String(useRoute().query.variant ?? "A"));
 const changed = computed(() => (ui.value?.changed(props.field.fieldname) ?? []).map((one) => LABELS[one] ?? one.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())));
 </script>
