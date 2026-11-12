@@ -16,6 +16,8 @@ export interface DraftUi {
 	labelFocus: Ref<string | null>;
 	/** Selects the tab and puts the caret in the panel's tab Label. */
 	focusTabLabel: (key: string) => void;
+	/** A saved DocType asks before removing a field whose column holds data (#47095). */
+	beforeRemove?: (fieldname: string) => Promise<boolean>;
 }
 
 export const DraftUiKey: InjectionKey<DraftUi> = Symbol("DraftUi");

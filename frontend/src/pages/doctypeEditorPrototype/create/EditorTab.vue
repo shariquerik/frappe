@@ -5,6 +5,7 @@
      cancels a drag, else clears the selection. -->
 <template>
 	<div class="flex min-h-0 flex-1">
+		<slot name="rail" />
 		<div
 			class="relative min-w-0 flex-1 overflow-y-auto"
 			:class="{ 'select-none': editor.state.dragging }"
@@ -77,7 +78,8 @@ const selectedTab = computed(() => {
 const clear = () => (editor.state.selection = null);
 const sections = () => editor.tree.value.flatMap((tab) => tab.sections);
 
-function removeField(fieldname: string) {
+async function removeField(fieldname: string) {
+	if (ui.beforeRemove && !(await ui.beforeRemove(fieldname))) return;
 	if (ui.titleField.value === fieldname) ui.titleField.value = "";
 	editor.acts.deleteField(fieldname);
 }
