@@ -34,6 +34,21 @@
 			</div>
 		</PanelRow>
 	</PanelSection>
+	<!-- #47100: a tab shows only when its condition holds. -->
+	<PanelSection label="Conditions">
+		<ConditionPanelRow
+			label="Visible if"
+			kind="condition"
+			:value="tab.dependsOn || ''"
+			empty-text="Always"
+			empty-note="Always visible. Add a condition to show the tab only sometimes."
+			:subject="tab.label || 'Untitled tab'"
+			:row-key="`${tab.name}.depends_on`"
+			:scope="scope"
+			:record="scope.fields"
+			@update="setTab($event)"
+		/>
+	</PanelSection>
 	<p class="px-4 pt-2 text-p-sm text-ink-gray-5">To move a field to this tab, drag it onto the tab's name, or pick the tab in the field's settings.</p>
 </template>
 
@@ -49,6 +64,8 @@ import PanelSection from "./PanelSection.vue";
 import { useRoute } from "vue-router";
 import PanelSearchRow from "./PanelSearchRow.vue";
 import { providePanelSearch } from "./panelSearch";
+import ConditionPanelRow from "./ConditionPanelRow.vue";
+import { conditionScope } from "./conditions";
 
 const props = defineProps<{ tab: LayoutTreeTab }>();
 defineEmits<{ close: [] }>();
@@ -63,6 +80,14 @@ function closeSearch() {
 }
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
+
+const scope = computed(() => conditionScope(editor.state.fields, { submittable: ui.kind === "submittable" }));
+function setTab(value: string) {
+	editor.history.group(() => {
+		editor.acts.setContainer(props.tab.name!, "dependsOn", value);
+		if (editor.field(props.tab.name!)) editor.acts.setField(props.tab.name!, "depends_on", value);
+	});
+}
 
 const index = computed(() => editor.tree.value.indexOf(props.tab));
 const last = computed(() => editor.tree.value.length - 1);

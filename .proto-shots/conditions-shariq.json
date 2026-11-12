@@ -1,0 +1,128 @@
+[
+{
+"go": "/doctype/Sales%20Invoice?field=return_against"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3500
+},
+{
+"click": "[data-condition-row='return_against.depends_on']"
+},
+{
+"wait": 1000
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "01-shariq-popover-builder"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=set_warehouse"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3500
+},
+{
+"click": "[data-condition-row='set_warehouse.link_filters']"
+},
+{
+"wait": 1500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "02-shariq-link-filters"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=tax_id"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3500
+},
+{
+"click": "[data-fetch-row]"
+},
+{
+"wait": 1500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "03-shariq-fetch-from"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?child=A&field=items&column=target_warehouse"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 4500
+},
+{
+"click": "[data-condition-row='target_warehouse.depends_on']"
+},
+{
+"wait": 1000
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "04-shariq-child-parent-row"
+}
+]

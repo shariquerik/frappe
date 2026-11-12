@@ -1,0 +1,871 @@
+[
+{
+"go": "/doctype/Sales%20Invoice?field=return_against"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"scroll": "[data-fetch-row]",
+"by": -260
+},
+{
+"wait": 500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "01-panel-rule-summaries"
+},
+{
+"click": "[data-condition-row='return_against.depends_on']"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "02-a-popover-below-the-row"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=return_against&cond=B"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='return_against.depends_on']"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "03-b-dialog"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=return_against&cond=C"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='return_against.depends_on']"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "04-c-inline-in-the-panel"
+},
+{
+"go": "/doctype/Sales%20Invoice?field=tax_id"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='tax_id.depends_on']"
+},
+{
+"wait": 800
+},
+{
+"role": [
+"radio",
+"Code"
+]
+},
+{
+"wait": 400
+},
+{
+"fill": [
+"[data-condition-editor] textarea",
+"doc.customer && (doc.is_return || doc.is_debit_note) && doc.docstatus === 0"
+]
+},
+{
+"wait": 500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "05-write-as-code"
+},
+{
+"role": [
+"radio",
+"Rules"
+]
+},
+{
+"wait": 700
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "06-nested-and-or-group"
+},
+{
+"eval": "(() => { const b = [...document.querySelectorAll(\"[data-condition-editor] [data-slot='add-condition']\")]; b.at(-1).click(); return b.length })()"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"menuitem",
+"Add condition"
+]
+},
+{
+"wait": 500
+},
+{
+"eval": "(() => { const b = [...document.querySelectorAll(\"[data-condition-editor] [data-slot='condition-field'] button\")]; b.at(-1).click(); return b.length })()"
+},
+{
+"wait": 500
+},
+{
+"type": "Record"
+},
+{
+"wait": 500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "07-special-field-record-is-new"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-condition-editor] fieldset > ul > li:last-child [data-slot='condition-value'] button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"option",
+"No"
+]
+},
+{
+"wait": 600
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "08-record-is-saved-row"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=update_stock"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='update_stock.depends_on']"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "09-code-fallback-unparsable"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?child=A&field=items&column=target_warehouse"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"wait": 2000
+},
+{
+"click": "[data-condition-row='target_warehouse.depends_on']"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "10-child-row-parent-field"
+},
+{
+"eval": "(() => { const b = [...document.querySelectorAll(\"[data-condition-editor] [data-slot='add-condition']\")]; b.at(-1).click(); return b.length })()"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"menuitem",
+"Add condition"
+]
+},
+{
+"wait": 500
+},
+{
+"eval": "(() => { const b = [...document.querySelectorAll(\"[data-condition-editor] [data-slot='condition-field'] button\")]; b.at(-1).click(); return b.length })()"
+},
+{
+"wait": 500
+},
+{
+"type": "Parent:"
+},
+{
+"wait": 500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "11-child-row-parent-fields-list"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=return_against"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"hover": "[data-fieldname='return_against'] [data-condition-mark]"
+},
+{
+"wait": 900
+},
+{
+"shot": "12-canvas-condition-mark"
+},
+{
+"go": "/doctype/Sales%20Invoice"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"clicktext": "Payments"
+},
+{
+"wait": 600
+},
+{
+"click": "[data-heading='payments_section']"
+},
+{
+"wait": 700
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "13-section-visible-and-starts-open"
+},
+{
+"go": "/doctype/Sales%20Invoice?field=tax_id"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='tax_id.depends_on']"
+},
+{
+"wait": 700
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "14-empty-condition-always"
+},
+{
+"click": "[data-slot='condition-empty']"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-field'] button"
+},
+{
+"wait": 400
+},
+{
+"type": "Is Return"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 600
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "15-tax-id-visible-if-is-return"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"role": [
+"tab",
+"Preview"
+]
+},
+{
+"wait": 4500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "16-preview-is-return-off-tax-id-hidden"
+},
+{
+"clicktext": "Is Return (Credit Note)"
+},
+{
+"wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "17-preview-is-return-on-tax-id-shown"
+},
+{
+"go": "/doctype/Sales%20Invoice?field=tax_id"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-fetch-row]"
+},
+{
+"wait": 900
+},
+{
+"click": "[data-fetch-back]"
+},
+{
+"wait": 500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "18-fetch-from-step-1-link-fields"
+},
+{
+"click": "[data-fetch-link='customer']"
+},
+{
+"wait": 1200
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "19-fetch-from-step-2-customer-fields"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=customer&fetch=B"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-fetch-add]"
+},
+{
+"wait": 1200
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "20-fetch-b-on-the-link-field"
+},
+{
+"click": "[data-fetch-source='customer_type']"
+},
+{
+"wait": 1200
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "21-fetch-b-new-read-only-field"
+},
+{
+"go": "/doctype/Sales%20Invoice?field=set_warehouse"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='set_warehouse.link_filters']"
+},
+{
+"wait": 1200
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "22-link-filters-field-of-this-record"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?field=customer"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='customer.link_filters']"
+},
+{
+"wait": 900
+},
+{
+"click": "[data-slot='condition-empty']"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-field'] button"
+},
+{
+"wait": 400
+},
+{
+"type": "Disabled"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 600
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-value'] button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"option",
+"No"
+]
+},
+{
+"wait": 700
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "23-link-filters-customer-disabled-no"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Sales%20Invoice?mode=customize&field=customer"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-condition-row='customer.link_filters']"
+},
+{
+"wait": 900
+},
+{
+"click": "[data-slot='condition-empty']"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-field'] button"
+},
+{
+"wait": 400
+},
+{
+"type": "Disabled"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 600
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-value'] button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"option",
+"No"
+]
+},
+{
+"wait": 500
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"click": "[data-condition-row='customer.read_only_depends_on']"
+},
+{
+"wait": 600
+},
+{
+"click": "[data-slot='condition-empty']"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-condition-editor] [data-slot='condition-field'] button"
+},
+{
+"wait": 400
+},
+{
+"type": "Document status"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 500
+},
+{
+"press": "Escape"
+},
+{
+"wait": 400
+},
+{
+"scroll": "[data-condition-row='customer.link_filters']",
+"by": -200
+},
+{
+"wait": 400
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "24-customize-changed-marks"
+},
+{
+"go": "/doctype/Sales%20Invoice?tab=preview"
+},
+{
+"wait": 9000
+},
+{
+"clicktext": "Update Stock"
+},
+{
+"wait": 800
+},
+{
+"click": "[data-fieldname='set_warehouse'] input"
+},
+{
+"wait": 2000
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 250
+},
+{
+"shot": "25-preview-link-filters-applied"
+}
+]

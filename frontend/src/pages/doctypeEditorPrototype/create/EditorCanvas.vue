@@ -56,6 +56,7 @@
 							@click.stop="selectSection(section.name)"
 							@input="editor.acts.setContainer(section.name, 'label', ($event.target as HTMLInputElement).value)"
 						/>
+						<ConditionMark class="mr-1" :rules="[{ label: 'Visible if', value: section.dependsOn }, { label: 'Starts open if', value: section.collapsibleDependsOn }]" />
 						<span
 							class="section-handle flex size-6 shrink-0 cursor-grab items-center justify-center text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-7 group-hover/section:opacity-100"
 							:class="{ '!opacity-100': isSection(section.name) }"
@@ -124,6 +125,7 @@ import { EditorKey, onDrop } from "../context";
 import { nameOf } from "../editor";
 import AddFieldPopover from "./AddFieldPopover.vue";
 import EditorField from "./EditorField.vue";
+import ConditionMark from "./ConditionMark.vue";
 import { DraftUiKey } from "./draftUi";
 
 defineEmits<{ "drag-start": [event: any]; "drag-end": [event: any] }>();

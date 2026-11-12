@@ -93,6 +93,25 @@
 				/>
 			</div>
 		</PanelRow>
+		<!-- #47100: which records the Link offers (`link_filters`), in the conditions' builder. -->
+		<LinkFiltersRow
+			v-if="field.fieldtype === 'Link' && field.options"
+			:key="`filters-${field.options}`"
+			:doctype="field.options"
+			:value="value('link_filters') || ''"
+			:subject="field.label || field.fieldname"
+			:row-key="field.fieldname"
+			:record="scope.fields"
+			:mark="mark('link_filters')"
+			@update="set('link_filters', $event)"
+		/>
+		<!-- #47100 ?fetch=B: a Link field adds a read-only field that copies one of its target's. -->
+		<PanelRow v-if="fetchOnLink && field.fieldtype === 'Link' && field.options" label="Fetched fields" :box="false">
+			<div class="flex min-h-7 flex-col justify-center">
+				<FetchAddButton :link="field" @pick="addFetched" />
+				<p v-if="fetchedHere.length" class="px-2 pb-1 text-p-sm text-ink-gray-5">{{ fetchedLine }}</p>
+			</div>
+		</PanelRow>
 		<PanelRow v-if="field.fieldtype === 'Select'" label="Options" v-bind="mark('options')">
 			<Textarea
 				variant="ghost"
@@ -143,6 +162,18 @@
 		<PanelRow v-if="!TABLES.has(field.fieldtype)" label="Default" v-bind="mark('default')">
 			<TextInput variant="ghost" :model-value="field.default" placeholder="None" @update:model-value="set('default', $event)" />
 		</PanelRow>
+		<!-- #47100: Fetch from is a picker (a Link field, then its target's field), beside Default. -->
+		<PanelRow v-if="!TABLES.has(field.fieldtype)" label="Fetch from" :box="false" v-bind="mark('fetch_from')">
+			<FetchFromPicker :key="field.fieldname" :value="value('fetch_from') || ''" :links="linkFields" @update="set('fetch_from', $event)" />
+		</PanelRow>
+		<PanelRow v-if="value('fetch_from')" label="Only when empty" :box="false" v-bind="mark('fetch_if_empty')">
+			<div class="flex min-h-7 flex-col justify-center px-2">
+				<div class="flex h-7 items-center">
+					<Switch size="sm" :model-value="Boolean(value('fetch_if_empty'))" @update:model-value="set('fetch_if_empty', $event ? 1 : 0)" />
+				</div>
+				<p class="pb-1 text-p-sm text-ink-gray-5">{{ fetchHelp }}</p>
+			</div>
+		</PanelRow>
 		<PanelRow v-if="field.fieldtype !== 'Check' && !TABLES.has(field.fieldtype)" label="Placeholder" v-bind="mark('placeholder')">
 			<TextInput variant="ghost" :model-value="field.placeholder" placeholder="Add placeholder…" @update:model-value="set('placeholder', $event)" />
 		</PanelRow>
@@ -188,15 +219,24 @@
 
 	<TablePanel v-if="childUi && !inChild && TABLES.has(field.fieldtype) && field.options" :field="field" />
 
+	<!-- #47100: each rule is one line in words; a click opens the builder (?cond= picks where). -->
 	<PanelSection label="Conditions">
-		<template #actions>
-			<Tooltip text="A field name, or eval: with doc.<fieldname>, like eval:doc.status == 'Open'. Leave blank for no condition.">
-				<span class="lucide-info size-4 text-ink-gray-4" aria-hidden="true" />
-			</Tooltip>
-		</template>
-		<PanelRow v-for="rule in RULES" :key="rule.key" :label="rule.label" v-bind="mark(rule.key)">
-			<TextInput variant="ghost" :model-value="value(rule.key)" :placeholder="rule.empty" @update:model-value="set(rule.key, $event)" />
-		</PanelRow>
+		<ConditionPanelRow
+			v-for="rule in RULES"
+			:key="rule.key"
+			:label="rule.label"
+			kind="condition"
+			:value="value(rule.key) || ''"
+			:empty-text="rule.empty"
+			:empty-note="rule.note"
+			:subject="field.label || field.fieldname"
+			:row-key="`${field.fieldname}.${rule.key}`"
+			:scope="scope"
+			:record="scope.fields"
+			:on-row="inChild"
+			:mark="mark(rule.key)"
+			@update="set(rule.key, $event)"
+		/>
 	</PanelSection>
 
 	<PanelSection v-for="group in groups" :key="group.label" :label="group.label" :start-open="false" :count="group.on">
@@ -218,7 +258,7 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch, watchEffect } from "vue";
-import { Combobox, Dropdown, Switch, Textarea, TextInput, Tooltip } from "frappe-ui";
+import { Combobox, Dropdown, Switch, Textarea, TextInput } from "frappe-ui";
 import type { Addresses } from "@/addresses";
 import { EditorKey } from "../context";
 import type { EditorField } from "../editor";
@@ -236,6 +276,11 @@ import ChildTablePicker from "./ChildTablePicker.vue";
 import TablePanel from "./TablePanel.vue";
 import { canBeColumn, ChildScopeKey, ChildUiKey, columnPx } from "./childTables";
 import { providePanelSearch } from "./panelSearch";
+import ConditionPanelRow from "./ConditionPanelRow.vue";
+import FetchAddButton from "./FetchAddButton.vue";
+import FetchFromPicker from "./FetchFromPicker.vue";
+import LinkFiltersRow from "./LinkFiltersRow.vue";
+import { conditionScope } from "./conditions";
 
 type Prop = { key: string; label: string; type: "check" | "text" | "int"; placeholder?: string; only?: (field: EditorField) => boolean };
 
@@ -246,9 +291,9 @@ const TABLES = new Set(["Table", "Table MultiSelect"]);
 const CHECKS = new Set(["reqd", "hidden", "read_only", "bold", "print_hide", "report_hide", "allow_on_submit", "translatable", "in_list_view", "in_standard_filter", "in_global_search", "in_preview", "fetch_if_empty", "unique", "no_copy", "set_only_once", "non_negative", "ignore_user_permissions"]);
 
 const RULES = [
-	{ key: "depends_on", label: "Visible if", empty: "Always" },
-	{ key: "mandatory_depends_on", label: "Mandatory if", empty: "Never" },
-	{ key: "read_only_depends_on", label: "Read-only if", empty: "Never" },
+	{ key: "depends_on", label: "Visible if", empty: "Always", note: "Always visible. Add a condition to show it only sometimes." },
+	{ key: "mandatory_depends_on", label: "Mandatory if", empty: "Never", note: "Never required by a condition. Add one to require it sometimes." },
+	{ key: "read_only_depends_on", label: "Read-only if", empty: "Never", note: "Always editable. Add a condition to lock it sometimes." },
 ];
 
 const props = defineProps<{ field: EditorField }>();
@@ -277,6 +322,45 @@ const gridSummary = computed(() => {
 });
 
 const value = (key: string) => (props.field as Record<string, any>)[key];
+
+// #47100: what a condition may name: the other fields, the parent's on a child row, the record's own.
+const scope = computed(() =>
+	conditionScope(
+		editor.state.fields,
+		inChild ? { parent: childUi?.parentFields(), submittable: childUi?.parentSubmittable() } : { submittable: ui.kind === "submittable" }
+	)
+);
+const linkFields = computed(() => editor.state.fields.filter((one) => one.fieldtype === "Link" && one.options && one.fieldname !== props.field.fieldname));
+const fetchSource = computed(() => {
+	const link = editor.field(String(value("fetch_from") ?? "").split(".")[0]);
+	return link?.label || link?.options || "the linked record";
+});
+const fetchHelp = computed(() =>
+	value("fetch_if_empty")
+		? `Copies from ${fetchSource.value} only while this field is empty, so a typed value stays.`
+		: `Copies from ${fetchSource.value} on every save; a typed value is replaced.`
+);
+// ?fetch=B: the Link field's own act, and the fields that already copy from it.
+const fetchOnLink = useRoute().query.fetch === "B";
+const fetchedHere = computed(() => editor.state.fields.filter((one) => String((one as any).fetch_from ?? "").split(".")[0] === props.field.fieldname));
+const fetchedLine = computed(() => {
+	const names = fetchedHere.value.map((one) => one.label || one.fieldname);
+	return `Fetched now: ${names.length > 3 ? `${names.slice(0, 3).join(", ")} and ${names.length - 3} more` : names.join(", ")}.`;
+});
+const FETCHED_TYPE: Record<string, string> = { "Text Editor": "Small Text", "Long Text": "Small Text", Text: "Small Text" };
+/** A read-only field after the Link, copying the picked field; it opens in the panel. */
+function addFetched(link: EditorField, source: EditorField) {
+	const column = editor.columnOf(link.fieldname);
+	if (!column) return;
+	const at = column.fields.findIndex((entry) => (typeof entry === "string" ? entry : entry.fieldname) === link.fieldname) + 1;
+	let fieldname = "";
+	editor.history.group(() => {
+		fieldname = editor.acts.addLabelled({ label: source.label || source.fieldname, fieldtype: FETCHED_TYPE[source.fieldtype] ?? source.fieldtype, options: source.options }, column.name!, at);
+		editor.acts.setField(fieldname, "fetch_from", `${link.fieldname}.${source.fieldname}`);
+		editor.acts.setField(fieldname, "read_only", 1);
+	});
+	editor.state.selection = { kind: "field", fieldname };
+}
 const set = (key: string, next: unknown) => editor.acts.setField(props.field.fieldname, key, next);
 const isTitle = computed(() => ui.titleField.value === props.field.fieldname);
 const pickType = (type: FieldType) => (set("fieldtype", type.fieldtype), set("options", type.options));
@@ -390,8 +474,6 @@ const GROUPS: { label: string; props: Prop[] }[] = [
 			{ key: "in_global_search", label: "Global search", type: "check" },
 			{ key: "in_preview", label: "Link preview", type: "check" },
 			{ key: "search_index", label: "Search index", type: "check" },
-			{ key: "fetch_from", label: "Fetch from", type: "text", placeholder: "customer.customer_name" },
-			{ key: "fetch_if_empty", label: "Fetch if empty", type: "check" },
 		],
 	},
 	{

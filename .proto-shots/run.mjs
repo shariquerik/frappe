@@ -5,7 +5,8 @@ import { chromium } from "/home/shariq/wt/ui-test/runner/node_modules/playwright
 import fs from "node:fs";
 const [, , stepsFile, outdir] = process.argv;
 const steps = JSON.parse(fs.readFileSync(stepsFile, "utf8"));
-const sid = fs.readFileSync("/tmp/proto-45867/sid", "utf8").trim();
+// SID_FILE: shoot as another user (#47100 checks a non-admin, shariq@frappe.io).
+const sid = fs.readFileSync(process.env.SID_FILE ?? "/tmp/proto-45867/sid", "utf8").trim();
 fs.mkdirSync(outdir, { recursive: true });
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900) }, deviceScaleFactor: 2 });

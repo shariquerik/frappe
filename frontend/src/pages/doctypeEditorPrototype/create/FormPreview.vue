@@ -42,7 +42,7 @@
 			<span class="ml-auto shrink-0 text-p-sm text-ink-gray-5">Changes here are not saved.</span>
 		</div>
 		<div :inert="!saved">
-			<FormLayout :key="record" v-model:doc="doc" v-model:tab="tab" :layout="schema" :class="FORM_CLASSES" />
+			<FormLayout :key="record" v-model:doc="doc" v-model:tab="tab" :layout="filtered" :class="FORM_CLASSES" />
 		</div>
 	</div>
 </template>
@@ -56,14 +56,35 @@ import { CommitKey, LayoutEditKey, NO_COMMIT } from "@framework/ui/FormLayout/ty
 import { FORM_CLASSES } from "@/pages/record/formClasses";
 import { DraftUiKey } from "./draftUi";
 import { SavedUiKey } from "./savedDoctype";
+import { EditorKey } from "../context";
+import { linkFiltersForPreview } from "./conditions";
 
-defineProps<{ schema: any }>();
+const props = defineProps<{ schema: any }>();
 
 // The draft page provides nothing to FormLayout; this keeps the preview plain on its own.
 provide(LayoutEditKey, null as any);
 provide(CommitKey, NO_COMMIT);
 const doc = ref<Record<string, any>>({});
 const tab = ref("");
+// #47100: desk v2 reads no `link_filters`; the Preview turns a Link's into its search filters
+// (equality as a value, the rest as [op, value]; `eval:doc.company` read from this record).
+const editor = inject(EditorKey, null);
+const filtered = computed(() => {
+	if (!editor) return props.schema;
+	return props.schema.map((one: any) => ({
+		...one,
+		sections: one.sections.map((section: any) => ({
+			...section,
+			columns: section.columns.map((column: any) => ({
+				...column,
+				fields: column.fields.map((node: any) => {
+					const raw = (editor.field(node.fieldname) as any)?.link_filters;
+					return raw ? { ...node, filters: linkFiltersForPreview(raw, doc.value) ?? node.filters } : node;
+				}),
+			})),
+		})),
+	}));
+});
 
 const EMPTY = "__empty__";
 const savedKey = inject(SavedUiKey, null);

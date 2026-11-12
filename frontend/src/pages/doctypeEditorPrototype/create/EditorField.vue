@@ -11,6 +11,7 @@
 			<span class="truncate">{{ field.label || field.fieldname }}</span>
 			<span v-if="field.reqd" class="-ml-0.5 text-ink-red-4">*</span>
 			<span v-if="isTitle" class="shrink-0 text-ink-gray-4">· Title field</span>
+			<ConditionMark :rules="rules" />
 			<CustomizeMarks :field="field" />
 			<!-- Variant B (#47096): a standard field's lock sits in the grip's lane, so it takes no label width. -->
 			<span v-if="locked && !selected" class="-my-1 ml-auto grid size-4 shrink-0 place-items-center group-hover/field:hidden" aria-label="Standard field">
@@ -28,6 +29,7 @@
 			<div v-if="field.fieldtype === 'Check'" class="flex min-h-7 items-center gap-2">
 				<FormControl type="checkbox" :model-value="false" />
 				<span class="text-sm text-ink-gray-6">{{ field.label }}<span v-if="field.reqd" class="text-ink-red-4">*</span></span>
+				<ConditionMark :rules="rules" />
 				<CustomizeMarks :field="field" />
 				<!-- Variant B (#47096): a standard field's lock sits in the grip's lane, so it takes no label width. -->
 				<span v-if="locked && !selected" class="ml-auto grid size-4 shrink-0 place-items-center group-hover/field:hidden" aria-label="Standard field">
@@ -64,6 +66,7 @@ import { FormControl, TextInput } from "frappe-ui";
 import type { EditorField } from "../editor";
 import CanvasGrid from "./CanvasGrid.vue";
 import CustomizeMarks from "./CustomizeMarks.vue";
+import ConditionMark from "./ConditionMark.vue";
 import { ChildScopeKey, ChildUiKey } from "./childTables";
 import { CustomizeKey } from "./customize";
 import { DraftUiKey } from "./draftUi";
@@ -90,6 +93,12 @@ const customizeKey = inject(CustomizeKey, null);
 const customizing = computed(() => Boolean(customizeKey?.value));
 const route = useRoute();
 const locked = computed(() => route.query.variant === "B" && Boolean(customizeKey?.value?.isStandard(props.field.fieldname)));
+// #47100: the canvas says a field has conditions; the tooltip says them.
+const rules = computed(() => [
+	{ label: "Visible if", value: props.field.depends_on },
+	{ label: "Mandatory if", value: props.field.mandatory_depends_on },
+	{ label: "Read-only if", value: props.field.read_only_depends_on },
+]);
 const isTitle = computed(() => ui.titleField.value === props.field.fieldname);
 const placeholder = computed(() => props.field.placeholder || SAMPLE[props.field.fieldtype] || (props.field.options === "Email" ? "name@example.com" : ""));
 const choiceText = computed(() => {

@@ -24,7 +24,7 @@ import { CustomizeKey } from "./customize";
 const LABELS: Record<string, string> = {
 	reqd: "Required", hidden: "Hidden", read_only: "Read only", print_hide: "Hide in print", report_hide: "Hide in reports",
 	in_list_view: "In list view", columns: "Grid width", in_standard_filter: "List filter", depends_on: "Visible if", mandatory_depends_on: "Mandatory if",
-	read_only_depends_on: "Read-only if", allow_on_submit: "Edit after submit", fieldtype: "Type", fetch_from: "Fetch from",
+	read_only_depends_on: "Read-only if", link_filters: "Filters", fetch_if_empty: "Only when empty", collapsible_depends_on: "Starts open if", allow_on_submit: "Edit after submit", fieldtype: "Type", fetch_from: "Fetch from",
 };
 
 const props = defineProps<{ field: EditorField }>();

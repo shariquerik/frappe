@@ -86,6 +86,9 @@ export interface ChildUi {
 	pending: () => { name: string; isNew: boolean; edits: number }[];
 	markSaved: () => void;
 	dirty: () => boolean;
+	/** #47100: the parent's fields, for a row condition's "Parent: …" (`parent.x`), and whether it submits. */
+	parentFields: () => EditorField[];
+	parentSubmittable: () => boolean;
 }
 
 export const ChildUiKey: InjectionKey<ChildUi> = Symbol("ChildUi");
@@ -101,6 +104,7 @@ export function createChildUi(options: {
 	customizing: () => boolean;
 	metas?: () => Record<string, any>;
 	jumped?: string | null;
+	parentKind?: () => string;
 }): ChildUi {
 	const { parentEditor, persona } = options;
 	const loading: Record<string, Promise<ChildTable>> = {};
@@ -116,6 +120,8 @@ export function createChildUi(options: {
 		jumped: options.jumped ?? null,
 		newFor: null,
 		get: (name?: string) => (name ? ui.tables[name] : undefined),
+		parentFields: () => parentEditor.state.fields,
+		parentSubmittable: () => options.parentKind?.() === "submittable",
 		ensure(name: string) {
 			if (ui.tables[name]) return Promise.resolve(ui.tables[name]);
 			return (loading[name] ??= load(name));

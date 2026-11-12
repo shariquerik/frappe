@@ -118,7 +118,8 @@
 		<LayoutDialogs v-if="ready" />
 		<SettingsDialogs v-if="ready" :ui="settings" />
 		<NewChildDialog v-if="ready" :customizing="customizing" />
-		<VariantBar :variants="CHILD" param="child" />
+		<!-- #47100: the bar switches where a condition's builder opens; ?child= (#47099) reads from the address. -->
+		<VariantBar :variants="COND" param="cond" />
 	</PageFrame>
 </template>
 
@@ -153,6 +154,7 @@ import { DraftUiKey } from "./draftUi";
 import type { Kind } from "./newDoctype";
 import { createSavedUi, plural, SavedUiKey, type SavedUi } from "./savedDoctype";
 import { actRefusal, createSettingsUi, type SettingsUi } from "./settings";
+import { seedBreakRules, seedDemo } from "./conditions";
 
 // #47098: the bar switches the Settings tab's page; ?header= (#47097) still reads from the address.
 // #47099: the bar switches where a Table field's child is edited.
@@ -160,6 +162,12 @@ const CHILD = [
 	{ key: "A", label: "Child: inline grid" },
 	{ key: "B", label: "Child: in the panel" },
 	{ key: "C", label: "Child: its own editor" },
+];
+// #47100: where the condition builder opens.
+const COND = [
+	{ key: "A", label: "Conditions: popover" },
+	{ key: "B", label: "Conditions: dialog" },
+	{ key: "C", label: "Conditions: inline" },
 ];
 const SETTINGS = [
 	{ key: "B", label: "Settings: section list" },
@@ -221,6 +229,7 @@ const childUi = createChildUi({
 	customizing: () => customizing.value,
 	metas: () => metas.value as any,
 	jumped: route.query.table ? String(route.query.table) : null,
+	parentKind: () => kind.value,
 });
 provide(ChildUiKey, childUi);
 // The variant bar moves ?child=; the page follows without a reload.
@@ -290,6 +299,9 @@ watch(
 	async (fields) => {
 		if (!fields || ready.value) return;
 		await editor.loadAll(meta.value as any, layoutsFor(kind.value), FAKE_VARIANTS[doctype]);
+		// #47100: the breaks' rules desk v2's meta layout drops, and the demo's seeded link filters.
+		seedBreakRules(editor.state.trees, editor.state.fields);
+		seedDemo(doctype, editor.state.fields);
 		if (route.query.layout) editor.openLayout(String(route.query.layout) as LayoutKey, route.query.row ? String(route.query.row) : null);
 		titleField.value = (meta.value as any).title_field ?? "";
 		description.value = (meta.value as any).description ?? "";
