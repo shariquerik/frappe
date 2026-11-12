@@ -1,11 +1,13 @@
 <!-- PROTOTYPE (#45867): the selected field's settings in the 380px panel, in the look of
      frappe/crm#3419's PanelFieldSettings. "Field" and "Conditions" start open; the rarer groups
-     start closed. Each change applies at once; nothing saves. -->
+     start closed. Each change applies at once; nothing saves. On a saved DocType (#47095) a field
+     whose column holds values says how many, keeps its type within the changes that keep them, and
+     renames (custom DocType) or locks (standard) its fieldname. -->
 <template>
 	<PanelHeader
 		:icon="typeIcon(field)"
 		:title="field.label || field.fieldname"
-		:subtitle="`${typeLabel(field.fieldtype, field.options)} · ${field.fieldname}`"
+		:subtitle="subtitle"
 		remove-label="Remove field"
 		@remove="$emit('remove')"
 		@close="$emit('close')"
@@ -22,14 +24,17 @@
 				@keydown.enter="followLabel"
 			/>
 		</PanelRow>
-		<PanelRow label="Type">
-			<Dropdown :options="menu" side="bottom" align="start">
-				<button type="button" class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8">
-					<span :class="[typeIcon(field), 'size-4 shrink-0 text-ink-gray-5']" aria-hidden="true" />
-					<span class="min-w-0 flex-1 truncate">{{ typeLabel(field.fieldtype, field.options) }}</span>
-					<span class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-				</button>
-			</Dropdown>
+		<PanelRow label="Type" :box="false">
+			<div class="rounded-4 hover:bg-surface-gray-2">
+				<Dropdown :options="menu" side="bottom" align="start">
+					<button type="button" class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8">
+						<span :class="[typeIcon(field), 'size-4 shrink-0 text-ink-gray-5']" aria-hidden="true" />
+						<span class="min-w-0 flex-1 truncate">{{ typeLabel(field.fieldtype, field.options) }}</span>
+						<span class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+					</button>
+				</Dropdown>
+			</div>
+			<p v-if="typeNote" class="px-2 pb-1 pt-0.5 text-p-sm text-ink-gray-5">{{ typeNote }}</p>
 		</PanelRow>
 		<PanelRow v-if="tabMenu.length > 1" label="Tab">
 			<Dropdown :options="tabMenu" side="bottom" align="start">
@@ -89,9 +94,31 @@
 			/>
 		</PanelRow>
 		<PanelRow label="Fieldname" :box="false">
-			<div class="flex min-h-7 flex-col justify-center px-2">
-				<span class="truncate font-mono text-sm leading-7 text-ink-gray-7">{{ field.fieldname }}</span>
-				<p v-if="ui.draft.value && field.added" class="pb-1 text-p-sm text-ink-gray-5">Follows the label until the first save.</p>
+			<template v-if="renamable">
+				<div class="min-h-7 rounded-4 focus-within:bg-surface-gray-2 focus-within:ring-1 focus-within:ring-inset focus-within:ring-outline-gray-3 hover:bg-surface-gray-2">
+					<TextInput
+						variant="ghost"
+						class="[&_input]:font-mono [&_input]:text-sm"
+						:model-value="fieldnameDraft"
+						@update:model-value="fieldnameDraft = $event"
+						@blur="commitFieldname"
+						@keydown.enter="commitFieldname"
+						@keydown.esc.stop="fieldnameDraft = field.fieldname"
+					/>
+				</div>
+				<p class="px-2 pb-1 pt-0.5 text-p-sm text-ink-gray-5">
+					<template v-if="wasNamed">Was <code class="font-mono text-ink-gray-7">{{ wasNamed }}</code>. </template>
+					Renames the column on save; {{ count ? `its ${plural(count, "value")} move with it` : "no record holds a value in it" }}. Reports, scripts and filters that name
+					<code class="font-mono text-ink-gray-7">{{ wasNamed || field.fieldname }}</code> must change.
+				</p>
+			</template>
+			<div v-else class="flex min-h-7 flex-col justify-center px-2">
+				<div class="flex h-7 items-center gap-1.5">
+					<span class="min-w-0 truncate font-mono text-sm text-ink-gray-7">{{ field.fieldname }}</span>
+					<span v-if="locked" class="lucide-lock size-3.5 shrink-0 text-ink-gray-4" aria-hidden="true" />
+				</div>
+				<p v-if="ui.draft.value && field.added" class="pb-1 text-p-sm text-ink-gray-5">Follows the label until {{ saved ? "you save" : "the first save" }}.</p>
+				<p v-else-if="locked" class="pb-1 text-p-sm text-ink-gray-5">A standard field keeps its fieldname. Renaming it needs a patch in the app.</p>
 			</div>
 		</PanelRow>
 	</PanelSection>
@@ -125,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, nextTick, ref, watch } from "vue";
+import { computed, inject, nextTick, ref, watch, watchEffect } from "vue";
 import { Combobox, Dropdown, Switch, Textarea, TextInput, Tooltip } from "frappe-ui";
 import type { Addresses } from "@/addresses";
 import { EditorKey } from "../context";
@@ -134,8 +161,9 @@ import PanelHeader from "./PanelHeader.vue";
 import PanelRow from "./PanelRow.vue";
 import PanelSection from "./PanelSection.vue";
 import { DraftUiKey, TITLE_TYPES } from "./draftUi";
+import { plural, SavedUiKey, typesKeepingValues } from "./savedDoctype";
 import { fieldnameOf, typeLabel } from "./newDoctype";
-import { typeIcon, typeMenu, type FieldType } from "./typeMenu";
+import { COMMON, typeIcon, typeMenu, type FieldType } from "./typeMenu";
 
 type Prop = { key: string; label: string; type: "check" | "text" | "int"; placeholder?: string; only?: (field: EditorField) => boolean };
 
@@ -157,7 +185,50 @@ const doctypes = inject<Addresses>("addresses")!.doctypeNames();
 const value = (key: string) => (props.field as Record<string, any>)[key];
 const set = (key: string, next: unknown) => editor.acts.setField(props.field.fieldname, key, next);
 const isTitle = computed(() => ui.titleField.value === props.field.fieldname);
-const menu = computed(() => typeMenu((type: FieldType) => (set("fieldtype", type.fieldtype), set("options", type.options))));
+const pickType = (type: FieldType) => (set("fieldtype", type.fieldtype), set("options", type.options));
+
+// A saved DocType's field: its column, how many records hold a value in it, its type at load.
+const savedKey = inject(SavedUiKey, null);
+const saved = computed(() => savedKey?.value ?? null);
+const isSaved = computed(() => Boolean(saved.value?.isSaved(props.field.fieldname)));
+watchEffect(() => isSaved.value && saved.value!.count(props.field.fieldname));
+const count = computed(() => (isSaved.value ? saved.value!.counts[saved.value!.original(props.field.fieldname)] : undefined));
+const loadedType = computed(() => (isSaved.value ? saved.value!.loadedType[saved.value!.original(props.field.fieldname)] : undefined));
+
+const subtitle = computed(() => {
+	const parts = [typeLabel(props.field.fieldtype, props.field.options), props.field.fieldname];
+	if (count.value !== undefined) parts.push(plural(count.value, "value"));
+	return parts.join(" · ");
+});
+
+/** With values in its column, a field offers only the type changes that keep them; the rest show, disabled. */
+const menu = computed(() => {
+	if (!count.value || !loadedType.value) return typeMenu(pickType);
+	const keeps = typesKeepingValues(loadedType.value);
+	if (keeps.includes("Data")) keeps.splice(keeps.indexOf("Data") + 1, 0, "Email");
+	const asType = (one: string): FieldType => (one === "Email" ? { fieldtype: "Data", options: "Email" } : { fieldtype: one });
+	const option = (one: string, disabled = false) => ({ label: one, icon: typeIcon(asType(one)), disabled, onClick: () => pickType(asType(one)) });
+	return [
+		{ group: `Keeps its ${plural(count.value, "value")}`, options: keeps.map((one) => option(one)) },
+		{ group: `Not while ${plural(count.value, "record")} hold${count.value === 1 ? "s" : ""} a value`, options: COMMON.filter((one) => !keeps.includes(one)).map((one) => option(one, true)) },
+	];
+});
+
+const typeNote = computed(() => {
+	if (!loadedType.value || props.field.fieldtype === loadedType.value) return "";
+	return count.value ? `The column changes type on save. Its ${plural(count.value, "value")} are kept.` : "The column changes type on save. No record holds a value in it.";
+});
+
+// A custom DocType renames a saved field's column on save; a standard one cannot without a patch.
+const renamable = computed(() => isSaved.value && saved.value!.custom);
+const locked = computed(() => isSaved.value && !saved.value!.custom);
+const wasNamed = computed(() => (isSaved.value && saved.value!.renamed[props.field.fieldname]) || "");
+const fieldnameDraft = ref(props.field.fieldname);
+function commitFieldname() {
+	const next = fieldnameOf(fieldnameDraft.value);
+	fieldnameDraft.value = next;
+	if (next !== props.field.fieldname) ui.rename(props.field.fieldname, next);
+}
 
 // With more than one tab, the field can move to another one here as well as by a drag.
 const tabOfField = computed(() => {

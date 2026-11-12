@@ -2,16 +2,17 @@
      of frappe/crm#3419's EditorCanvas: sections 40px apart with the heading typed in place, columns
      as full-height drop zones, "Add field" under each section, "Add section" under a rule. -->
 <template>
-	<!-- The rule spans the form's width; the tabs step 8px left so the first label sits on its edge. -->
+	<!-- The rule spans the form's width; the tabs step 8px left so the first label sits on its edge.
+	     Many tabs (a big DocType's) scroll sideways on one line, labels unbroken (#47095). -->
 	<div v-if="editor.tree.value.length > 1" class="mb-10 border-b border-outline-gray-1">
-		<div class="-ml-2 flex items-center gap-1">
+		<div class="-mb-px -ml-2 flex items-center gap-1 overflow-x-auto [scrollbar-width:none]">
 		<button
 			v-for="tab in editor.tree.value"
 			:key="tab.name"
 			type="button"
 			data-editor-select
 			:data-tab-key="tab.name"
-			class="relative -mb-px flex h-9 items-center rounded-t-4 px-2 text-base transition-colors"
+			class="relative flex h-9 shrink-0 items-center whitespace-nowrap rounded-t-4 px-2 text-base transition-colors"
 			:class="[
 				tab.name === shown?.name ? 'font-medium text-ink-gray-9' : 'text-ink-gray-5 hover:text-ink-gray-7',
 				editor.state.dropTab === tab.name && 'bg-surface-gray-2 text-ink-gray-9',
@@ -23,7 +24,7 @@
 			<span v-if="tab.name === shown?.name" class="absolute inset-x-2 bottom-0 h-px bg-surface-gray-7" aria-hidden="true" />
 		</button>
 		<Tooltip text="Add tab">
-			<Button variant="ghost" size="sm" icon="lucide-plus" label="Add tab" class="ml-1" @click.stop="addTab" />
+			<Button variant="ghost" size="sm" icon="lucide-plus" label="Add tab" class="ml-1 shrink-0" @click.stop="addTab" />
 		</Tooltip>
 		</div>
 	</div>

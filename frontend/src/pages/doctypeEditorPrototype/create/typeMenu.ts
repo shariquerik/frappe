@@ -3,7 +3,7 @@ import { FIELDTYPES, iconOf } from "../fieldtypes";
 
 export type FieldType = { fieldtype: string; options?: string };
 
-const COMMON = ["Data", "Email", "Phone", "Int", "Currency", "Date", "Datetime", "Check", "Select", "Link", "Small Text", "Text Editor", "Attach", "Table"];
+export const COMMON = ["Data", "Email", "Phone", "Int", "Currency", "Date", "Datetime", "Check", "Select", "Link", "Small Text", "Text Editor", "Attach", "Table"];
 
 /** A Data field with options "Email" shows as its own type, as the record page draws it. */
 export const typeIcon = (type: FieldType) => (type.options === "Email" ? "lucide-mail" : iconOf(type.fieldtype));

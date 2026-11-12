@@ -108,7 +108,7 @@ export function fieldIndex(editor: Editor) {
 						label: field.label || field.fieldname,
 						fieldtype: field.fieldtype,
 						options: field.options,
-						tab: tab.label || "Details",
+						tab: tab.label || "Untitled tab",
 						tabKey: tab.name!,
 						section: section.label || "",
 					});
