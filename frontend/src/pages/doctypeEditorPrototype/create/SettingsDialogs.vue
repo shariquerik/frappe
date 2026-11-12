@@ -8,7 +8,7 @@
 			<TextInput v-model="name" label="New name" />
 			<ul class="flex flex-col gap-1.5 text-p-base text-ink-gray-7">
 				<li class="flex items-start gap-2"><span class="lucide-arrow-right mt-0.5 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" /><span>The table <code class="font-mono text-sm">tab{{ ui.doctype }}</code> becomes <code class="font-mono text-sm">tab{{ target }}</code>, with its {{ records }}.</span></li>
-				<li class="flex items-start gap-2"><span class="lucide-arrow-right mt-0.5 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" /><span>{{ ui.loaded.linkFields }} Link and Table field{{ ui.loaded.linkFields === 1 ? "" : "s" }} in other DocTypes point to {{ target }}.</span></li>
+				<li v-if="ui.loaded.linkFields != null" class="flex items-start gap-2"><span class="lucide-arrow-right mt-0.5 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" /><span>{{ ui.loaded.linkFields }} Link and Table field{{ ui.loaded.linkFields === 1 ? "" : "s" }} in other DocTypes point to {{ target }}.</span></li>
 				<li v-if="!ui.custom" class="flex items-start gap-2"><span class="lucide-arrow-right mt-0.5 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" /><span>The folder <code class="font-mono text-sm">{{ folderOf(ui, ui.module) }}</code> becomes <code class="font-mono text-sm">{{ folderOf(ui, ui.module, target) }}</code>, and its controller class is renamed.</span></li>
 			</ul>
 		</div>

@@ -113,12 +113,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	async function load(meta: { fields: RawMetaField[] }, options: LoadOptions = {}) {
 		state.fields = meta.fields.map((field, idx) => ({ ...field, idx }));
 		const key = state.layout;
-		const type = LAYOUTS.find((one) => one.key === key)!.type;
-		const { data } = await runMethod<FormLayoutsResponse>(
-			"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
-			{ dt: doctype, type },
-			{ http: "GET" }
-		);
+		const data = await readLayouts(doctype, key, meta.fields);
 		const rows = data.layouts.slice();
 		if (options.fakeCondition) {
 			const base = rows.find((one) => !one.condition);
@@ -156,7 +151,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	 */
 	async function loadAll(meta: { fields: RawMetaField[] }, keys: LayoutKey[], fake?: { key: LayoutKey; condition: string; title: string }) {
 		state.fields = meta.fields.map((field, idx) => ({ ...field, idx }));
-		const responses = await Promise.all(keys.map((key) => readLayouts(doctype, key)));
+		const responses = await Promise.all(keys.map((key) => readLayouts(doctype, key, meta.fields)));
 		const defaults: Partial<Record<LayoutKey, string>> = {};
 		keys.forEach((key, i) => {
 			const data = responses[i];
@@ -636,14 +631,35 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 
 export type Editor = ReturnType<typeof createEditor>;
 
-async function readLayouts(doctype: string, key: LayoutKey) {
+async function readLayouts(doctype: string, key: LayoutKey, fields: RawMetaField[]): Promise<FormLayoutsResponse> {
 	const type = LAYOUTS.find((one) => one.key === key)!.type;
-	const { data } = await runMethod<FormLayoutsResponse>(
-		"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
-		{ dt: doctype, type },
-		{ http: "GET" }
-	);
-	return data;
+	try {
+		const { data } = await runMethod<FormLayoutsResponse>(
+			"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
+			{ dt: doctype, type },
+			{ http: "GET" }
+		);
+		return data;
+	} catch {
+		// PROTOTYPE: a child DocType 403s for non-Administrators (its read check needs a parent); the real build fixes the endpoint.
+		return { layouts: [], fallback: metaLayout(fields) };
+	}
+}
+
+/** The server's `get_meta_layout`: the field order cut into tabs, sections and columns at the breaks. */
+function metaLayout(fields: RawMetaField[]): LayoutTree {
+	const tabs: LayoutTree = [];
+	const tab = () => tabs.at(-1) ?? tabs[tabs.push({ name: "first_tab", sections: [] }) - 1];
+	const section = () => tab().sections.at(-1) ?? tab().sections[tab().sections.push({ name: "section_1", columns: [] }) - 1];
+	const column = () => section().columns.at(-1) ?? section().columns[section().columns.push({ name: "column_1", fields: [] }) - 1];
+	for (const field of fields) {
+		const container = { name: field.fieldname, ...(field.label ? { label: field.label } : {}) };
+		if (field.fieldtype === "Tab Break") tabs.push({ ...container, sections: [] });
+		else if (field.fieldtype === "Section Break") tab().sections.push({ ...container, columns: [] });
+		else if (field.fieldtype === "Column Break") section().columns.push({ ...container, fields: [] });
+		else column().fields.push(field.fieldname);
+	}
+	return tabs;
 }
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? []));

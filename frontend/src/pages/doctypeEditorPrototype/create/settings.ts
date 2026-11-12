@@ -149,7 +149,7 @@ export function createSettingsUi(source: SettingsSource) {
 	const shippedSetters: Record<string, string> = {};
 	const site = reactive<Record<string, string>>({});
 	const perms = reactive({ app: [] as PermRow[], site: null as PermRow[] | null, siteAtLoad: 0, copied: false });
-	const loaded = reactive({ done: false, savedKind: "regular" as SettingsKind, rule: "hash" as Rule, roles: [] as string[], linkFields: 0, submitted: 0, modules: [] as { name: string; app: string }[] });
+	const loaded = reactive({ done: false, savedKind: "regular" as SettingsKind, rule: "hash" as Rule, roles: [] as string[], linkFields: null as number | null, submitted: 0, modules: [] as { name: string; app: string }[] });
 	let saved = "";
 
 	const ui = reactive({
@@ -341,6 +341,7 @@ export function createSettingsUi(source: SettingsSource) {
 		}
 		loaded.modules = modules.map((one) => ({ name: one.name, app: one.app_name })).sort((a, b) => a.name.localeCompare(b.name));
 		// For the Danger zone and Change kind: fields that point here, and records that are submitted.
+		// Counting DocFields needs DocField read; without it the count stays null and Rename hides its line.
 		void runMethod<number>("frappe.client.get_count", { doctype: "DocField", filters: JSON.stringify({ options: name, fieldtype: ["in", ["Link", "Table", "Table MultiSelect"]] }) }, { http: "GET" })
 			.then(({ data }) => (loaded.linkFields = data ?? 0))
 			.catch(() => {});

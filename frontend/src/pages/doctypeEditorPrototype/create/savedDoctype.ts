@@ -88,7 +88,7 @@ export function createSavedUi(editor: Editor, doctype: string, custom: boolean, 
 			);
 		},
 	});
-	if (!single) void runMethod<number>("frappe.client.get_count", { doctype }, { http: "GET" }).then(({ data }) => (ui.records = data));
+	if (!single) void runMethod<number>("frappe.client.get_count", { doctype }, { http: "GET" }).then(({ data }) => (ui.records = data)).catch(() => {});
 	return ui;
 }
 
