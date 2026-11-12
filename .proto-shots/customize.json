@@ -21,7 +21,7 @@
 {"clicktext": "Display"},
 {"wait": 600},
 {"shot": "04-a-hidden-and-changed-marks"},
-{"hover": "[data-editor-panel] [aria-label='Changed on this site'] >> nth=0"},
+{"hover": "[data-editor-panel] span:text-is('Label')"},
 {"wait": 900},
 {"shot": "05-reset-arrow-on-hover"},
 {"press": "Escape"},

@@ -63,9 +63,9 @@ export interface CustomizeUi {
 	/** The field a custom field sits after, which is how it keeps its place (#45865). */
 	anchor: (fieldname: string) => { label: string; fieldname: string } | null;
 	/** What Save writes, and what Reset all would remove. */
-	counts: ComputedRef<{ customFields: number; propertyChanges: number; layouts: number }>;
+	counts: { customFields: number; propertyChanges: number; layouts: number };
 	/** What the next Save writes. */
-	pending: ComputedRef<{ customFields: number; propertyChanges: number }>;
+	pending: { customFields: number; propertyChanges: number };
 	/** Marks everything changed so far as saved. */
 	markSaved: () => void;
 }
@@ -160,7 +160,7 @@ export async function createCustomizeUi(editor: Editor, doctype: string, module:
 				for (const prop of ui.changed(one.fieldname)) saved.props[`${one.fieldname}.${prop}`] = String((one as any)[prop]);
 			}
 		},
-	}) as CustomizeUi;
+	}) as unknown as CustomizeUi;
 	return ui;
 }
 

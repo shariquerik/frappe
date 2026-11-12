@@ -75,7 +75,7 @@ const exportOpen = defineModel<boolean>("export", { default: false });
 const modules = inject<Addresses>("addresses")!.moduleNames();
 
 const removes = computed(() => {
-	const { customFields, propertyChanges, layouts } = props.ui.counts.value;
+	const { customFields, propertyChanges, layouts } = props.ui.counts;
 	const out = [];
 	if (customFields) out.push(`${customFields} custom field${customFields === 1 ? "" : "s"}`);
 	if (propertyChanges) out.push(`${propertyChanges} property change${propertyChanges === 1 ? "" : "s"} (hidden, required, labels, order…)`);
@@ -104,7 +104,7 @@ watch(module, async (name) => {
 	app.value = String(data?.app_name ?? "");
 });
 const file = computed(() => (module.value && app.value ? `${app.value}/${scrub(module.value)}/custom/${scrub(props.doctype)}.json` : ""));
-const counted = computed(() => summary(props.ui.counts.value) || "No site changes yet");
+const counted = computed(() => summary(props.ui.counts) || "No site changes yet");
 function exportNow() {
 	exportOpen.value = false;
 	toast.success(`Exported to ${file.value} (prototype: nothing was written)`);

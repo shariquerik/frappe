@@ -275,7 +275,7 @@ const dirty = computed(
 );
 
 function save() {
-	const written = customizing.value ? summary(customize.value!.pending.value) : "";
+	const written = customizing.value ? summary(customize.value!.pending) : "";
 	customize.value?.markSaved();
 	for (const field of editor.state.fields) field.added = false;
 	savedAt.value = { acted: editor.state.acted, title: titleField.value, description: description.value };
