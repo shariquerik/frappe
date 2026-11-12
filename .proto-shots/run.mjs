@@ -1,6 +1,6 @@
 // PROTOTYPE (#45867) screenshot runner: node run.mjs <steps.json> <outdir>
 // Steps run in one page (state is in memory). Each step: {go}, {click}, {clicktext}, {fill:[sel,text]},
-// {type}, {press}, {wait}, {waitfor}, {eval}, {mdrag:[from,to]}, {shot:name}, {hover}, {resize:[w,h]}.
+// {type}, {press}, {wait}, {scroll}, {waitfor}, {eval}, {mdrag:[from,to]}, {shot:name}, {hover}, {resize:[w,h]}.
 import { chromium } from "/home/shariq/wt/ui-test/runner/node_modules/playwright/index.mjs";
 import fs from "node:fs";
 const [, , stepsFile, outdir] = process.argv;
@@ -13,7 +13,7 @@ await ctx.addCookies([{ name: "sid", value: sid, domain: "desk.localhost", path:
 const page = await ctx.newPage();
 page.on("console", (m) => m.type() === "error" && console.log("console:", m.text().slice(0, 300)));
 page.on("pageerror", (e) => console.log("pageerror:", e.message.slice(0, 300)));
-page.on("dialog", async (d) => { console.log("dialog:", d.type(), d.message()); await d.dismiss(); });
+page.on("dialog", async (d) => { console.log("dialog:", d.type(), d.message()); await (d.type() === "beforeunload" ? d.accept() : d.dismiss()); });
 const base = "http://desk.localhost:8094/apps/desk";
 for (const s of steps) {
 	try {
@@ -26,6 +26,9 @@ for (const s of steps) {
 		if (s.type) await page.keyboard.type(s.type, { delay: 30 });
 		if (s.press) await page.keyboard.press(s.press);
 		if (s.resize) await page.setViewportSize({ width: s.resize[0], height: s.resize[1] });
+		// {scroll: sel, by?}: scrolls the element to the top of its scroller, then by px more.
+		if (s.scroll) await page.locator(s.scroll).first().evaluate((el, by) => { el.scrollIntoView({ block: "start" }); el.closest(".overflow-y-auto")?.scrollBy(0, by); }, s.by ?? -24);
+		if (s.mouse) await page.mouse.move(s.mouse[0], s.mouse[1]);
 		if (s.hover) await page.locator(s.hover).first().hover();
 		if (s.waitfor) await page.getByText(s.waitfor).first().waitFor({ timeout: 20000 });
 		if (s.wait) await page.waitForTimeout(s.wait);

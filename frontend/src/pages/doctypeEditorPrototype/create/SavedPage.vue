@@ -13,6 +13,9 @@
   Design | Customize sits: A in the header, left of Undo; B at the tab strip's right end. The variant
   bar switches ?header=; round 1's ?switcher= is ignored now, and ?variant= still reads #47096's
   B (locks) and C (banner); its A chip is the meta line's "From ERPNext".
+  #47098: the Settings tab (SettingsTab; ?settings=A|B|C, the variant bar switches it now). Its
+  edits join Save. The ⋯ menu shows in both modes, so Design | Customize moves nothing: Design's
+  opens the list and the Danger zone's Rename and Delete dialogs.
 -->
 <template>
 	<PageFrame :scroll="false">
@@ -23,8 +26,8 @@
 						<LayoutCrumbs :crumbs="crumbs" :ready="ready" class="-ml-0.5" @picked="tab = 'editor'" />
 						<Badge v-if="dirty" label="Not saved" theme="amber" class="shrink-0" />
 					</div>
-					<div v-if="finder === 'A' && tab === 'editor' && ready" class="hidden shrink-0 lg:flex">
-						<FieldFinder />
+					<div v-if="finder === 'A' && (tab === 'editor' || unified) && ready" class="hidden shrink-0 lg:flex">
+						<FieldFinder :settings="unified ? settings : null" @tab="tab = $event" />
 					</div>
 					<TabButtons v-if="switchable && header === 'A'" class="shrink-0" :options="MODES" :model-value="mode" @update:model-value="setMode" />
 					<div v-if="tab === 'editor'" class="hidden shrink-0 items-center lg:flex">
@@ -35,7 +38,7 @@
 							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!editor.state.future.length" @click="editor.history.redo()" />
 						</Tooltip>
 					</div>
-					<Dropdown v-if="customizing" :options="moreMenu" side="bottom" align="end">
+					<Dropdown :options="moreMenu" side="bottom" align="end">
 						<Button variant="ghost" icon="lucide-ellipsis" label="More" />
 					</Dropdown>
 					<Tooltip text="No changes to save" :disabled="dirty">
@@ -83,16 +86,24 @@
 					</div>
 				</template>
 			</EditorTab>
-			<main v-else class="min-w-0 flex-1 overflow-y-auto">
+			<!-- ?search=one keeps Settings mounted, so the header's finder can search its rows from any tab. -->
+			<SettingsTab
+				v-if="unified || tab === 'settings'"
+				v-show="tab === 'settings'"
+				:ui="settings"
+				:can-customize="switchable"
+				@customize="setMode('customize')"
+			/>
+			<main v-if="tab === 'preview'" class="min-w-0 flex-1 overflow-y-auto">
 				<div class="px-3 pb-24 pt-6 sm:px-5">
-					<DraftSettings v-if="tab === 'settings'" :name="doctype" :kind="kind" :title="titleLabel" />
-					<FormPreview v-else :schema="editor.schema.value" />
+					<FormPreview :schema="editor.schema.value" />
 				</div>
 			</main>
 		</template>
 		<CustomizeDialogs v-if="customize" v-model:reset="resetOpen" v-model:export="exportOpen" :doctype="doctype" :ui="customize" />
 		<LayoutDialogs v-if="ready" />
-		<VariantBar :variants="HEADERS" param="header" />
+		<SettingsDialogs v-if="ready" :ui="settings" />
+		<VariantBar :variants="SETTINGS" param="settings" />
 	</PageFrame>
 </template>
 
@@ -109,22 +120,26 @@ import { EditorKey } from "../context";
 import { createEditor, keyOf, nameOf, type LayoutKey, type Mode } from "../editor";
 import CustomizeDialogs from "./CustomizeDialogs.vue";
 import { createCustomizeUi, CustomizeKey, summary, type CustomizeUi, type Persona } from "./customize";
-import DraftSettings from "./DraftSettings.vue";
 import EditorTab from "./EditorTab.vue";
 import FieldFinder from "./FieldFinder.vue";
 import FieldOutline from "./FieldOutline.vue";
 import FormPreview from "./FormPreview.vue";
 import LayoutCrumbs from "./LayoutCrumbs.vue";
 import LayoutDialogs from "./LayoutDialogs.vue";
+import SettingsDialogs from "./SettingsDialogs.vue";
+import SettingsTab from "./SettingsTab.vue";
 import VariantBar from "./VariantBar.vue";
 import { createLayoutUi, FAKE_VARIANTS, layoutsFor, LayoutUiKey } from "./layouts";
 import { DraftUiKey } from "./draftUi";
 import type { Kind } from "./newDoctype";
 import { createSavedUi, plural, SavedUiKey, type SavedUi } from "./savedDoctype";
+import { actRefusal, createSettingsUi, type SettingsUi } from "./settings";
 
-const HEADERS = [
-	{ key: "A", label: "Design | Customize in the header" },
-	{ key: "B", label: "Design | Customize at the tab strip's end" },
+// #47098: the bar switches the Settings tab's page; ?header= (#47097) still reads from the address.
+const SETTINGS = [
+	{ key: "B", label: "Settings: section list" },
+	{ key: "A", label: "Settings on one page" },
+	{ key: "C", label: "Settings: edit in the panel" },
 ];
 const MODES = [
 	{ label: "Design", value: "design" },
@@ -142,6 +157,8 @@ const doctype = String(route.params.name);
 const variant = computed(() => String(route.query.variant ?? "A"));
 const finder = computed(() => String(route.query.finder ?? "A"));
 const header = computed(() => (route.query.header === "B" ? "B" : "A"));
+// #47098: ?search=one makes the header's finder search fields, settings and properties, on every tab.
+const unified = route.query.search === "one";
 const persona: Persona = route.query.as === "manager" ? "manager" : "developer";
 const tab = ref(String(route.query.tab ?? "editor"));
 const { meta } = useDoctypeMeta(doctype);
@@ -174,13 +191,30 @@ function setMode(next: Mode) {
 }
 const resetOpen = ref(false);
 const exportOpen = ref(false);
-const moreMenu = computed(() => [
-	{ label: "Reset all customizations", icon: "lucide-rotate-ccw", onClick: () => (resetOpen.value = true) },
-	...(persona === "developer" ? [{ label: "Export to an app", icon: "lucide-package", onClick: () => (exportOpen.value = true) }] : []),
-]);
+// #47098: ⋯ is there in both modes, so switching moves nothing. Design's opens the list and the
+// Danger zone's Rename and Delete (the same dialogs; an act the zone refuses is left out).
+const moreMenu = computed(() => {
+	if (customizing.value)
+		return [
+			{ label: "Reset all customizations", icon: "lucide-rotate-ccw", onClick: () => (resetOpen.value = true) },
+			...(persona === "developer" ? [{ label: "Export to an app", icon: "lucide-package", onClick: () => (exportOpen.value = true) }] : []),
+		];
+	const acts = [
+		{ act: "rename" as const, label: "Rename DocType…", icon: "lucide-pencil" },
+		{ act: "delete" as const, label: "Delete DocType…", icon: "lucide-trash-2" },
+	].filter((one) => ready.value && !actRefusal(settings.value, one.act));
+	// A child table has no page of its own to open.
+	const opens = !ready.value || kind.value === "child" ? [] : [{ label: kind.value === "single" ? `Open ${doctype}` : `Open ${doctype} list`, icon: "lucide-list", route: routeFor(doctype) }];
+	return [
+		{ group: "Open", hideLabel: true, options: opens },
+		{ group: "DocType", hideLabel: true, options: acts.map((one) => ({ label: one.label, icon: one.icon, onClick: () => (settings.value.act = one.act) })) },
+	].filter((group) => group.options.length);
+});
 
 // SavedUi needs the loaded fields, so it is made once the meta arrives; until then a stand-in.
 const saved = ref<SavedUi>(null as any);
+// #47098: the Settings tab's state; its pending edits join the header's Save.
+const settings = ref<SettingsUi>(null as any);
 provide(SavedUiKey, computed(() => (ready.value ? saved.value : null)));
 
 watch(
@@ -193,6 +227,15 @@ watch(
 		description.value = (meta.value as any).description ?? "";
 		saved.value = createSavedUi(editor, doctype, Boolean((meta.value as any).custom), kind.value === "single");
 		if (!(meta.value as any).custom) customize.value = await createCustomizeUi(editor, doctype, (meta.value as any).module, persona);
+		settings.value = createSettingsUi({
+			doctype,
+			fields: () => editor.state.fields,
+			records: () => (kind.value === "single" ? null : saved.value.records),
+			customizing: () => customizing.value,
+			titleField,
+			description,
+			app: () => customize.value?.app ?? "",
+		});
 		ready.value = true;
 		const field = route.query.field;
 		if (field) saved.value.jumpTo(String(field));
@@ -278,7 +321,6 @@ const metaLine = computed(() => {
 		records: kind.value === "single" ? "" : plural(saved.value.records, "record"),
 	};
 });
-const titleLabel = computed(() => editor.field(titleField.value)?.label ?? "");
 
 // #47097: the open layout lives in the address (?layout=, &row=), so a link or a reload keeps it.
 // Round 2: the crumb's menu works on every tab; a layout opened from Settings or Preview shows in the Editor.
@@ -297,12 +339,16 @@ watch(ready, () => (savedAt.value = { acted: editor.state.acted, title: titleFie
 const dirty = computed(
 	() =>
 		ready.value &&
-		(editor.state.acted !== savedAt.value.acted || titleField.value !== savedAt.value.title || description.value !== savedAt.value.description)
+		(editor.state.acted !== savedAt.value.acted ||
+			titleField.value !== savedAt.value.title ||
+			description.value !== savedAt.value.description ||
+			settings.value.dirty)
 );
 
 function save() {
 	const written = customizing.value ? summary(customize.value!.pending) : "";
 	customize.value?.markSaved();
+	settings.value.markSaved();
 	for (const field of editor.state.fields) field.added = false;
 	savedAt.value = { acted: editor.state.acted, title: titleField.value, description: description.value };
 	toast.success(`${doctype} saved${written ? `: ${written}` : ""} (prototype: nothing was written)`);

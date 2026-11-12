@@ -1,27 +1,30 @@
 <!-- PROTOTYPE (#45867): one collapsible group of the panel, as frappe/crm#3419's PanelSection:
-     42px header, bold label, chevron, a rule above. -->
+     42px header, bold label, chevron, a rule above. #47098: while the panel's search runs, a group
+     with a match shows open and one without hides; its own open state comes back after. -->
 <template>
 	<div
+		v-show="hasMatch"
 		class="flex h-[42px] shrink-0 cursor-pointer select-none items-center gap-1.5 px-4"
 		:class="{ 'border-t border-outline-gray-1': divided }"
 		@click="open = !open"
 	>
-		<button type="button" class="flex items-center gap-1 py-1 text-base font-semibold text-ink-gray-8" :aria-expanded="open" @click.stop="open = !open">
+		<button type="button" class="flex items-center gap-1 py-1 text-base font-semibold text-ink-gray-8" :aria-expanded="open || searching" @click.stop="open = !open">
 			{{ label }}
-			<span class="size-4 text-ink-gray-5" :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'" aria-hidden="true" />
+			<span class="size-4 text-ink-gray-5" :class="open || searching ? 'lucide-chevron-up' : 'lucide-chevron-down'" aria-hidden="true" />
 		</button>
-		<span v-if="!open && count" class="text-sm text-ink-gray-4">{{ count }}</span>
+		<span v-if="!open && !searching && count" class="text-sm text-ink-gray-4">{{ count }}</span>
 		<div v-if="$slots.actions" class="ml-auto flex cursor-default items-center gap-1" @click.stop>
 			<slot name="actions" />
 		</div>
 	</div>
-	<div v-if="open" class="flex flex-col gap-2.5 px-4 pb-3 pt-1">
+	<div v-show="(open || searching) && hasMatch" class="flex flex-col gap-2.5 px-4 pb-3 pt-1">
 		<slot />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { usePanelGroup } from "./panelSearch";
 
 const props = withDefaults(defineProps<{ label: string; divided?: boolean; startOpen?: boolean; count?: number }>(), {
 	divided: true,
@@ -29,4 +32,5 @@ const props = withDefaults(defineProps<{ label: string; divided?: boolean; start
 	count: 0,
 });
 const open = ref(props.startOpen);
+const { searching, hasMatch } = usePanelGroup(props.label, open);
 </script>

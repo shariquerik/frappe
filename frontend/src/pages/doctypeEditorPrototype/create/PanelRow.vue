@@ -1,9 +1,10 @@
 <!-- PROTOTYPE (#45867): a label-left row of the panel, as frappe/crm#3419's PanelRow. `box` wraps a
      ghost control the way desk's FieldBox does. Customize mode (#47096) puts one mark at the end of
      the label: a lock (the site may not change it; the control goes inert) or a dot (the site
-     changed it), which turns into a reset arrow while the row is hovered. -->
+     changed it), which turns into a reset arrow while the row is hovered. #47098: the panel's
+     property search hides a row it does not match. -->
 <template>
-	<div class="group/row grid grid-cols-[130px_1fr] items-start gap-2">
+	<div ref="root" v-show="shown" class="group/row grid grid-cols-[130px_1fr] items-start gap-2">
 		<div class="flex h-7 min-w-0 items-center gap-1">
 			<span class="truncate text-base text-ink-gray-5">{{ label }}</span>
 			<Tooltip v-if="lock" :text="lock">
@@ -39,7 +40,11 @@
 
 <script setup lang="ts">
 import { Tooltip } from "frappe-ui";
+import { ref } from "vue";
+import { usePanelRow } from "./panelSearch";
 
-withDefaults(defineProps<{ label: string; box?: boolean; lock?: string; changed?: boolean; resetText?: string }>(), { box: true, lock: "", resetText: "Reset" });
+const props = withDefaults(defineProps<{ label: string; box?: boolean; lock?: string; changed?: boolean; resetText?: string }>(), { box: true, lock: "", resetText: "Reset" });
+const root = ref<HTMLElement | null>(null);
+const shown = usePanelRow(() => props.label, () => root.value);
 defineEmits<{ reset: [] }>();
 </script>

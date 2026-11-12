@@ -8,6 +8,8 @@
   Save pretends to create the DocType: a toast, the address becomes /doctype/<name>, and "Try it"
   offers the record and the list. Nothing reaches the server, and leaving an unsaved draft leaves
   nothing behind.
+  #47098: Settings is the saved DocType's Settings tab with a new DocType's defaults (draft): every
+  kind allowed, no record counts, no Danger zone.
 -->
 <template>
 	<PageFrame :scroll="false">
@@ -69,10 +71,10 @@
 					</div>
 				</template>
 			</EditorTab>
+			<SettingsTab v-else-if="tab === 'settings'" :ui="settings!" />
 			<main v-else class="min-w-0 flex-1 overflow-y-auto">
 				<div class="px-3 pb-24 pt-6 sm:px-5">
-					<DraftSettings v-if="tab === 'settings'" :name="current.name" :kind="current.kind" :title="titleLabel" />
-					<FormPreview v-else :schema="editor.schema.value" />
+					<FormPreview :schema="editor.schema.value" />
 				</div>
 			</main>
 		</template>
@@ -90,9 +92,10 @@ import { shellDialog } from "@/shell/dialog";
 import { useUnloadGuard } from "@/pages/record/recordSave";
 import { EditorKey } from "../context";
 import { createEditor, nameOf } from "../editor";
-import DraftSettings from "./DraftSettings.vue";
 import EditorTab from "./EditorTab.vue";
 import FormPreview from "./FormPreview.vue";
+import SettingsTab from "./SettingsTab.vue";
+import { createSettingsUi } from "./settings";
 import { DraftUiKey } from "./draftUi";
 import { created, draft, KINDS, openNewDoctype, rememberModule, slugOf, type Draft } from "./newDoctype";
 
@@ -145,6 +148,19 @@ const meta = computed(() => {
 	return `${one.module} · ${kindLabel.value}`;
 });
 const titleLabel = computed(() => editor.field(titleField.value)?.label ?? "");
+// #47098: the Settings tab, as on a saved DocType but with defaults: no counts, no Danger zone.
+const settings = current.value
+	? createSettingsUi({
+			doctype: current.value.name,
+			draft: { kind: current.value.kind, module: current.value.module },
+			fields: () => editor.state.fields,
+			records: () => null,
+			customizing: () => false,
+			titleField,
+			description,
+			app: () => "",
+		})
+	: null;
 
 /** Before the first save a field's name follows its label; nothing refers to it yet. */
 function rename(from: string, to: string) {
@@ -165,7 +181,11 @@ const savedAt = ref({ edits: 0, title: "" });
 const tryIt = ref(false);
 const savedDescription = ref("");
 const dirty = computed(
-	() => editor.state.acted !== savedAt.value.edits || titleField.value !== savedAt.value.title || description.value !== savedDescription.value
+	() =>
+		editor.state.acted !== savedAt.value.edits ||
+		titleField.value !== savedAt.value.title ||
+		description.value !== savedDescription.value ||
+		Boolean(settings?.dirty)
 );
 const unsavedNow = computed(() => Boolean(current.value) && (!saved.value || dirty.value));
 const unsaved = () => unsavedNow.value;
@@ -178,6 +198,7 @@ function save() {
 	for (const field of editor.state.fields) field.added = false;
 	saved.value = true;
 	savedAt.value = { edits: editor.state.acted, title: titleField.value };
+	settings?.markSaved();
 	savedDescription.value = description.value;
 	if (!first) return void toast.success(`${one.name} saved`);
 	tryIt.value = true;

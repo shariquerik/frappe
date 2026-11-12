@@ -8,7 +8,11 @@
 		remove-label="Remove tab, keep its fields"
 		@remove="editor.acts.removeTab(tab.name!)"
 		@close="$emit('close')"
+		:searchable="!unified"
+		@search="searchOpen = true"
 	/>
+	<PanelSearchRow v-if="searchOpen" v-model="search.query" @close="closeSearch" />
+	<p v-if="searching && !anyMatch" class="border-t border-outline-gray-1 px-4 py-3 text-base text-ink-gray-5">No properties match “{{ search.query.trim() }}”</p>
 	<PanelSection label="Tab">
 		<PanelRow label="Label">
 			<TextInput
@@ -42,9 +46,21 @@ import { DraftUiKey } from "./draftUi";
 import PanelHeader from "./PanelHeader.vue";
 import PanelRow from "./PanelRow.vue";
 import PanelSection from "./PanelSection.vue";
+import { useRoute } from "vue-router";
+import PanelSearchRow from "./PanelSearchRow.vue";
+import { providePanelSearch } from "./panelSearch";
 
 const props = defineProps<{ tab: LayoutTreeTab }>();
 defineEmits<{ close: [] }>();
+// #47098: filters the properties below; "/" is the Editor's add-a-field key, so it is not bound here.
+const { search, searching, anyMatch } = providePanelSearch();
+const searchOpen = ref(false);
+// ?search=one: the header's finder searches properties; the panel has no search of its own.
+const unified = useRoute().query.search === "one";
+function closeSearch() {
+	search.query = "";
+	searchOpen.value = false;
+}
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
 

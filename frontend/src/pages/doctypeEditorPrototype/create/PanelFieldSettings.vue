@@ -14,7 +14,11 @@
 		:remove-icon="removeIcon"
 		@remove="$emit('remove')"
 		@close="$emit('close')"
+		:searchable="!unified"
+		@search="searchOpen = true"
 	/>
+	<PanelSearchRow v-if="searchOpen" v-model="search.query" @close="closeSearch" />
+	<p v-if="searching && !anyMatch" class="border-t border-outline-gray-1 px-4 py-3 text-base text-ink-gray-5">No properties match “{{ search.query.trim() }}”</p>
 	<PanelSection label="Field">
 		<PanelRow label="Label" v-bind="mark('label')">
 			<TextInput
@@ -178,6 +182,9 @@ import { CustomizeKey } from "./customize";
 import { plural, SavedUiKey, typesKeepingValues } from "./savedDoctype";
 import { fieldnameOf, typeLabel } from "./newDoctype";
 import { COMMON, typeIcon, typeMenu, type FieldType } from "./typeMenu";
+import { useRoute } from "vue-router";
+import PanelSearchRow from "./PanelSearchRow.vue";
+import { providePanelSearch } from "./panelSearch";
 
 type Prop = { key: string; label: string; type: "check" | "text" | "int"; placeholder?: string; only?: (field: EditorField) => boolean };
 
@@ -194,6 +201,15 @@ const RULES = [
 
 const props = defineProps<{ field: EditorField }>();
 defineEmits<{ remove: []; close: [] }>();
+// #47098: filters the properties below; "/" is the Editor's add-a-field key, so it is not bound here.
+const { search, searching, anyMatch } = providePanelSearch();
+const searchOpen = ref(false);
+// ?search=one: the header's finder searches properties; the panel has no search of its own.
+const unified = useRoute().query.search === "one";
+function closeSearch() {
+	search.query = "";
+	searchOpen.value = false;
+}
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
 const doctypes = inject<Addresses>("addresses")!.doctypeNames();
