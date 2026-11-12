@@ -145,6 +145,10 @@ async function addSection() {
 [data-editor-empty] > .dte-drop-line {
 	margin: 29px 0 0 !important;
 }
+/* The line crosses the empty box's middle, so its text steps aside. */
+[data-editor-empty]:has(> .dte-drop-line) + div {
+	color: transparent;
+}
 .dte-drop-line > * {
 	display: none !important;
 }

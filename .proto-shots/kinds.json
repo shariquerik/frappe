@@ -34,7 +34,7 @@
 {"role": ["button", "New DocType"]},
 {"wait": 600},
 {"click": "input[placeholder='Support Ticket']"},
-{"type": "Support Settings"},
+{"type": "Ticket Desk Settings"},
 {"click": "[role=dialog] button[data-slot=trigger]"},
 {"wait": 400},
 {"role": ["option", "Single"]},

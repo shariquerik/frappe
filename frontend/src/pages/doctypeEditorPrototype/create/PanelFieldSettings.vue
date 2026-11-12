@@ -204,13 +204,13 @@ function followLabel() {
 }
 
 // A new field's label takes the caret, so typing names it at once.
-const labelInput = ref<{ el?: HTMLElement } | null>(null);
+const labelInput = ref<{ inputElement: HTMLInputElement | null } | null>(null);
 watch(
 	() => ui.labelFocus.value,
 	async (fieldname) => {
 		if (fieldname !== props.field.fieldname) return;
 		await nextTick();
-		const input = (labelInput.value as any)?.$el?.querySelector?.("input") as HTMLInputElement | undefined;
+		const input = labelInput.value?.inputElement;
 		input?.focus();
 		input?.select();
 		ui.labelFocus.value = null;

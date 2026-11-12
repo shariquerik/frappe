@@ -4,12 +4,12 @@
 <template>
 	<Popover v-model:open="open" side="bottom" align="start" :auto-focus="false">
 		<template #trigger="{ open: isOpen }">
-			<div class="flex w-fit" data-editor-add-field>
-				<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add field" :class="{ '!bg-surface-gray-3': isOpen }" @click.stop />
+			<div ref="triggerEl" class="flex w-fit scroll-mt-[20vh]" data-editor-add-field @click.stop>
+				<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add field" :class="{ '!bg-surface-gray-3': isOpen }" />
 			</div>
 		</template>
-		<form class="flex w-[320px] flex-col gap-2 p-2" @submit.prevent="add" @click.stop>
-			<TextInput ref="labelInput" v-model="label" placeholder="Field label, like Due date" autocomplete="off" @keydown.esc="open = false" />
+		<form ref="formEl" class="flex w-[320px] flex-col gap-2 p-2" @submit.prevent="add" @click.stop>
+			<TextInput v-model="label" placeholder="Field label, like Due date" autocomplete="off" @keydown.esc="open = false" />
 			<div class="flex items-center gap-2">
 				<Dropdown :options="menu" side="bottom" align="start">
 					<Button size="sm" variant="subtle" :icon-left="typeIcon(type)" icon-right="lucide-chevron-down" :label="typeLabel(type.fieldtype, type.options)" />
@@ -64,13 +64,22 @@ function add() {
 	picked.value = null;
 	optionsTyped.value = "";
 	focusLabel();
+	nextTick(keepRoomBelow);
 }
 
-const labelInput = ref();
-const focusLabel = () => (labelInput.value?.$el?.querySelector?.("input") as HTMLInputElement | undefined)?.focus();
+const formEl = ref<HTMLFormElement>();
+const focusLabel = () => formEl.value?.querySelector("input")?.focus({ preventScroll: true });
 watch(open, async (now) => {
 	if (!now) return;
+	keepRoomBelow();
 	await nextTick();
 	setTimeout(focusLabel, 30);
 });
+
+// Near the window's bottom the popover and its type menu would flip above the button.
+const triggerEl = ref<HTMLElement>();
+function keepRoomBelow() {
+	const top = triggerEl.value?.getBoundingClientRect().top ?? 0;
+	if (top > window.innerHeight / 2) triggerEl.value?.scrollIntoView({ block: "start" });
+}
 </script>
