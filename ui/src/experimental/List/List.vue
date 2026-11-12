@@ -83,6 +83,9 @@
 					:key="rowValue(row)"
 					:value="rowValue(row)"
 					:route="rowLink?.(row)"
+					@mouseenter="hovered = rowValue(row)"
+					@focusin="hovered = rowValue(row)"
+					@mouseleave="hovered = null"
 				>
 					<!-- The molecule's own `selectable` turns a row click into a toggle; the row must stay
 						a link, so the checkbox is drawn here (frappe/frappe-ui#1131). -->
@@ -93,7 +96,9 @@
 							:aria-checked="isSelected(rowValue(row))"
 							:aria-label="`Select ${rowValue(row)}`"
 							tabindex="0"
-							@click.stop.prevent="toggle(rowValue(row))"
+							@click.stop.prevent="
+								$event.shiftKey ? toggleRange(rowValue(row)) : toggle(rowValue(row))
+							"
 							@keydown.enter.stop.prevent="toggle(rowValue(row))"
 							@keydown.space.stop.prevent="toggle(rowValue(row))"
 						>
@@ -158,6 +163,7 @@ import {
 	ListHeaderCellSort,
 	ListRow,
 } from "frappe-ui/list";
+import { useEventListener } from "@vueuse/core";
 import { computed, getCurrentInstance, ref, toRef } from "vue";
 import type { Sort } from "../../components/SortBy/types";
 import { columnTracks } from "./columnTracks";
@@ -227,11 +233,23 @@ function rowValue(row: ListRowData) {
 	return String(row[props.rowKey]);
 }
 
-const { selectAllState, isSelected, toggle, toggleSelectAll } = useRowSelection(
+const { selectAllState, isSelected, toggle, toggleRange, toggleSelectAll } = useRowSelection(
 	selection,
 	rows,
 	toRef(props, "rowKey")
 );
+
+// PROTOTYPE (#47056): `x` toggles the row under the pointer or with focus; `X` extends a range.
+const hovered = ref<string | null>(null);
+useEventListener(document, "keydown", (event: KeyboardEvent) => {
+	if (event.key.toLowerCase() !== "x" || !hovered.value) return;
+	const target = event.target as HTMLElement | null;
+	if (event.metaKey || event.ctrlKey || event.altKey) return;
+	if (target?.closest("input, textarea, select, [contenteditable], [role=menu], [role=dialog]")) return;
+	event.preventDefault();
+	if (event.shiftKey) toggleRange(hovered.value);
+	else toggle(hovered.value);
+});
 
 const { drafts, resizingFieldname, startResize, resetColumn } = useColumnResize({
 	onResize: (fieldname, width) => emit("column-resize", { fieldname, width }),

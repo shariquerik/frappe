@@ -28,10 +28,26 @@ export function useRowSelection(
     return selected.value.has(value);
   }
 
+  // PROTOTYPE (#47056): the last toggled row anchors a shift-click range.
+  let anchor: string | null = null;
+
   function toggle(value: string) {
+    anchor = value;
     selection.value = isSelected(value)
       ? selection.value.filter((key) => key !== value)
       : [...selection.value, value];
+  }
+
+  /** PROTOTYPE (#47056): sets every row from the anchor to `value` as the anchor now is. */
+  function toggleRange(value: string) {
+    const keys = allKeys.value;
+    const from = anchor === null ? -1 : keys.indexOf(anchor);
+    const to = keys.indexOf(value);
+    if (from < 0 || to < 0) return toggle(value);
+    const range = keys.slice(Math.min(from, to), Math.max(from, to) + 1);
+    const select = isSelected(anchor!);
+    const rest = selection.value.filter((key) => !range.includes(key));
+    selection.value = select ? [...rest, ...range] : rest;
   }
 
   // Selected rows outside the shown set stay selected; only the shown rows clear.
@@ -44,5 +60,5 @@ export function useRowSelection(
     }
   }
 
-  return { selectAllState, isSelected, toggle, toggleSelectAll };
+  return { selectAllState, isSelected, toggle, toggleRange, toggleSelectAll };
 }

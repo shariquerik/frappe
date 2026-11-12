@@ -25,7 +25,15 @@
 			</div>
 		</template>
 
-		<div :class="pageGutter" class="flex shrink-0 items-start justify-between gap-2 pt-3.5">
+		<!-- PROTOTYPE (#47056): with the bar in the controls row, a selection takes the row's place. -->
+		<div v-if="bulkOnTop" :class="pageGutter" class="flex shrink-0 items-center pt-3.5">
+			<BulkBar :floating="false" />
+		</div>
+		<div
+			v-show="!bulkOnTop"
+			:class="pageGutter"
+			class="flex shrink-0 items-start justify-between gap-2 pt-3.5"
+		>
 			<div class="flex min-w-0 flex-1 flex-col">
 				<QuickFilter
 					v-model:filters="filters"
@@ -76,8 +84,17 @@ import { createdMessage } from "./createdMessage";
 import { clearDefaultView, setDefaultView } from "./defaultView";
 import { useListActs } from "./listActs";
 import { rendererFor, type RendererHost } from "./renderer";
+import BulkBar from "./bulkPrototype/BulkBar.vue";
+import { count as bulkCount, runs as bulkRuns } from "./bulkPrototype/store";
+import { tweaks as bulkTweaks } from "./bulkPrototype/tweaks";
 
 const props = defineProps<{ page: ListPage; label?: string }>();
+
+const bulkOnTop = computed(
+	() =>
+		bulkTweaks.barAt === "top" &&
+		(bulkCount.value > 0 || (bulkTweaks.runs === "bar" && bulkRuns.some((run) => run.background)))
+);
 
 const router = useRouter();
 const boot = inject<Boot>("boot")!;

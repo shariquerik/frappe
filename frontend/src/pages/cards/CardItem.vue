@@ -2,9 +2,14 @@
 <template>
 	<RouterLink
 		:to="link"
-		class="group relative flex h-56 min-w-0 flex-col gap-2 overflow-hidden rounded-5 border border-outline-gray-2 bg-surface-base p-3 hover:border-outline-gray-3"
+		class="group relative flex h-56 min-w-0 flex-col gap-2 overflow-hidden rounded-5 border bg-surface-base p-3"
+		:class="
+			selected
+				? 'border-outline-gray-5 ring-1 ring-outline-gray-5'
+				: 'border-outline-gray-2 hover:border-outline-gray-3'
+		"
 	>
-		<div class="truncate text-base" :class="titleClass || 'font-medium text-ink-gray-9'">
+		<div class="truncate text-base" :class="[titleClass || 'font-medium text-ink-gray-9', selecting && 'pe-8']">
 			{{ title }}
 		</div>
 		<div
@@ -29,8 +34,26 @@
 				<FieldCell :field="MODIFIED" :row="row" />
 			</span>
 		</div>
+		<!-- PROTOTYPE (#47056): the card's checkbox, beside the menu: on hover, and on every card once one
+			is selected, so nothing moves. -->
 		<div
-			v-if="menu.length"
+			role="checkbox"
+			:aria-checked="selected"
+			:aria-label="`Select ${row.name}`"
+			tabindex="0"
+			class="absolute top-2 flex h-7 w-7 items-center justify-center rounded-3 [&_input]:mt-0"
+			:class="[
+				selecting || selected
+					? 'end-2 opacity-100'
+					: [menu.length ? 'end-9' : 'end-2', 'opacity-0 focus:opacity-100 group-hover:opacity-100'],
+			]"
+			@click.stop.prevent="emit('toggle', $event.shiftKey)"
+			@keydown.space.stop.prevent="emit('toggle', false)"
+		>
+			<Checkbox :modelValue="selected" class="pointer-events-none" tabindex="-1" aria-hidden="true" />
+		</div>
+		<div
+			v-if="menu.length && !selecting"
 			class="absolute end-2 top-2 opacity-0 focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
 			@click.prevent.stop
 		>
@@ -43,6 +66,7 @@
 import { LinkMark } from "@framework/ui/fields";
 import type { FieldMeta } from "@framework/ui/fields/types";
 import { RichTextView } from "@framework/ui/RichText";
+import { Checkbox } from "frappe-ui";
 import { computed } from "vue";
 import type { RouteLocationRaw } from "vue-router";
 import FieldCell from "@/pages/list/FieldCell.vue";
@@ -70,7 +94,11 @@ const props = defineProps<{
 	titleClass?: string;
 	menu: RowMenuOption[];
 	person?: Person;
+	selected?: boolean;
+	selecting?: boolean;
 }>();
+
+const emit = defineEmits<{ toggle: [shift: boolean] }>();
 
 const title = computed(() =>
 	recordTitle(props.meta, props.row, String(props.row.name), props.titleField)

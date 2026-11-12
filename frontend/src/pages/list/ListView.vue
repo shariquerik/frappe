@@ -12,8 +12,10 @@
 		/>
 	</Teleport>
 	<PageState v-if="error" v-bind="failedState(error, reload)" />
+	<!-- PROTOTYPE (#47056): the select-all strip over the rows. -->
+	<SelectAllStrip v-if="!error" class="mx-[var(--page-gutter)] mb-1" />
 	<List
-		v-else
+		v-if="!error"
 		ref="table"
 		v-model:selection="selection"
 		v-model:sort="sort"
@@ -102,7 +104,8 @@
 			<PageState :name="filters.length ? 'filtered' : 'empty'" />
 		</template>
 	</List>
-	<ListBulkBar v-model:selection="selection" :actions="bulkActions" />
+	<!-- PROTOTYPE (#47056): the bulk bar, runs and result panel replace ListBulkBar. -->
+	<BulkLayer />
 	<ListFooter
 		v-model:pageSize="pageSize"
 		:class="pageGutter"
@@ -125,10 +128,10 @@ import { ColumnSettings } from "@framework/ui/ColumnSettings";
 import { LinkMark, LinkTitlesKey, isEmailField, isPhoneField } from "@framework/ui/fields";
 import type { FieldMeta } from "@framework/ui/fields/types";
 import { mapField, type RawMetaField } from "@framework/ui/FormLayout";
-import { List, ListBulkBar, ListFooter, type BulkAction } from "@framework/ui/experimental/List";
+import { List, ListFooter, type BulkAction } from "@framework/ui/experimental/List";
 import { computed, provide, ref } from "vue";
 import { __ } from "@/i18n";
-import { useListView } from "@/list/useListView";
+import { filtersDict, useListView } from "@/list/useListView";
 import { useScrollMemory } from "@/list/useScrollMemory";
 import type { View } from "@/list/view";
 import { pageGutter } from "@/shell/PageFrame.vue";
@@ -148,6 +151,9 @@ import PhoneCell from "./PhoneCell.vue";
 import type { RendererHost } from "./renderer";
 import StatusCell from "./StatusCell.vue";
 import RowMenu from "./RowMenu.vue";
+import BulkLayer from "./bulkPrototype/BulkLayer.vue";
+import SelectAllStrip from "./bulkPrototype/SelectAllStrip.vue";
+import { bindHost } from "./bulkPrototype/store";
 import { rowActionEntries, rowMenuOptions } from "./rowActions";
 
 const props = defineProps<{ view: View; host: RendererHost }>();
@@ -190,6 +196,15 @@ const {
 } = useListView(props.view);
 
 props.host.onCreate(reload);
+
+bindHost({
+	doctype: props.view.doctype,
+	selection,
+	rows,
+	total: totalCount,
+	filters: () => filtersDict(filters.value),
+	filterLabel: () => (filters.value.length ? "this filter" : props.view.doctype + "s"),
+});
 
 // A Link cell shows its target's title for the name, as the record's read-only field does.
 provide(LinkTitlesKey, linkTitles);
