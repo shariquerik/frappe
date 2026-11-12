@@ -43,7 +43,7 @@
 				<template #prefix><span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" /></template>
 			</TextInput>
 		</div>
-		<div v-if="unplacedRows.length" class="-mx-2 flex max-h-[296px] flex-col overflow-y-auto">
+		<div v-if="unplacedRows.length" class="-mx-2 flex max-h-[272px] flex-col overflow-y-auto">
 			<ItemListRow
 				v-for="row in unplacedRows"
 				:key="row.fieldname"
@@ -70,7 +70,7 @@
 			:group="{ name: 'dte-fields', pull: 'clone', put: false }"
 			:sort="false"
 			item-key="value"
-			class="flex flex-col"
+			class="-mx-2 flex flex-col"
 			:force-fallback="true"
 			:fallback-on-body="false"
 			fallback-class="dte-drag-fallback"

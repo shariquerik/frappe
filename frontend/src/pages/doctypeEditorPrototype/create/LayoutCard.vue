@@ -10,8 +10,9 @@
 			<div class="flex h-7 items-center"><Badge :label="entry.badge" theme="gray" /></div>
 		</PanelRow>
 		<PanelRow v-if="entry.variant" label="Shows when" :box="false">
-			<div class="flex min-h-7 items-center gap-1">
-				<code class="min-w-0 flex-1 truncate font-mono text-sm text-ink-gray-8" :title="entry.variant.condition">{{ entry.variant.condition }}</code>
+			<!-- The condition is the variant's name: wrap it whole, never truncate. -->
+			<div class="flex min-h-7 items-start gap-1">
+				<code class="min-w-0 flex-1 break-all py-1.5 font-mono text-sm leading-4 text-ink-gray-8">{{ entry.variant.condition }}</code>
 				<Button variant="ghost" size="sm" icon="lucide-pencil" label="Edit condition" tooltip="Edit condition" @click="ui.editing.value = entry.variant!" />
 			</div>
 		</PanelRow>

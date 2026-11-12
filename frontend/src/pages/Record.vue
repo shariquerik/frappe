@@ -420,6 +420,9 @@ provideRecordCommits(() => controller.value);
 
 // The row's built-ins, re-read on every resolve so the title crumb tracks the draft.
 function headerBuiltins(): HeaderItem[] {
+	// PROTOTYPE (#47097): "Edit panel" leaves for /doctype/<name>, a route with no :doctype param;
+	// the header re-resolves once before this page unmounts, with no DocType to address.
+	if (!doctype.value) return [];
 	const title = doc.value[meta.value?.title_field] || docname.value;
 	const single = addresses.isSingle(doctype.value!);
 	const items: HeaderItem[] = [

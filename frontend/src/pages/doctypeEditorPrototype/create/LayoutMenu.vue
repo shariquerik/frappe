@@ -41,8 +41,8 @@
 						<span class="grid size-4 shrink-0 place-items-center" aria-hidden="true">
 							<span v-if="entry.id === ui.current.value.id" class="lucide-check size-4 text-ink-gray-7" />
 						</span>
-						<!-- C: every row reserves the ⋯ lane, so badges line up whether a row has acts or not. -->
-						<span v-if="variant === 'C'" class="flex w-7 shrink-0 justify-center" @click.stop @keydown.enter.stop>
+						<!-- C: every row reserves the ⋯ lane (width and height), so badges line up and rows keep one height whether a row has acts or not. -->
+						<span v-if="variant === 'C'" class="flex h-7 w-7 shrink-0 items-center justify-center" @click.stop @keydown.enter.stop>
 							<Dropdown v-if="actsOf(ui, entry).length" :options="actsOf(ui, entry).map(withClose)" side="bottom" align="start">
 								<Button variant="ghost" size="sm" icon="lucide-ellipsis" :label="`${entry.title}: more`" data-layout-acts />
 							</Dropdown>

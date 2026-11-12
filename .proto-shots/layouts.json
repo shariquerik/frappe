@@ -51,6 +51,9 @@
 "wait": 900
 },
 {
+"hover": "[data-layout-card]"
+},
+{
 "shot": "03-a-side-panel-two-fields-placed"
 },
 {

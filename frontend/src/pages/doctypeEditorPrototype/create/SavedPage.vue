@@ -193,7 +193,7 @@ watch(
 		if (route.query.layout) editor.openLayout(String(route.query.layout) as LayoutKey, route.query.row ? String(route.query.row) : null);
 		titleField.value = (meta.value as any).title_field ?? "";
 		description.value = (meta.value as any).description ?? "";
-		saved.value = createSavedUi(editor, doctype, Boolean((meta.value as any).custom));
+		saved.value = createSavedUi(editor, doctype, Boolean((meta.value as any).custom), kind.value === "single");
 		if (!(meta.value as any).custom) customize.value = await createCustomizeUi(editor, doctype, (meta.value as any).module, persona);
 		ready.value = true;
 		const field = route.query.field;

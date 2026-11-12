@@ -17,7 +17,7 @@
 			/>
 			<div v-if="!editing" class="flex flex-col gap-1.5">
 				<span class="text-xs text-ink-gray-5">Start from</span>
-				<TabButtons v-model="start" :options="starts" class="[&>*]:w-full [&_button]:flex-1" />
+				<TabButtons v-model="start" :options="starts" class="[&>*]:w-full [&_button]:flex-1 [&_button]:justify-center" />
 			</div>
 			<button type="submit" class="hidden" />
 		</form>

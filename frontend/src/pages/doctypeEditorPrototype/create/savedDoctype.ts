@@ -48,7 +48,8 @@ export function typesKeepingValues(from: string) {
 
 const NO_COLUMN = new Set(["Table", "Table MultiSelect", "Button", "HTML", "Image", "Heading", "Fold"]);
 
-export function createSavedUi(editor: Editor, doctype: string, custom: boolean): SavedUi {
+/** A Single has no table of records to count (get_count on it is a 500), so it skips every count. */
+export function createSavedUi(editor: Editor, doctype: string, custom: boolean, single = false): SavedUi {
 	const loaded = new Set(editor.state.fields.map((one) => one.fieldname));
 	const ui: SavedUi = reactive({
 		doctype,
@@ -62,7 +63,7 @@ export function createSavedUi(editor: Editor, doctype: string, custom: boolean):
 			const fieldname = ui.original(name);
 			if (fieldname in ui.counts || !loaded.has(fieldname)) return;
 			ui.counts[fieldname] = undefined;
-			if (NO_COLUMN.has(ui.loadedType[fieldname])) return void (ui.counts[fieldname] = 0);
+			if (single || NO_COLUMN.has(ui.loadedType[fieldname])) return void (ui.counts[fieldname] = 0);
 			void runMethod<number>(
 				"frappe.client.get_count",
 				{ doctype, filters: JSON.stringify({ [fieldname]: ["is", "set"] }) },
@@ -87,7 +88,7 @@ export function createSavedUi(editor: Editor, doctype: string, custom: boolean):
 			);
 		},
 	});
-	void runMethod<number>("frappe.client.get_count", { doctype }, { http: "GET" }).then(({ data }) => (ui.records = data));
+	if (!single) void runMethod<number>("frappe.client.get_count", { doctype }, { http: "GET" }).then(({ data }) => (ui.records = data));
 	return ui;
 }
 
