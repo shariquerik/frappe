@@ -45,6 +45,8 @@ export interface Variant {
 	key: LayoutKey;
 	row: string;
 	condition: string;
+	/** #47098: its own name ("Passive contacts"); the crumb and the menu show it. */
+	title?: string;
 	/** PROTOTYPE: no conditional row exists on this site; this one is made up at load. */
 	fake?: boolean;
 }
@@ -152,7 +154,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	 * #47097: every layout `keys` names, read at once (the menu badges each), and their
 	 * conditional rows as variants. `fake` adds one made-up variant (none exist on this site).
 	 */
-	async function loadAll(meta: { fields: RawMetaField[] }, keys: LayoutKey[], fake?: { key: LayoutKey; condition: string }) {
+	async function loadAll(meta: { fields: RawMetaField[] }, keys: LayoutKey[], fake?: { key: LayoutKey; condition: string; title: string }) {
 		state.fields = meta.fields.map((field, idx) => ({ ...field, idx }));
 		const responses = await Promise.all(keys.map((key) => readLayouts(doctype, key)));
 		const defaults: Partial<Record<LayoutKey, string>> = {};
@@ -174,7 +176,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		});
 		if (fake && keys.includes(fake.key)) {
 			const id = layoutId(fake.key, "proto-1");
-			state.variants.push({ id, key: fake.key, row: "proto-1", condition: fake.condition, fake: true });
+			state.variants.push({ id, key: fake.key, row: "proto-1", condition: fake.condition, title: fake.title, fake: true });
 			install(id, copy(state.trees[fake.key]), state.source[fake.key] === "site" ? "site" : "app");
 		}
 		state.open = state.layout;
@@ -458,7 +460,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			return fieldname;
 		},
 		/** #47097: a conditional variant of a layout type, a copy of its default or empty; it opens. */
-		addVariant(key: LayoutKey, condition: string, start: "copy" | "empty") {
+		addVariant(key: LayoutKey, condition: string, start: "copy" | "empty", title?: string) {
 			const row = `new-${++counter}`;
 			const id = layoutId(key, row);
 			const tree = start === "copy" ? copy(state.trees[key] ?? []) : [{ name: newKey("tab"), sections: [newSection()] }];
@@ -466,8 +468,8 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			state.omitted[id] = [];
 			state.source[id] = state.mode === "customize" ? "site" : "app";
 			state.forked[id] = state.mode === "customize";
-			state.variants.push({ id, key, row, condition });
-			act("add_layout", { type: LAYOUTS.find((one) => one.key === key)!.type, condition, start });
+			state.variants.push({ id, key, row, condition, title });
+			act("add_layout", { type: LAYOUTS.find((one) => one.key === key)!.type, title, condition, start });
 			state.tabFor[state.open] = state.activeTab;
 			show(id);
 			state.selection = null;
@@ -478,6 +480,13 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			if (!variant || variant.condition === condition) return;
 			variant.condition = condition;
 			act("set_layout_condition", { layout: id, condition });
+		},
+		/** #47098: a conditional layout's own title. */
+		setTitle(id: string, title: string) {
+			const variant = state.variants.find((one) => one.id === id);
+			if (!variant || variant.title === title) return;
+			variant.title = title;
+			act("set_layout_title", { layout: id, title });
 		},
 		/** The variant goes; the canvas falls back to its type's default layout. */
 		deleteVariant(id: string) {
