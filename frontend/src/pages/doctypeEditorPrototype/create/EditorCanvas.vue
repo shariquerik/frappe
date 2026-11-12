@@ -2,8 +2,30 @@
      of frappe/crm#3419's EditorCanvas: sections 40px apart with the heading typed in place, columns
      as full-height drop zones, "Add field" under each section, "Add section" under a rule. -->
 <template>
+	<div v-if="editor.tree.value.length > 1" class="-ml-2 mb-10 flex items-center gap-1 border-b border-outline-gray-1">
+		<button
+			v-for="tab in editor.tree.value"
+			:key="tab.name"
+			type="button"
+			data-editor-select
+			:data-tab-key="tab.name"
+			class="relative -mb-px flex h-9 items-center rounded-t-4 px-2 text-base transition-colors"
+			:class="[
+				tab.name === shown?.name ? 'font-medium text-ink-gray-9' : 'text-ink-gray-5 hover:text-ink-gray-7',
+				editor.state.dropTab === tab.name && 'bg-surface-gray-2 text-ink-gray-9',
+				isTab(tab.name!) && 'bg-surface-gray-2',
+			]"
+			@click.stop="openTab(tab.name!)"
+		>
+			{{ tab.label || "Untitled tab" }}
+			<span v-if="tab.name === shown?.name" class="absolute inset-x-2 bottom-0 h-px bg-ink-gray-9" aria-hidden="true" />
+		</button>
+		<Tooltip text="Add tab">
+			<Button variant="ghost" size="sm" icon="lucide-plus" label="Add tab" class="ml-1" @click.stop="addTab" />
+		</Tooltip>
+	</div>
 	<Draggable
-		v-for="tab in editor.tree.value"
+		v-for="tab in shown ? [shown] : []"
 		:key="tab.name"
 		:model-value="tab.sections"
 		item-key="name"
@@ -76,34 +98,51 @@
 							</div>
 						</div>
 					</div>
-					<AddFieldPopover @add="addToSection(section, $event)" />
+					<AddFieldPopover :section-key="section.name" @add="addToSection(section, $event)" />
 				</div>
 			</div>
 		</template>
 	</Draggable>
 
-	<div class="mt-10 flex border-t border-outline-gray-1 pt-4">
+	<div class="mt-10 flex gap-2 border-t border-outline-gray-1 pt-4">
 		<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add section" @click.stop="addSection" />
+		<Button v-if="editor.tree.value.length < 2" variant="subtle" size="sm" icon-left="lucide-panel-top" label="Add tab" @click.stop="addTab" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { inject, nextTick } from "vue";
+import { computed, inject, nextTick } from "vue";
 // @ts-ignore, vuedraggable ships no bundled types
 import Draggable from "vuedraggable";
-import { Button } from "frappe-ui";
+import { Button, Tooltip } from "frappe-ui";
 import type { LayoutTreeSection } from "@framework/ui/FormLayout/types";
 import { EditorKey, onDrop } from "../context";
 import { nameOf } from "../editor";
 import AddFieldPopover from "./AddFieldPopover.vue";
 import EditorField from "./EditorField.vue";
+import { DraftUiKey } from "./draftUi";
 
 defineEmits<{ "drag-start": [event: any]; "drag-end": [event: any] }>();
 const editor = inject(EditorKey)!;
+const ui = inject(DraftUiKey)!;
 
 const isField = (fieldname: string) => editor.state.selection?.kind === "field" && editor.state.selection.fieldname === fieldname;
 const isSection = (key: string) => editor.state.selection?.kind === "section" && editor.state.selection.key === key;
 const selectSection = (key: string) => (editor.state.selection = { kind: "section", key });
+const isTab = (key: string) => editor.state.selection?.kind === "tab" && editor.state.selection.key === key;
+
+// Only the tab in view is drawn. A click on another tab opens it; a click on the open one selects it.
+const shown = computed(() => editor.tree.value.find((tab) => tab.name === editor.state.activeTab) ?? editor.tree.value[0]);
+function openTab(key: string) {
+	if (shown.value?.name === key) return void (editor.state.selection = { kind: "tab", key });
+	editor.state.activeTab = key;
+	editor.state.selection = null;
+}
+
+function addTab() {
+	const key = editor.acts.addTab();
+	ui.focusTabLabel(key);
+}
 
 /** A field enters after the selected one in this section, else at the end of its shortest column. */
 function addToSection(section: LayoutTreeSection, field: { label: string; fieldtype: string; options?: string }) {
@@ -117,7 +156,7 @@ function addToSection(section: LayoutTreeSection, field: { label: string; fieldt
 
 async function addSection() {
 	editor.acts.addSection();
-	const sections = editor.tree.value[0].sections;
+	const sections = shown.value!.sections;
 	const key = sections[sections.length - 1].name!;
 	await nextTick();
 	(document.querySelector(`[data-heading="${key}"]`) as HTMLInputElement | null)?.focus();

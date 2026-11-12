@@ -1,6 +1,6 @@
 // PROTOTYPE (#45867) screenshot runner: node run.mjs <steps.json> <outdir>
 // Steps run in one page (state is in memory). Each step: {go}, {click}, {clicktext}, {fill:[sel,text]},
-// {type}, {press}, {wait}, {waitfor}, {eval}, {mdrag:[from,to]}, {shot:name}, {hover}.
+// {type}, {press}, {wait}, {waitfor}, {eval}, {mdrag:[from,to]}, {shot:name}, {hover}, {resize:[w,h]}.
 import { chromium } from "/home/shariq/wt/ui-test/runner/node_modules/playwright/index.mjs";
 import fs from "node:fs";
 const [, , stepsFile, outdir] = process.argv;
@@ -25,6 +25,7 @@ for (const s of steps) {
 		if (s.select) await page.locator(s.select[0]).first().selectOption(s.select[1]);
 		if (s.type) await page.keyboard.type(s.type, { delay: 30 });
 		if (s.press) await page.keyboard.press(s.press);
+		if (s.resize) await page.setViewportSize({ width: s.resize[0], height: s.resize[1] });
 		if (s.hover) await page.locator(s.hover).first().hover();
 		if (s.waitfor) await page.getByText(s.waitfor).first().waitFor({ timeout: 20000 });
 		if (s.wait) await page.waitForTimeout(s.wait);

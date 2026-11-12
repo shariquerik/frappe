@@ -3,7 +3,7 @@
 // page for Details, the Create dialog for Quick Entry, the record page for its row and its
 // panel). Nothing here saves. Every edit runs through `act`, which logs it as `page.run` would.
 
-import { reactive, computed } from "vue";
+import { reactive, computed, toRaw } from "vue";
 import { runMethod } from "@framework/ui/api";
 import { DROPPED_FIELDTYPES } from "@framework/ui/FormLayout";
 import { joinLayout } from "@/recordPage/formLayoutSource/joinLayout";
@@ -35,6 +35,15 @@ export const LAYOUTS: { key: LayoutKey; type: string; label: string }[] = [
 export const MORE_FIELDS = "__more_fields__";
 
 let counter = 0;
+let version = 0;
+
+interface Snapshot {
+	fields: EditorField[];
+	trees: Record<LayoutKey, LayoutTree>;
+	omitted: Record<LayoutKey, string[]>;
+	acted: number;
+	activeTab: string | null;
+}
 const newKey = (kind: string) => `${kind}-new-${++counter}`;
 
 export interface LoadOptions {
@@ -60,9 +69,17 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		forked: {} as Record<LayoutKey, boolean>,
 		selection: null as Selection,
 		log: [] as { act: string; args: string; note?: string }[],
-		// Every act counts here; the log above keeps only the last 30.
+		// The edit version: every act sets a new one, and undo/redo restore the one they return to,
+		// so a page can tell "unsaved" by comparing with the version it saved at.
 		acted: 0,
+		// The tab the canvas shows; new sections go into it.
+		activeTab: null as string | null,
+		// Undo and redo: snapshots of the fields and layouts (#45867 round 2026-11-12).
+		past: [] as Snapshot[],
+		future: [] as Snapshot[],
 		dragging: null as null | "field" | "column" | "section",
+		// The tab header a dragged field is over: dropping there moves it to that tab.
+		dropTab: null as string | null,
 	});
 
 	async function load(meta: { fields: RawMetaField[] }, options: LoadOptions = {}) {
@@ -103,6 +120,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		state.omitted.details = [];
 		state.source.details = "row";
 		state.forked.details = false;
+		state.activeTab = state.trees.details[0]?.name ?? null;
 		state.loading = false;
 	}
 
@@ -175,7 +193,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	}
 
 	function act(name: string, args: Record<string, unknown>, note?: string) {
-		state.acted++;
+		state.acted = ++version;
 		state.log.unshift({ act: name, args: JSON.stringify(args), note });
 		if (state.log.length > 30) state.log.pop();
 	}
@@ -238,17 +256,46 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			state.trees[state.layout].push(tab);
 			act("add_tab", { label: tab.label });
 			touchContainer();
+			state.activeTab = tab.name!;
 			state.selection = { kind: "tab", key: tab.name! };
 			return tab.name!;
 		},
 		addSection(tabKey?: string) {
 			ensureTab();
-			const tab = (tabKey ? find(tabKey)?.node : tree.value[0]) as LayoutTreeTab;
+			const tab = (find(tabKey ?? state.activeTab ?? "")?.node ?? tree.value[0]) as LayoutTreeTab;
 			const section = newSection();
 			tab.sections.push(section);
 			act("add_section", { tab: tab.name });
 			touchContainer();
 			state.selection = { kind: "section", key: section.name! };
+		},
+		/** A removed tab hands its sections to the tab before it (after, for the first). */
+		removeTab(key: string) {
+			const list = tree.value;
+			const index = list.findIndex((tab) => tab.name === key);
+			if (index < 0 || list.length < 2) return;
+			const [tab] = list.splice(index, 1);
+			const into = list[index - 1] ?? list[0];
+			into.sections.push(...tab.sections);
+			if (list.length === 1) into.label = "";
+			act("remove_tab", { tab: key }, "its sections move to the tab before");
+			touchContainer();
+			state.activeTab = into.name!;
+			state.selection = null;
+		},
+		/** A field dropped on a tab's header goes to the end of that tab's first section. */
+		moveFieldToTab(fieldname: string, tabKey: string) {
+			const tab = find(tabKey)?.node as LayoutTreeTab;
+			if (!tab) return;
+			if (!tab.sections.length) tab.sections.push(newSection());
+			const first = tab.sections[0];
+			const column = first.columns[first.columns.length - 1];
+			const from = columnOf(fieldname);
+			if (from === column) return;
+			if (from) from.fields = from.fields.filter((entry) => nameOf(entry) !== fieldname);
+			column.fields.push(fieldname);
+			act("move_field", { fieldname, column: column.name, index: column.fields.length - 1 }, `to the tab ${tab.label}`);
+			placeOnly();
 		},
 		addColumn(sectionKey: string) {
 			const section = find(sectionKey)?.node as LayoutTreeSection;
@@ -325,6 +372,72 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		},
 	};
 
+	// Each act is one undo step. Typing into one input (the same act on the same target within a
+	// second) folds into the step it started.
+	let lastStep = { key: "", at: 0 };
+	let grouping = false;
+	const snapshot = (): Snapshot => ({
+		fields: structuredClone(toRaw(state.fields)),
+		trees: structuredClone(toRaw(state.trees)),
+		omitted: structuredClone(toRaw(state.omitted)),
+		acted: state.acted,
+		activeTab: state.activeTab,
+	});
+	function restore(one: Snapshot) {
+		state.fields = one.fields;
+		state.trees = one.trees;
+		state.omitted = one.omitted;
+		state.acted = one.acted;
+		if (one.activeTab && tree.value.some((tab) => tab.name === one.activeTab)) state.activeTab = one.activeTab;
+		const selected = state.selection;
+		if (selected?.kind === "field" && !field(selected.fieldname)) state.selection = null;
+		if (selected && selected.kind !== "field" && !find(selected.key)) state.selection = null;
+	}
+	for (const [name, run] of Object.entries(acts) as [string, (...args: any[]) => any][]) {
+		(acts as any)[name] = (...args: any[]) => {
+			const before = snapshot();
+			const result = run(...args);
+			if (grouping || state.acted === before.acted) return result;
+			const key = `${name}:${String(args[0])}:${String(args[1])}`;
+			const folds = ["setContainer", "setField"].includes(name) && key === lastStep.key && Date.now() - lastStep.at < 1000;
+			if (!folds) state.past.push(before);
+			if (state.past.length > 50) state.past.shift();
+			state.future = [];
+			lastStep = { key, at: Date.now() };
+			return result;
+		};
+	}
+	const history = {
+		/** Runs several acts (and the page's own tree edits around them) as one undo step. */
+		group(run: () => void) {
+			const before = snapshot();
+			grouping = true;
+			try {
+				run();
+			} finally {
+				grouping = false;
+			}
+			if (state.acted === before.acted) return;
+			state.past.push(before);
+			state.future = [];
+			lastStep = { key: "", at: 0 };
+		},
+		undo() {
+			const one = state.past.pop();
+			if (!one) return;
+			state.future.push(snapshot());
+			restore(one);
+			lastStep = { key: "", at: 0 };
+		},
+		redo() {
+			const one = state.future.pop();
+			if (!one) return;
+			state.past.push(snapshot());
+			restore(one);
+			lastStep = { key: "", at: 0 };
+		},
+	};
+
 	function ensureTab() {
 		if (!state.trees[state.layout].length)
 			state.trees[state.layout].push({ name: newKey("tab"), sections: [] });
@@ -350,7 +463,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 
 	return {
 		state, tree, schema, edits: computed(() => state.log.length), placed, omitted, unplaced, autoFields, hasMoreFields, dataFields,
-		load, loadDraft, find, field, columnOf, acts, can,
+		load, loadDraft, find, field, columnOf, acts, can, history,
 	};
 }
 

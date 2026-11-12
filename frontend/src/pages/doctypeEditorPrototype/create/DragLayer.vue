@@ -27,17 +27,23 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, reactive, ref } from "vue";
+import { inject, onBeforeUnmount, reactive, ref } from "vue";
+import { EditorKey } from "../context";
 
 const card = ref<{ icon: string; label: string } | null>(null);
 const withBin = ref(false);
 const overBin = ref(false);
 const pos = reactive({ x: 0, y: 0 });
 const bin = ref<HTMLElement>();
+const editor = inject(EditorKey)!;
 
 function track(event: PointerEvent) {
 	pos.x = event.clientX;
 	pos.y = event.clientY;
+	if (card.value) {
+		const under = document.elementFromPoint(pos.x, pos.y) as HTMLElement | null;
+		editor.state.dropTab = under?.closest<HTMLElement>("[data-tab-key]")?.dataset.tabKey ?? null;
+	}
 	if (!withBin.value || !bin.value) return;
 	const box = bin.value.getBoundingClientRect();
 	overBin.value =
@@ -60,6 +66,7 @@ function start(next: { icon: string; label: string }, withRemoveBin: boolean) {
 function end() {
 	const wasOverBin = withBin.value && overBin.value;
 	card.value = null;
+	editor.state.dropTab = null;
 	withBin.value = false;
 	overBin.value = false;
 	return wasOverBin;

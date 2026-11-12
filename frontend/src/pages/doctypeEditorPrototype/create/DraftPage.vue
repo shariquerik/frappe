@@ -18,6 +18,14 @@
 						<Breadcrumbs :items="crumbs" class="-ml-0.5 min-w-0" />
 						<Badge v-if="current && unsavedNow" label="Not saved" theme="amber" />
 					</div>
+					<div v-if="current && tab === 'editor'" class="flex shrink-0 items-center">
+						<Tooltip text="Undo (Ctrl+Z)">
+							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!editor.state.past.length" @click="editor.history.undo()" />
+						</Tooltip>
+						<Tooltip text="Redo (Ctrl+Shift+Z)">
+							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!editor.state.future.length" @click="editor.history.redo()" />
+						</Tooltip>
+					</div>
 					<Tooltip v-if="current" text="No changes to save" :disabled="unsavedNow">
 						<div class="flex shrink-0">
 							<Button variant="solid" label="Save" :disabled="!unsavedNow" @click="save" />
@@ -42,7 +50,10 @@
 		</div>
 
 		<template v-else>
-			<EditorTab v-if="tab === 'editor'" :name="current.name" :meta="meta">
+			<div v-if="tab === 'editor'" class="flex flex-1 items-center justify-center border-t border-outline-gray-1 px-6 text-center text-base text-ink-gray-6 lg:hidden">
+				The editor needs a wider window, 1024px or more.
+			</div>
+			<EditorTab v-if="tab === 'editor'" class="hidden lg:flex" :name="current.name" :meta="meta">
 				<template #banner>
 					<div v-if="saved && tryIt" class="mb-8 flex items-center gap-3 rounded-4 bg-surface-gray-2 py-2 pl-3 pr-2">
 						<span class="lucide-circle-check size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
@@ -121,6 +132,10 @@ provide(DraftUiKey, {
 	focusLabel(fieldname: string) {
 		editor.state.selection = { kind: "field", fieldname };
 		labelFocus.value = fieldname;
+	},
+	focusTabLabel(key: string) {
+		editor.state.selection = { kind: "tab", key };
+		labelFocus.value = key;
 	},
 });
 const meta = computed(() => {

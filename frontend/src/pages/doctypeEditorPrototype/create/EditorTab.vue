@@ -40,6 +40,7 @@
 				@remove="removeSection(selectedSection)"
 				@close="clear"
 			/>
+			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
 			<PanelAddField v-else @add="addTyped" @drag-start="startPalette" @drag-end="endPalette" />
 		</aside>
 	</div>
@@ -47,13 +48,14 @@
 
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref } from "vue";
-import type { LayoutTreeSection } from "@framework/ui/FormLayout/types";
+import type { LayoutTreeSection, LayoutTreeTab } from "@framework/ui/FormLayout/types";
 import { EditorKey, onDrop } from "../context";
 import DragLayer from "./DragLayer.vue";
 import EditorCanvas from "./EditorCanvas.vue";
 import PanelAddField from "./PanelAddField.vue";
 import PanelFieldSettings from "./PanelFieldSettings.vue";
 import PanelSectionSettings from "./PanelSectionSettings.vue";
+import PanelTabSettings from "./PanelTabSettings.vue";
 import { DraftUiKey } from "./draftUi";
 import { typeLabel } from "./newDoctype";
 import { typeIcon, type FieldType } from "./typeMenu";
@@ -67,6 +69,10 @@ const selectedSection = computed(() => {
 	const selected = editor.state.selection;
 	return selected?.kind === "section" ? (editor.find(selected.key)?.node as LayoutTreeSection | undefined) : undefined;
 });
+const selectedTab = computed(() => {
+	const selected = editor.state.selection;
+	return selected?.kind === "tab" ? (editor.find(selected.key)?.node as LayoutTreeTab | undefined) : undefined;
+});
 const clear = () => (editor.state.selection = null);
 const sections = () => editor.tree.value.flatMap((tab) => tab.sections);
 
@@ -75,31 +81,38 @@ function removeField(fieldname: string) {
 	editor.acts.deleteField(fieldname);
 }
 
+const activeTab = computed(() => editor.tree.value.find((tab) => tab.name === editor.state.activeTab) ?? editor.tree.value[0]);
+const tabSections = () => activeTab.value?.sections ?? [];
+
 /** A removed section hands its fields to the section before it (after, for the first). */
 function removeSection(section: LayoutTreeSection) {
-	const all = sections();
+	const all = tabSections();
 	if (all.length < 2) return;
 	const index = all.indexOf(section);
 	const into = all[index - 1] ?? all[index + 1];
-	into.columns[into.columns.length - 1].fields.push(...section.columns.flatMap((column) => column.fields));
-	editor.acts.removeContainer(section.name!);
+	editor.history.group(() => {
+		into.columns[into.columns.length - 1].fields.push(...section.columns.flatMap((column) => column.fields));
+		editor.acts.removeContainer(section.name!);
+	});
 }
 
 /** Fewer columns fold the removed ones' fields into the last one kept. */
 function setColumns(section: LayoutTreeSection, count: number) {
 	const key = section.name!;
-	while (section.columns.length < count) editor.acts.addColumn(key);
-	while (section.columns.length > count) {
-		const last = section.columns[section.columns.length - 1];
-		section.columns[section.columns.length - 2].fields.push(...last.fields);
-		editor.acts.removeContainer(last.name!);
-	}
+	editor.history.group(() => {
+		while (section.columns.length < count) editor.acts.addColumn(key);
+		while (section.columns.length > count) {
+			const last = section.columns[section.columns.length - 1];
+			section.columns[section.columns.length - 2].fields.push(...last.fields);
+			editor.acts.removeContainer(last.name!);
+		}
+	});
 	editor.state.selection = { kind: "section", key };
 }
 
-/** A click on a type in the panel adds a field of that type at the form's end, label first. */
+/** A click on a type in the panel adds a field of that type at the end of the tab in view, label first. */
 function addTyped(type: FieldType, column?: string, index?: number) {
-	const all = sections();
+	const all = tabSections();
 	const last = all[all.length - 1];
 	const target = column ?? last.columns[last.columns.length - 1].name!;
 	const label = typeLabel(type.fieldtype, type.options);
@@ -121,12 +134,14 @@ function startField(event: any) {
 }
 
 function endField(event: any) {
+	const tab = editor.state.dropTab;
 	const overBin = layer.value?.end();
 	const cancelled = dragged?.cancelled;
 	dragged = null;
 	editor.state.dragging = null;
 	if (cancelled) return;
 	if (overBin) return removeField(event.item.dataset.fieldname);
+	if (tab) return dropOnTab(event.item.dataset.fieldname, tab);
 	onDrop(editor, event);
 }
 
@@ -141,13 +156,28 @@ function startPalette(event: any) {
 }
 
 function endPalette(event: any) {
+	const tab = editor.state.dropTab;
 	layer.value?.end();
 	const one = dragged;
 	dragged = null;
 	editor.state.dragging = null;
+	if (one && !one.cancelled && tab) return void addTyped(one.type!, firstColumnOf(tab));
 	const column = event.to?.dataset?.columnKey;
 	if (!one || one.cancelled || !column || event.to === event.from) return;
 	addTyped(one.type!, column, event.newIndex);
+}
+
+/** A field dropped on a tab's header moves to the end of that tab's first section, and the tab opens. */
+function dropOnTab(fieldname: string, tab: string) {
+	editor.acts.moveFieldToTab(fieldname, tab);
+	editor.state.activeTab = tab;
+	editor.state.selection = { kind: "field", fieldname };
+}
+
+function firstColumnOf(tabKey: string) {
+	editor.state.activeTab = tabKey;
+	const section = tabSections()[0];
+	return section.columns[section.columns.length - 1].name!;
 }
 
 // Sortable ends its drag on the document's pointer/mouse up.
@@ -170,6 +200,22 @@ function onKeydown(event: KeyboardEvent) {
 	if (event.key === "Escape" && dragged) return cancelDrag(event);
 	if (document.querySelector(OPEN_OVERLAY)) return;
 	if (event.key === "Escape") return clear();
+	const typing = (event.target as HTMLElement).closest?.(TYPING);
+	// Ctrl+Z / Ctrl+Shift+Z (or Ctrl+Y) undo and redo the editor's acts; in a text box they stay the box's.
+	const mod = event.ctrlKey || event.metaKey;
+	if (mod && !typing && event.key.toLowerCase() === "z") {
+		event.preventDefault();
+		return event.shiftKey ? editor.history.redo() : editor.history.undo();
+	}
+	if (mod && !typing && event.key.toLowerCase() === "y") {
+		event.preventDefault();
+		return editor.history.redo();
+	}
+	// A or / opens "Add field" in the selected section (the selected field's), else the tab's last.
+	if (!mod && !event.altKey && !typing && (event.key === "a" || event.key === "/")) {
+		event.preventDefault();
+		return openAddField();
+	}
 	if (!["Delete", "Backspace"].includes(event.key) || !selectedField.value) return;
 	if ((event.target as HTMLElement).closest?.(TYPING)) return;
 	event.preventDefault();
@@ -177,6 +223,18 @@ function onKeydown(event: KeyboardEvent) {
 }
 onMounted(() => window.addEventListener("keydown", onKeydown));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
+
+function openAddField() {
+	const selected = editor.state.selection;
+	const all = tabSections();
+	let section = all[all.length - 1];
+	if (selected?.kind === "section") section = (editor.find(selected.key)?.node as LayoutTreeSection) ?? section;
+	if (selected?.kind === "field") {
+		const column = editor.columnOf(selected.fieldname);
+		section = all.find((one) => one.columns.includes(column!)) ?? section;
+	}
+	document.querySelector<HTMLElement>(`[data-editor-add-field="${section?.name}"] button`)?.click();
+}
 
 const description = ref<HTMLTextAreaElement>();
 function grow() {

@@ -31,6 +31,15 @@
 				</button>
 			</Dropdown>
 		</PanelRow>
+		<PanelRow v-if="tabMenu.length > 1" label="Tab">
+			<Dropdown :options="tabMenu" side="bottom" align="start">
+				<button type="button" class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8">
+					<span class="lucide-panel-top size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+					<span class="min-w-0 flex-1 truncate">{{ tabOfField?.label || "Untitled tab" }}</span>
+					<span class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+				</button>
+			</Dropdown>
+		</PanelRow>
 		<PanelRow v-if="LINKS_TO.has(field.fieldtype)" :label="field.fieldtype === 'Link' ? 'Links to' : 'Child table'">
 			<Combobox
 				variant="ghost"
@@ -149,6 +158,21 @@ const value = (key: string) => (props.field as Record<string, any>)[key];
 const set = (key: string, next: unknown) => editor.acts.setField(props.field.fieldname, key, next);
 const isTitle = computed(() => ui.titleField.value === props.field.fieldname);
 const menu = computed(() => typeMenu((type: FieldType) => (set("fieldtype", type.fieldtype), set("options", type.options))));
+
+// With more than one tab, the field can move to another one here as well as by a drag.
+const tabOfField = computed(() => {
+	const column = editor.columnOf(props.field.fieldname);
+	return editor.tree.value.find((tab) => tab.sections.some((section) => section.columns.includes(column!)));
+});
+const tabMenu = computed(() =>
+	editor.tree.value.map((tab) => ({
+		label: tab.label || "Untitled tab",
+		onClick: () => {
+			editor.acts.moveFieldToTab(props.field.fieldname, tab.name!);
+			editor.state.activeTab = tab.name!;
+		},
+	}))
+);
 
 const GROUPS: { label: string; props: Prop[] }[] = [
 	{

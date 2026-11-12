@@ -4,8 +4,10 @@
 <template>
 	<Popover v-model:open="open" side="bottom" align="start" :auto-focus="false">
 		<template #trigger="{ open: isOpen }">
-			<div ref="triggerEl" class="flex w-fit scroll-mt-[20vh]" data-editor-add-field @click.stop>
-				<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add field" :class="{ '!bg-surface-gray-3': isOpen }" />
+			<div ref="triggerEl" class="flex w-fit scroll-mt-[20vh]" :data-editor-add-field="sectionKey" @click.stop>
+				<Tooltip text="Add a field to this section (A)">
+					<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add field" :class="{ '!bg-surface-gray-3': isOpen }" />
+				</Tooltip>
 			</div>
 		</template>
 		<form ref="formEl" class="flex w-[320px] flex-col gap-2 p-2" @submit.prevent="add" @click.stop>
@@ -27,11 +29,12 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from "vue";
-import { Button, Dropdown, Popover, Textarea, TextInput } from "frappe-ui";
+import { Button, Dropdown, Popover, Textarea, TextInput, Tooltip } from "frappe-ui";
 import type { Addresses } from "@/addresses";
 import { guessType, typeLabel } from "./newDoctype";
 import { typeIcon, typeMenu, type FieldType } from "./typeMenu";
 
+defineProps<{ sectionKey?: string }>();
 const emit = defineEmits<{ add: [field: { label: string; fieldtype: string; options?: string }] }>();
 const doctypes = inject<Addresses>("addresses")!.doctypeNames();
 
@@ -76,10 +79,12 @@ watch(open, async (now) => {
 	setTimeout(focusLabel, 30);
 });
 
-// Near the window's bottom the popover and its type menu would flip above the button.
+// Near the window's bottom the popover and its type menu would flip above the button: the
+// popover (about 130px) and the chip's type menu (about 420px) both need room below it.
+const ROOM_BELOW = 620;
 const triggerEl = ref<HTMLElement>();
 function keepRoomBelow() {
 	const top = triggerEl.value?.getBoundingClientRect().top ?? 0;
-	if (top > window.innerHeight / 2) triggerEl.value?.scrollIntoView({ block: "start" });
+	if (top + ROOM_BELOW > window.innerHeight) triggerEl.value?.scrollIntoView({ block: "start" });
 }
 </script>

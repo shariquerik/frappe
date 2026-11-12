@@ -14,6 +14,8 @@ export interface DraftUi {
 	focusLabel: (fieldname: string) => void;
 	/** The panel's Label input asks for focus by this; it clears it once taken. */
 	labelFocus: Ref<string | null>;
+	/** Selects the tab and puts the caret in the panel's tab Label. */
+	focusTabLabel: (key: string) => void;
 }
 
 export const DraftUiKey: InjectionKey<DraftUi> = Symbol("DraftUi");
