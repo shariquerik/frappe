@@ -1,19 +1,19 @@
-// PROTOTYPE (#45867): the draft page's editing state, handed to the structure view's parts.
+// PROTOTYPE (#45867): the draft page's editing state, handed to the canvas and the panel.
 import type { InjectionKey, Ref } from "vue";
 import type { Kind } from "./newDoctype";
 
 export interface DraftUi {
 	kind: Kind;
-	/** The field whose row is expanded; one at a time. */
-	expanded: Ref<string | null>;
-	/** The field shown in the All properties panel. */
-	panel: Ref<string | null>;
-	/** The column with an open new-field row. */
-	adding: Ref<string | null>;
 	titleField: Ref<string>;
+	/** The DocType's description, typed on the canvas under its name. */
+	description: Ref<string>;
 	/** Before the first save a fieldname follows its label; nothing refers to it yet. */
 	draft: Ref<boolean>;
 	rename: (from: string, to: string) => void;
+	/** Selects the field and puts the caret in the panel's Label. */
+	focusLabel: (fieldname: string) => void;
+	/** The panel's Label input asks for focus by this; it clears it once taken. */
+	labelFocus: Ref<string | null>;
 }
 
 export const DraftUiKey: InjectionKey<DraftUi> = Symbol("DraftUi");

@@ -8,7 +8,7 @@ const steps = JSON.parse(fs.readFileSync(stepsFile, "utf8"));
 const sid = fs.readFileSync("/tmp/proto-45867/sid", "utf8").trim();
 fs.mkdirSync(outdir, { recursive: true });
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
+const ctx = await browser.newContext({ viewport: { width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900) }, deviceScaleFactor: 2 });
 await ctx.addCookies([{ name: "sid", value: sid, domain: "desk.localhost", path: "/" }]);
 const page = await ctx.newPage();
 page.on("console", (m) => m.type() === "error" && console.log("console:", m.text().slice(0, 300)));
@@ -38,6 +38,21 @@ for (const s of steps) {
 			await page.waitForTimeout(200);
 			await page.mouse.up();
 		}
+		// A held drag, to shoot it mid-way: {mdown: sel}, then {mmove: sel, dy?, dx?}, then {mup: true}.
+		if (s.mdown) {
+			const a = await page.locator(s.mdown).first().boundingBox();
+			globalThis.at = { x: a.x + (s.dx ?? a.width / 2), y: a.y + a.height / 2 };
+			await page.mouse.move(at.x, at.y);
+			await page.mouse.down();
+		}
+		if (s.mmove) {
+			const b = await page.locator(s.mmove).first().boundingBox();
+			const to = { x: b.x + (s.dx ?? b.width / 2), y: b.y + b.height / 2 + (s.dy ?? 0) };
+			for (let i = 1; i <= 20; i++) await page.mouse.move(at.x + (to.x - at.x) * i / 20, at.y + (to.y - at.y) * i / 20);
+			globalThis.at = to;
+			await page.waitForTimeout(250);
+		}
+		if (s.mup) { await page.mouse.up(); await page.waitForTimeout(300); }
 		if (s.shot) { await page.waitForTimeout(400); await page.screenshot({ path: `${outdir}/${s.shot}.png` }); console.log("shot", s.shot, page.url()); }
 	} catch (e) { console.log("step failed", JSON.stringify(s), e.message.split("\n")[0]); }
 }

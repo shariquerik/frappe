@@ -1,9 +1,10 @@
 <!--
   PROTOTYPE (#45867), throwaway: steps 2 to 5 of the new-DocType flow (comment 6767773108), in
-  the look of CRM's Forms builder. The draft at /<prefix>/doctype/new starts with one "Title"
-  field set as the title field. Editor shows the structure: sections, columns and field rows that
-  expand to the common properties, with "All properties" in a side panel. "Add field" asks for a
-  label and guesses the type. Settings shows the defaults; Preview draws the record page.
+  the look of CRM's desk v2 Forms editor (frappe/crm#3419; rulings frappe/frappe#47023 round 3
+  variant g, and #47029). The draft at /<prefix>/doctype/new starts with one "Title" field set as
+  the title field. Editor is the form itself, one size up, with a 380px panel: the selected
+  field's or section's settings, else "Add a field" (field types). A section's "Add field" asks
+  for a label and guesses the type. Settings shows the defaults; Preview draws the record page.
   Save pretends to create the DocType: a toast, the address becomes /doctype/<name>, and "Try it"
   offers the record and the list. Nothing reaches the server, and leaving an unsaved draft leaves
   nothing behind.
@@ -40,45 +41,37 @@
 			<Button variant="solid" icon-left="lucide-plus" label="New DocType" @click="openNewDoctype" />
 		</div>
 
-		<div v-else class="flex min-h-0 flex-1">
-			<main class="min-w-0 flex-1 overflow-y-auto">
-				<div class="flex flex-col gap-4 px-3 pb-24 pt-5 sm:px-5">
-					<div v-if="saved && tryIt" class="flex items-center gap-3 rounded-4 bg-surface-gray-2 py-2 pl-3 pr-2">
+		<template v-else>
+			<EditorTab v-if="tab === 'editor'" :name="current.name" :meta="meta">
+				<template #banner>
+					<div v-if="saved && tryIt" class="mb-8 flex items-center gap-3 rounded-4 bg-surface-gray-2 py-2 pl-3 pr-2">
 						<span class="lucide-circle-check size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
 						<p class="min-w-0 flex-1 text-base text-ink-gray-8">
-							<template v-if="current.kind === 'child'">{{ current.name }} is ready. Add it to a parent DocType as a Table field.</template>
+							<template v-if="current.kind === 'child'">Ready. Add it to a parent DocType as a Table field.</template>
 							<template v-else>{{ current.name }} is ready. Try it.</template>
 						</p>
 						<template v-if="current.kind !== 'child'">
-							<Button v-if="current.kind !== 'single'" variant="outline" icon-left="lucide-plus" label="New record" @click="explain('new')" />
-							<Button variant="outline" :label="current.kind === 'single' ? 'Open' : 'Open list'" @click="explain('open')" />
+							<Button v-if="current.kind !== 'single'" size="sm" variant="outline" icon-left="lucide-plus" label="New record" @click="explain('new')" />
+							<Button size="sm" variant="outline" :label="current.kind === 'single' ? 'Open' : 'Open list'" @click="explain('open')" />
 						</template>
-						<Button variant="ghost" icon="lucide-x" label="Dismiss" @click="tryIt = false" />
+						<Button size="sm" variant="ghost" icon="lucide-x" label="Dismiss" @click="tryIt = false" />
 					</div>
-
-					<template v-if="tab === 'editor'">
-						<p class="flex items-center gap-1.5 px-1 text-sm text-ink-gray-5">
-							<span class="lucide-box size-3.5" aria-hidden="true" />
-							{{ current.module }}
-							<span aria-hidden="true">·</span>
-							{{ kindLabel }}
-							<template v-if="current.kind === 'child'"><span aria-hidden="true">·</span> this form is the row's dialog</template>
-						</p>
-						<StructureCanvas />
-					</template>
-					<DraftSettings v-else-if="tab === 'settings'" :name="current.name" :kind="current.kind" :title="titleLabel" class="pt-1" />
+				</template>
+			</EditorTab>
+			<main v-else class="min-w-0 flex-1 overflow-y-auto">
+				<div class="px-3 pb-24 pt-6 sm:px-5">
+					<DraftSettings v-if="tab === 'settings'" :name="current.name" :kind="current.kind" :title="titleLabel" />
 					<FormPreview v-else :schema="editor.schema.value" />
 				</div>
 			</main>
-			<AllProperties v-if="tab === 'editor' && panelField" :key="panelField.fieldname" :field="panelField" />
-		</div>
+		</template>
 
 		<Dialog v-model="explained" :title="explainTitle" :message="explainMessage" />
 	</PageFrame>
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref, watch } from "vue";
+import { computed, provide, ref } from "vue";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import { Badge, Breadcrumbs, Button, Dialog, TabList, Tabs, TabTrigger, Tooltip, toast } from "frappe-ui";
 import PageFrame from "@/shell/PageFrame.vue";
@@ -86,10 +79,9 @@ import { shellDialog } from "@/shell/dialog";
 import { useUnloadGuard } from "@/pages/record/recordSave";
 import { EditorKey } from "../context";
 import { createEditor, nameOf } from "../editor";
-import AllProperties from "./AllProperties.vue";
 import DraftSettings from "./DraftSettings.vue";
+import EditorTab from "./EditorTab.vue";
 import FormPreview from "./FormPreview.vue";
-import StructureCanvas from "./StructureCanvas.vue";
 import { DraftUiKey } from "./draftUi";
 import { created, draft, KINDS, openNewDoctype, rememberModule, slugOf, type Draft } from "./newDoctype";
 
@@ -113,27 +105,30 @@ editor.loadDraft(
 	[{ fieldname: "title", fieldtype: "Data", label: "Title", added: true } as any],
 	[{ name: "tab-details", sections: [{ name: "section-main", label: "Details", columns: [{ name: "column-main", fields: ["title"] }] }] }]
 );
-// The structure view has no selection; a field opens by its row instead.
-watch(
-	() => editor.state.selection,
-	(selection) => selection && (editor.state.selection = null)
-);
+editor.state.selection = null;
 
-const expanded = ref<string | null>(null);
-const panel = ref<string | null>(null);
-const adding = ref<string | null>(null);
 const titleField = ref("title");
+const description = ref("");
+const labelFocus = ref<string | null>(null);
 const saved = ref(false);
 provide(DraftUiKey, {
 	kind: current.value?.kind ?? "regular",
-	expanded,
-	panel,
-	adding,
 	titleField,
+	description,
 	draft: computed(() => !saved.value),
 	rename,
+	labelFocus,
+	focusLabel(fieldname: string) {
+		editor.state.selection = { kind: "field", fieldname };
+		labelFocus.value = fieldname;
+	},
 });
-const panelField = computed(() => (panel.value ? editor.field(panel.value) : undefined));
+const meta = computed(() => {
+	const one = current.value;
+	if (!one) return "";
+	if (one.kind === "child") return `${one.module} · Child table. This form is the row's dialog.`;
+	return `${one.module} · ${kindLabel.value}`;
+});
 const titleLabel = computed(() => editor.field(titleField.value)?.label ?? "");
 
 /** Before the first save a field's name follows its label; nothing refers to it yet. */
@@ -145,13 +140,18 @@ function rename(from: string, to: string) {
 	editor.field(from)!.fieldname = fieldname;
 	const column = editor.columnOf(from);
 	if (column) column.fields = column.fields.map((entry) => (nameOf(entry) === from ? fieldname : entry));
-	for (const one of [titleField, expanded, panel]) if (one.value === from) one.value = fieldname;
+	if (titleField.value === from) titleField.value = fieldname;
+	const selected = editor.state.selection;
+	if (selected?.kind === "field" && selected.fieldname === from) editor.state.selection = { kind: "field", fieldname };
 }
 
 // Saved state: the edit count and title field at the last save, to tell what is unsaved.
 const savedAt = ref({ edits: 0, title: "" });
 const tryIt = ref(false);
-const dirty = computed(() => editor.state.acted !== savedAt.value.edits || titleField.value !== savedAt.value.title);
+const savedDescription = ref("");
+const dirty = computed(
+	() => editor.state.acted !== savedAt.value.edits || titleField.value !== savedAt.value.title || description.value !== savedDescription.value
+);
 const unsavedNow = computed(() => Boolean(current.value) && (!saved.value || dirty.value));
 const unsaved = () => unsavedNow.value;
 
@@ -163,7 +163,7 @@ function save() {
 	for (const field of editor.state.fields) field.added = false;
 	saved.value = true;
 	savedAt.value = { edits: editor.state.acted, title: titleField.value };
-	adding.value = null;
+	savedDescription.value = description.value;
 	if (!first) return void toast.success(`${one.name} saved`);
 	tryIt.value = true;
 	toast.success(`${one.name} created`);
