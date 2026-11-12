@@ -3,14 +3,43 @@
      fills it with a real record, the latest by default, or an empty form. The record is a copy:
      its tabs open and its fields take typing, but nothing is written.
      #47097 round 2: drawn as the record page's Details column (its FORM_CLASSES: no frame, its
-     tab strip, 728px of content), with the Record row on the same left and right edges. -->
+     tab strip, 728px of content), with the Record row on the same left and right edges.
+     #47098 owner note: the row is a quiet "Previewing …" button, not a labelled select. -->
 <template>
 	<div class="mx-auto w-full max-w-3xl">
-		<div v-if="saved" class="mb-2 flex items-center gap-2 px-[--page-gutter]">
-			<span class="text-base text-ink-gray-5">Record</span>
-			<Combobox class="w-72" :model-value="record" :options="records" placeholder="Choose a record" @update:model-value="pick(String($event ?? EMPTY))" />
+		<!-- #47098 note: one quiet line, not a labelled field: "Previewing <name> <title> ▾" as a
+		     crumb-style button (bleeds 4px so its text sits on the form's left edge), the note on
+		     the right edge. Both 13px gray. -->
+		<div v-if="saved" class="mb-1 flex items-center gap-2 px-[--page-gutter]">
+			<Combobox
+				:model-value="record"
+				:options="records"
+				align="start"
+				placeholder="Search records"
+				@update:model-value="pick(String($event ?? EMPTY))"
+			>
+				<template #trigger="{ open }">
+					<button
+						type="button"
+						class="-ml-1 flex min-w-0 max-w-[320px] items-center gap-1 rounded-4 px-1 py-1 text-p-sm text-ink-gray-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+						:class="open ? 'bg-surface-gray-3' : 'hover:bg-surface-gray-2'"
+						data-preview-record
+					>
+						<span class="shrink-0">Previewing</span>
+						<span class="shrink-0 text-ink-gray-8">{{ current.name }}</span>
+						<span v-if="current.title" class="min-w-0 truncate">{{ current.title }}</span>
+						<span class="lucide-chevron-down size-4 shrink-0" aria-hidden="true" />
+					</button>
+				</template>
+				<template #item-label="{ item }">
+					<span class="flex min-w-0 gap-1.5 leading-tighter">
+						<span class="shrink-0">{{ item.name ?? item.label }}</span>
+						<span v-if="item.title" class="min-w-0 truncate text-ink-gray-5">{{ item.title }}</span>
+					</span>
+				</template>
+			</Combobox>
 			<span v-if="loading" class="text-p-sm text-ink-gray-5">Loading…</span>
-			<span class="ml-auto text-p-sm text-ink-gray-5">Changes here are not saved.</span>
+			<span class="ml-auto shrink-0 text-p-sm text-ink-gray-5">Changes here are not saved.</span>
 		</div>
 		<div :inert="!saved">
 			<FormLayout :key="record" v-model:doc="doc" v-model:tab="tab" :layout="schema" :class="FORM_CLASSES" />
@@ -44,9 +73,18 @@ const latest = ref<{ name: string; title?: string }[]>([]);
 const record = ref(EMPTY);
 const loading = ref(false);
 
+const current = computed(() => {
+	if (record.value === EMPTY) return { name: "an empty form", title: "" };
+	const one = latest.value.find((row) => row.name === record.value);
+	return { name: record.value, title: one?.title && one.title !== one.name ? one.title : "" };
+});
+
 const records = computed(() => [
 	{ label: "Empty form", value: EMPTY },
-	...latest.value.map((one) => ({ label: one.title && one.title !== one.name ? `${one.title} · ${one.name}` : one.name, value: one.name })),
+	...latest.value.map((one) => {
+		const title = one.title && one.title !== one.name ? one.title : "";
+		return { label: `${one.name} ${title}`.trim(), value: one.name, name: one.name, title };
+	}),
 ]);
 
 watch(

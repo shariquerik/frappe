@@ -1,0 +1,14 @@
+[
+{"go": "/doctype/Sales%20Invoice?tab=preview"},
+{"waitfor": "Changes here are not saved"},
+{"wait": 2500},
+{"shot": "p1-preview-record"},
+{"click": "[data-preview-record]"},
+{"wait": 800},
+{"shot": "p2-preview-record-open"},
+{"press": "Escape"},
+{"go": "/doctype/Contact?tab=preview"},
+{"waitfor": "Changes here are not saved"},
+{"wait": 2500},
+{"shot": "p3-preview-record-contact"}
+]
