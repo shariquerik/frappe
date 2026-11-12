@@ -50,7 +50,7 @@
 						icon-left="lucide-pencil-ruler"
 						label="Edit layout"
 						class="text-ink-gray-5"
-						@click="editing = true"
+						@click="editLayout"
 					/>
 				</div>
 				<Button
@@ -84,6 +84,7 @@ import { landOnFirstMarked } from "@/pages/record/landOnField";
 import EditBar from "@/pages/doctypeEditorPrototype/EditBar.vue";
 import InPlaceEditor from "@/pages/doctypeEditorPrototype/InPlaceEditor.vue";
 import type { Editor } from "@/pages/doctypeEditorPrototype/editor";
+import { openLayoutEditor } from "@/pages/doctypeEditorPrototype/editMode";
 import { routeForNew } from "@/router/routeFor";
 import type { CreateRequest } from "@/shell/create";
 import {
@@ -224,6 +225,13 @@ const landing = {
 	layout: () => layout.value,
 	showTab: (identity: string) => void (formTab.value = identity),
 };
+
+// PROTOTYPE (#47097): "Edit layout" opens the DocType editor at Quick Entry instead of editing here.
+function editLayout() {
+	isOpen.value = false;
+	props.request.settle(null);
+	void openLayoutEditor(router, doctype, "quick-entry");
+}
 
 function editFullForm() {
 	const typed = typedValues(values, formData(layout.value, doc.value), defaults.value);

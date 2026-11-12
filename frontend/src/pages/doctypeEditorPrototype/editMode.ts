@@ -1,9 +1,19 @@
 // PROTOTYPE (#45867): a surface's edit mode, switched on by `?edit=<what>` so a walk can open
 // it by address. Done and Cancel both leave it; nothing saves either way.
 import { computed, shallowRef } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, type Router } from "vue-router";
 import { toast } from "frappe-ui";
-import type { Editor } from "./editor";
+import { routeFor } from "@/router/routeFor";
+import type { Editor, LayoutKey } from "./editor";
+
+/**
+ * PROTOTYPE (#47097): the in-place edit modes gave way to the DocType editor, opened at a layout
+ * (`/doctype/<name>?layout=`). A path, not the named route: the prototype's `/doctype/:name`
+ * matches ahead of DocType's own record route.
+ */
+export function openLayoutEditor(router: Router, doctype: string, layout: LayoutKey) {
+	return router.push(router.resolve(routeFor("DocType", doctype, { query: { layout } })).fullPath);
+}
 
 export function useEditMode() {
 	const route = useRoute();

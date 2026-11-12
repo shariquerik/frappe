@@ -97,7 +97,7 @@ import { toast } from "frappe-ui";
 import EditBar from "@/pages/doctypeEditorPrototype/EditBar.vue";
 import InPlaceEditor from "@/pages/doctypeEditorPrototype/InPlaceEditor.vue";
 import TweakPanel from "@/pages/doctypeEditorPrototype/TweakPanel.vue";
-import { useEditMode } from "@/pages/doctypeEditorPrototype/editMode";
+import { openLayoutEditor, useEditMode } from "@/pages/doctypeEditorPrototype/editMode";
 import { tweaks } from "@/pages/doctypeEditorPrototype/tweaks";
 import { createDocument, isApiError } from "@framework/ui/api";
 import { FormLayout } from "@framework/ui/FormLayout";
@@ -330,8 +330,8 @@ function headerBuiltins(): HeaderItem[] {
 			key: "Mod+S",
 			run: save,
 		},
-		// PROTOTYPE (#45867): the New Record layout, edited in place.
-		{ name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", run: () => editMode.open("layout") },
+		// PROTOTYPE (#45867): "Edit layout"; #47097: it opens the DocType editor at New Record.
+		{ name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", run: () => void openLayoutEditor(router, props.doctype, "new-record") },
 	];
 }
 

@@ -6,6 +6,11 @@
   #47096: Customize mode on a standard DocType (?mode=customize; ?as=manager fakes a user without
   developer mode: Customize only, no switch, no Export). ?variant= picks how the mode shows: A a
   chip by the breadcrumbs, B a lock on every standard field, C a banner over the canvas.
+  #47097: every layout the DocType's kind allows, from a `Details ▾` menu (?layout= and &row= open
+  one). ?switcher= picks where the open layout's own acts live: A the menu by the crumbs and a
+  "This layout" card in the panel, B the menu at the tab strip's end and a strip over the canvas,
+  C everything in the menu (a ⋯ per row). The variant bar switches ?switcher=; ?variant= still
+  reads #47096's choice.
 -->
 <template>
 	<PageFrame :scroll="false">
@@ -14,6 +19,7 @@
 				<div class="-mx-3 flex h-12 items-center justify-between gap-3 border-b px-3 sm:-mx-5 sm:px-5">
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<Breadcrumbs :items="crumbs" class="-ml-0.5 min-w-0" />
+						<LayoutMenu v-if="ready && tab === 'editor' && switcher !== 'B'" :variant="switcher" />
 						<TabButtons v-if="switchable" class="shrink-0" :options="MODES" :model-value="mode" @update:model-value="setMode" />
 						<Tooltip v-if="customizing && variant !== 'C'" :text="`${doctype} comes from ${customize!.app}. Your changes stay on this site and survive its updates.`">
 							<Badge :label="`From ${customize!.app}`" theme="gray" class="shrink-0" />
@@ -45,14 +51,20 @@
 						</div>
 					</Tooltip>
 				</div>
-				<Tabs
-					v-model="tab"
-					class="-mx-3 -mb-px sm:-mx-5 [&_[role='tab']]:rounded-4 [&_[role='tablist']]:gap-5 [&_[role='tablist']]:px-3 [&_[role='tablist']]:py-2 sm:[&_[role='tablist']]:px-5"
-				>
-					<TabList variant="underline">
-						<TabTrigger v-for="one in TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
-					</TabList>
-				</Tabs>
+				<div class="relative">
+					<Tabs
+						v-model="tab"
+						class="-mx-3 -mb-px sm:-mx-5 [&_[role='tab']]:rounded-4 [&_[role='tablist']]:gap-5 [&_[role='tablist']]:px-3 [&_[role='tablist']]:py-2 sm:[&_[role='tablist']]:px-5"
+					>
+						<TabList variant="underline">
+							<TabTrigger v-for="one in TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
+						</TabList>
+					</Tabs>
+					<!-- B: the layout menu at the strip's right end, so it opens below and extends left. -->
+					<div v-if="ready && tab === 'editor' && switcher === 'B'" class="absolute inset-y-0 right-0 flex items-center">
+						<LayoutMenu variant="B" align="end" />
+					</div>
+				</div>
 			</div>
 		</template>
 
@@ -63,12 +75,14 @@
 			</div>
 			<EditorTab v-if="tab === 'editor'" class="hidden lg:flex" :name="doctype" :meta="metaLine">
 				<template v-if="finder === 'B'" #rail><FieldOutline /></template>
-				<template v-if="customizing && variant === 'C'" #banner>
-					<div class="mb-6 flex items-start gap-2.5 rounded-6 bg-surface-gray-2 px-3.5 py-3 text-p-base text-ink-gray-7">
+				<template v-if="(customizing && variant === 'C') || switcher === 'B'" #banner>
+					<LayoutStrip v-if="switcher === 'B'" />
+					<div v-if="customizing && variant === 'C'" class="mb-6 flex items-start gap-2.5 rounded-6 bg-surface-gray-2 px-3.5 py-3 text-p-base text-ink-gray-7">
 						<span class="lucide-paintbrush mt-0.5 size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
-						<span>You are customizing {{ doctype }} from {{ customize.app }}. Your changes stay on this site and survive {{ customize.app }} updates.</span>
+						<span>You are customizing {{ doctype }} from {{ customize!.app }}. Your changes stay on this site and survive {{ customize!.app }} updates.</span>
 					</div>
 				</template>
+				<template v-if="switcher === 'A'" #panel-top><LayoutCard /></template>
 			</EditorTab>
 			<main v-else class="min-w-0 flex-1 overflow-y-auto">
 				<div class="px-3 pb-24 pt-6 sm:px-5">
@@ -78,7 +92,8 @@
 			</main>
 		</template>
 		<CustomizeDialogs v-if="customize" v-model:reset="resetOpen" v-model:export="exportOpen" :doctype="doctype" :ui="customize" />
-		<VariantBar :variants="VARIANTS" />
+		<LayoutDialogs v-if="ready" />
+		<VariantBar :variants="SWITCHERS" param="switcher" />
 	</PageFrame>
 </template>
 
@@ -92,22 +107,27 @@ import PageFrame from "@/shell/PageFrame.vue";
 import { shellDialog } from "@/shell/dialog";
 import { useUnloadGuard } from "@/pages/record/recordSave";
 import { EditorKey } from "../context";
-import { createEditor, nameOf, type Mode } from "../editor";
+import { createEditor, keyOf, nameOf, type LayoutKey, type Mode } from "../editor";
 import CustomizeDialogs from "./CustomizeDialogs.vue";
 import { createCustomizeUi, CustomizeKey, summary, type CustomizeUi, type Persona } from "./customize";
 import DraftSettings from "./DraftSettings.vue";
 import EditorTab from "./EditorTab.vue";
 import FieldOutline from "./FieldOutline.vue";
 import FormPreview from "./FormPreview.vue";
+import LayoutCard from "./LayoutCard.vue";
+import LayoutDialogs from "./LayoutDialogs.vue";
+import LayoutMenu from "./LayoutMenu.vue";
+import LayoutStrip from "./LayoutStrip.vue";
 import VariantBar from "./VariantBar.vue";
+import { createLayoutUi, FAKE_VARIANTS, layoutsFor, LayoutUiKey } from "./layouts";
 import { DraftUiKey } from "./draftUi";
 import type { Kind } from "./newDoctype";
 import { createSavedUi, fieldIndex, plural, SavedUiKey, type SavedUi } from "./savedDoctype";
 
-const VARIANTS = [
-	{ key: "A", label: "Chip by the breadcrumbs" },
-	{ key: "B", label: "Lock on standard fields" },
-	{ key: "C", label: "Banner over the canvas" },
+const SWITCHERS = [
+	{ key: "A", label: "Menu by the crumbs, card in the panel" },
+	{ key: "B", label: "Menu in the tab strip, strip over the canvas" },
+	{ key: "C", label: "Everything in the menu" },
 ];
 const MODES = [
 	{ label: "Design", value: "design" },
@@ -124,6 +144,7 @@ const router = useRouter();
 const doctype = String(route.params.name);
 const variant = computed(() => String(route.query.variant ?? "A"));
 const finder = computed(() => String(route.query.finder ?? "A"));
+const switcher = computed(() => String(route.query.switcher ?? "A"));
 const persona: Persona = route.query.as === "manager" ? "manager" : "developer";
 const tab = ref(String(route.query.tab ?? "editor"));
 const { meta } = useDoctypeMeta(doctype);
@@ -137,6 +158,7 @@ const kind = computed<Kind>(() => {
 	if (one?.issingle) return "single";
 	return one?.is_submittable ? "submittable" : "regular";
 });
+provide(LayoutUiKey, createLayoutUi(editor, kind));
 const titleField = ref("");
 const description = ref("");
 const labelFocus = ref<string | null>(null);
@@ -167,8 +189,8 @@ watch(
 	() => meta.value?.fields,
 	async (fields) => {
 		if (!fields || ready.value) return;
-		await editor.load(meta.value as any);
-		editor.state.activeTab = editor.tree.value[0]?.name ?? null;
+		await editor.loadAll(meta.value as any, layoutsFor(kind.value), FAKE_VARIANTS[doctype]);
+		if (route.query.layout) editor.openLayout(String(route.query.layout) as LayoutKey, route.query.row ? String(route.query.row) : null);
 		titleField.value = (meta.value as any).title_field ?? "";
 		description.value = (meta.value as any).description ?? "";
 		saved.value = createSavedUi(editor, doctype, Boolean((meta.value as any).custom));
@@ -265,6 +287,16 @@ const finderOptions = computed(() => {
 	}
 	return groups;
 });
+
+// #47097: the open layout lives in the address (?layout=, &row=), so a link or a reload keeps it.
+watch(
+	() => editor.state.open,
+	(open) => {
+		if (!ready.value) return;
+		const variant = editor.state.variants.find((one) => one.id === open);
+		void router.replace({ query: { ...route.query, layout: keyOf(open), row: variant?.row } });
+	}
+);
 
 const savedAt = ref({ acted: 0, title: "", description: "" });
 watch(ready, () => (savedAt.value = { acted: editor.state.acted, title: titleField.value, description: description.value }));

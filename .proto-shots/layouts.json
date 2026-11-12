@@ -1,0 +1,326 @@
+[
+{
+"go": "/doctype/Contact?switcher=A"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 600
+},
+{
+"shot": "01-a-details-menu"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 400
+},
+{
+"click": "[data-layout-row='side-panel']"
+},
+{
+"wait": 900
+},
+{
+"shot": "02-a-side-panel-not-set-up"
+},
+{
+"click": "[data-unplaced-field='email_id']"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-unplaced-field='status']"
+},
+{
+"wait": 900
+},
+{
+"shot": "03-a-side-panel-two-fields-placed"
+},
+{
+"role": [
+"button",
+"Save"
+]
+},
+{
+"wait": 600
+},
+{
+"go": "/doctype/Contact?switcher=A&layout=quick-entry"
+},
+{
+"waitfor": "New Contact"
+},
+{
+"wait": 1500
+},
+{
+"shot": "04-a-quick-entry-layout-card"
+},
+{
+"go": "/doctype/Contact?switcher=A&layout=details&row=proto-1"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"shot": "05-a-faked-variant"
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 400
+},
+{
+"click": "[data-add-variant]"
+},
+{
+"wait": 700
+},
+{
+"click": "[role='dialog'] input[type='text']"
+},
+{
+"type": "doc.is_primary_contact == 1"
+},
+{
+"wait": 400
+},
+{
+"shot": "06-add-variant-dialog"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 400
+},
+{
+"go": "/doctype/Contact?switcher=B&layout=details"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 600
+},
+{
+"shot": "07-b-menu"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Contact?switcher=B&layout=quick-entry"
+},
+{
+"waitfor": "New Contact"
+},
+{
+"wait": 1500
+},
+{
+"shot": "08-b-strip-quick-entry"
+},
+{
+"go": "/doctype/Contact?switcher=C&layout=details&row=proto-1"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-layout-row='details~proto-1'] [data-layout-acts]"
+},
+{
+"wait": 600
+},
+{
+"shot": "09-c-row-acts"
+},
+{
+"press": "Escape"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"go": "/doctype/Contact?switcher=A&mode=customize&layout=quick-entry"
+},
+{
+"waitfor": "New Contact"
+},
+{
+"wait": 2000
+},
+{
+"role": [
+"button",
+"Add section"
+]
+},
+{
+"wait": 400
+},
+{
+"press": "Escape"
+},
+{
+"wait": 600
+},
+{
+"shot": "10-a-customize-quick-entry-site-layout"
+},
+{
+"role": [
+"button",
+"Save"
+]
+},
+{
+"wait": 600
+},
+{
+"go": "/doctype/CRM%20Lead?switcher=A"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 600
+},
+{
+"shot": "11-crm-lead-menu"
+},
+{
+"press": "Escape"
+},
+{
+"go": "/doctype/Sales%20Invoice%20Item?switcher=A"
+},
+{
+"waitfor": "Sales Invoice Item"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 600
+},
+{
+"shot": "12-sales-invoice-item-menu"
+},
+{
+"press": "Escape"
+},
+{
+"go": "/doctype/Selling%20Settings?switcher=A"
+},
+{
+"waitfor": "Selling Settings"
+},
+{
+"wait": 3000
+},
+{
+"click": "[data-layout-menu]"
+},
+{
+"wait": 600
+},
+{
+"shot": "13-selling-settings-menu"
+},
+{
+"press": "Escape"
+},
+{
+"go": "/doctype/Sales%20Invoice?switcher=A"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2500
+},
+{
+"shot": "14-wide-canvas-3-columns"
+},
+{
+"eval": "(() => { const c = document.querySelector('[data-editor-canvas]').getBoundingClientRect(); const el = document.querySelector('[data-editor-canvas] [data-container-key]'); const s = el.getBoundingClientRect(); const g = el.querySelector('.grid').getBoundingClientRect(); return { canvas: c.width, section: s.width, grid: g?.width, left: s.left - c.left, right: c.right - s.right }; })()"
+},
+{
+"go": "/contact/John%20Doe"
+},
+{
+"wait": 4000
+},
+{
+"hover": "button:has-text('Edit panel')"
+},
+{
+"wait": 400
+},
+{
+"shot": "15-record-edit-panel"
+},
+{
+"click": "button:has-text('Edit panel')"
+},
+{
+"wait": 4000
+},
+{
+"shot": "16-edit-panel-lands-on-side-panel"
+}
+]

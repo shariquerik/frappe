@@ -249,8 +249,10 @@ const typeNote = computed(() => {
 const customizeKey = inject(CustomizeKey, null);
 const customize = computed(() => customizeKey?.value ?? null);
 const standard = computed(() => Boolean(customize.value?.isStandard(props.field.fieldname)));
-const removeLabel = computed(() => (!standard.value ? "Remove field" : props.field.hidden ? "Show field" : "Hide field"));
-const removeIcon = computed(() => (!standard.value ? "lucide-trash-2" : props.field.hidden ? "lucide-eye" : "lucide-eye-off"));
+// #47097: outside Details a field leaves the layout only; it stays on the DocType.
+const offLayout = computed(() => editor.state.layout !== "details");
+const removeLabel = computed(() => (offLayout.value ? "Take off this layout" : !standard.value ? "Remove field" : props.field.hidden ? "Show field" : "Hide field"));
+const removeIcon = computed(() => (offLayout.value ? "lucide-circle-minus" : !standard.value ? "lucide-trash-2" : props.field.hidden ? "lucide-eye" : "lucide-eye-off"));
 const anchor = computed(() => (customize.value?.isCustom(props.field.fieldname) ? customize.value.anchor(props.field.fieldname) : undefined));
 const shown = (prop: string, raw: string) => (CHECKS.has(prop) ? (raw ? "on" : "off") : raw || "empty");
 /** A row's Customize mark: locked, or changed with a reset back to what the app ships. */

@@ -1,5 +1,8 @@
-<!-- PROTOTYPE (#45867): the Editor tab, as frappe/crm#3419's EditorTab: the canvas (one 640px column
-     centred in the space left of the panel) and the 380px panel, side by side under the tab strip.
+<!-- PROTOTYPE (#45867): the Editor tab, as frappe/crm#3419's EditorTab: the canvas (one column
+     centred left of the panel, 728px of form as the record page's Details column, #47097)
+     and the 380px panel, side by side under the tab strip.
+     #47097: the canvas draws the open layout (Side Panel and Quick Entry in their own frames);
+     `panel-top` heads the panel while nothing is selected.
      The panel shows the selected field's settings, the selected section's, or "Add a field".
      No × on the canvas: remove from the panel, with Delete/Backspace, or on the drag bin. Escape
      cancels a drag, else clears the selection. -->
@@ -13,9 +16,23 @@
 			:data-drop-tab="editor.state.dropTab ?? undefined"
 			@click="onCanvasClick"
 		>
-			<div class="mx-auto w-full max-w-[640px] px-10 pb-[80vh] pt-10">
+			<div class="mx-auto w-full px-10 pb-[80vh] pt-10" :class="layout === 'quick-entry' ? 'max-w-[656px]' : 'max-w-[808px]'">
 				<slot name="banner" />
-				<div class="mb-10">
+				<!-- #47097: the Side Panel draws as the record's panel; Quick Entry inside the Create dialog's frame. -->
+				<SidePanelCanvas v-if="layout === 'side-panel'" @drag-start="startField" @drag-end="endField" />
+				<div v-else-if="layout === 'quick-entry'" class="rounded-7 bg-surface-elevation-1 shadow-xl ring-1 ring-outline-gray-1" data-quick-entry-frame>
+					<div class="px-6 pb-6 pt-5">
+						<div class="mb-6 flex items-center justify-between">
+							<h3 class="text-2xl font-semibold leading-6 text-ink-gray-8">New {{ name }}</h3>
+							<Button variant="ghost" icon="lucide-x" label="Close" inert tabindex="-1" />
+						</div>
+						<EditorCanvas @drag-start="startField" @drag-end="endField" />
+					</div>
+					<div class="flex justify-end px-6 pb-7 pt-4">
+						<Button variant="solid" label="Create" inert tabindex="-1" />
+					</div>
+				</div>
+				<div v-else class="mb-10">
 					<h1 class="text-2xl font-semibold text-ink-gray-9">{{ name }}</h1>
 					<textarea
 						ref="description"
@@ -27,7 +44,7 @@
 					/>
 					<p class="mt-1 text-p-sm text-ink-gray-5">{{ meta }}</p>
 				</div>
-				<EditorCanvas @drag-start="startField" @drag-end="endField" />
+				<EditorCanvas v-if="layout !== 'side-panel' && layout !== 'quick-entry'" @drag-start="startField" @drag-end="endField" />
 			</div>
 			<DragLayer ref="layer" />
 		</div>
@@ -43,7 +60,10 @@
 				@close="clear"
 			/>
 			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
-			<PanelAddField v-else @add="addTyped" @drag-start="startPalette" @drag-end="endPalette" />
+			<template v-else>
+				<slot name="panel-top" />
+				<PanelAddField :divided="Boolean($slots['panel-top'])" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
+			</template>
 		</aside>
 	</div>
 </template>
@@ -51,13 +71,16 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { LayoutTreeSection, LayoutTreeTab } from "@framework/ui/FormLayout/types";
+import { Button } from "frappe-ui";
 import { EditorKey, onDrop } from "../context";
+import { MORE_FIELDS } from "../editor";
 import DragLayer from "./DragLayer.vue";
 import EditorCanvas from "./EditorCanvas.vue";
 import PanelAddField from "./PanelAddField.vue";
 import PanelFieldSettings from "./PanelFieldSettings.vue";
 import PanelSectionSettings from "./PanelSectionSettings.vue";
 import PanelTabSettings from "./PanelTabSettings.vue";
+import SidePanelCanvas from "./SidePanelCanvas.vue";
 import { DraftUiKey } from "./draftUi";
 import { typeLabel } from "./newDoctype";
 import { typeIcon, type FieldType } from "./typeMenu";
@@ -78,14 +101,47 @@ const selectedTab = computed(() => {
 const clear = () => (editor.state.selection = null);
 const sections = () => editor.tree.value.flatMap((tab) => tab.sections);
 
+const layout = computed(() => editor.state.layout);
+
 async function removeField(fieldname: string) {
+	// #47097: outside Details a field only leaves this layout, back to "Fields not on this layout".
+	if (layout.value !== "details") {
+		editor.acts.moveField(fieldname, MORE_FIELDS, 0);
+		editor.state.selection = null;
+		return;
+	}
 	if (ui.beforeRemove && !(await ui.beforeRemove(fieldname))) return;
 	if (ui.titleField.value === fieldname) ui.titleField.value = "";
 	editor.acts.deleteField(fieldname);
 }
 
 const activeTab = computed(() => editor.tree.value.find((tab) => tab.name === editor.state.activeTab) ?? editor.tree.value[0]);
-const tabSections = () => activeTab.value?.sections ?? [];
+// The Side Panel runs every tab's sections together; elsewhere the tab in view.
+const tabSections = () => (layout.value === "side-panel" ? sections() : (activeTab.value?.sections ?? []));
+
+/** The last column of the selected section, else of the last section in view; a layout with none grows one. */
+function endColumn() {
+	const selected = editor.state.selection;
+	let section = selected?.kind === "section" ? (editor.find(selected.key)?.node as LayoutTreeSection | undefined) : undefined;
+	if (!section) {
+		if (!tabSections().length) editor.acts.addSection();
+		const all = tabSections();
+		section = all[all.length - 1];
+	}
+	return section.columns[section.columns.length - 1].name!;
+}
+
+/** #47097: a field from "Fields not on this layout" goes to the end of the section in view. */
+function place(fieldname: string) {
+	editor.history.group(() => {
+		const column = endColumn();
+		const fields = (editor.find(column)?.node as any).fields;
+		editor.acts.moveField(fieldname, column, fields.length);
+	});
+	// The list stays in the panel, so the next field is one click away.
+	editor.state.selection = null;
+	requestAnimationFrame(() => document.querySelector(`[data-editor-canvas] [data-fieldname="${fieldname}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+}
 
 /** A removed section hands its fields to the section before it (after, for the first). */
 function removeSection(section: LayoutTreeSection) {
@@ -115,11 +171,12 @@ function setColumns(section: LayoutTreeSection, count: number) {
 
 /** A click on a type in the panel adds a field of that type at the end of the tab in view, label first. */
 function addTyped(type: FieldType, column?: string, index?: number) {
-	const all = tabSections();
-	const last = all[all.length - 1];
-	const target = column ?? last.columns[last.columns.length - 1].name!;
 	const label = typeLabel(type.fieldtype, type.options);
-	const fieldname = editor.acts.addLabelled({ label, fieldtype: type.fieldtype, options: type.options }, target, index);
+	let fieldname = "";
+	editor.history.group(() => {
+		const target = column ?? endColumn();
+		fieldname = editor.acts.addLabelled({ label, fieldtype: type.fieldtype, options: type.options }, target, index);
+	});
 	ui.focusLabel(fieldname);
 	requestAnimationFrame(() => document.querySelector(`[data-editor-canvas] [data-fieldname="${fieldname}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
 }

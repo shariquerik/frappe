@@ -119,7 +119,7 @@
 					>
 						<template v-if="!editMode.editing.value" #after>
 							<div class="px-2.5 py-3">
-								<Button variant="ghost" size="sm" icon-left="lucide-pencil-ruler" label="Edit panel" @click="editMode.open('panel')" />
+								<Button variant="ghost" size="sm" icon-left="lucide-pencil-ruler" label="Edit panel" @click="openLayoutEditor(router, doctype, 'side-panel')" />
 							</div>
 						</template>
 					</RecordPanel>
@@ -162,7 +162,7 @@ import { Button, toast } from "frappe-ui";
 import EditBar from "./doctypeEditorPrototype/EditBar.vue";
 import InPlaceEditor from "./doctypeEditorPrototype/InPlaceEditor.vue";
 import TweakPanel from "./doctypeEditorPrototype/TweakPanel.vue";
-import { useEditMode } from "./doctypeEditorPrototype/editMode";
+import { openLayoutEditor, useEditMode } from "./doctypeEditorPrototype/editMode";
 import { tweaks } from "./doctypeEditorPrototype/tweaks";
 import {
 	addFavourite,
@@ -464,9 +464,9 @@ function headerBuiltins(): HeaderItem[] {
 	return items;
 }
 
-// PROTOTYPE (#45867): "Edit layout" edits the record's own row in place; it sits just above Delete.
+// PROTOTYPE (#45867): "Edit layout" sits just above Delete; #47097: it opens the DocType editor at Details.
 function withEditLayout(items: HeaderItem[]) {
-	const edit = { name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", group: "layout_band", run: () => editMode.open("layout") };
+	const edit = { name: "proto_edit_layout", label: "Edit layout", icon: "lucide-pencil-ruler", group: "layout_band", run: () => void openLayoutEditor(router, doctype.value, "details") };
 	const at = items.findIndex((item) => item.group === "danger");
 	return at < 0 ? [...items, edit] : [...items.slice(0, at), edit, ...items.slice(at)];
 }

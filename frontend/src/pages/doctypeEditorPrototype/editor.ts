@@ -2,6 +2,9 @@
 // Each surface that renders a layout makes its own editor for that one layout (the DocType
 // page for Details, the Create dialog for Quick Entry, the record page for its row and its
 // panel). Nothing here saves. Every edit runs through `act`, which logs it as `page.run` would.
+// #47097: the DocType page loads every layout its kind allows (`loadAll`) and each conditional
+// variant, each its own tree keyed by `state.open` ("details", "details~<row>"); `openLayout`
+// swaps the canvas, and undo/redo carry the layout they happened on.
 
 import { reactive, computed } from "vue";
 import { runMethod } from "@framework/ui/api";
@@ -34,13 +37,31 @@ export const LAYOUTS: { key: LayoutKey; type: string; label: string }[] = [
 
 export const MORE_FIELDS = "__more_fields__";
 
+/** Where a layout comes from: the app's file, a site row, the DocType's breaks, nothing yet, or Details' rows. */
+export type Source = "app" | "site" | "fallback" | "none" | "details";
+/** A conditional row of one layout type: its own tree under `<key>~<row>`. */
+export interface Variant {
+	id: string;
+	key: LayoutKey;
+	row: string;
+	condition: string;
+	/** PROTOTYPE: no conditional row exists on this site; this one is made up at load. */
+	fake?: boolean;
+}
+export const layoutId = (key: LayoutKey, row?: string | null) => (row ? `${key}~${row}` : key);
+export const keyOf = (id: string) => id.split("~")[0] as LayoutKey;
+
 let counter = 0;
 let version = 0;
 
 interface Snapshot {
 	fields: EditorField[];
-	trees: Record<LayoutKey, LayoutTree>;
-	omitted: Record<LayoutKey, string[]>;
+	trees: Record<string, LayoutTree>;
+	omitted: Record<string, string[]>;
+	source: Record<string, Source>;
+	forked: Record<string, boolean>;
+	variants: Variant[];
+	open: string;
 	acted: number;
 	activeTab: string | null;
 }
@@ -58,15 +79,20 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		doctype,
 		mode,
 		layout,
+		// The tree on the canvas: a layout key, or a variant's "<key>~<row>" (#47097).
+		open: layout as string,
+		variants: [] as Variant[],
 		// The row being edited: its condition, or none for the default row.
 		row: { condition: "" as string, isNew: false },
 		loading: true,
 		fields: [] as EditorField[],
-		trees: {} as Record<LayoutKey, LayoutTree>,
-		omitted: {} as Record<LayoutKey, string[]>,
-		// Where each layout came from: a site row, the app's file, or the break fallback.
-		source: {} as Record<LayoutKey, "row" | "fallback" | "none">,
-		forked: {} as Record<LayoutKey, boolean>,
+		trees: {} as Record<string, LayoutTree>,
+		omitted: {} as Record<string, string[]>,
+		// Where each layout came from: the app's file, a site row, or the break fallback.
+		source: {} as Record<string, Source>,
+		forked: {} as Record<string, boolean>,
+		// The tab each layout last showed, so switching back lands where it was.
+		tabFor: {} as Record<string, string | null>,
 		selection: null as Selection,
 		log: [] as { act: string; args: string; note?: string }[],
 		// The edit version: every act sets a new one, and undo/redo restore the one they return to,
@@ -106,30 +132,93 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		const row = conditional ?? rows.find((one) => !one.condition);
 		const tree = row?.layout ?? (key === "side-panel" ? [] : data.fallback);
 		state.row = { condition: row?.condition ?? "", isNew: !row };
-		state.trees[key] = keyed(structuredClone(tree ?? []));
-		state.omitted[key] = [];
-		state.source[key] = row ? "row" : key === "side-panel" ? "none" : "fallback";
-		state.forked[key] = false;
+		install(key, tree ?? [], row ? sourceOf(row) : key === "side-panel" ? "none" : "fallback");
 		state.loading = false;
 	}
+
+	// The app's tree under each layout, for "Reset to app layout". Plain: not undo state.
+	const appTrees: Record<string, LayoutTree> = {};
+
+	function install(id: string, tree: LayoutTree, source: Source, appTree?: LayoutTree) {
+		state.trees[id] = keyed(clone(tree));
+		state.omitted[id] = [];
+		state.source[id] = source;
+		state.forked[id] = false;
+		const app = appTree ?? (source === "app" ? tree : undefined);
+		if (app) appTrees[id] = clone(app);
+	}
+
+	/**
+	 * #47097: every layout `keys` names, read at once (the menu badges each), and their
+	 * conditional rows as variants. `fake` adds one made-up variant (none exist on this site).
+	 */
+	async function loadAll(meta: { fields: RawMetaField[] }, keys: LayoutKey[], fake?: { key: LayoutKey; condition: string }) {
+		state.fields = meta.fields.map((field, idx) => ({ ...field, idx }));
+		const responses = await Promise.all(keys.map((key) => readLayouts(doctype, key)));
+		const defaults: Partial<Record<LayoutKey, string>> = {};
+		keys.forEach((key, i) => {
+			const data = responses[i];
+			const base = data.layouts.find((row) => !row.condition);
+			const app = data.layouts.find((row) => !row.condition && row.name == null);
+			let source: Source = base ? sourceOf(base) : key === "side-panel" ? "none" : "fallback";
+			// New Record with no rows of its own gets Details' rows from the server.
+			if (key === "new-record" && base && JSON.stringify(base.layout) === defaults.details) source = "details";
+			if (base) defaults[key] = JSON.stringify(base.layout);
+			install(key, base?.layout ?? (key === "side-panel" ? [] : data.fallback ?? []), source, app?.layout);
+			if (source === "details") return;
+			for (const row of data.layouts.filter((one) => one.condition)) {
+				const name = String(row.name ?? "app");
+				state.variants.push({ id: layoutId(key, name), key, row: name, condition: row.condition! });
+				install(layoutId(key, name), row.layout, sourceOf(row));
+			}
+		});
+		if (fake && keys.includes(fake.key)) {
+			const id = layoutId(fake.key, "proto-1");
+			state.variants.push({ id, key: fake.key, row: "proto-1", condition: fake.condition, fake: true });
+			install(id, copy(state.trees[fake.key]), state.source[fake.key] === "site" ? "site" : "app");
+		}
+		state.open = state.layout;
+		state.activeTab = state.trees[state.open]?.[0]?.name ?? null;
+		state.loading = false;
+	}
+
+	/** Swaps the canvas to a layout (or one of its variants). Not an edit: no undo step. */
+	function openLayout(key: LayoutKey, row?: string | null) {
+		let id = layoutId(key, row);
+		if (!state.trees[id]) id = key;
+		if (!state.trees[id] || id === state.open) return;
+		state.tabFor[state.open] = state.activeTab;
+		show(id, state.tabFor[id]);
+		state.selection = null;
+	}
+
+	function show(id: string, tab?: string | null) {
+		state.open = id;
+		state.layout = keyOf(id);
+		const tabs = state.trees[id] ?? [];
+		state.activeTab = tab && tabs.some((one) => one.name === tab) ? tab : (tabs[0]?.name ?? null);
+	}
+
+	/** Customize may reset a site layout that sits over an app one. */
+	const canReset = (id: string) => state.mode === "customize" && state.source[id] === "site" && Boolean(appTrees[id]);
 
 	/** A new DocType's draft: its fields and one Details tree, nothing read from the server. */
 	function loadDraft(fields: EditorField[], tree: LayoutTree) {
 		state.fields = fields.map((one, idx) => ({ ...one, idx }));
 		state.trees.details = keyed(tree);
 		state.omitted.details = [];
-		state.source.details = "row";
+		state.source.details = "app";
 		state.forked.details = false;
 		state.activeTab = state.trees.details[0]?.name ?? null;
 		state.loading = false;
 	}
 
-	const tree = computed(() => state.trees[state.layout] ?? []);
+	const tree = computed(() => state.trees[state.open] ?? []);
 	const dataFields = computed(() =>
 		state.fields.filter((field) => !DROPPED_FIELDTYPES.has(field.fieldtype))
 	);
 	const placed = computed(() => new Set(placedIn(tree.value)));
-	const omitted = computed(() => new Set(state.omitted[state.layout] ?? []));
+	const omitted = computed(() => new Set(state.omitted[state.open] ?? []));
 	const unplaced = computed(() =>
 		dataFields.value.filter(
 			(field) => !placed.value.has(field.fieldname) && !omitted.value.has(field.fieldname)
@@ -198,14 +287,17 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		if (state.log.length > 30) state.log.pop();
 	}
 
-	// The first container edit on a layout still drawn from the app's breaks forks a site row.
+	// The first container edit on a layout not yet written where this mode writes makes it:
+	// Customize forks a site layout off the app's (or the breaks); Design writes the app's file.
 	function touchContainer() {
-		if (state.mode === "customize" && state.source[state.layout] === "fallback") {
-			state.source[state.layout] = "row";
-			state.forked[state.layout] = true;
+		const id = state.open;
+		const from = state.source[id];
+		if (state.mode === "customize" && from !== "site") {
+			state.source[id] = "site";
+			state.forked[id] = true;
+		} else if (state.mode === "design" && from !== "app" && from !== "site") {
+			state.source[id] = "app";
 		}
-		if (state.layout === "side-panel" && state.source["side-panel"] === "none")
-			state.source["side-panel"] = "row";
 	}
 
 	// #45865: placing or moving a field on Details or New Record never forks (an anchor, or
@@ -218,7 +310,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		moveField(fieldname: string, toColumn: string, index: number) {
 			const from = columnOf(fieldname);
 			if (from) from.fields = from.fields.filter((entry) => nameOf(entry) !== fieldname);
-			state.omitted[state.layout] = state.omitted[state.layout].filter((one) => one !== fieldname);
+			state.omitted[state.open] = state.omitted[state.open].filter((one) => one !== fieldname);
 			if (toColumn === MORE_FIELDS) {
 				act("unplace_field", { fieldname }, "back to More fields");
 			} else {
@@ -253,7 +345,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			if (tree.value.length === 1 && !tree.value[0].label) tree.value[0].label = "Details";
 			const tab: LayoutTreeTab = { name: newKey("tab"), label: "New tab", sections: [] };
 			tab.sections.push(newSection());
-			state.trees[state.layout].push(tab);
+			state.trees[state.open].push(tab);
 			act("add_tab", { label: tab.label });
 			touchContainer();
 			state.activeTab = tab.name!;
@@ -330,12 +422,12 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		omit(fieldname: string) {
 			const column = columnOf(fieldname);
 			if (column) column.fields = column.fields.filter((entry) => nameOf(entry) !== fieldname);
-			state.omitted[state.layout].push(fieldname);
+			state.omitted[state.open].push(fieldname);
 			act("omit_field", { fieldname });
 			touchContainer();
 		},
 		restore(fieldname: string) {
-			state.omitted[state.layout] = state.omitted[state.layout].filter((one) => one !== fieldname);
+			state.omitted[state.open] = state.omitted[state.open].filter((one) => one !== fieldname);
 			act("restore_field", { fieldname });
 		},
 		addField(fieldtype: string, column?: string, index?: number) {
@@ -362,7 +454,50 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			const fields = (find(column)?.node as LayoutTreeColumn).fields;
 			fields.splice(index ?? fields.length, 0, fieldname);
 			act(customize ? "add_custom_field" : "add_field", { label: field.label, fieldtype: field.fieldtype, options: field.options, column, index: index ?? fields.length - 1 });
+			placeOnly();
 			return fieldname;
+		},
+		/** #47097: a conditional variant of a layout type, a copy of its default or empty; it opens. */
+		addVariant(key: LayoutKey, condition: string, start: "copy" | "empty") {
+			const row = `new-${++counter}`;
+			const id = layoutId(key, row);
+			const tree = start === "copy" ? copy(state.trees[key] ?? []) : [{ name: newKey("tab"), sections: [newSection()] }];
+			state.trees[id] = keyed(tree);
+			state.omitted[id] = [];
+			state.source[id] = state.mode === "customize" ? "site" : "app";
+			state.forked[id] = state.mode === "customize";
+			state.variants.push({ id, key, row, condition });
+			act("add_layout", { type: LAYOUTS.find((one) => one.key === key)!.type, condition, start });
+			state.tabFor[state.open] = state.activeTab;
+			show(id);
+			state.selection = null;
+			return id;
+		},
+		setCondition(id: string, condition: string) {
+			const variant = state.variants.find((one) => one.id === id);
+			if (!variant || variant.condition === condition) return;
+			variant.condition = condition;
+			act("set_layout_condition", { layout: id, condition });
+		},
+		/** The variant goes; the canvas falls back to its type's default layout. */
+		deleteVariant(id: string) {
+			const at = state.variants.findIndex((one) => one.id === id);
+			if (at < 0) return;
+			const [variant] = state.variants.splice(at, 1);
+			act("delete_layout", { layout: id, condition: variant.condition });
+			if (state.open === id) show(variant.key, state.tabFor[variant.key]);
+			state.selection = null;
+		},
+		/** Customize: the site's layout goes, and the app's shows again. */
+		resetLayout(id: string) {
+			if (!appTrees[id]) return;
+			state.trees[id] = keyed(clone(appTrees[id]));
+			state.omitted[id] = [];
+			state.source[id] = "app";
+			state.forked[id] = false;
+			act("reset_layout", { layout: id }, "the site layout is deleted");
+			if (state.open === id) show(id);
+			state.selection = null;
 		},
 		deleteField(fieldname: string) {
 			const column = columnOf(fieldname);
@@ -383,15 +518,27 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		fields: copy(state.fields),
 		trees: copy(state.trees),
 		omitted: copy(state.omitted),
+		source: copy(state.source),
+		forked: copy(state.forked),
+		variants: copy(state.variants),
+		open: state.open,
 		acted: state.acted,
 		activeTab: state.activeTab,
 	});
+	// A step restores the layouts it saw; layouts opened since keep theirs. It lands on the
+	// layout the step was taken on, so an undo is never out of sight (#47097).
 	function restore(one: Snapshot) {
 		state.fields = one.fields;
-		state.trees = one.trees;
-		state.omitted = one.omitted;
+		state.trees = { ...state.trees, ...one.trees };
+		state.omitted = { ...state.omitted, ...one.omitted };
+		state.source = { ...state.source, ...one.source };
+		state.forked = { ...state.forked, ...one.forked };
+		state.variants = one.variants;
 		state.acted = one.acted;
-		if (one.activeTab && tree.value.some((tab) => tab.name === one.activeTab)) state.activeTab = one.activeTab;
+		if (one.open !== state.open) {
+			state.tabFor[state.open] = state.activeTab;
+			show(one.open, one.activeTab);
+		} else if (one.activeTab && tree.value.some((tab) => tab.name === one.activeTab)) state.activeTab = one.activeTab;
 		const selected = state.selection;
 		if (selected?.kind === "field" && !field(selected.fieldname)) state.selection = null;
 		if (selected && selected.kind !== "field" && !find(selected.key)) state.selection = null;
@@ -428,22 +575,22 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		undo() {
 			const one = state.past.pop();
 			if (!one) return;
-			state.future.push(snapshot());
+			state.future.push({ ...snapshot(), open: one.open });
 			restore(one);
 			lastStep = { key: "", at: 0 };
 		},
 		redo() {
 			const one = state.future.pop();
 			if (!one) return;
-			state.past.push(snapshot());
+			state.past.push({ ...snapshot(), open: one.open });
 			restore(one);
 			lastStep = { key: "", at: 0 };
 		},
 	};
 
 	function ensureTab() {
-		if (!state.trees[state.layout].length)
-			state.trees[state.layout].push({ name: newKey("tab"), sections: [] });
+		if (!state.trees[state.open].length)
+			state.trees[state.open].push({ name: newKey("tab"), sections: [] });
 	}
 
 	function defaultColumn() {
@@ -466,11 +613,26 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 
 	return {
 		state, tree, schema, edits: computed(() => state.log.length), placed, omitted, unplaced, autoFields, hasMoreFields, dataFields,
-		load, loadDraft, find, field, columnOf, acts, can, history,
+		load, loadDraft, loadAll, openLayout, canReset, find, field, columnOf, acts, can, history,
 	};
 }
 
 export type Editor = ReturnType<typeof createEditor>;
+
+async function readLayouts(doctype: string, key: LayoutKey) {
+	const type = LAYOUTS.find((one) => one.key === key)!.type;
+	const { data } = await runMethod<FormLayoutsResponse>(
+		"frappe.desk.doctype.form_layout.form_layout.get_form_layouts",
+		{ dt: doctype, type },
+		{ http: "GET" }
+	);
+	return data;
+}
+
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? []));
+
+/** The runtime marks an app file's entry with `name: null`; a site row has a name. */
+const sourceOf = (row: { name: string | number | null }): Source => (row.name == null ? "app" : "site");
 
 export function isMandatory(field: RawMetaField) {
 	return (Boolean(field.reqd) && !field.default) || Boolean(field.mandatory_depends_on);

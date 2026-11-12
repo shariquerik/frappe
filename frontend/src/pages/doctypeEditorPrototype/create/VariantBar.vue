@@ -1,5 +1,6 @@
 <!-- PROTOTYPE (#47095), throwaway: the floating variant switcher. ‹ A (label) ›, or ← and → when
-     no input has the caret; the choice lives in ?variant= so a link or a reload keeps it. Dev only. -->
+     no input has the caret; the choice lives in ?variant= so a link or a reload keeps it. Dev only.
+     #47097: `param` names the query key it switches (default `variant`), so each ticket keeps its own. -->
 <template>
 	<div
 		v-if="DEV"
@@ -23,17 +24,17 @@
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-const props = defineProps<{ variants: { key: string; label: string }[] }>();
+const props = withDefaults(defineProps<{ variants: { key: string; label: string }[]; param?: string }>(), { param: "variant" });
 const DEV = import.meta.env.DEV;
 const route = useRoute();
 const router = useRouter();
 
-const index = computed(() => Math.max(0, props.variants.findIndex((one) => one.key === route.query.variant)));
+const index = computed(() => Math.max(0, props.variants.findIndex((one) => one.key === route.query[props.param])));
 const current = computed(() => props.variants[index.value]);
 
 function step(by: number) {
 	const next = props.variants[(index.value + by + props.variants.length) % props.variants.length];
-	void router.replace({ query: { ...route.query, variant: next.key } });
+	void router.replace({ query: { ...route.query, [props.param]: next.key } });
 }
 
 function onKeydown(event: KeyboardEvent) {
