@@ -1,23 +1,26 @@
-<!-- PROTOTYPE (#47097), throwaway: the `Details ▾` layout menu. Its button names the open layout;
-     the menu lists Details, Side panel, Quick entry and New record (those the DocType's kind
-     allows), each conditional variant indented under its type, a source badge on every row and a
-     check on the open one, then "Add a variant…". It opens below its button, aligned to the
-     button's edge. Rows by ?switcher=: A one line; B two (name, then where it shows); C one line
-     with a trailing ⋯ holding the row's acts, its lane reserved on every row. -->
+<!-- PROTOTYPE (#47097), throwaway: the layout crumb, last in `DocType / Contact / Details ▾`, and
+     its menu. The crumb names the open layout in the crumbs' own type; a click opens the menu
+     below it, aligned to its left edge. The menu lists Details, Side panel, Quick entry and New
+     record (those the DocType's kind allows), each conditional variant indented under its type, a
+     source badge on every row and a check on the open one. Round 2: the open layout's own acts
+     follow (Edit condition…, Reset to app layout, Delete variant) under a muted header naming it
+     and where it shows; a layout with no acts drops the header too. "Add a variant…" ends it. -->
 <template>
-	<Popover v-model:open="open" side="bottom" :align="align" :auto-focus="false">
+	<Popover v-model:open="open" side="bottom" align="start" :auto-focus="false">
 		<template #trigger="{ open: isOpen }">
-			<Button
-				variant="subtle"
-				icon-right="lucide-chevron-down"
-				:label="ui.current.value.title"
-				class="max-w-[280px] shrink-0"
-				:class="{ '!bg-surface-gray-3': isOpen }"
+			<!-- px-1, not a plain crumb's px-0.5: the hover fill keeps 2px clear of the `/`. -->
+			<button
+				type="button"
+				:disabled="disabled"
+				class="flex min-w-0 max-w-[360px] items-center gap-0.5 rounded-4 px-1 py-1 text-lg-medium leading-tighter text-ink-gray-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+				:class="isOpen ? 'bg-surface-gray-3' : 'hover:bg-surface-gray-2'"
 				data-layout-menu
-			/>
+			>
+				<span class="min-w-0 truncate" :title="ui.current.value.title">{{ ui.current.value.title }}</span>
+				<span class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+			</button>
 		</template>
-		<!-- B's second line needs the room: "A new record's page, until its first save" stays whole. -->
-		<div class="flex flex-col divide-y divide-outline-elevation-2" :class="twoLine ? 'w-[440px]' : 'w-[380px]'" data-layout-menu-content>
+		<div class="flex w-[380px] flex-col divide-y divide-outline-elevation-2" data-layout-menu-content>
 			<div class="flex flex-col gap-px p-1.5">
 				<ItemListRow
 					v-for="entry in ui.entries.value"
@@ -26,7 +29,7 @@
 					role="menuitem"
 					tabindex="0"
 					class="cursor-pointer !pr-1 hover:bg-surface-gray-2 focus-visible:bg-surface-gray-2 focus-visible:outline-none"
-					:class="[entry.variant ? '!pl-8' : '', twoLine ? '!min-h-12' : '']"
+					:class="{ '!pl-8': entry.variant }"
 					:data-layout-row="entry.id"
 					@click="pick(entry)"
 					@keydown.enter.prevent="pick(entry)"
@@ -35,21 +38,24 @@
 						<span class="size-4 text-ink-gray-6" :class="entry.icon" aria-hidden="true" />
 					</template>
 					<span class="block truncate" :class="entry.variant ? 'text-ink-gray-7' : 'text-ink-gray-8'" :title="entry.label">{{ entry.label }}</span>
-					<span v-if="twoLine" class="mt-0.5 block truncate text-sm text-ink-gray-5">{{ entry.where }}</span>
 					<template #suffix>
 						<Badge :label="entry.badge" theme="gray" class="shrink-0" />
 						<span class="grid size-4 shrink-0 place-items-center" aria-hidden="true">
 							<span v-if="entry.id === ui.current.value.id" class="lucide-check size-4 text-ink-gray-7" />
 						</span>
-						<!-- C: every row reserves the ⋯ lane (width and height), so badges line up and rows keep one height whether a row has acts or not. -->
-						<span v-if="variant === 'C'" class="flex h-7 w-7 shrink-0 items-center justify-center" @click.stop @keydown.enter.stop>
-							<Dropdown v-if="actsOf(ui, entry).length" :options="actsOf(ui, entry).map(withClose)" side="bottom" align="start">
-								<Button variant="ghost" size="sm" icon="lucide-ellipsis" :label="`${entry.title}: more`" data-layout-acts />
-							</Dropdown>
-						</span>
 					</template>
 				</ItemListRow>
 				<p v-if="ui.kind.value === 'child'" class="px-2 pb-1 pt-1.5 text-p-sm text-ink-gray-5">A child table's rows use Details only.</p>
+			</div>
+			<div v-if="acts.length" class="flex flex-col gap-px p-1.5" data-layout-acts>
+				<div class="px-2 pb-1.5 pt-1">
+					<p class="truncate text-sm font-medium leading-tighter text-ink-gray-5" :title="ui.current.value.title">{{ ui.current.value.title }}</p>
+					<p class="mt-1 text-sm leading-tighter text-ink-gray-4">{{ ui.current.value.where }}</p>
+				</div>
+				<ItemListRow v-for="act in acts" :key="act.label" as="button" type="button" class="text-left hover:bg-surface-gray-2" :data-layout-act="act.label" @click="run(act)">
+					<template #prefix><span class="size-4 text-ink-gray-6" :class="act.icon" aria-hidden="true" /></template>
+					<span class="block truncate text-ink-gray-8">{{ act.label }}</span>
+				</ItemListRow>
 			</div>
 			<div class="flex flex-col gap-px p-1.5">
 				<ItemListRow as="button" type="button" class="text-left hover:bg-surface-gray-2" data-add-variant @click="addVariant">
@@ -63,30 +69,30 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from "vue";
-import { Badge, Button, Dropdown, ItemListRow, Popover } from "frappe-ui";
+import { Badge, ItemListRow, Popover } from "frappe-ui";
 import { actsOf, LayoutUiKey, type LayoutEntry } from "./layouts";
 
-const props = withDefaults(defineProps<{ variant: string; align?: "start" | "end" }>(), { align: "start" });
+// Disabled until the layouts load: the menu's badges need them.
+defineProps<{ disabled?: boolean }>();
+const emit = defineEmits<{ picked: [] }>();
 const ui = inject(LayoutUiKey)!;
 const open = ref(false);
-const twoLine = computed(() => props.variant === "B");
+const acts = computed(() => actsOf(ui, ui.current.value));
 
 function pick(entry: LayoutEntry) {
 	ui.open(entry);
 	open.value = false;
+	emit("picked");
+}
+
+// An act closes the menu first: it may change the canvas under it, or open a dialog.
+function run(act: { onClick: () => void }) {
+	open.value = false;
+	act.onClick();
 }
 
 function addVariant() {
 	open.value = false;
 	ui.adding.value = true;
 }
-
-// An act closes the layout menu too: it may change the canvas under it.
-const withClose = (act: { label: string; icon: string; onClick: () => void }) => ({
-	...act,
-	onClick: () => {
-		open.value = false;
-		act.onClick();
-	},
-});
 </script>

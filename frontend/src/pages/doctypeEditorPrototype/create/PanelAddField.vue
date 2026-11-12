@@ -8,7 +8,7 @@
 	<div v-if="listing" class="px-4 pb-1 pt-3">
 		<TabButtons v-model="pane" :options="PANES" class="[&>*]:w-full [&_button]:flex-1" />
 	</div>
-	<div v-if="!listing || pane === 'add'" class="flex min-h-[42px] items-center px-4 py-2" :class="{ 'border-t border-outline-gray-1': divided }">
+	<div v-if="!listing || pane === 'add'" class="flex min-h-[42px] items-center px-4 py-2">
 		<p class="text-p-sm text-ink-gray-5">Select a field or a section heading to edit it here.</p>
 	</div>
 	<template v-if="listing && pane === 'fields'">
@@ -109,7 +109,6 @@ import { fieldIndex, matches, SavedUiKey } from "./savedDoctype";
 import { typeLabel } from "./newDoctype";
 import { typeIcon, type FieldType } from "./typeMenu";
 
-defineProps<{ divided?: boolean }>();
 defineEmits<{ add: [type: FieldType]; place: [fieldname: string]; "drag-start": [event: any]; "drag-end": [event: any] }>();
 
 // Email is Data with the Email option, listed as its own type, as the type menu does.

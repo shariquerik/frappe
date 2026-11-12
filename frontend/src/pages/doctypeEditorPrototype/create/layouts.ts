@@ -1,17 +1,16 @@
-// PROTOTYPE (#47097), throwaway: the layouts a saved DocType has, as the `Details ▾` menu lists
-// them, and the acts on the one that is open. Nothing is written; Save stays a toast.
-// ?switcher= picks where those acts live: A a card in the panel, B a strip over the canvas,
-// C a ⋯ on each menu row.
+// PROTOTYPE (#47097), throwaway: the layouts a saved DocType has, as the layout crumb's menu
+// lists them, and the acts on the one that is open. Nothing is written; Save stays a toast.
+// Round 2: the acts live in that menu, under the rows, for the open layout only.
 import { computed, ref, type ComputedRef, type InjectionKey, type Ref } from "vue";
 import type { Editor, LayoutKey, Source, Variant } from "../editor";
 import { LAYOUTS } from "../editor";
 import type { Kind } from "./newDoctype";
 
 export const WHERE: Record<LayoutKey, string> = {
-	details: "The record page's main column",
-	"side-panel": "The record page's right side",
-	"quick-entry": "The Create dialog",
-	"new-record": "A new record's page, until its first save",
+	details: "Shows in the record page's main column",
+	"side-panel": "Shows on the record page's right side",
+	"quick-entry": "Shows in the Create dialog",
+	"new-record": "Shows on a new record's page until its first save",
 };
 
 export const ICON: Record<LayoutKey, string> = {
@@ -47,7 +46,7 @@ export interface LayoutEntry {
 	key: LayoutKey;
 	/** "Side panel", or "When doc.status == …" for a variant. */
 	label: string;
-	/** The button's label: "Details · when doc.status == …" for a variant. */
+	/** The crumb's label: "Details · when doc.status == …" for a variant. */
 	title: string;
 	where: string;
 	badge: string;
@@ -106,8 +105,8 @@ export function createLayoutUi(editor: Editor, kind: ComputedRef<Kind>): LayoutU
 
 /** The acts a layout has, in the order every variant lists them. */
 export function actsOf(ui: LayoutUi, entry: LayoutEntry) {
-	const acts: { label: string; icon: string; onClick: () => void; theme?: "red" }[] = [];
-	if (entry.variant) acts.push({ label: "Edit condition", icon: "lucide-pencil", onClick: () => (ui.editing.value = entry.variant!) });
+	const acts: { label: string; icon: string; onClick: () => void }[] = [];
+	if (entry.variant) acts.push({ label: "Edit condition…", icon: "lucide-pencil", onClick: () => (ui.editing.value = entry.variant!) });
 	if (ui.canReset(entry.id)) acts.push({ label: "Reset to app layout", icon: "lucide-rotate-ccw", onClick: () => ui.reset(entry.id) });
 	if (entry.variant) acts.push({ label: "Delete variant", icon: "lucide-trash-2", onClick: () => ui.remove(entry.id) });
 	return acts;

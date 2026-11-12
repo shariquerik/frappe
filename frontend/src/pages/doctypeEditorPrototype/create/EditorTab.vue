@@ -1,8 +1,9 @@
 <!-- PROTOTYPE (#45867): the Editor tab, as frappe/crm#3419's EditorTab: the canvas (one column
      centred left of the panel, 728px of form as the record page's Details column, #47097)
      and the 380px panel, side by side under the tab strip.
-     #47097: the canvas draws the open layout (Side Panel and Quick Entry in their own frames);
-     `panel-top` heads the panel while nothing is selected.
+     #47097: the canvas draws the open layout (Side Panel and Quick Entry in their own frames).
+     Round 2: the `meta` slot replaces the plain meta line (Customize's "From ERPNext" has a tooltip);
+     the panel's "This layout" card is gone, its acts are in the layout crumb's menu.
      The panel shows the selected field's settings, the selected section's, or "Add a field".
      No × on the canvas: remove from the panel, with Delete/Backspace, or on the drag bin. Escape
      cancels a drag, else clears the selection. -->
@@ -42,7 +43,7 @@
 						class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink-gray-6 placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 						@input="grow"
 					/>
-					<p class="mt-1 text-p-sm text-ink-gray-5">{{ meta }}</p>
+					<p class="mt-1 text-p-sm text-ink-gray-5"><slot name="meta">{{ meta }}</slot></p>
 				</div>
 				<EditorCanvas v-if="layout !== 'side-panel' && layout !== 'quick-entry'" @drag-start="startField" @drag-end="endField" />
 			</div>
@@ -60,10 +61,7 @@
 				@close="clear"
 			/>
 			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
-			<template v-else>
-				<slot name="panel-top" />
-				<PanelAddField :divided="Boolean($slots['panel-top'])" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
-			</template>
+			<PanelAddField v-else @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
 		</aside>
 	</div>
 </template>
@@ -85,7 +83,7 @@ import { DraftUiKey } from "./draftUi";
 import { typeLabel } from "./newDoctype";
 import { typeIcon, type FieldType } from "./typeMenu";
 
-defineProps<{ name: string; meta: string }>();
+defineProps<{ name: string; meta?: string }>();
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
 
