@@ -21,8 +21,12 @@
 		</PanelRow>
 		<PanelRow label="Order" :box="false">
 			<div class="flex gap-1.5">
-				<Button size="sm" variant="subtle" icon-left="lucide-arrow-left" label="Move left" :disabled="index === 0" @click="editor.acts.moveTab(tab.name!, -1)" />
-				<Button size="sm" variant="subtle" icon-left="lucide-arrow-right" label="Move right" :disabled="index === last" @click="editor.acts.moveTab(tab.name!, 1)" />
+				<Tooltip text="Move left">
+					<Button size="sm" variant="subtle" icon="lucide-arrow-left" label="Move left" :disabled="index === 0" @click="editor.acts.moveTab(tab.name!, -1)" />
+				</Tooltip>
+				<Tooltip text="Move right">
+					<Button size="sm" variant="subtle" icon="lucide-arrow-right" label="Move right" :disabled="index === last" @click="editor.acts.moveTab(tab.name!, 1)" />
+				</Tooltip>
 			</div>
 		</PanelRow>
 	</PanelSection>
@@ -31,7 +35,7 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from "vue";
-import { Button, TextInput } from "frappe-ui";
+import { Button, TextInput, Tooltip } from "frappe-ui";
 import type { LayoutTreeTab } from "@framework/ui/FormLayout/types";
 import { EditorKey } from "../context";
 import { DraftUiKey } from "./draftUi";

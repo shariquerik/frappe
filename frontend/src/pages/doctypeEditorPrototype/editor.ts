@@ -3,7 +3,7 @@
 // page for Details, the Create dialog for Quick Entry, the record page for its row and its
 // panel). Nothing here saves. Every edit runs through `act`, which logs it as `page.run` would.
 
-import { reactive, computed, toRaw } from "vue";
+import { reactive, computed } from "vue";
 import { runMethod } from "@framework/ui/api";
 import { DROPPED_FIELDTYPES } from "@framework/ui/FormLayout";
 import { joinLayout } from "@/recordPage/formLayoutSource/joinLayout";
@@ -376,10 +376,12 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	// second) folds into the step it started.
 	let lastStep = { key: "", at: 0 };
 	let grouping = false;
+	// A JSON copy: structuredClone throws on the reactive proxies nested inside the trees.
+	const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 	const snapshot = (): Snapshot => ({
-		fields: structuredClone(toRaw(state.fields)),
-		trees: structuredClone(toRaw(state.trees)),
-		omitted: structuredClone(toRaw(state.omitted)),
+		fields: copy(state.fields),
+		trees: copy(state.trees),
+		omitted: copy(state.omitted),
 		acted: state.acted,
 		activeTab: state.activeTab,
 	});

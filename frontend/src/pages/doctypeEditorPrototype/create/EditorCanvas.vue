@@ -2,7 +2,9 @@
      of frappe/crm#3419's EditorCanvas: sections 40px apart with the heading typed in place, columns
      as full-height drop zones, "Add field" under each section, "Add section" under a rule. -->
 <template>
-	<div v-if="editor.tree.value.length > 1" class="-ml-2 mb-10 flex items-center gap-1 border-b border-outline-gray-1">
+	<!-- The rule spans the form's width; the tabs step 8px left so the first label sits on its edge. -->
+	<div v-if="editor.tree.value.length > 1" class="mb-10 border-b border-outline-gray-1">
+		<div class="-ml-2 flex items-center gap-1">
 		<button
 			v-for="tab in editor.tree.value"
 			:key="tab.name"
@@ -18,11 +20,12 @@
 			@click.stop="openTab(tab.name!)"
 		>
 			{{ tab.label || "Untitled tab" }}
-			<span v-if="tab.name === shown?.name" class="absolute inset-x-2 bottom-0 h-px bg-ink-gray-9" aria-hidden="true" />
+			<span v-if="tab.name === shown?.name" class="absolute inset-x-2 bottom-0 h-px bg-surface-gray-7" aria-hidden="true" />
 		</button>
 		<Tooltip text="Add tab">
 			<Button variant="ghost" size="sm" icon="lucide-plus" label="Add tab" class="ml-1" @click.stop="addTab" />
 		</Tooltip>
+		</div>
 	</div>
 	<Draggable
 		v-for="tab in shown ? [shown] : []"
@@ -180,6 +183,10 @@ async function addSection() {
 	box-shadow: none !important;
 	background-color: var(--outline-gray-4) !important;
 	opacity: 1 !important;
+}
+/* Over a tab header the field goes to that tab, so the line in the form hides. */
+[data-drop-tab] .dte-drop-line {
+	opacity: 0 !important;
 }
 [data-editor-empty] > .dte-drop-line {
 	margin: 29px 0 0 !important;

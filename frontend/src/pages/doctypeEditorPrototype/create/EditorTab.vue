@@ -9,9 +9,10 @@
 			class="relative min-w-0 flex-1 overflow-y-auto"
 			:class="{ 'select-none': editor.state.dragging }"
 			data-editor-canvas
+			:data-drop-tab="editor.state.dropTab ?? undefined"
 			@click="onCanvasClick"
 		>
-			<div class="mx-auto w-full max-w-[640px] px-10 pb-[40vh] pt-10">
+			<div class="mx-auto w-full max-w-[640px] px-10 pb-[80vh] pt-10">
 				<slot name="banner" />
 				<div class="mb-10">
 					<h1 class="text-2xl font-semibold text-ink-gray-9">{{ name }}</h1>
@@ -47,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { LayoutTreeSection, LayoutTreeTab } from "@framework/ui/FormLayout/types";
 import { EditorKey, onDrop } from "../context";
 import DragLayer from "./DragLayer.vue";
@@ -222,6 +223,11 @@ function onKeydown(event: KeyboardEvent) {
 	removeField(selectedField.value.fieldname);
 }
 onMounted(() => window.addEventListener("keydown", onKeydown));
+// Another tab is another page of the form: it opens at the top, with the DocType's name in view.
+watch(
+	() => editor.state.activeTab,
+	() => document.querySelector("[data-editor-canvas]")?.scrollTo({ top: 0 })
+);
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 
 function openAddField() {

@@ -18,7 +18,7 @@
 						<Breadcrumbs :items="crumbs" class="-ml-0.5 min-w-0" />
 						<Badge v-if="current && unsavedNow" label="Not saved" theme="amber" />
 					</div>
-					<div v-if="current && tab === 'editor'" class="flex shrink-0 items-center">
+					<div v-if="current && tab === 'editor'" class="hidden shrink-0 items-center lg:flex">
 						<Tooltip text="Undo (Ctrl+Z)">
 							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!editor.state.past.length" @click="editor.history.undo()" />
 						</Tooltip>
