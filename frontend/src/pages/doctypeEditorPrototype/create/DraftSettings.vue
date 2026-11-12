@@ -1,9 +1,13 @@
-<!-- PROTOTYPE (#45867), a stub: step 6's Settings for a new DocType, showing the defaults the
+<!-- PROTOTYPE (#45867), a stub: step 6's Settings tab for a new DocType, showing the defaults the
      first save uses. Nothing here is asked up front and nothing saves. A child table drops naming
      and permissions (its rows take both from the parent); a Single drops naming (one record). -->
 <template>
-	<Dialog v-model:open="open" :title="`${name} settings`" size="xl">
-		<div class="flex flex-col divide-y divide-outline-gray-1">
+	<div class="mx-auto flex w-full max-w-[680px] flex-col">
+		<div class="flex flex-col gap-1 pb-5">
+			<h2 class="text-base-medium text-ink-gray-9">Settings</h2>
+			<p class="text-p-base text-ink-gray-6">The defaults the first save uses, so {{ name }} works at once. Change them later.</p>
+		</div>
+		<div class="flex flex-col divide-y divide-outline-gray-1 border-t border-outline-gray-1 pt-5">
 			<section v-if="kind === 'child'" class="flex gap-3 pb-5">
 				<span class="lucide-table-2 mt-0.5 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
 				<p class="text-p-base text-ink-gray-7">
@@ -56,22 +60,16 @@
 				</dl>
 			</section>
 		</div>
-		<template #actions>
-			<div class="flex items-center justify-between gap-3">
-				<span class="text-sm text-ink-gray-5">Prototype: these are the defaults, shown, not editable.</span>
-				<Button variant="solid" label="Done" @click="open = false" />
-			</div>
-		</template>
-	</Dialog>
+		<p class="mt-6 text-sm text-ink-gray-5">Prototype: these are the defaults, shown, not editable.</p>
+	</div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Button, Dialog } from "frappe-ui";
+import { Button } from "frappe-ui";
 import type { Kind } from "./newDoctype";
 
 const props = defineProps<{ name: string; kind: Kind; title: string }>();
-const open = defineModel<boolean>("open", { required: true });
 
 const rights = computed(() =>
 	props.kind === "submittable"

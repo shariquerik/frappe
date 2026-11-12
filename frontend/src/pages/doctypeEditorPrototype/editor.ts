@@ -60,6 +60,8 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 		forked: {} as Record<LayoutKey, boolean>,
 		selection: null as Selection,
 		log: [] as { act: string; args: string; note?: string }[],
+		// Every act counts here; the log above keeps only the last 30.
+		acted: 0,
 		dragging: null as null | "field" | "column" | "section",
 	});
 
@@ -173,6 +175,7 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 	}
 
 	function act(name: string, args: Record<string, unknown>, note?: string) {
+		state.acted++;
 		state.log.unshift({ act: name, args: JSON.stringify(args), note });
 		if (state.log.length > 30) state.log.pop();
 	}
