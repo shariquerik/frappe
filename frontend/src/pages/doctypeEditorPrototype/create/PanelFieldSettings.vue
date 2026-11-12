@@ -196,9 +196,10 @@ const count = computed(() => (isSaved.value ? saved.value!.counts[saved.value!.o
 const loadedType = computed(() => (isSaved.value ? saved.value!.loadedType[saved.value!.original(props.field.fieldname)] : undefined));
 
 const subtitle = computed(() => {
-	const parts = [typeLabel(props.field.fieldtype, props.field.options), props.field.fieldname];
-	if (count.value !== undefined) parts.push(plural(count.value, "value"));
-	return parts.join(" · ");
+	// A saved field's subtitle trades the fieldname (in its own row below) for the value count.
+	const type = typeLabel(props.field.fieldtype, props.field.options);
+	if (!isSaved.value) return `${type} · ${props.field.fieldname}`;
+	return count.value === undefined ? type : `${type} · ${plural(count.value, "value")}`;
 });
 
 /** With values in its column, a field offers only the type changes that keep them; the rest show, disabled. */
