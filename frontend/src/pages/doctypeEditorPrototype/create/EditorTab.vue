@@ -65,9 +65,12 @@
 				@close="clear"
 			/>
 			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
-			<!-- #47099: in a child's own editor, its grid columns head the empty panel. -->
-			<GridColumns v-if="inChild && !selectedField && !selectedSection && !selectedTab" :child="inChild" :table="childUi?.jumped ?? ''" :divided="false" @open="openOwn" />
-			<PanelAddField v-if="!focusChild && !selectedField && !selectedSection && !selectedTab" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
+			<PanelAddField v-if="!focusChild && !selectedField && !selectedSection && !selectedTab" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette">
+				<!-- #47099: in a child's own editor, its grid columns come right after the panel's hint, as the parent's first group does. -->
+				<template v-if="inChild" #first>
+					<GridColumns :child="inChild" :table="childUi?.jumped ?? ''" @open="openOwn" />
+				</template>
+			</PanelAddField>
 		</aside>
 	</div>
 </template>

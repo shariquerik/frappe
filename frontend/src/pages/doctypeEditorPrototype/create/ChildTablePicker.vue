@@ -2,39 +2,42 @@
      the parent's module first, drafts made here on top. Its footer makes a new one
      ("+ New child table…"). A Table field just added opens it, so choosing the type leads here. -->
 <template>
-	<!-- The Combobox trigger is inline-flex and sizes to its input; here it fills the panel row. -->
-	<div class="w-full min-w-0 [&_[data-slot=trigger]]:!flex [&_[data-slot=trigger]]:w-full">
-		<Combobox
-			v-model:open="open"
-			variant="ghost"
-			side="bottom"
-			align="end"
-			:model-value="field.options"
-			:options="groups"
-			placeholder="Choose a child table"
-			data-child-picker
-			@update:model-value="pick"
-		>
-			<template #footer>
-				<div class="border-t border-outline-gray-1 p-1">
-					<button
-						type="button"
-						class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8 hover:bg-surface-gray-3"
-						data-new-child
-						@click="newChild"
-					>
-						<span class="lucide-plus size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
-						New child table…
-					</button>
-				</div>
-			</template>
-		</Combobox>
-	</div>
+	<!-- The Combobox trigger is inline-flex and sizes to its input; here it fills the panel row, and a
+	     long name ends in an ellipsis before the chevron (the tooltip has it in full). -->
+	<Tooltip :text="field.options" :disabled="!field.options || open">
+		<div class="w-full min-w-0 [&_[data-slot=trigger]]:!flex [&_[data-slot=trigger]]:w-full [&_input]:min-w-0 [&_input]:text-ellipsis">
+			<Combobox
+				v-model:open="open"
+				variant="ghost"
+				side="bottom"
+				align="end"
+				:model-value="field.options"
+				:options="groups"
+				placeholder="Choose a child table"
+				data-child-picker
+				@update:model-value="pick"
+			>
+				<template #footer>
+					<div class="border-t border-outline-gray-1 p-1">
+						<button
+							type="button"
+							class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8 hover:bg-surface-gray-3"
+							data-new-child
+							@click="newChild"
+						>
+							<span class="lucide-plus size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
+							New child table…
+						</button>
+					</div>
+				</template>
+			</Combobox>
+		</div>
+	</Tooltip>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from "vue";
-import { Combobox } from "frappe-ui";
+import { Combobox, Tooltip } from "frappe-ui";
 import { EditorKey } from "../context";
 import type { EditorField } from "../editor";
 import { ChildUiKey } from "./childTables";
@@ -78,3 +81,12 @@ onMounted(() => {
 	if (props.field.added && !props.field.options) setTimeout(() => (open.value = true), 350);
 });
 </script>
+
+<style>
+/* The list opens below the trigger, its right edge on the trigger's, and as wide as the panel row:
+   its left edge sits on the label column (130px plus the row's 8px gap), with the rows' gutter.
+   Long names in it truncate (the Combobox rows do once the list has a width). */
+[data-slot="content"]:has([data-new-child]) {
+	width: calc(var(--reka-combobox-trigger-width) + 138px);
+}
+</style>

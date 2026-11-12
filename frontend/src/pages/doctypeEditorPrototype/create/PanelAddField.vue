@@ -11,6 +11,8 @@
 	<div v-if="!listing || pane === 'add'" class="flex min-h-[42px] items-center px-4 py-2">
 		<p class="text-p-sm text-ink-gray-5">Select a field or a section heading to edit it here.</p>
 	</div>
+	<!-- #47099: a child's own editor puts its grid columns here, under the hint. -->
+	<slot name="first" />
 	<template v-if="listing && pane === 'fields'">
 		<div class="px-4 pb-1 pt-2">
 			<TextInput v-model="fieldQuery" placeholder="Find a field">

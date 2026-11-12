@@ -9,6 +9,15 @@
 "wait": 3000
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "01-a-table-field-grid-and-columns"
 },
 {
@@ -16,6 +25,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "02-a-column-opens-child-field"
@@ -31,6 +49,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "03-a-add-column-menu"
@@ -54,6 +81,15 @@
 "wait": 600
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "04-a-narrower-column-fits"
 },
 {
@@ -73,6 +109,15 @@
 "wait": 500
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "05-b-panel-lists-child-fields"
 },
 {
@@ -80,6 +125,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "06-b-child-field-in-panel"
@@ -94,6 +148,15 @@
 "wait": 3000
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "07-c-table-field-panel"
 },
 {
@@ -103,6 +166,15 @@
 "wait": 2000
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "08-c-child-editor"
 },
 {
@@ -110,6 +182,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "09-c-child-field-from-grid"
@@ -143,6 +224,15 @@
 },
 {
 "wait": 300
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "10-c-back-to-parent-edits-kept"
@@ -193,6 +283,15 @@
 "wait": 1200
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "11-new-table-field-picker"
 },
 {
@@ -200,6 +299,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "12-new-child-table-dialog"
@@ -212,6 +320,15 @@
 },
 {
 "wait": 1200
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "13-new-child-empty-grid"
@@ -238,6 +355,30 @@
 "wait": 600
 },
 {
+"click": "[data-editor-panel] div.grid:has(> div > span:text-is('Type')) button"
+},
+{
+"wait": 500
+},
+{
+"role": [
+"menuitem",
+"Date"
+]
+},
+{
+"wait": 600
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "14-new-child-first-column"
 },
 {
@@ -248,6 +389,15 @@
 },
 {
 "wait": 800
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "15-save-child-first-toast"
@@ -274,6 +424,15 @@
 "wait": 600
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "16-customize-columns-site-change"
 },
 {
@@ -281,6 +440,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "17-customize-child-field-marks"
@@ -293,6 +461,15 @@
 },
 {
 "wait": 800
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "18-customize-save-toast"
@@ -308,6 +485,15 @@
 },
 {
 "wait": 3500
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "19-customize-shared-child"
@@ -353,6 +539,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "20-customize-new-custom-child-dialog"
@@ -427,6 +622,15 @@
 "wait": 1200
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "21-draft-table-field-picker"
 },
 {
@@ -434,6 +638,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "22-draft-new-child-dialog"
@@ -475,6 +688,15 @@
 "wait": 600
 },
 {
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
+},
+{
 "shot": "23-draft-child-first-column"
 },
 {
@@ -485,6 +707,15 @@
 },
 {
 "wait": 900
+},
+{
+"mouse": [
+60,
+860
+]
+},
+{
+"wait": 200
 },
 {
 "shot": "24-draft-save-child-first"

@@ -9,22 +9,24 @@
 			><span class="text-sm text-ink-gray-4">{{ columns.length }}</span></template
 		>
 		<div class="flex flex-col gap-1.5" data-grid-fit>
-			<div class="relative flex h-2 gap-0.5 overflow-hidden rounded-full bg-surface-gray-2">
-				<div
-					v-for="one in columns"
-					:key="one.fieldname"
-					class="h-full min-w-0 first:rounded-l-full"
-					:class="isFocused(one.fieldname) ? 'bg-surface-gray-7' : 'bg-surface-gray-5'"
-					:style="{ flex: `${columnPx(one)} 1 0` }"
-				/>
-				<!-- The form's room the columns leave free. -->
-				<div v-if="!fit.over && columns.length" :style="{ flex: `${fit.room - fit.used} 1 0` }" />
-				<!-- Past the form's edge: the part of the grid that scrolls into view. -->
-				<div
-					v-if="fit.over"
-					class="absolute inset-y-0 right-0 border-l-2 border-outline-white bg-surface-base opacity-60"
-					:style="{ left: `${(fit.room / scale) * 100}%` }"
-				/>
+			<div class="relative h-2">
+				<div class="flex h-full gap-0.5 overflow-hidden rounded-full bg-surface-gray-2">
+					<div
+						v-for="one in columns"
+						:key="one.fieldname"
+						class="h-full min-w-0"
+						:class="isFocused(one.fieldname) ? 'bg-surface-gray-7' : 'bg-surface-gray-5'"
+						:style="{ flex: `${columnPx(one)} 1 0` }"
+					/>
+					<!-- The form's room the columns leave free. -->
+					<div v-if="!fit.over && columns.length" :style="{ flex: `${fit.room - fit.used} 1 0` }" />
+				</div>
+				<!-- Wider than the form: the columns fill the bar, the part past the form's edge (the grid
+				     scrolls it into view) is a lighter shade, and a thin mark taller than the bar is the edge. -->
+				<template v-if="fit.over">
+					<div class="absolute inset-y-0 right-0 rounded-r-full bg-surface-base opacity-60" :style="{ left: edge }" />
+					<div class="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 rounded-full bg-surface-gray-9" :style="{ left: edge }" aria-label="The form's edge" data-form-edge />
+				</template>
 			</div>
 			<p class="text-p-sm text-ink-gray-5">
 				<template v-if="!columns.length">No columns. On save, its first 4 required fields become columns.</template>
@@ -124,6 +126,7 @@ const columns = computed(() => ui.columns(props.child));
 const fit = computed(() => gridFit(columns.value));
 // The bar's full width is the larger of the form's room and the grid's columns.
 const scale = computed(() => Math.max(FORM_PX - GRID_FIXED_PX, fit.value.used));
+const edge = computed(() => `${(fit.value.room / scale.value) * 100}%`);
 const lastLabel = computed(() => {
 	const last = columns.value[columns.value.length - 1];
 	return last?.label || last?.fieldname || "";

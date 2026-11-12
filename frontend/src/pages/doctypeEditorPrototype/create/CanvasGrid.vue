@@ -2,7 +2,8 @@
      (Grid.vue: checkbox, row number, the child's in_list_view columns, row menu) with one empty
      row. Each column is as wide as its `columns` asks (v1's pixel map), growing with the form; past
      the form's width the grid scrolls, as on the record page. ?child=A makes it the place to edit
-     the child: a click on a column opens that field in the panel, and the last header cell adds one. -->
+     the child: a click on a column opens that field in the panel, and the last header cell adds one
+     (in every variant: its + adds a column, so the header never ends in a blank cell). -->
 <template>
 	<div v-if="!child" class="flex h-20 items-center justify-center rounded-4 border border-dashed border-outline-gray-2 text-base text-ink-gray-5">
 		{{ field.options ? `Loading ${field.options}…` : "Choose its child table in the panel" }}
@@ -40,7 +41,7 @@
 					</component>
 					<div v-if="!columns.length" class="h-9 bg-surface-gray-2" />
 					<div class="sticky right-0 z-10 flex h-9 items-center justify-center border-l border-outline-gray-2 bg-surface-gray-2">
-						<AddColumnMenu v-if="editable" :child="child" :table="field.fieldname" align="end">
+						<AddColumnMenu :child="child" :table="field.fieldname" align="end">
 							<Tooltip text="Add column">
 								<button
 									type="button"

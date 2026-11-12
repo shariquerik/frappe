@@ -8,13 +8,14 @@
 			<template #actions
 				><span class="text-sm text-ink-gray-4">{{ rows.length }}</span></template
 			>
-			<div class="-mt-1 flex flex-col" data-child-field-list>
+			<!-- The list, not each row, takes the -mx-2: a w-full row would only shift left, ending its marks 16px short of the panel's edge. -->
+			<div class="-mx-2 -mt-1 flex flex-col" data-child-field-list>
 				<ItemListRow
 					v-for="row in shown"
 					:key="row.fieldname"
 					as="button"
 					type="button"
-					class="-mx-2 !min-h-8 text-left"
+					class="!min-h-8 text-left"
 					:data-child-field="row.fieldname"
 					@click="open(row.fieldname)"
 				>
