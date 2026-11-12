@@ -12,7 +12,7 @@
 		<PanelRow v-if="entry.variant" label="Shows when" :box="false">
 			<!-- The condition is the variant's name: wrap it whole, never truncate. -->
 			<div class="flex min-h-7 items-start gap-1">
-				<code class="min-w-0 flex-1 break-all py-1.5 font-mono text-sm leading-4 text-ink-gray-8">{{ entry.variant.condition }}</code>
+				<code class="min-w-0 flex-1 break-words py-1.5 font-mono text-sm leading-4 text-ink-gray-8">{{ entry.variant.condition }}</code>
 				<Button variant="ghost" size="sm" icon="lucide-pencil" label="Edit condition" tooltip="Edit condition" @click="ui.editing.value = entry.variant!" />
 			</div>
 		</PanelRow>

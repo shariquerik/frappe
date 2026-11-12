@@ -51,9 +51,6 @@
 "wait": 900
 },
 {
-"hover": "[data-layout-card]"
-},
-{
 "shot": "03-a-side-panel-two-fields-placed"
 },
 {
@@ -154,6 +151,18 @@
 },
 {
 "shot": "08-b-strip-quick-entry"
+},
+{
+"go": "/doctype/Contact?switcher=B&layout=details&row=proto-1"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 2000
+},
+{
+"shot": "08b-b-strip-variant"
 },
 {
 "go": "/doctype/Contact?switcher=C&layout=details&row=proto-1"
