@@ -15,7 +15,9 @@
 			</component>
 			<span class="mx-0.5 text-base text-ink-gray-4" aria-hidden="true">/</span>
 		</template>
-		<component :is="menu" :disabled="!ready" @picked="$emit('picked')" />
+		<!-- #47099: a child's editor ends on its name; a child has Details only, so no layout menu. -->
+		<span v-if="last" class="truncate px-0.5 py-1 text-lg-medium leading-tighter text-ink-gray-9">{{ last }}</span>
+		<component :is="menu" v-else :disabled="!ready" @picked="$emit('picked')" />
 	</nav>
 </template>
 
@@ -24,7 +26,7 @@ import { RouterLink, useRoute, type RouteLocationRaw } from "vue-router";
 import LayoutMenu from "./LayoutMenu.vue";
 import LayoutMenuOld from "./LayoutMenuOld.vue";
 
-defineProps<{ crumbs: { label: string; route?: RouteLocationRaw; onClick?: () => void }[]; ready: boolean }>();
+defineProps<{ crumbs: { label: string; route?: RouteLocationRaw; onClick?: () => void }[]; ready: boolean; last?: string }>();
 defineEmits<{ picked: [] }>();
 const menu = useRoute().query.menu === "old" ? LayoutMenuOld : LayoutMenu;
 </script>

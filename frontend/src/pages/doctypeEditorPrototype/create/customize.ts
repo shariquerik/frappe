@@ -19,7 +19,7 @@ const FIXED: Record<string, string> = {
 const WATCHED = [
 	"label", "fieldtype", "options", "reqd", "default", "placeholder", "description", "depends_on", "mandatory_depends_on",
 	"read_only_depends_on", "hidden", "read_only", "bold", "print_hide", "report_hide", "allow_on_submit", "translatable",
-	"in_list_view", "in_standard_filter", "in_global_search", "in_preview", "fetch_from", "fetch_if_empty", "unique",
+	"in_list_view", "columns", "in_standard_filter", "in_global_search", "in_preview", "fetch_from", "fetch_if_empty", "unique",
 	"no_copy", "set_only_once", "non_negative", "precision", "length", "permlevel", "ignore_user_permissions",
 ];
 

@@ -23,19 +23,19 @@
 			<div class="flex w-full flex-col">
 				<div class="-mx-3 flex h-12 items-center justify-between gap-3 border-b px-3 sm:-mx-5 sm:px-5">
 					<div class="flex min-w-0 flex-1 items-center gap-2">
-						<LayoutCrumbs :crumbs="crumbs" :ready="ready" class="-ml-0.5" @picked="tab = 'editor'" />
+						<LayoutCrumbs :crumbs="crumbs" :ready="ready" :last="jumpedChild?.name" class="-ml-0.5" @picked="tab = 'editor'" />
 						<Badge v-if="dirty" label="Not saved" theme="amber" class="shrink-0" />
 					</div>
-					<div v-if="finder === 'A' && (tab === 'editor' || unified) && ready" class="hidden shrink-0 lg:flex">
+					<div v-if="finder === 'A' && (tab === 'editor' || unified) && ready && !jumpedChild" class="hidden shrink-0 lg:flex">
 						<FieldFinder :settings="unified ? settings : null" @tab="tab = $event" />
 					</div>
 					<TabButtons v-if="switchable && header === 'A'" class="shrink-0" :options="MODES" :model-value="mode" @update:model-value="setMode" />
 					<div v-if="tab === 'editor'" class="hidden shrink-0 items-center lg:flex">
 						<Tooltip text="Undo (Ctrl+Z)">
-							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!editor.state.past.length" @click="editor.history.undo()" />
+							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!active.state.past.length" @click="active.history.undo()" />
 						</Tooltip>
 						<Tooltip text="Redo (Ctrl+Shift+Z)">
-							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!editor.state.future.length" @click="editor.history.redo()" />
+							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!active.state.future.length" @click="active.history.redo()" />
 						</Tooltip>
 					</div>
 					<Dropdown :options="moreMenu" side="bottom" align="end">
@@ -53,7 +53,7 @@
 						class="-mx-3 -mb-px sm:-mx-5 [&_[role='tab']]:rounded-4 [&_[role='tablist']]:gap-5 [&_[role='tablist']]:px-3 [&_[role='tablist']]:py-2 sm:[&_[role='tablist']]:px-5"
 					>
 						<TabList variant="underline">
-							<TabTrigger v-for="one in TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
+							<TabTrigger v-for="one in jumpedChild ? TABS.slice(0, 1) : TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
 						</TabList>
 					</Tabs>
 					<!-- B: Design | Customize at the strip's right end, on every tab. -->
@@ -69,7 +69,21 @@
 			<div v-if="tab === 'editor'" class="flex flex-1 items-center justify-center border-t border-outline-gray-1 px-6 text-center text-base text-ink-gray-6 lg:hidden">
 				The editor needs a wider window, 1024px or more.
 			</div>
-			<EditorTab v-if="tab === 'editor'" class="hidden lg:flex" :name="doctype">
+			<!-- #47099: a child's own editor fills the page (C's "Edit <child>", every "Edit row form"); the parent's edits wait. -->
+			<ChildScope v-if="tab === 'editor' && jumpedChild" :key="jumpedChild.name" :child="jumpedChild">
+				<EditorTab class="hidden lg:flex" :name="jumpedChild.name">
+					<template #meta>
+						{{ jumpedChild.module }} · Child table<template v-if="jumpedChild.custom"> · Custom</template><template v-if="jumpedChild.isNew"> · New, saved before {{ doctype }}</template> · This form is the row's dialog.
+					</template>
+					<template #after-meta>
+						<div class="mt-8" data-child-grid-preview>
+							<p class="mb-1.5 text-sm text-ink-gray-6">{{ jumpedField?.label }} in {{ doctype }}</p>
+							<CanvasGrid :field="jumpedField!" own />
+						</div>
+					</template>
+				</EditorTab>
+			</ChildScope>
+			<EditorTab v-else-if="tab === 'editor'" class="hidden lg:flex" :name="doctype">
 				<template #meta>
 					{{ metaLine.module }} ·
 					<Tooltip v-if="customizing" :text="`${doctype} comes from ${customize!.app}. Your changes stay on this site and survive its updates.`">
@@ -103,7 +117,8 @@
 		<CustomizeDialogs v-if="customize" v-model:reset="resetOpen" v-model:export="exportOpen" :doctype="doctype" :ui="customize" />
 		<LayoutDialogs v-if="ready" />
 		<SettingsDialogs v-if="ready" :ui="settings" />
-		<VariantBar :variants="SETTINGS" param="settings" />
+		<NewChildDialog v-if="ready" :customizing="customizing" />
+		<VariantBar :variants="CHILD" param="child" />
 	</PageFrame>
 </template>
 
@@ -129,6 +144,10 @@ import LayoutDialogs from "./LayoutDialogs.vue";
 import SettingsDialogs from "./SettingsDialogs.vue";
 import SettingsTab from "./SettingsTab.vue";
 import VariantBar from "./VariantBar.vue";
+import CanvasGrid from "./CanvasGrid.vue";
+import ChildScope from "./ChildScope.vue";
+import NewChildDialog from "./NewChildDialog.vue";
+import { ChildUiKey, createChildUi, type ChildVariant } from "./childTables";
 import { createLayoutUi, FAKE_VARIANTS, layoutsFor, LayoutUiKey } from "./layouts";
 import { DraftUiKey } from "./draftUi";
 import type { Kind } from "./newDoctype";
@@ -136,6 +155,12 @@ import { createSavedUi, plural, SavedUiKey, type SavedUi } from "./savedDoctype"
 import { actRefusal, createSettingsUi, type SettingsUi } from "./settings";
 
 // #47098: the bar switches the Settings tab's page; ?header= (#47097) still reads from the address.
+// #47099: the bar switches where a Table field's child is edited.
+const CHILD = [
+	{ key: "A", label: "Child: inline grid" },
+	{ key: "B", label: "Child: in the panel" },
+	{ key: "C", label: "Child: its own editor" },
+];
 const SETTINGS = [
 	{ key: "B", label: "Settings: section list" },
 	{ key: "A", label: "Settings on one page" },
@@ -161,7 +186,7 @@ const header = computed(() => (route.query.header === "B" ? "B" : "A"));
 const unified = route.query.search === "one";
 const persona: Persona = route.query.as === "manager" ? "manager" : "developer";
 const tab = ref(String(route.query.tab ?? "editor"));
-const { meta } = useDoctypeMeta(doctype);
+const { meta, metas } = useDoctypeMeta(doctype);
 
 const editor = createEditor(doctype, persona === "manager" || route.query.mode === "customize" ? "customize" : "design", "details");
 provide(EditorKey, editor);
@@ -184,6 +209,49 @@ const mode = computed(() => editor.state.mode);
 const customizing = computed(() => Boolean(customize.value) && mode.value === "customize");
 const switchable = computed(() => Boolean(customize.value) && persona === "developer");
 provide(CustomizeKey, computed(() => (customizing.value ? customize.value : null)));
+
+// #47099: the Table fields' child DocTypes. ?child= picks where their fields are edited; &table= opens one's editor.
+const childVariant = (["A", "B", "C"].includes(String(route.query.child)) ? String(route.query.child) : "A") as ChildVariant;
+const childUi = createChildUi({
+	parent: doctype,
+	parentModule: () => (meta.value as any)?.module ?? "",
+	parentEditor: editor,
+	variant: childVariant,
+	persona,
+	customizing: () => customizing.value,
+	metas: () => metas.value as any,
+	jumped: route.query.table ? String(route.query.table) : null,
+});
+provide(ChildUiKey, childUi);
+// The variant bar moves ?child=; the page follows without a reload.
+watch(
+	() => route.query.child,
+	(next) => (childUi.variant = (["A", "B", "C"].includes(String(next)) ? String(next) : "A") as ChildVariant)
+);
+const jumpedField = computed(() => (childUi.jumped ? editor.field(childUi.jumped) : undefined));
+const jumpedChild = computed(() => (ready.value ? childUi.get(jumpedField.value?.options) : undefined));
+watch(
+	() => jumpedField.value?.options,
+	(name) => name && void childUi.ensure(name),
+	{ immediate: true }
+);
+watch(
+	() => childUi.jumped,
+	(table) => {
+		if (!ready.value) return;
+		tab.value = "editor";
+		void router.replace({ query: { ...route.query, table: table ?? undefined } });
+	}
+);
+/** The editor Undo and Redo work on: the child's while its editor fills the page. */
+const active = computed(() => jumpedChild.value?.editor ?? editor);
+/** Back from a child's editor to the parent, with the Table field selected or nothing. */
+function backToParent(select: boolean) {
+	const table = childUi.jumped;
+	childUi.jumped = null;
+	if (select && table) saved.value.jumpTo(table);
+	else editor.state.selection = null;
+}
 function setMode(next: Mode) {
 	editor.state.mode = next;
 	editor.state.selection = null;
@@ -239,6 +307,10 @@ watch(
 		ready.value = true;
 		const field = route.query.field;
 		if (field) saved.value.jumpTo(String(field));
+		// #47099: &column= opens a child's field in the panel, as a click on it does.
+		const column = route.query.column;
+		const table = field ? editor.field(String(field)) : undefined;
+		if (column && table?.options) void childUi.ensure(table.options).then(() => (childUi.focus = { table: table.fieldname, fieldname: String(column) }));
 	},
 	{ immediate: true }
 );
@@ -342,10 +414,27 @@ const dirty = computed(
 		(editor.state.acted !== savedAt.value.acted ||
 			titleField.value !== savedAt.value.title ||
 			description.value !== savedAt.value.description ||
-			settings.value.dirty)
+			settings.value.dirty ||
+			childUi.dirty())
 );
 
 function save() {
+	// #47099: child DocTypes are written first (the Table field's options must name one that exists).
+	const children = childUi.pending().map((one) => {
+		if (one.isNew) return `created ${one.name} (child table)`;
+		const site = childUi.get(one.name)?.editor.state.mode === "customize" ? summary(childUi.get(one.name)!.customize!.pending) : "";
+		return `saved ${one.name}${site ? ` (${site})` : ""}`;
+	});
+	childUi.markSaved();
+	if (children.length) {
+		const first = children.join(", ");
+		toast.success(`${first[0].toUpperCase()}${first.slice(1)}, then saved ${doctype} (prototype: nothing was written)`);
+		customize.value?.markSaved();
+		settings.value.markSaved();
+		for (const field of editor.state.fields) field.added = false;
+		savedAt.value = { acted: editor.state.acted, title: titleField.value, description: description.value };
+		return;
+	}
 	const written = customizing.value ? summary(customize.value!.pending) : "";
 	customize.value?.markSaved();
 	settings.value.markSaved();
@@ -358,7 +447,12 @@ function save() {
 // layout crumb follows; the one before it opens Details, the layout every DocType has.
 const openDetails = () => layoutUi.open(layoutUi.entries.value[0]);
 const crumbs = computed(() =>
-	persona === "manager"
+	jumpedChild.value
+		? [
+				...(persona === "manager" ? [{ label: doctype, route: routeFor(doctype) }, { label: "Customize", onClick: () => backToParent(false) }] : [{ label: "DocType", route: "/doctype" }, { label: doctype, onClick: () => backToParent(false) }]),
+				{ label: jumpedField.value?.label || childUi.jumped!, onClick: () => backToParent(true) },
+			]
+		: persona === "manager"
 		? [{ label: doctype, route: routeFor(doctype) }, { label: "Customize", onClick: openDetails }]
 		: [{ label: "DocType", route: "/doctype" }, { label: doctype, onClick: openDetails }]
 );

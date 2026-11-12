@@ -1,0 +1,492 @@
+[
+{
+"go": "/doctype/Sales%20Invoice?child=A&field=items"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"shot": "01-a-table-field-grid-and-columns"
+},
+{
+"click": "[data-grid-header='item_code']"
+},
+{
+"wait": 900
+},
+{
+"shot": "02-a-column-opens-child-field"
+},
+{
+"click": "[data-child-crumbs] button"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-canvas-grid='items'] [data-add-column] button"
+},
+{
+"wait": 900
+},
+{
+"shot": "03-a-add-column-menu"
+},
+{
+"press": "Escape"
+},
+{
+"wait": 300
+},
+{
+"click": "[data-width='item_code'] button[aria-label='Narrower']"
+},
+{
+"wait": 200
+},
+{
+"click": "[data-width='item_code'] button[aria-label='Narrower']"
+},
+{
+"wait": 600
+},
+{
+"shot": "04-a-narrower-column-fits"
+},
+{
+"go": "/doctype/Sales%20Invoice?child=B&field=items"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"scroll": "[data-grid-fit]",
+"by": -70
+},
+{
+"wait": 500
+},
+{
+"shot": "05-b-panel-lists-child-fields"
+},
+{
+"click": "[data-child-field='item_name']"
+},
+{
+"wait": 900
+},
+{
+"shot": "06-b-child-field-in-panel"
+},
+{
+"go": "/doctype/Sales%20Invoice?child=C&field=items"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"shot": "07-c-table-field-panel"
+},
+{
+"click": "[data-open-child]"
+},
+{
+"wait": 2000
+},
+{
+"shot": "08-c-child-editor"
+},
+{
+"click": "[data-child-grid-preview] [data-grid-header='rate']"
+},
+{
+"wait": 900
+},
+{
+"shot": "09-c-child-field-from-grid"
+},
+{
+"click": "[data-editor-panel] button[aria-label='Wider']"
+},
+{
+"wait": 200
+},
+{
+"click": "[data-editor-panel] button[aria-label='Wider']"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"button",
+"Items"
+]
+},
+{
+"wait": 1500
+},
+{
+"mouse": [
+700,
+1000
+]
+},
+{
+"wait": 300
+},
+{
+"shot": "10-c-back-to-parent-edits-kept"
+},
+{
+"go": "/doctype/Sales%20Invoice?child=A&field=items"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3000
+},
+{
+"eval": "document.querySelector(\"[data-fieldname='items']\").closest('[data-container-key]').querySelector('[data-editor-add-field] button').click()"
+},
+{
+"wait": 700
+},
+{
+"type": "Payment plan"
+},
+{
+"click": "[data-slot='content'] form button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"menuitem",
+"Table"
+]
+},
+{
+"wait": 400
+},
+{
+"role": [
+"button",
+"Add"
+]
+},
+{
+"wait": 600
+},
+{
+"wait": 1200
+},
+{
+"shot": "11-new-table-field-picker"
+},
+{
+"click": "[data-new-child]"
+},
+{
+"wait": 900
+},
+{
+"shot": "12-new-child-table-dialog"
+},
+{
+"role": [
+"button",
+"Create child table"
+]
+},
+{
+"wait": 1200
+},
+{
+"shot": "13-new-child-empty-grid"
+},
+{
+"click": "[data-canvas-grid='payment_plan'] [data-add-column] button"
+},
+{
+"wait": 700
+},
+{
+"click": "[data-new-column]"
+},
+{
+"wait": 700
+},
+{
+"type": "Due date"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 600
+},
+{
+"shot": "14-new-child-first-column"
+},
+{
+"role": [
+"button",
+"Save"
+]
+},
+{
+"wait": 800
+},
+{
+"shot": "15-save-child-first-toast"
+},
+{
+"go": "/doctype/Sales%20Invoice?child=A&mode=customize&field=items"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3500
+},
+{
+"click": "[data-width='item_code'] button[aria-label='Narrower']"
+},
+{
+"wait": 200
+},
+{
+"click": "[data-width='warehouse'] button[aria-label='Wider']"
+},
+{
+"wait": 600
+},
+{
+"shot": "16-customize-columns-site-change"
+},
+{
+"click": "[data-grid-header='warehouse']"
+},
+{
+"wait": 900
+},
+{
+"shot": "17-customize-child-field-marks"
+},
+{
+"role": [
+"button",
+"Save"
+]
+},
+{
+"wait": 800
+},
+{
+"shot": "18-customize-save-toast"
+},
+{
+"wait": 3500
+},
+{
+"go": "/doctype/Sales%20Invoice?child=A&mode=customize&field=taxes"
+},
+{
+"waitfor": " records"
+},
+{
+"wait": 3500
+},
+{
+"shot": "19-customize-shared-child"
+},
+{
+"eval": "document.querySelector(\"[data-fieldname='taxes']\").closest('[data-container-key]').querySelector('[data-editor-add-field] button').click()"
+},
+{
+"wait": 700
+},
+{
+"type": "Delivery stops"
+},
+{
+"click": "[data-slot='content'] form button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"menuitem",
+"Table"
+]
+},
+{
+"wait": 400
+},
+{
+"role": [
+"button",
+"Add"
+]
+},
+{
+"wait": 600
+},
+{
+"wait": 1200
+},
+{
+"click": "[data-new-child]"
+},
+{
+"wait": 900
+},
+{
+"shot": "20-customize-new-custom-child-dialog"
+},
+{
+"go": "/doctype?child=B"
+},
+{
+"eval": "localStorage.setItem('proto-45867-last-module','Support')"
+},
+{
+"wait": 2000
+},
+{
+"role": [
+"button",
+"New DocType"
+]
+},
+{
+"wait": 600
+},
+{
+"click": "input[placeholder='Support Ticket']"
+},
+{
+"type": "Support Ticket"
+},
+{
+"role": [
+"button",
+"Continue"
+]
+},
+{
+"wait": 1500
+},
+{
+"role": [
+"button",
+"Add field"
+]
+},
+{
+"wait": 500
+},
+{
+"type": "Replies"
+},
+{
+"click": "[data-slot='content'] form button"
+},
+{
+"wait": 400
+},
+{
+"role": [
+"menuitem",
+"Table"
+]
+},
+{
+"wait": 400
+},
+{
+"role": [
+"button",
+"Add"
+]
+},
+{
+"wait": 1200
+},
+{
+"shot": "21-draft-table-field-picker"
+},
+{
+"click": "[data-new-child]"
+},
+{
+"wait": 900
+},
+{
+"shot": "22-draft-new-child-dialog"
+},
+{
+"role": [
+"button",
+"Create child table"
+]
+},
+{
+"wait": 1200
+},
+{
+"click": "[data-editor-panel] [data-add-column] button"
+},
+{
+"wait": 700
+},
+{
+"click": "[data-new-column]"
+},
+{
+"wait": 700
+},
+{
+"type": "Message"
+},
+{
+"press": "Enter"
+},
+{
+"wait": 500
+},
+{
+"click": "[data-child-crumbs] button"
+},
+{
+"wait": 600
+},
+{
+"shot": "23-draft-child-first-column"
+},
+{
+"role": [
+"button",
+"Save"
+]
+},
+{
+"wait": 900
+},
+{
+"shot": "24-draft-save-child-first"
+}
+]

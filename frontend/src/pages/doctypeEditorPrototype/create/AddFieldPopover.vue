@@ -63,6 +63,13 @@ function add() {
 	if (!label.value.trim()) return;
 	const options = type.value.fieldtype === "Select" ? optionsTyped.value : type.value.options;
 	emit("add", { label: label.value.trim(), fieldtype: type.value.fieldtype, options });
+	// #47099: a Table field's next step is its child table, in the panel's picker, which opens.
+	if (type.value.fieldtype === "Table" || type.value.fieldtype === "Table MultiSelect") {
+		open.value = false;
+		label.value = "";
+		picked.value = null;
+		return;
+	}
 	label.value = "";
 	picked.value = null;
 	optionsTyped.value = "";

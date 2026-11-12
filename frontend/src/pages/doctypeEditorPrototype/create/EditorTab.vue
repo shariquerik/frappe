@@ -38,12 +38,14 @@
 					<textarea
 						ref="description"
 						v-model="ui.description.value"
-						placeholder="Add a description of what one record holds"
+						:placeholder="`Add a description of what one ${ui.kind === 'child' ? 'row' : 'record'} holds`"
 						rows="1"
 						class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink-gray-6 placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 						@input="grow"
 					/>
 					<p class="mt-1 text-p-sm text-ink-gray-5"><slot name="meta">{{ meta }}</slot></p>
+					<!-- #47099: a child's editor shows its grid as the parent draws it. -->
+					<slot name="after-meta" />
 				</div>
 				<EditorCanvas v-if="layout !== 'side-panel' && layout !== 'quick-entry'" @drag-start="startField" @drag-end="endField" />
 			</div>
@@ -51,7 +53,9 @@
 		</div>
 
 		<aside class="flex h-full w-[380px] shrink-0 flex-col overflow-y-auto border-l border-outline-gray-1" data-editor-panel>
-			<PanelFieldSettings v-if="selectedField" :key="selectedField.fieldname" :field="selectedField" @remove="removeField(selectedField.fieldname)" @close="clear" />
+			<!-- #47099: a child's field opened from the Table field (?child=A's grid, B's list). -->
+			<ChildFieldPanel v-if="focusChild" :key="`${focusChild.name}/${childUi!.focus!.fieldname}`" :child="focusChild" :table="childUi!.focus!.table" :fieldname="childUi!.focus!.fieldname" />
+			<PanelFieldSettings v-else-if="selectedField" :key="selectedField.fieldname" :field="selectedField" @remove="removeField(selectedField.fieldname)" @close="clear" />
 			<PanelSectionSettings
 				v-else-if="selectedSection"
 				:key="selectedSection.name"
@@ -61,7 +65,9 @@
 				@close="clear"
 			/>
 			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
-			<PanelAddField v-else @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
+			<!-- #47099: in a child's own editor, its grid columns head the empty panel. -->
+			<GridColumns v-if="inChild && !selectedField && !selectedSection && !selectedTab" :child="inChild" :table="childUi?.jumped ?? ''" :divided="false" @open="openOwn" />
+			<PanelAddField v-if="!focusChild && !selectedField && !selectedSection && !selectedTab" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette" />
 		</aside>
 	</div>
 </template>
@@ -73,6 +79,9 @@ import { Button } from "frappe-ui";
 import { EditorKey, onDrop } from "../context";
 import { MORE_FIELDS } from "../editor";
 import DragLayer from "./DragLayer.vue";
+import ChildFieldPanel from "./ChildFieldPanel.vue";
+import GridColumns from "./GridColumns.vue";
+import { ChildScopeKey, ChildUiKey } from "./childTables";
 import EditorCanvas from "./EditorCanvas.vue";
 import PanelAddField from "./PanelAddField.vue";
 import PanelFieldSettings from "./PanelFieldSettings.vue";
@@ -97,6 +106,10 @@ const selectedTab = computed(() => {
 	return selected?.kind === "tab" ? (editor.find(selected.key)?.node as LayoutTreeTab | undefined) : undefined;
 });
 const clear = () => (editor.state.selection = null);
+const childUi = inject(ChildUiKey, null);
+const inChild = inject(ChildScopeKey, null);
+const focusChild = computed(() => (!inChild && childUi?.focus ? childUi.get(editor.field(childUi.focus.table)?.options) : undefined));
+const openOwn = (fieldname: string) => (editor.state.selection = { kind: "field", fieldname });
 const sections = () => editor.tree.value.flatMap((tab) => tab.sections);
 
 const layout = computed(() => editor.state.layout);
@@ -274,7 +287,7 @@ function onKeydown(event: KeyboardEvent) {
 		event.preventDefault();
 		return openAddField();
 	}
-	if (!["Delete", "Backspace"].includes(event.key) || !selectedField.value) return;
+	if (!["Delete", "Backspace"].includes(event.key) || !selectedField.value || focusChild.value) return;
 	if ((event.target as HTMLElement).closest?.(TYPING)) return;
 	event.preventDefault();
 	removeField(selectedField.value.fieldname);

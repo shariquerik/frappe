@@ -62,14 +62,36 @@
 				</button>
 			</Dropdown>
 		</PanelRow>
-		<PanelRow v-if="LINKS_TO.has(field.fieldtype)" :label="field.fieldtype === 'Link' ? 'Links to' : 'Child table'" v-bind="mark('options')">
-			<Combobox
-				variant="ghost"
-				:model-value="field.options"
-				:options="doctypes"
-				placeholder="Choose a DocType"
-				@update:model-value="set('options', String($event ?? ''))"
-			/>
+		<PanelRow v-if="TABLES.has(field.fieldtype) && childUi && !inChild" label="Child table" v-bind="mark('options')">
+			<ChildTablePicker :field="field" />
+		</PanelRow>
+		<!-- #47099: the child's own editor: its fields (C), or its Details layout, the row's dialog (A, B). -->
+		<PanelRow v-if="TABLES.has(field.fieldtype) && childUi && !inChild && field.options" :label="childUi.variant === 'C' ? 'Fields' : 'Row form'" :box="false">
+			<div class="flex min-h-7 flex-col justify-center">
+				<button
+					type="button"
+					class="flex h-7 w-full min-w-0 items-center gap-1.5 rounded-4 px-2 text-left text-base text-ink-gray-8 hover:bg-surface-gray-2"
+					data-open-child
+					@click="childUi.jumped = field.fieldname"
+				>
+					<span class="min-w-0 truncate">{{ childUi.variant === "C" ? `Edit ${field.options}` : "Edit row form" }}</span>
+					<span class="lucide-arrow-up-right size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+				</button>
+				<p v-if="childUi.variant === 'C'" class="px-2 pb-1 text-p-sm text-ink-gray-5">
+					{{ gridSummary }}
+				</p>
+			</div>
+		</PanelRow>
+		<PanelRow v-else-if="LINKS_TO.has(field.fieldtype) && !(TABLES.has(field.fieldtype) && childUi && !inChild)" :label="field.fieldtype === 'Link' ? 'Links to' : 'Child table'" v-bind="mark('options')">
+			<div class="w-full min-w-0 [&_[data-slot=trigger]]:!flex [&_[data-slot=trigger]]:w-full">
+				<Combobox
+					variant="ghost"
+					:model-value="field.options"
+					:options="doctypes"
+					placeholder="Choose a DocType"
+					@update:model-value="set('options', String($event ?? ''))"
+				/>
+			</div>
 		</PanelRow>
 		<PanelRow v-if="field.fieldtype === 'Select'" label="Options" v-bind="mark('options')">
 			<Textarea
@@ -86,7 +108,7 @@
 				<Switch size="sm" :model-value="Boolean(field.reqd)" @update:model-value="set('reqd', $event ? 1 : 0)" />
 			</div>
 		</PanelRow>
-		<PanelRow v-if="TITLE_TYPES.has(field.fieldtype)" label="Title field" :box="false">
+		<PanelRow v-if="TITLE_TYPES.has(field.fieldtype) && ui.kind !== 'child'" label="Title field" :box="false">
 			<div class="flex min-h-7 flex-col justify-center px-2">
 				<div class="flex h-7 items-center">
 					<Switch size="sm" :model-value="isTitle" @update:model-value="ui.titleField.value = $event ? field.fieldname : ''" />
@@ -94,10 +116,34 @@
 				<p v-if="isTitle" class="pb-1 text-p-sm text-ink-gray-5">Lists and links show this instead of the ID.</p>
 			</div>
 		</PanelRow>
-		<PanelRow label="Default" v-bind="mark('default')">
+		<!-- #47099: a child's field is a grid column (`in_list_view`) of a width (`columns`, 1 to 10, else the type's). -->
+		<template v-if="ui.kind === 'child' && canBeColumn(field)">
+			<PanelRow label="Grid column" :box="false" v-bind="mark('in_list_view')">
+				<div class="flex h-7 items-center px-2">
+					<Switch size="sm" :model-value="Boolean(field.in_list_view)" @update:model-value="set('in_list_view', $event ? 1 : 0)" />
+				</div>
+			</PanelRow>
+			<PanelRow v-if="field.in_list_view" label="Column width" :box="false" v-bind="mark('columns')">
+				<div class="flex min-h-7 flex-col justify-center px-2">
+					<div class="flex h-7 items-center gap-2">
+						<div class="flex items-center rounded-4 bg-surface-gray-2">
+							<button type="button" class="grid size-6 place-items-center rounded-4 text-ink-gray-6 hover:text-ink-gray-9 disabled:text-ink-gray-3" :disabled="!width" aria-label="Narrower" @click="set('columns', width - 1)">
+								<span class="lucide-minus size-3.5" aria-hidden="true" />
+							</button>
+							<span class="w-9 text-center text-sm tabular-nums text-ink-gray-8">{{ width || "Auto" }}</span>
+							<button type="button" class="grid size-6 place-items-center rounded-4 text-ink-gray-6 hover:text-ink-gray-9 disabled:text-ink-gray-3" :disabled="width >= 10" aria-label="Wider" @click="set('columns', width + 1)">
+								<span class="lucide-plus size-3.5" aria-hidden="true" />
+							</button>
+						</div>
+						<span class="text-sm text-ink-gray-5">{{ columnPx(field) }}px</span>
+					</div>
+				</div>
+			</PanelRow>
+		</template>
+		<PanelRow v-if="!TABLES.has(field.fieldtype)" label="Default" v-bind="mark('default')">
 			<TextInput variant="ghost" :model-value="field.default" placeholder="None" @update:model-value="set('default', $event)" />
 		</PanelRow>
-		<PanelRow v-if="field.fieldtype !== 'Check'" label="Placeholder" v-bind="mark('placeholder')">
+		<PanelRow v-if="field.fieldtype !== 'Check' && !TABLES.has(field.fieldtype)" label="Placeholder" v-bind="mark('placeholder')">
 			<TextInput variant="ghost" :model-value="field.placeholder" placeholder="Add placeholder…" @update:model-value="set('placeholder', $event)" />
 		</PanelRow>
 		<PanelRow label="Help text" v-bind="mark('description')">
@@ -139,6 +185,8 @@
 			</div>
 		</PanelRow>
 	</PanelSection>
+
+	<TablePanel v-if="childUi && !inChild && TABLES.has(field.fieldtype) && field.options" :field="field" />
 
 	<PanelSection label="Conditions">
 		<template #actions>
@@ -184,12 +232,16 @@ import { fieldnameOf, typeLabel } from "./newDoctype";
 import { COMMON, typeIcon, typeMenu, type FieldType } from "./typeMenu";
 import { useRoute } from "vue-router";
 import PanelSearchRow from "./PanelSearchRow.vue";
+import ChildTablePicker from "./ChildTablePicker.vue";
+import TablePanel from "./TablePanel.vue";
+import { canBeColumn, ChildScopeKey, ChildUiKey, columnPx } from "./childTables";
 import { providePanelSearch } from "./panelSearch";
 
 type Prop = { key: string; label: string; type: "check" | "text" | "int"; placeholder?: string; only?: (field: EditorField) => boolean };
 
 const NUMERIC = new Set(["Int", "Float", "Currency", "Percent"]);
 const LINKS_TO = new Set(["Link", "Table", "Table MultiSelect"]);
+const TABLES = new Set(["Table", "Table MultiSelect"]);
 
 const CHECKS = new Set(["reqd", "hidden", "read_only", "bold", "print_hide", "report_hide", "allow_on_submit", "translatable", "in_list_view", "in_standard_filter", "in_global_search", "in_preview", "fetch_if_empty", "unique", "no_copy", "set_only_once", "non_negative", "ignore_user_permissions"]);
 
@@ -213,6 +265,16 @@ function closeSearch() {
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
 const doctypes = inject<Addresses>("addresses")!.doctypeNames();
+// #47099: the page's child tables; inside a child's scope its own fields are edited, never a nested table.
+const childUi = inject(ChildUiKey, null);
+const inChild = Boolean(inject(ChildScopeKey, null));
+const width = computed(() => Number((props.field as any).columns) || 0);
+const gridSummary = computed(() => {
+	const child = childUi?.get(props.field.options);
+	if (!child) return "";
+	const columns = childUi!.columns(child).map((one) => one.label || one.fieldname);
+	return columns.length ? `Grid: ${columns.join(", ")}` : "No grid columns yet";
+});
 
 const value = (key: string) => (props.field as Record<string, any>)[key];
 const set = (key: string, next: unknown) => editor.acts.setField(props.field.fieldname, key, next);
@@ -323,7 +385,7 @@ const GROUPS: { label: string; props: Prop[] }[] = [
 	{
 		label: "List and search",
 		props: [
-			{ key: "in_list_view", label: "In list view", type: "check" },
+			{ key: "in_list_view", label: "In list view", type: "check", only: () => ui.kind !== "child" },
 			{ key: "in_standard_filter", label: "List filter", type: "check" },
 			{ key: "in_global_search", label: "Global search", type: "check" },
 			{ key: "in_preview", label: "Link preview", type: "check" },

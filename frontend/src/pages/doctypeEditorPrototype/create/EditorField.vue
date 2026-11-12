@@ -22,7 +22,9 @@
 				aria-hidden="true"
 			/>
 		</div>
-		<div class="pointer-events-none" :class="{ 'opacity-50': customizing && field.hidden }" tabindex="-1" inert>
+		<!-- #47099: a Table field draws as its grid; ?child=A makes its columns clickable, so it is not inert. -->
+		<CanvasGrid v-if="TABLE.has(field.fieldtype) && childUi" :field="field" :class="{ 'opacity-50': customizing && field.hidden }" />
+		<div v-else class="pointer-events-none" :class="{ 'opacity-50': customizing && field.hidden }" tabindex="-1" inert>
 			<div v-if="field.fieldtype === 'Check'" class="flex min-h-7 items-center gap-2">
 				<FormControl type="checkbox" :model-value="false" />
 				<span class="text-sm text-ink-gray-6">{{ field.label }}<span v-if="field.reqd" class="text-ink-red-4">*</span></span>
@@ -60,7 +62,9 @@ import { computed, inject } from "vue";
 import { useRoute } from "vue-router";
 import { FormControl, TextInput } from "frappe-ui";
 import type { EditorField } from "../editor";
+import CanvasGrid from "./CanvasGrid.vue";
 import CustomizeMarks from "./CustomizeMarks.vue";
+import { ChildScopeKey, ChildUiKey } from "./childTables";
 import { CustomizeKey } from "./customize";
 import { DraftUiKey } from "./draftUi";
 
@@ -79,6 +83,8 @@ const SAMPLE: Record<string, string> = { Int: "0", Float: "0.00", Currency: "0.0
 
 const props = defineProps<{ field: EditorField; selected?: boolean }>();
 const ui = inject(DraftUiKey)!;
+// A child's own editor (C) never holds a Table field; the parent's canvas draws one as its grid.
+const childUi = inject(ChildScopeKey, null) ? null : inject(ChildUiKey, null);
 
 const customizeKey = inject(CustomizeKey, null);
 const customizing = computed(() => Boolean(customizeKey?.value));

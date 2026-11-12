@@ -508,6 +508,14 @@ export function createEditor(doctype: string, mode: Mode, layout: LayoutKey = "d
 			if (state.open === id) show(id);
 			state.selection = null;
 		},
+		/** #47099: moves a field in the DocType's field order (a child's grid columns follow it). */
+		reorderField(fieldname: string, toIndex: number) {
+			const from = state.fields.findIndex((one) => one.fieldname === fieldname);
+			if (from < 0 || from === toIndex) return;
+			const [one] = state.fields.splice(from, 1);
+			state.fields.splice(toIndex, 0, one);
+			act("move_field_order", { fieldname, index: toIndex }, state.mode === "customize" ? "Property Setter field_order" : undefined);
+		},
 		deleteField(fieldname: string) {
 			const column = columnOf(fieldname);
 			if (column) column.fields = column.fields.filter((entry) => nameOf(entry) !== fieldname);

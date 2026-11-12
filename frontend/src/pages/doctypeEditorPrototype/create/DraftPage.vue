@@ -22,10 +22,10 @@
 					</div>
 					<div v-if="current && tab === 'editor'" class="hidden shrink-0 items-center lg:flex">
 						<Tooltip text="Undo (Ctrl+Z)">
-							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!editor.state.past.length" @click="editor.history.undo()" />
+							<Button variant="ghost" icon="lucide-undo-2" label="Undo" :disabled="!active.state.past.length" @click="active.history.undo()" />
 						</Tooltip>
 						<Tooltip text="Redo (Ctrl+Shift+Z)">
-							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!editor.state.future.length" @click="editor.history.redo()" />
+							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!active.state.future.length" @click="active.history.redo()" />
 						</Tooltip>
 					</div>
 					<Tooltip v-if="current" text="No changes to save" :disabled="unsavedNow">
@@ -40,7 +40,7 @@
 					class="-mx-3 -mb-px sm:-mx-5 [&_[role='tab']]:rounded-4 [&_[role='tablist']]:gap-5 [&_[role='tablist']]:px-3 [&_[role='tablist']]:py-2 sm:[&_[role='tablist']]:px-5"
 				>
 					<TabList variant="underline">
-						<TabTrigger v-for="one in TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
+						<TabTrigger v-for="one in jumpedChild ? TABS.slice(0, 1) : TABS" :key="one.value" :value="one.value" :label="one.label" :icon-left="one.icon" />
 					</TabList>
 				</Tabs>
 			</div>
@@ -55,7 +55,21 @@
 			<div v-if="tab === 'editor'" class="flex flex-1 items-center justify-center border-t border-outline-gray-1 px-6 text-center text-base text-ink-gray-6 lg:hidden">
 				The editor needs a wider window, 1024px or more.
 			</div>
-			<EditorTab v-if="tab === 'editor'" class="hidden lg:flex" :name="current.name" :meta="meta">
+			<!-- #47099: a child's own editor fills the page; the draft's edits wait. -->
+			<ChildScope v-if="tab === 'editor' && jumpedChild" :key="jumpedChild.name" :child="jumpedChild">
+				<EditorTab class="hidden lg:flex" :name="jumpedChild.name">
+					<template #meta>
+						{{ jumpedChild.module }} · Child table<template v-if="jumpedChild.isNew"> · New, saved before {{ current.name }}</template> · This form is the row's dialog.
+					</template>
+					<template #after-meta>
+						<div class="mt-8">
+							<p class="mb-1.5 text-sm text-ink-gray-6">{{ jumpedField?.label }} in {{ current.name }}</p>
+							<CanvasGrid :field="jumpedField!" own />
+						</div>
+					</template>
+				</EditorTab>
+			</ChildScope>
+			<EditorTab v-else-if="tab === 'editor'" class="hidden lg:flex" :name="current.name" :meta="meta">
 				<template #banner>
 					<div v-if="saved && tryIt" class="mb-8 flex items-center gap-3 rounded-4 bg-surface-gray-2 py-2 pl-3 pr-2">
 						<span class="lucide-circle-check size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
@@ -80,12 +94,14 @@
 		</template>
 
 		<Dialog v-model="explained" :title="explainTitle" :message="explainMessage" />
+		<NewChildDialog v-if="current" />
+		<VariantBar v-if="current" :variants="CHILD" param="child" />
 	</PageFrame>
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref } from "vue";
-import { onBeforeRouteLeave, useRouter } from "vue-router";
+import { computed, provide, ref, watch } from "vue";
+import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { Badge, Breadcrumbs, Button, Dialog, TabList, Tabs, TabTrigger, Tooltip, toast } from "frappe-ui";
 import PageFrame from "@/shell/PageFrame.vue";
 import { shellDialog } from "@/shell/dialog";
@@ -95,11 +111,23 @@ import { createEditor, nameOf } from "../editor";
 import EditorTab from "./EditorTab.vue";
 import FormPreview from "./FormPreview.vue";
 import SettingsTab from "./SettingsTab.vue";
+import CanvasGrid from "./CanvasGrid.vue";
+import ChildScope from "./ChildScope.vue";
+import NewChildDialog from "./NewChildDialog.vue";
+import VariantBar from "./VariantBar.vue";
+import { ChildUiKey, createChildUi, type ChildVariant } from "./childTables";
 import { createSettingsUi } from "./settings";
 import { DraftUiKey } from "./draftUi";
 import { created, draft, KINDS, openNewDoctype, rememberModule, slugOf, type Draft } from "./newDoctype";
 
 const router = useRouter();
+const route = useRoute();
+// #47099: as on a saved DocType, ?child= picks where a Table field's child is edited.
+const CHILD = [
+	{ key: "A", label: "Child: inline grid" },
+	{ key: "B", label: "Child: in the panel" },
+	{ key: "C", label: "Child: its own editor" },
+];
 
 const TABS = [
 	{ value: "editor", label: "Editor", icon: "lucide-layout-list" },
@@ -120,6 +148,29 @@ editor.loadDraft(
 	[{ name: "tab-details", sections: [{ name: "section-main", label: "Details", columns: [{ name: "column-main", fields: ["title"] }] }] }]
 );
 editor.state.selection = null;
+
+const childUi = createChildUi({
+	parent: current.value?.name ?? "New DocType",
+	parentModule: () => current.value?.module ?? "",
+	parentEditor: editor,
+	variant: (["A", "B", "C"].includes(String(route.query.child)) ? String(route.query.child) : "A") as ChildVariant,
+	persona: "developer",
+	customizing: () => false,
+});
+provide(ChildUiKey, childUi);
+// The variant bar moves ?child=; the page follows without a reload.
+watch(
+	() => route.query.child,
+	(next) => (childUi.variant = (["A", "B", "C"].includes(String(next)) ? String(next) : "A") as ChildVariant)
+);
+const jumpedField = computed(() => (childUi.jumped ? editor.field(childUi.jumped) : undefined));
+const jumpedChild = computed(() => childUi.get(jumpedField.value?.options));
+const active = computed(() => jumpedChild.value?.editor ?? editor);
+function backToParent(select: boolean) {
+	const table = childUi.jumped;
+	childUi.jumped = null;
+	editor.state.selection = select && table ? { kind: "field", fieldname: table } : null;
+}
 
 const titleField = ref("title");
 const description = ref("");
@@ -185,7 +236,8 @@ const dirty = computed(
 		editor.state.acted !== savedAt.value.edits ||
 		titleField.value !== savedAt.value.title ||
 		description.value !== savedDescription.value ||
-		Boolean(settings?.dirty)
+		Boolean(settings?.dirty) ||
+		childUi.dirty()
 );
 const unsavedNow = computed(() => Boolean(current.value) && (!saved.value || dirty.value));
 const unsaved = () => unsavedNow.value;
@@ -193,6 +245,9 @@ const unsaved = () => unsavedNow.value;
 function save() {
 	const one = current.value!;
 	const first = !saved.value;
+	// #47099: new child tables are written first: the Table field's options must name a DocType that exists.
+	const children = childUi.pending().map((child) => (child.isNew ? `Created ${child.name} (child table)` : `Saved ${child.name}`));
+	childUi.markSaved();
 	created.set(one.name, one);
 	rememberModule(one.module);
 	for (const field of editor.state.fields) field.added = false;
@@ -200,16 +255,26 @@ function save() {
 	savedAt.value = { edits: editor.state.acted, title: titleField.value };
 	settings?.markSaved();
 	savedDescription.value = description.value;
-	if (!first) return void toast.success(`${one.name} saved`);
+	const before = children.length ? `${children.join(", ")}, then ` : "";
+	if (!first) return void toast.success(before ? `${before}saved ${one.name}` : `${one.name} saved`);
 	tryIt.value = true;
-	toast.success(`${one.name} created`);
+	toast.success(before ? `${before}created ${one.name}` : `${one.name} created`);
 	void router.replace(`/doctype/${encodeURIComponent(one.name)}`);
 }
 
-const crumbs = computed(() => [
-	{ label: "DocType", route: "/doctype" },
-	{ label: current.value?.name ?? "New DocType" },
-]);
+const crumbs = computed(() =>
+	jumpedChild.value
+		? [
+				{ label: "DocType", route: "/doctype" },
+				{ label: current.value!.name, onClick: () => backToParent(false) },
+				{ label: jumpedField.value?.label || childUi.jumped!, onClick: () => backToParent(true) },
+				{ label: jumpedChild.value.name },
+			]
+		: [
+				{ label: "DocType", route: "/doctype" },
+				{ label: current.value?.name ?? "New DocType" },
+			]
+);
 
 // "Try it" is a stub: each button says where it would go.
 const explained = ref(false);
