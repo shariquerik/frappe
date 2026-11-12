@@ -42,7 +42,7 @@ import { computed, inject, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Button, Combobox, Dialog, FormControl } from "frappe-ui";
 import type { Addresses } from "@/addresses";
-import { deriveName, dialogOpen, draft, KINDS, lastModule, slugOf, type Kind } from "./newDoctype";
+import { deriveName, dialogOpen, draft, draftGeneration, KINDS, lastModule, slugOf, type Kind } from "./newDoctype";
 
 const router = useRouter();
 const addresses = inject<Addresses>("addresses")!;
@@ -77,6 +77,7 @@ const ready = computed(() => Boolean(name.value && module.value && !error.value)
 function start() {
 	if (!ready.value) return;
 	draft.value = { name: name.value, module: String(module.value), kind: kind.value };
+	draftGeneration.value++;
 	dialogOpen.value = false;
 	void router.push("/doctype/new");
 }

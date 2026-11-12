@@ -1,7 +1,12 @@
 <!-- PROTOTYPE (#47100), throwaway: a small gray mark on the canvas for a field, section or tab
-     with a condition; its tooltip says each rule in words ("Visible if Is POS is on"). -->
+     with a condition; its tooltip says each rule in words, one per line ("Visible if Is POS is on"). -->
 <template>
-	<Tooltip v-if="lines.length" :text="lines.join('. ')">
+	<Tooltip v-if="lines.length">
+		<template #content>
+			<div class="max-w-[320px] space-y-1 whitespace-normal break-words" data-condition-tooltip>
+				<p v-for="line in lines" :key="line">{{ line }}</p>
+			</div>
+		</template>
 		<span class="grid size-4 shrink-0 place-items-center" aria-label="Has conditions" data-condition-mark>
 			<span class="lucide-split size-3.5 text-ink-gray-5" aria-hidden="true" />
 		</span>

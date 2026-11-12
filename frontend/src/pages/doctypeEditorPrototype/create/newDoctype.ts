@@ -25,6 +25,9 @@ export const dialogOpen = ref(false);
 /** The draft the page at `/doctype/new` edits; null when no dialog has filled one. */
 export const draft = ref<Draft | null>(null);
 
+/** Bumped by each Continue: the draft page remounts on it, as /doctype/new may already be open. */
+export const draftGeneration = ref(0);
+
 /** DocTypes the prototype "created" this session, by name: their page stays the draft page. */
 export const created = reactive(new Map<string, Draft>());
 

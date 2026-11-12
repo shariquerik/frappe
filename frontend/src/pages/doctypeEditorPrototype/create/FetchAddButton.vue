@@ -1,4 +1,4 @@
-<!-- PROTOTYPE (#47100) ?fetch=B, throwaway: on a Link field, "Fetch a field from Customer…" opens
+<!-- PROTOTYPE (#47100) ?fetch=B, throwaway: on a Link field, "Fetch a field…" (under Links to Customer) opens
      FetchMenu on Customer's fields; the pick becomes a new read-only field after the Link. -->
 <template>
 	<button
@@ -10,7 +10,7 @@
 		@click="toggle"
 	>
 		<span class="lucide-plus size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-		<span class="min-w-0 truncate">Fetch a field from {{ link.options }}…</span>
+		<span class="min-w-0 truncate">Fetch a field…</span>
 	</button>
 	<Popover v-if="button" :open="open" trigger="manual" :reference="button" side="bottom" align="end" @update:open="onPopover">
 		<FetchMenu :links="[link]" :link="link" @pick="pick" @close="close" />

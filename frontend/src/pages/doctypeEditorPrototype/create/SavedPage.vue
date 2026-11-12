@@ -148,7 +148,7 @@ import VariantBar from "./VariantBar.vue";
 import CanvasGrid from "./CanvasGrid.vue";
 import ChildScope from "./ChildScope.vue";
 import NewChildDialog from "./NewChildDialog.vue";
-import { ChildUiKey, createChildUi, type ChildVariant } from "./childTables";
+import { ChildUiKey, childVariantOf, createChildUi } from "./childTables";
 import { createLayoutUi, FAKE_VARIANTS, layoutsFor, LayoutUiKey } from "./layouts";
 import { DraftUiKey } from "./draftUi";
 import type { Kind } from "./newDoctype";
@@ -219,7 +219,7 @@ const switchable = computed(() => Boolean(customize.value) && persona === "devel
 provide(CustomizeKey, computed(() => (customizing.value ? customize.value : null)));
 
 // #47099: the Table fields' child DocTypes. ?child= picks where their fields are edited; &table= opens one's editor.
-const childVariant = (["A", "B", "C"].includes(String(route.query.child)) ? String(route.query.child) : "A") as ChildVariant;
+const childVariant = childVariantOf(route.query.child);
 const childUi = createChildUi({
 	parent: doctype,
 	parentModule: () => (meta.value as any)?.module ?? "",
@@ -235,7 +235,7 @@ provide(ChildUiKey, childUi);
 // The variant bar moves ?child=; the page follows without a reload.
 watch(
 	() => route.query.child,
-	(next) => (childUi.variant = (["A", "B", "C"].includes(String(next)) ? String(next) : "A") as ChildVariant)
+	(next) => (childUi.variant = childVariantOf(next))
 );
 const jumpedField = computed(() => (childUi.jumped ? editor.field(childUi.jumped) : undefined));
 const jumpedChild = computed(() => (ready.value ? childUi.get(jumpedField.value?.options) : undefined));

@@ -61,7 +61,7 @@
 				/>
 				<p class="mt-2 flex items-start gap-1.5 text-p-sm text-ink-gray-5">
 					<span class="lucide-info mt-px size-3.5 shrink-0" aria-hidden="true" />
-					<span v-if="!readable && code.trim()">The rules cannot show this {{ kind === "filters" ? "list" : "expression" }}, so it stays as code. It is kept as written.</span>
+					<span v-if="!readable && code.trim()">The rules can't show {{ kind === "filters" ? "these filters" : "this condition" }}. {{ kind === "filters" ? "They stay" : "It stays" }} as code, as written.</span>
 					<span v-else-if="kind === 'filters'">A JSON list of <code class="font-mono">[DocType, field, operator, value]</code>. A value <code class="font-mono">eval:doc.company</code> reads this record.</span>
 					<span v-else-if="onRow">JavaScript. <code class="font-mono">doc</code> is the row; <code class="font-mono">parent</code> is the record that holds it.</span>
 					<span v-else>JavaScript. <code class="font-mono">doc</code> is the record.</span>

@@ -1,7 +1,7 @@
 <!-- PROTOTYPE (#47100), throwaway: the Fetch from list, in two steps, in the look of frappe-ui's
      Combobox list: first a Link field of this DocType ("Customer", its target in gray), then a field
      of the DocType it links to ("Customer › Customer Name"). `link` starts at the second step (a Link
-     field's "Fetch a field from Customer…", ?fetch=B). -->
+     field's "Fetch a field…", ?fetch=B). -->
 <template>
 	<div class="flex w-[320px] flex-col" data-fetch-menu @keydown.esc.stop="$emit('close')">
 		<div class="flex items-center gap-1 border-b border-outline-gray-1 p-1.5">
@@ -22,19 +22,20 @@
 		<p v-else class="px-3.5 pb-1 pt-2 text-sm text-ink-gray-5">Link fields of this form</p>
 		<div ref="list" class="max-h-[300px] overflow-y-auto p-1.5 pt-0">
 			<template v-if="!step">
-				<button
-					v-for="one in shownLinks"
-					:key="one.fieldname"
-					type="button"
-					class="flex h-7 w-full min-w-0 items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8 hover:bg-surface-gray-3"
-					:data-fetch-link="one.fieldname"
-					@click="open(one)"
-				>
-					<span class="lucide-link size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-					<span class="min-w-0 truncate">{{ one.label || one.fieldname }}</span>
-					<span class="ml-auto shrink-0 pl-2 text-sm text-ink-gray-5">{{ one.options }}</span>
-					<span class="lucide-chevron-right size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
-				</button>
+				<Tooltip v-for="one in shownLinks" :key="one.fieldname" :text="`${one.label || one.fieldname} · ${one.options}`" :disabled="`${one.label || one.fieldname}${one.options}`.length < 30">
+					<button
+						type="button"
+						class="flex h-7 w-full min-w-0 items-center gap-2 rounded-4 px-2 text-left text-base text-ink-gray-8 hover:bg-surface-gray-3"
+						:data-fetch-link="one.fieldname"
+						@click="open(one)"
+					>
+						<span class="lucide-link size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+						<!-- The label wins: the gray target has no width of its own, only what the label leaves. -->
+						<span class="min-w-0 truncate">{{ one.label || one.fieldname }}</span>
+						<span class="min-w-0 flex-1 basis-0 truncate pl-2 text-right text-sm text-ink-gray-5">{{ one.options }}</span>
+						<span class="lucide-chevron-right size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
+					</button>
+				</Tooltip>
 				<p v-if="!shownLinks.length" class="px-2 py-1.5 text-base text-ink-gray-5">{{ links.length ? "No Link field matches" : "This form has no Link field yet" }}</p>
 			</template>
 			<template v-else>
@@ -60,7 +61,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { Button, TextInput } from "frappe-ui";
+import { Button, TextInput, Tooltip } from "frappe-ui";
 import { useDoctypeMeta } from "@framework/ui/useDoctypeMeta";
 import type { EditorField } from "../editor";
 import { typeIcon } from "./typeMenu";

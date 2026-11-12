@@ -4,7 +4,11 @@
      C inline, under the row, inside the 380px panel. -->
 <template>
 	<PanelRow :label="label" :box="false" v-bind="mark">
-		<Tooltip :text="summary.text" :disabled="!long || open">
+		<!-- Every rule has its full sentence here, so two rows cut at the same word still differ. -->
+		<Tooltip>
+			<template v-if="sentence && !open" #content>
+				<p class="max-w-[320px] whitespace-normal break-words">{{ sentence }}</p>
+			</template>
 			<button
 				ref="button"
 				type="button"
@@ -79,7 +83,12 @@ const summary = computed(() =>
 		? summarizeLinkFilters(props.value, props.doctype!, props.targetFields ?? [], props.record)
 		: summarize(props.value, props.scope!, props.emptyText)
 );
-const long = computed(() => summary.value.text.length > 26);
+const sentence = computed(() => {
+	const { kind, text } = summary.value;
+	if (kind === "empty") return "";
+	if (props.kind === "filters") return `${props.label}: ${text}`;
+	return kind === "code" ? `${props.label} (code) ${text}` : `${props.label} ${text}`;
+});
 
 const editorProps = computed(() => ({
 	key: variant.value,

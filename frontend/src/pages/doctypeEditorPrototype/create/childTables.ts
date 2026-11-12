@@ -3,7 +3,8 @@
 // Customize UI when the parent is customized and the child is standard. A new child table is a
 // draft that saves before its parent. Nothing is written.
 // ?child= picks where the child's fields are edited: A inline (the canvas grid), B in the panel,
-// C a jump to the child's own editor. &table=<fieldname> opens that jump (any variant's "Edit row form").
+// C a jump to the child's own editor (the default since the owner's #47099 amendment). &table=<fieldname>
+// opens that jump (any variant's "Edit row form").
 import { computed, markRaw, reactive, ref, watch, type InjectionKey } from "vue";
 import { runMethod } from "@framework/ui/api";
 import { DROPPED_FIELDTYPES } from "@framework/ui/FormLayout";
@@ -14,6 +15,9 @@ import type { DraftUi } from "./draftUi";
 import { createSavedUi, type SavedUi } from "./savedDoctype";
 
 export type ChildVariant = "A" | "B" | "C";
+export const DEFAULT_CHILD_VARIANT: ChildVariant = "C";
+/** ?child=A|B|C, else C. */
+export const childVariantOf = (value: unknown) => (["A", "B", "C"].includes(String(value)) ? String(value) : DEFAULT_CHILD_VARIANT) as ChildVariant;
 
 /** v1's grid (grid.js:21-34, since d0f94ba3c6): a field's `columns` as a pixel width. */
 export const COLUMN_PX: Record<number, number> = { 1: 60, 2: 100, 3: 140, 4: 200, 5: 250, 6: 300, 7: 350, 8: 400, 9: 450, 10: 500 };

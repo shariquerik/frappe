@@ -1,4 +1,4 @@
-<!-- PROTOTYPE (#47100), throwaway: the Fetch from row: "Customer › Customer Name", or "Nothing". A
+<!-- PROTOTYPE (#47100), throwaway: the Fetch from row: "Customer › Customer Name", or "None". A
      click opens FetchMenu under the row, right edges together: a Link field of this DocType, then a
      field of its target. Writes `fetch_from` ("customer.customer_name"); a value the picker cannot
      read (no such Link field) shows as code and keeps its text. -->
@@ -12,7 +12,7 @@
 			data-fetch-row
 			@click="toggle"
 		>
-			<span v-if="!value" class="min-w-0 flex-1 truncate text-ink-gray-5">Nothing</span>
+			<span v-if="!value" class="min-w-0 flex-1 truncate text-ink-gray-5">None</span>
 			<span v-else-if="!link" class="min-w-0 flex-1 truncate font-mono text-sm text-ink-gray-7">{{ value }}</span>
 			<span v-else class="flex min-w-0 flex-1 items-center gap-1 text-ink-gray-8">
 				<span class="shrink-0">{{ link.label || link.fieldname }}</span>
@@ -52,7 +52,7 @@ const sourceLabel = computed(() => {
 	const name = props.value.split(".")[1];
 	return (meta.value?.fields ?? []).find((one) => one.fieldname === name)?.label ?? name;
 });
-const text = computed(() => (!props.value ? "Nothing" : link.value ? `${link.value.label || link.value.fieldname} › ${sourceLabel.value}` : props.value));
+const text = computed(() => (!props.value ? "None" : link.value ? `${link.value.label || link.value.fieldname} › ${sourceLabel.value}` : props.value));
 
 function pick(one: EditorField, source: EditorField) {
 	emit("update", `${one.fieldname}.${source.fieldname}`);

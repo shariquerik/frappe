@@ -95,7 +95,7 @@
 
 		<Dialog v-model="explained" :title="explainTitle" :message="explainMessage" />
 		<NewChildDialog v-if="current" />
-		<VariantBar v-if="current" :variants="CHILD" param="child" />
+		<VariantBar v-if="current" :variants="CHILD" param="child" :fallback="DEFAULT_CHILD_VARIANT" />
 	</PageFrame>
 </template>
 
@@ -115,7 +115,7 @@ import CanvasGrid from "./CanvasGrid.vue";
 import ChildScope from "./ChildScope.vue";
 import NewChildDialog from "./NewChildDialog.vue";
 import VariantBar from "./VariantBar.vue";
-import { ChildUiKey, createChildUi, type ChildVariant } from "./childTables";
+import { ChildUiKey, childVariantOf, createChildUi, DEFAULT_CHILD_VARIANT } from "./childTables";
 import { createSettingsUi } from "./settings";
 import { DraftUiKey } from "./draftUi";
 import { created, draft, KINDS, openNewDoctype, rememberModule, slugOf, type Draft } from "./newDoctype";
@@ -153,7 +153,7 @@ const childUi = createChildUi({
 	parent: current.value?.name ?? "New DocType",
 	parentModule: () => current.value?.module ?? "",
 	parentEditor: editor,
-	variant: (["A", "B", "C"].includes(String(route.query.child)) ? String(route.query.child) : "A") as ChildVariant,
+	variant: childVariantOf(route.query.child),
 	persona: "developer",
 	customizing: () => false,
 });
@@ -161,7 +161,7 @@ provide(ChildUiKey, childUi);
 // The variant bar moves ?child=; the page follows without a reload.
 watch(
 	() => route.query.child,
-	(next) => (childUi.variant = (["A", "B", "C"].includes(String(next)) ? String(next) : "A") as ChildVariant)
+	(next) => (childUi.variant = childVariantOf(next))
 );
 const jumpedField = computed(() => (childUi.jumped ? editor.field(childUi.jumped) : undefined));
 const jumpedChild = computed(() => childUi.get(jumpedField.value?.options));

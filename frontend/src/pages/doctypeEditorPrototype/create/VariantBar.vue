@@ -1,6 +1,7 @@
 <!-- PROTOTYPE (#47095), throwaway: the floating variant switcher. ‹ A (label) ›, or ← and → when
      no input has the caret; the choice lives in ?variant= so a link or a reload keeps it. Dev only.
-     #47097: `param` names the query key it switches (default `variant`), so each ticket keeps its own. -->
+     #47097: `param` names the query key it switches (default `variant`), so each ticket keeps its own.
+     `fallback` is the variant the page shows when the address names none (default the first). -->
 <template>
 	<div
 		v-if="DEV"
@@ -24,12 +25,16 @@
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-const props = withDefaults(defineProps<{ variants: { key: string; label: string }[]; param?: string }>(), { param: "variant" });
+const props = withDefaults(defineProps<{ variants: { key: string; label: string }[]; param?: string; fallback?: string }>(), { param: "variant", fallback: "" });
 const DEV = import.meta.env.DEV;
 const route = useRoute();
 const router = useRouter();
 
-const index = computed(() => Math.max(0, props.variants.findIndex((one) => one.key === route.query[props.param])));
+const indexOf = (key: unknown) => props.variants.findIndex((one) => one.key === key);
+const index = computed(() => {
+	const named = indexOf(route.query[props.param]);
+	return named >= 0 ? named : Math.max(0, indexOf(props.fallback));
+});
 const current = computed(() => props.variants[index.value]);
 
 function step(by: number) {

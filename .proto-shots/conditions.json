@@ -421,6 +421,15 @@
 "shot": "13-section-visible-and-starts-open"
 },
 {
+"hover": "[data-condition-row$='.collapsible_depends_on']"
+},
+{
+"wait": 900
+},
+{
+"shot": "13b-section-starts-open-tooltip"
+},
+{
 "go": "/doctype/Sales%20Invoice?field=tax_id"
 },
 {
