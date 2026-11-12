@@ -2,8 +2,10 @@
   PROTOTYPE (#47095), throwaway: a DocType that is already saved and has records, in Design mode,
   in the same editor as a new one (#45867's look: header, canvas, 380px panel). The meta and the
   Details layout (its row, else the DocType's breaks) are real reads; counts are real; nothing is
-  written. ?variant= picks how a big DocType is crossed: A a finder in the header, B an outline
-  on the left, C a field list in the panel.
+  written. ?finder= picks how a big DocType is crossed (#47095 chose A, the header finder).
+  #47096: Customize mode on a standard DocType (?mode=customize; ?as=manager fakes a user without
+  developer mode: Customize only, no switch, no Export). ?variant= picks how the mode shows: A a
+  chip by the breadcrumbs, B a lock on every standard field, C a banner over the canvas.
 -->
 <template>
 	<PageFrame :scroll="false">
@@ -12,10 +14,14 @@
 				<div class="-mx-3 flex h-12 items-center justify-between gap-3 border-b px-3 sm:-mx-5 sm:px-5">
 					<div class="flex min-w-0 flex-1 items-center gap-2">
 						<Breadcrumbs :items="crumbs" class="-ml-0.5 min-w-0" />
-						<Badge v-if="dirty" label="Not saved" theme="amber" />
+						<TabButtons v-if="switchable" class="shrink-0" :options="MODES" :model-value="mode" @update:model-value="setMode" />
+						<Tooltip v-if="customizing && variant !== 'C'" :text="`${doctype} comes from ${customize!.app}. Your changes stay on this site and survive its updates.`">
+							<Badge :label="`From ${customize!.app}`" theme="gray" class="shrink-0" />
+						</Tooltip>
+						<Badge v-if="dirty" label="Not saved" theme="amber" class="shrink-0" />
 					</div>
 					<Combobox
-						v-if="variant === 'A' && tab === 'editor' && ready"
+						v-if="finder === 'A' && tab === 'editor' && ready"
 						class="hidden w-64 lg:block"
 						:model-value="null"
 						:options="finderOptions"
@@ -30,6 +36,9 @@
 							<Button variant="ghost" icon="lucide-redo-2" label="Redo" :disabled="!editor.state.future.length" @click="editor.history.redo()" />
 						</Tooltip>
 					</div>
+					<Dropdown v-if="customizing" :options="moreMenu" side="bottom" align="end">
+						<Button variant="ghost" icon="lucide-ellipsis" label="More" />
+					</Dropdown>
 					<Tooltip text="No changes to save" :disabled="dirty">
 						<div class="flex shrink-0">
 							<Button variant="solid" label="Save" :disabled="!dirty" @click="save" />
@@ -53,7 +62,13 @@
 				The editor needs a wider window, 1024px or more.
 			</div>
 			<EditorTab v-if="tab === 'editor'" class="hidden lg:flex" :name="doctype" :meta="metaLine">
-				<template v-if="variant === 'B'" #rail><FieldOutline /></template>
+				<template v-if="finder === 'B'" #rail><FieldOutline /></template>
+				<template v-if="customizing && variant === 'C'" #banner>
+					<div class="mb-6 flex items-start gap-2.5 rounded-6 bg-surface-gray-2 px-3.5 py-3 text-p-base text-ink-gray-7">
+						<span class="lucide-paintbrush mt-0.5 size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
+						<span>You are customizing {{ doctype }} from {{ customize.app }}. Your changes stay on this site and survive {{ customize.app }} updates.</span>
+					</div>
+				</template>
 			</EditorTab>
 			<main v-else class="min-w-0 flex-1 overflow-y-auto">
 				<div class="px-3 pb-24 pt-6 sm:px-5">
@@ -62,20 +77,24 @@
 				</div>
 			</main>
 		</template>
+		<CustomizeDialogs v-if="customize" v-model:reset="resetOpen" v-model:export="exportOpen" :doctype="doctype" :ui="customize" />
 		<VariantBar :variants="VARIANTS" />
 	</PageFrame>
 </template>
 
 <script setup lang="ts">
 import { computed, provide, ref, watch } from "vue";
-import { useRoute } from "vue-router";
-import { Badge, Breadcrumbs, Button, Combobox, TabList, Tabs, TabTrigger, Tooltip, toast } from "frappe-ui";
+import { useRoute, useRouter } from "vue-router";
+import { Badge, Breadcrumbs, Button, Combobox, Dropdown, TabButtons, TabList, Tabs, TabTrigger, Tooltip, toast } from "frappe-ui";
 import { useDoctypeMeta } from "@framework/ui/useDoctypeMeta";
+import { routeFor } from "@/router/routeFor";
 import PageFrame from "@/shell/PageFrame.vue";
 import { shellDialog } from "@/shell/dialog";
 import { useUnloadGuard } from "@/pages/record/recordSave";
 import { EditorKey } from "../context";
-import { createEditor, nameOf } from "../editor";
+import { createEditor, nameOf, type Mode } from "../editor";
+import CustomizeDialogs from "./CustomizeDialogs.vue";
+import { createCustomizeUi, CustomizeKey, summary, type CustomizeUi, type Persona } from "./customize";
 import DraftSettings from "./DraftSettings.vue";
 import EditorTab from "./EditorTab.vue";
 import FieldOutline from "./FieldOutline.vue";
@@ -86,9 +105,13 @@ import type { Kind } from "./newDoctype";
 import { createSavedUi, fieldIndex, plural, SavedUiKey, type SavedUi } from "./savedDoctype";
 
 const VARIANTS = [
-	{ key: "A", label: "Finder in the header" },
-	{ key: "B", label: "Outline on the left" },
-	{ key: "C", label: "Field list in the panel" },
+	{ key: "A", label: "Chip by the breadcrumbs" },
+	{ key: "B", label: "Lock on standard fields" },
+	{ key: "C", label: "Banner over the canvas" },
+];
+const MODES = [
+	{ label: "Design", value: "design" },
+	{ label: "Customize", value: "customize" },
 ];
 const TABS = [
 	{ value: "editor", label: "Editor", icon: "lucide-layout-list" },
@@ -97,12 +120,15 @@ const TABS = [
 ];
 
 const route = useRoute();
+const router = useRouter();
 const doctype = String(route.params.name);
 const variant = computed(() => String(route.query.variant ?? "A"));
+const finder = computed(() => String(route.query.finder ?? "A"));
+const persona: Persona = route.query.as === "manager" ? "manager" : "developer";
 const tab = ref(String(route.query.tab ?? "editor"));
 const { meta } = useDoctypeMeta(doctype);
 
-const editor = createEditor(doctype, "design", "details");
+const editor = createEditor(doctype, persona === "manager" || route.query.mode === "customize" ? "customize" : "design", "details");
 provide(EditorKey, editor);
 const ready = ref(false);
 const kind = computed<Kind>(() => {
@@ -114,6 +140,24 @@ const kind = computed<Kind>(() => {
 const titleField = ref("");
 const description = ref("");
 const labelFocus = ref<string | null>(null);
+
+// Customize mode: a standard DocType only. A developer switches; a manager is always in it.
+const customize = ref<CustomizeUi | null>(null);
+const mode = computed(() => editor.state.mode);
+const customizing = computed(() => Boolean(customize.value) && mode.value === "customize");
+const switchable = computed(() => Boolean(customize.value) && persona === "developer");
+provide(CustomizeKey, computed(() => (customizing.value ? customize.value : null)));
+function setMode(next: Mode) {
+	editor.state.mode = next;
+	editor.state.selection = null;
+	void router.replace({ query: { ...route.query, mode: next === "customize" ? "customize" : undefined } });
+}
+const resetOpen = ref(false);
+const exportOpen = ref(false);
+const moreMenu = computed(() => [
+	{ label: "Reset all customizations", icon: "lucide-rotate-ccw", onClick: () => (resetOpen.value = true) },
+	...(persona === "developer" ? [{ label: "Export to an app", icon: "lucide-package", onClick: () => (exportOpen.value = true) }] : []),
+]);
 
 // SavedUi needs the loaded fields, so it is made once the meta arrives; until then a stand-in.
 const saved = ref<SavedUi>(null as any);
@@ -128,6 +172,7 @@ watch(
 		titleField.value = (meta.value as any).title_field ?? "";
 		description.value = (meta.value as any).description ?? "";
 		saved.value = createSavedUi(editor, doctype, Boolean((meta.value as any).custom));
+		if (!(meta.value as any).custom) customize.value = await createCustomizeUi(editor, doctype, (meta.value as any).module, persona);
 		ready.value = true;
 		const field = route.query.field;
 		if (field) saved.value.jumpTo(String(field));
@@ -159,6 +204,8 @@ provide(DraftUiKey, {
 /** Renames a field everywhere it is named on the page; one undo step. */
 function rename(from: string, to: string) {
 	const taken = new Set(editor.state.fields.map((one) => one.fieldname).filter((one) => one !== from));
+	// A field the site adds to a standard DocType is a Custom Field: custom_ keeps it clear of the app's.
+	if (customizing.value && customize.value!.isCustom(from) && !to.startsWith("custom_")) to = `custom_${to}`;
 	let fieldname = to;
 	for (let n = 2; taken.has(fieldname); n++) fieldname = `${to}_${n}`;
 	if (fieldname === from) return;
@@ -179,6 +226,12 @@ function rename(from: string, to: string) {
 
 /** Removing a field whose column holds values says what stays, once. */
 async function beforeRemove(fieldname: string) {
+	// Customize cannot remove a standard field; Remove (and Delete) hides it, or shows it again.
+	if (customizing.value && customize.value!.isStandard(fieldname)) {
+		const hidden = editor.field(fieldname)?.hidden;
+		editor.acts.setField(fieldname, "hidden", hidden ? 0 : 1);
+		return false;
+	}
 	if (!saved.value.isSaved(fieldname)) return true;
 	const field = editor.field(fieldname)!;
 	const count = saved.value.counts[saved.value.original(fieldname)] ?? 0;
@@ -222,11 +275,16 @@ const dirty = computed(
 );
 
 function save() {
+	const written = customizing.value ? summary(customize.value!.pending.value) : "";
+	customize.value?.markSaved();
 	for (const field of editor.state.fields) field.added = false;
 	savedAt.value = { acted: editor.state.acted, title: titleField.value, description: description.value };
-	toast.success(`${doctype} saved (prototype: nothing was written)`);
+	toast.success(`${doctype} saved${written ? `: ${written}` : ""} (prototype: nothing was written)`);
 }
 
-const crumbs = computed(() => [{ label: "DocType", route: "/doctype" }, { label: doctype }]);
+// A manager reaches Customize from the DocType's own pages, so the crumbs lead back there.
+const crumbs = computed(() =>
+	persona === "manager" ? [{ label: doctype, route: routeFor(doctype) }, { label: "Customize" }] : [{ label: "DocType", route: "/doctype" }, { label: doctype }]
+);
 useUnloadGuard(() => dirty.value);
 </script>

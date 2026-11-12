@@ -10,7 +10,7 @@
 			<p class="mt-0.5 truncate text-sm text-ink-gray-5">{{ subtitle }}</p>
 		</div>
 		<div class="-mr-1 flex shrink-0 items-center">
-			<Button variant="ghost" icon="lucide-trash-2" :tooltip="removeLabel" :label="removeLabel" @click="$emit('remove')" />
+			<Button variant="ghost" :icon="removeIcon" :tooltip="removeLabel" :label="removeLabel" @click="$emit('remove')" />
 			<Button variant="ghost" icon="lucide-x" tooltip="Close" label="Close" @click="$emit('close')" />
 		</div>
 	</div>
@@ -19,6 +19,6 @@
 <script setup lang="ts">
 import { Button } from "frappe-ui";
 
-defineProps<{ icon: string; title: string; subtitle: string; removeLabel: string }>();
+withDefaults(defineProps<{ icon: string; title: string; subtitle: string; removeLabel: string; removeIcon?: string }>(), { removeIcon: "lucide-trash-2" });
 defineEmits<{ remove: []; close: [] }>();
 </script>

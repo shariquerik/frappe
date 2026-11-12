@@ -11,16 +11,18 @@
 			<span class="truncate">{{ field.label || field.fieldname }}</span>
 			<span v-if="field.reqd" class="-ml-0.5 text-ink-red-4">*</span>
 			<span v-if="isTitle" class="shrink-0 text-ink-gray-4">· Title field</span>
+			<CustomizeMarks :field="field" />
 			<span
 				class="lucide-grip-vertical -my-1 ml-auto size-4 shrink-0 text-ink-gray-4 opacity-0 transition-opacity group-hover/field:opacity-100"
 				:class="{ '!opacity-100': selected }"
 				aria-hidden="true"
 			/>
 		</div>
-		<div class="pointer-events-none" tabindex="-1" inert>
+		<div class="pointer-events-none" :class="{ 'opacity-50': customizing && field.hidden }" tabindex="-1" inert>
 			<div v-if="field.fieldtype === 'Check'" class="flex h-7 items-center gap-2">
 				<FormControl type="checkbox" :model-value="false" />
 				<span class="text-sm text-ink-gray-6">{{ field.label }}<span v-if="field.reqd" class="text-ink-red-4">*</span></span>
+				<CustomizeMarks :field="field" />
 				<span
 					class="lucide-grip-vertical ml-auto size-4 shrink-0 text-ink-gray-4 opacity-0 transition-opacity group-hover/field:opacity-100"
 					:class="{ '!opacity-100': selected }"
@@ -49,6 +51,8 @@
 import { computed, inject } from "vue";
 import { FormControl, TextInput } from "frappe-ui";
 import type { EditorField } from "../editor";
+import CustomizeMarks from "./CustomizeMarks.vue";
+import { CustomizeKey } from "./customize";
 import { DraftUiKey } from "./draftUi";
 
 const TEXTAREA = new Set(["Small Text", "Text", "Long Text", "Text Editor", "Markdown Editor", "Code", "JSON", "HTML"]);
@@ -67,6 +71,8 @@ const SAMPLE: Record<string, string> = { Int: "0", Float: "0.00", Currency: "0.0
 const props = defineProps<{ field: EditorField; selected?: boolean }>();
 const ui = inject(DraftUiKey)!;
 
+const customizeKey = inject(CustomizeKey, null);
+const customizing = computed(() => Boolean(customizeKey?.value));
 const isTitle = computed(() => ui.titleField.value === props.field.fieldname);
 const placeholder = computed(() => props.field.placeholder || SAMPLE[props.field.fieldtype] || (props.field.options === "Email" ? "name@example.com" : ""));
 const choiceText = computed(() => {
