@@ -84,10 +84,20 @@ export async function revealProperty(search: PanelSearch, row: { group: number; 
 	flash(row.el());
 }
 
-/** A brief gray background on a row the finder took you to. */
-export function flash(el: HTMLElement | null) {
+// The bleed fill: a pseudo-element 8px past the row's sides, so the text stays on the column edge.
+const BLEED = ["relative", "isolate", "before:pointer-events-none", "before:absolute", "before:-inset-x-2", "before:inset-y-0", "before:-z-10", "before:rounded-4", "before:bg-surface-gray-3", "before:transition-opacity", "before:duration-300"];
+
+/** A brief gray background on a row the finder took you to; `bleed` pads it out past the row's sides. */
+export function flash(el: HTMLElement | null, { bleed = false } = {}) {
 	if (!el) return;
 	el.scrollIntoView({ block: "center", behavior: "smooth" });
-	el.classList.add("rounded-4", "bg-surface-gray-3", "transition-colors", "duration-300");
-	setTimeout(() => el.classList.remove("bg-surface-gray-3"), 1200);
+	if (!bleed) {
+		el.classList.add("rounded-4", "bg-surface-gray-3", "transition-colors", "duration-300");
+		setTimeout(() => el.classList.remove("bg-surface-gray-3"), 1200);
+		return;
+	}
+	const added = BLEED.filter((one) => !el.classList.contains(one));
+	el.classList.add(...added);
+	setTimeout(() => el.classList.add("before:opacity-0"), 1200);
+	setTimeout(() => el.classList.remove(...added, "before:opacity-0"), 1500);
 }

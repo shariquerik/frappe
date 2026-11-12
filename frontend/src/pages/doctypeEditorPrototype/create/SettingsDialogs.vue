@@ -1,6 +1,6 @@
 <!-- PROTOTYPE (#47098), throwaway: the Danger zone's dialogs, opened by its rows or by the header's
      ⋯ menu (ui.act). Rename asks the new name and says what moves; Move and Make it standard ask the
-     module and say where the files go; Delete asks for the name typed. Each ends in a toast: nothing
+     module and say where the files go; Delete asks for the name typed, its box focused on open. Each ends in a toast: nothing
      is renamed, moved, written or deleted. -->
 <template>
 	<Dialog :open="ui.act === 'rename'" :title="`Rename ${ui.doctype}`" size="md" @update:open="close">
@@ -44,7 +44,7 @@
 				Deletes {{ ui.doctype }}, its {{ records }} and its table <code class="font-mono text-sm">tab{{ ui.doctype }}</code>. Custom fields that use it as a child table go too.
 				<template v-if="!ui.custom"> Its folder <code class="font-mono text-sm">{{ folderOf(ui, ui.module) }}</code> is removed.</template>
 			</p>
-			<TextInput v-model="typed" :label="`Type ${ui.doctype} to confirm`" :placeholder="ui.doctype" />
+			<TextInput v-model="typed" :label="`Type ${ui.doctype} to confirm`" :placeholder="ui.doctype" autofocus />
 		</div>
 		<template #actions>
 			<div class="flex justify-end gap-2">

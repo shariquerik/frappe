@@ -20,8 +20,10 @@
 					</template>
 					<div v-else-if="ui.rule === 'naming_series'" class="flex w-full flex-col">
 						<div v-for="(one, at) in series" :key="one" class="flex h-7 items-center gap-3">
-							<span class="w-[220px] shrink-0 truncate font-mono text-sm text-ink-gray-8">{{ one }}</span>
-							<span class="w-[64px] shrink-0"><Badge v-if="at === 0" label="Default" theme="gray" size="sm" /></span>
+							<span class="flex w-[296px] shrink-0 items-center gap-2">
+								<span class="min-w-0 truncate font-mono text-sm text-ink-gray-8">{{ one }}</span>
+								<Badge v-if="at === 0" label="Default" theme="gray" size="sm" class="shrink-0" />
+							</span>
 							<NamePreview class="whitespace-nowrap" :parts="previewName(one, counter, labelOf)" />
 						</div>
 						<p class="mt-1 text-p-sm text-ink-gray-5">The series are the options of the Naming Series field.</p>

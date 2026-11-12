@@ -1,6 +1,7 @@
-<!-- PROTOTYPE (#47098), throwaway: a setting's Customize mark, in a 20px slot that is always there so
-     nothing re-wraps when one appears: a lock (the site may not change it) or a dot (the site changed
-     it) that turns into a reset arrow while its row is hovered, as #47096's panel rows. -->
+<!-- PROTOTYPE (#47098), throwaway: a setting's Customize mark, in a 20px slot that is always there
+     (after a row's label) so nothing re-wraps when one appears: a lock (the site may not change
+     it) or a dot (the site changed it) that turns into a reset arrow while its row is hovered, as
+     #47096's panel rows. -->
 <template>
 	<span class="grid size-5 shrink-0 place-items-center">
 		<Tooltip v-if="lock" :text="lock">

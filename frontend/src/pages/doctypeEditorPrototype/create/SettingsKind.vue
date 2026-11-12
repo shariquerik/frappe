@@ -6,6 +6,7 @@
 		label="Change kind"
 		:help="`${ui.doctype} is ${/^[AEIOU]/.test(current.label) ? 'an' : 'a'} ${current.label} DocType. Changing it adds or removes fields and rights.`"
 		keywords="kind regular submittable tree child table single istable issingle is_tree"
+		action
 		class="!py-3"
 	>
 		<Button variant="subtle" theme="red" label="Change kind…" data-danger="kind" @click="open" />

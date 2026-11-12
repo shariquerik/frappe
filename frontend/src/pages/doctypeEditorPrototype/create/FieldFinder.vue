@@ -161,7 +161,7 @@ async function revealSetting(section: string, el: () => HTMLElement | null) {
 	emit("tab", "settings");
 	await router.replace({ query: { ...route.query, tab: "settings", section } });
 	await nextTick();
-	requestAnimationFrame(() => flash(el()));
+	requestAnimationFrame(() => flash(el(), { bleed: true }));
 }
 
 watch(query, () => (active.value = 0));

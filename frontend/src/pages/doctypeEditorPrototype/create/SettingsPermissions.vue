@@ -26,8 +26,8 @@
 				<thead class="bg-surface-gray-1 text-sm text-ink-gray-5">
 					<tr>
 						<th class="px-3 py-2 text-left font-normal">Role</th>
-						<th v-for="right in ui.columns" :key="right" class="w-[60px] px-1 py-2 text-center font-normal">{{ RIGHT_LABELS[right] }}</th>
-						<th class="w-[64px] px-1 py-2 text-center font-normal">More</th>
+						<th v-for="right in ui.columns" :key="right" class="w-[52px] px-1 py-2 text-center font-normal">{{ RIGHT_LABELS[right] }}</th>
+						<th class="w-[56px] px-1 py-2 text-center font-normal">More</th>
 						<th class="w-[40px]" aria-label="Actions" />
 					</tr>
 				</thead>
@@ -57,7 +57,9 @@
 							</div>
 						</td>
 						<td class="px-1 py-1.5 text-center">
-							<Popover side="bottom" align="end">
+							<!-- A level > 0 rule only reads and writes its fields: no more rights to give. -->
+							<span v-if="row.permlevel" class="text-ink-gray-4" aria-label="No more rights at this level">—</span>
+							<Popover v-else side="bottom" align="end">
 								<template #trigger>
 									<Button variant="ghost" size="sm" :label="moreLabel(row)" :aria-label="`More rights for ${row.role}`" data-perm-more />
 								</template>
