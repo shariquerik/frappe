@@ -17,6 +17,7 @@
 				'--list-row-padding-x': ROW_PADDING_X,
 				'--list-gap': COLUMN_GAP,
 				paddingInline,
+				paddingBottom: bottomInset,
 			}"
 			class="flex w-max min-w-full flex-col"
 		>

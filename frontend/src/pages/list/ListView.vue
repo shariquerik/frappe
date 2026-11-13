@@ -25,13 +25,14 @@
 		:rowMenu="rowActions.length > 0"
 		:cellClass="(row, column) => seenClassOf(row, column.fieldname)"
 		gutter="var(--page-gutter)"
+		:bottomInset="bulkVariant === 'B' && selection.length ? '4.5rem' : undefined"
 		@column-resize="resizeColumn($event.fieldname, $event.width)"
 		@column-reset="resetColumnWidth($event.fieldname)"
 		@row-contextmenu="menu.open($event.name, $event.event)"
 		@pointerover="bulk.prefetch"
 		@focusin="bulk.prefetch"
 	>
-		<template v-if="selection.length && bulk.parts.value" #bar>
+		<template v-if="bulkVariant === 'A' && selection.length && bulk.parts.value" #bar>
 			<component
 				:is="bulk.parts.value.chunk.BulkBar"
 				:scope="scope"
@@ -122,6 +123,33 @@
 			<PageState :name="filters.length ? 'filtered' : 'empty'" />
 		</template>
 	</List>
+	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
+	<div class="relative h-0 shrink-0">
+		<Transition
+			enter-active-class="transition duration-150 ease-out"
+			enter-from-class="translate-y-2 opacity-0"
+			leave-active-class="transition duration-100 ease-in"
+			leave-to-class="translate-y-2 opacity-0"
+		>
+			<div
+				v-if="bulkVariant === 'B' && selection.length && bulk.parts.value"
+				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
+			>
+				<component
+					:is="bulk.parts.value.chunk.BulkBar"
+					island
+					:scope="scope"
+					:doctype="view.doctype"
+					:status="bulk.parts.value.status"
+					:cap="bulk.cap"
+					:layout="bulk.layout.value"
+					:locked="bulk.locked"
+					v-model:menuOpen="bulk.menuOpen.value"
+					@clear="scope.clear()"
+				/>
+			</div>
+		</Transition>
+	</div>
 	<ListFooter
 		v-model:pageSize="pageSize"
 		:class="pageGutter"
@@ -194,6 +222,7 @@ import type { RendererHost } from "./renderer";
 import StatusCell from "./StatusCell.vue";
 import RowMenu from "./RowMenu.vue";
 import { rowMenuOptions } from "./rowActions";
+import { bulkVariant } from "./bulkPrototype/variant";
 import { useBulkBar } from "./useBulkBar";
 import { RowContextMenu, useRowContextMenu } from "./useRowContextMenu";
 

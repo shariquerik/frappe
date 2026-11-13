@@ -107,11 +107,13 @@
 
 		<FrameBands :bands="frame.after" :page="list.page" />
 		<PageDialogs v-if="list.engine.dialogs.value.length" :controller="list.engine" />
+		<BulkVariantSwitcher />
 	</PageFrame>
 </template>
 
 <script setup lang="ts">
 import { Button, Dropdown, Skeleton, toast } from "frappe-ui";
+import BulkVariantSwitcher from "./bulkPrototype/BulkVariantSwitcher.vue";
 import { Filter } from "@framework/ui/Filter";
 import { QuickFilter } from "@framework/ui/QuickFilter";
 import { SortBy } from "@framework/ui/SortBy";

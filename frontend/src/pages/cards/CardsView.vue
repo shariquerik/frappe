@@ -1,6 +1,9 @@
 <!-- The Cards type's renderer: a grid of cards, the List's footer, and the card settings among the controls. -->
 <template>
-	<Teleport v-if="host.bar.value && selection.length && bulk.parts.value" :to="host.bar.value">
+	<Teleport
+		v-if="bulkVariant === 'A' && host.bar.value && selection.length && bulk.parts.value"
+		:to="host.bar.value"
+	>
 		<component
 			:is="bulk.parts.value.chunk.BulkBar"
 			:scope="scope"
@@ -25,7 +28,7 @@
 	<div
 		v-else
 		class="min-h-0 flex-1 overflow-y-auto py-2"
-		:class="pageGutter"
+		:class="[pageGutter, bulkVariant === 'B' && selection.length && 'pb-[4.5rem]']"
 		@pointerover="bulk.prefetch"
 		@focusin="bulk.prefetch"
 	>
@@ -56,6 +59,33 @@
 				@focusout="blur(row.name)"
 			/>
 		</div>
+	</div>
+	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
+	<div class="relative h-0 shrink-0">
+		<Transition
+			enter-active-class="transition duration-150 ease-out"
+			enter-from-class="translate-y-2 opacity-0"
+			leave-active-class="transition duration-100 ease-in"
+			leave-to-class="translate-y-2 opacity-0"
+		>
+			<div
+				v-if="bulkVariant === 'B' && selection.length && bulk.parts.value"
+				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
+			>
+				<component
+					:is="bulk.parts.value.chunk.BulkBar"
+					island
+					:scope="scope"
+					:doctype="view.doctype"
+					:status="bulk.parts.value.status"
+					:cap="bulk.cap"
+					:layout="bulk.layout.value"
+					:locked="bulk.locked"
+					v-model:menuOpen="bulk.menuOpen.value"
+					@clear="scope.clear()"
+				/>
+			</div>
+		</Transition>
 	</div>
 	<ListFooter
 		v-model:pageSize="pageSize"
@@ -108,6 +138,7 @@ import { __ } from "@/i18n";
 import type { ListRow } from "@/list/useListRows";
 import type { View } from "@/list/view";
 import DeleteDialog from "@/pages/list/DeleteDialog.vue";
+import { bulkVariant } from "@/pages/list/bulkPrototype/variant";
 import type { RendererHost } from "@/pages/list/renderer";
 import { rowMenuOptions } from "@/pages/list/rowActions";
 import { useBulkBar } from "@/pages/list/useBulkBar";
@@ -192,7 +223,11 @@ const { listActs } = bulk;
 const menu = useRowContextMenu(selection);
 
 // The page swaps its controls row for the bar while this is true.
-watchEffect(() => (props.host.selecting.value = selection.value.length > 0 && !!bulk.parts.value));
+watchEffect(
+	() =>
+		(props.host.selecting.value =
+			bulkVariant.value === "A" && selection.value.length > 0 && !!bulk.parts.value)
+);
 onScopeDispose(() => (props.host.selecting.value = false));
 
 function ask(name: string) {
