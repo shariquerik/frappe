@@ -12,6 +12,7 @@ export const VARIANTS = [
 	{ key: "H", name: "D as a pill, deeper shadow" },
 	{ key: "I", name: "D with a count chip" },
 	{ key: "J", name: "D with a dark count badge" },
+	{ key: "K", name: "H, rounded, tight, checkbox" },
 ] as const;
 
 type Key = (typeof VARIANTS)[number]["key"];
@@ -26,6 +27,6 @@ export function setBulkVariant(key: Key) {
 	history.replaceState(history.state, "", url);
 }
 
-export const isIsland = computed(() => ["B", "C", "D", "E", "F", "H", "I", "J"].includes(bulkVariant.value));
-export const fades = computed(() => ["D", "E", "H", "I", "J"].includes(bulkVariant.value));
+export const isIsland = computed(() => ["B", "C", "D", "E", "F", "H", "I", "J", "K"].includes(bulkVariant.value));
+export const fades = computed(() => ["D", "E", "H", "I", "J", "K"].includes(bulkVariant.value));
 export const docked = computed(() => bulkVariant.value === "G");

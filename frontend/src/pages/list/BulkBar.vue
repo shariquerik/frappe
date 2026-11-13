@@ -18,12 +18,21 @@
 							H: 'deep !rounded-full !ps-5 ring-1 ring-outline-gray-3',
 							I: 'shadow-2xl !ps-1.5 ring-1 ring-outline-gray-3',
 							J: 'shadow-2xl !ps-2 ring-1 ring-outline-gray-3',
+							K: 'deep !ps-3 ring-1 ring-outline-gray-3',
 						}[bulkVariant],
 				  ]
 		"
 		role="toolbar"
 		:aria-label="__('Bulk actions')"
 	>
+		<!-- PROTOTYPE (#47260): variant K's checkbox; unticking it clears the selection. -->
+		<Checkbox
+			v-if="tight"
+			class="me-2"
+			:modelValue="true"
+			:aria-label="__('Clear selection')"
+			@update:modelValue="$emit('clear')"
+		/>
 		<span
 			v-if="island && bulkVariant === 'J' && !scope.all.value"
 			class="flex items-center gap-2 whitespace-nowrap text-ink-gray-9"
@@ -62,7 +71,7 @@
 		</template>
 		<template v-if="shown">
 			<div :class="[divider, scope.canSelectAll.value ? 'mx-1' : 'me-1 ms-3']" />
-			<div class="flex items-center gap-0.5">
+			<div class="flex items-center" :class="tight ? 'gap-0' : 'gap-0.5'">
 				<Button
 					v-for="entry in layout.transitions"
 					:key="entry.name"
@@ -77,6 +86,7 @@
 					v-for="entry in layout.buttons"
 					:key="entry.name"
 					variant="ghost"
+					:class="{ '!px-1.5': tight }"
 					:label="barLabel(entry.label)"
 					:icon-left="entry.icon"
 					:disabled="entry.disabled"
@@ -85,6 +95,7 @@
 				<!-- PROTOTYPE (#47260): the owner's bulk Favourite; flips to Unfavourite when every selected row is starred. -->
 				<Button
 					variant="ghost"
+					:class="{ '!px-1.5': tight }"
 					:label="favourite.label"
 					:icon-left="favourite.icon"
 					:disabled="scope.all.value"
@@ -109,13 +120,14 @@
 							</template>
 							<Button
 								variant="ghost"
+								:class="{ '!px-1.5': tight }"
 								:label="__('More')"
 								icon-right="lucide-chevron-down"
 							/>
 						</Tooltip>
 					</div>
 				</Dropdown>
-				<div v-if="layout.trash" :class="[divider, 'mx-1']" />
+				<div v-if="layout.trash && !tight" :class="[divider, 'mx-1']" />
 				<Tooltip v-if="layout.trash" :text="layout.trash.label">
 					<Button
 						variant="ghost"
@@ -157,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Dropdown, Icon, KeyboardShortcut, Tooltip, toast } from "frappe-ui";
+import { Button, Checkbox, Dropdown, Icon, KeyboardShortcut, Tooltip, toast } from "frappe-ui";
 import { computed, defineAsyncComponent, inject, ref, watch } from "vue";
 import { addFavourite, removeFavourite } from "@framework/ui/api";
 import type { Boot } from "@/boot";
@@ -206,6 +218,7 @@ watch(props.status.asked, (action) => {
 });
 
 const user = inject<Boot>("boot")!.session.user.name;
+const tight = computed(() => props.island && bulkVariant.value === "K");
 const selectedNames = () => {
 	const selected = props.scope.selected() as { names?: string[] };
 	return selected.names ?? [];
