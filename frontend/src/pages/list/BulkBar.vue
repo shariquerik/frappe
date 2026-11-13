@@ -3,10 +3,18 @@
 	<!-- PROTOTYPE (#47260): `island` draws the bar as a floating surface; otherwise the header-row bar with even gaps. -->
 	<div
 		class="flex items-center text-base"
+		:data-theme="island && bulkVariant === 'C' ? 'dark' : undefined"
 		:class="
-			island
-				? 'h-11 rounded-6 bg-surface-base py-2 pe-2 ps-4 shadow-2xl ring-1 ring-outline-gray-1'
-				: 'h-7 w-full'
+			!island
+				? 'h-7 w-full'
+				: [
+						'h-11 rounded-6 bg-surface-base py-2 pe-2 ps-4',
+						{
+							B: 'shadow-2xl ring-1 ring-outline-gray-1',
+							C: 'shadow-2xl',
+							D: 'shadow-2xl ring-1 ring-outline-gray-3',
+						}[bulkVariant],
+				  ]
 		"
 		role="toolbar"
 		:aria-label="__('Bulk actions')"
@@ -130,6 +138,7 @@ import { computed, defineAsyncComponent, inject, ref, watch } from "vue";
 import { addFavourite, removeFavourite } from "@framework/ui/api";
 import type { Boot } from "@/boot";
 import { isStarred } from "@/list/favouriteStars";
+import { bulkVariant } from "./bulkPrototype/variant";
 import { __ } from "@/i18n";
 import type { BulkScope } from "@/list/useBulkScope";
 import type { BulkLayout } from "./bulkLayout";

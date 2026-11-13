@@ -28,7 +28,7 @@
 	<div
 		v-else
 		class="min-h-0 flex-1 overflow-y-auto py-2"
-		:class="[pageGutter, bulkVariant === 'B' && selection.length && 'pb-[4.5rem]']"
+		:class="[pageGutter, bulkVariant !== 'A' && selection.length && 'pb-[4.5rem]']"
 		@pointerover="bulk.prefetch"
 		@focusin="bulk.prefetch"
 	>
@@ -62,6 +62,11 @@
 	</div>
 	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
 	<div class="relative h-0 shrink-0">
+		<div
+			v-if="bulkVariant === 'D' && selection.length && bulk.parts.value"
+			class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24"
+			style="background: linear-gradient(to top, var(--surface-base) 30%, transparent)"
+		/>
 		<Transition
 			enter-active-class="transition duration-150 ease-out"
 			enter-from-class="translate-y-2 opacity-0"
@@ -69,7 +74,7 @@
 			leave-to-class="translate-y-2 opacity-0"
 		>
 			<div
-				v-if="bulkVariant === 'B' && selection.length && bulk.parts.value"
+				v-if="bulkVariant !== 'A' && selection.length && bulk.parts.value"
 				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
 			>
 				<component

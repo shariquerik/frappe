@@ -25,7 +25,7 @@
 		:rowMenu="rowActions.length > 0"
 		:cellClass="(row, column) => seenClassOf(row, column.fieldname)"
 		gutter="var(--page-gutter)"
-		:bottomInset="bulkVariant === 'B' && selection.length ? '4.5rem' : undefined"
+		:bottomInset="bulkVariant !== 'A' && selection.length ? '4.5rem' : undefined"
 		@column-resize="resizeColumn($event.fieldname, $event.width)"
 		@column-reset="resetColumnWidth($event.fieldname)"
 		@row-contextmenu="menu.open($event.name, $event.event)"
@@ -125,6 +125,11 @@
 	</List>
 	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
 	<div class="relative h-0 shrink-0">
+		<div
+			v-if="bulkVariant === 'D' && selection.length && bulk.parts.value"
+			class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24"
+			style="background: linear-gradient(to top, var(--surface-base) 30%, transparent)"
+		/>
 		<Transition
 			enter-active-class="transition duration-150 ease-out"
 			enter-from-class="translate-y-2 opacity-0"
@@ -132,7 +137,7 @@
 			leave-to-class="translate-y-2 opacity-0"
 		>
 			<div
-				v-if="bulkVariant === 'B' && selection.length && bulk.parts.value"
+				v-if="bulkVariant !== 'A' && selection.length && bulk.parts.value"
 				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
 			>
 				<component
