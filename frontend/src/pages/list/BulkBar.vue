@@ -124,7 +124,7 @@
 						</Tooltip>
 					</div>
 				</Dropdown>
-				<div v-if="layout.trash && !tight" :class="[divider, 'mx-1']" />
+				<div v-if="layout.trash" :class="[divider, 'mx-1']" />
 				<Tooltip v-if="layout.trash" :text="layout.trash.label">
 					<Button
 						variant="ghost"
