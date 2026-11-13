@@ -50,6 +50,14 @@
 					:disabled="entry.disabled"
 					@click="entry.onClick"
 				/>
+				<!-- PROTOTYPE (#47260): the owner's bulk Favourite; flips to Unfavourite when every selected row is starred. -->
+				<Button
+					variant="ghost"
+					:label="favourite.label"
+					:icon-left="favourite.icon"
+					:disabled="scope.all.value"
+					@click="toggleFavourites"
+				/>
 				<Dropdown
 					v-if="layout.menu.length"
 					v-model:open="menuOpen"
@@ -118,7 +126,10 @@
 
 <script setup lang="ts">
 import { Button, Dropdown, Icon, KeyboardShortcut, Tooltip, toast } from "frappe-ui";
-import { computed, defineAsyncComponent, ref, watch } from "vue";
+import { computed, defineAsyncComponent, inject, ref, watch } from "vue";
+import { addFavourite, removeFavourite } from "@framework/ui/api";
+import type { Boot } from "@/boot";
+import { isStarred } from "@/list/favouriteStars";
 import { __ } from "@/i18n";
 import type { BulkScope } from "@/list/useBulkScope";
 import type { BulkLayout } from "./bulkLayout";
@@ -160,6 +171,29 @@ watch(props.status.asked, (action) => {
 	dialogOpened.value = true;
 	confirming.value = true;
 });
+
+const user = inject<Boot>("boot")!.session.user.name;
+const selectedNames = () => {
+	const selected = props.scope.selected() as { names?: string[] };
+	return selected.names ?? [];
+};
+const allStarred = computed(() => {
+	const names = selectedNames();
+	return names.length > 0 && names.every((name) => isStarred(props.doctype, name, user));
+});
+const favourite = computed(() =>
+	allStarred.value
+		? { label: __("Unfavourite"), icon: "lucide-star-off" }
+		: { label: __("Favourite"), icon: "lucide-star" }
+);
+// A sketch of the action only: one request per record, then a reload so the stars redraw.
+async function toggleFavourites() {
+	const names = selectedNames();
+	const remove = allStarred.value;
+	await Promise.all(names.map((name) => (remove ? removeFavourite : addFavourite)(props.doctype, name)));
+	toast.success(remove ? __("Removed {0} from favourites", [names.length]) : __("Added {0} to favourites", [names.length]));
+	location.reload();
+}
 
 const overCap = computed(() => !props.locked && props.scope.count.value > props.cap);
 const shown = computed(
