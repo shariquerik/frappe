@@ -13,13 +13,37 @@
 							B: 'shadow-2xl ring-1 ring-outline-gray-1',
 							C: 'shadow-2xl',
 							D: 'shadow-2xl ring-1 ring-outline-gray-3',
+							E: '!bg-surface-gray-3 shadow-xl ring-1 ring-outline-gray-3',
+							F: 'glass shadow-2xl ring-1 ring-outline-gray-2',
+							H: 'deep !rounded-full !ps-5 ring-1 ring-outline-gray-3',
+							I: 'shadow-2xl !ps-1.5 ring-1 ring-outline-gray-3',
+							J: 'shadow-2xl !ps-2 ring-1 ring-outline-gray-3',
 						}[bulkVariant],
 				  ]
 		"
 		role="toolbar"
 		:aria-label="__('Bulk actions')"
 	>
-		<span class="whitespace-nowrap text-ink-gray-9" aria-live="polite">{{ countText }}</span>
+		<span
+			v-if="island && bulkVariant === 'J' && !scope.all.value"
+			class="flex items-center gap-2 whitespace-nowrap text-ink-gray-9"
+			aria-live="polite"
+		>
+			<span
+				class="flex h-6 min-w-6 items-center justify-center rounded-full bg-surface-gray-7 px-1.5 text-sm font-medium text-ink-white"
+			>
+				{{ scope.count.value }}
+			</span>
+			{{ __("selected") }}
+		</span>
+		<span
+			v-else
+			class="whitespace-nowrap text-ink-gray-9"
+			:class="{ 'rounded-4 bg-surface-gray-3 px-2.5 py-1.5': island && bulkVariant === 'I' }"
+			aria-live="polite"
+		>
+			{{ countText }}
+		</span>
 		<Button
 			v-if="scope.canSelectAll.value"
 			class="ms-1"
@@ -70,7 +94,7 @@
 					v-if="layout.menu.length"
 					v-model:open="menuOpen"
 					:options="layout.menu"
-					:side="island ? 'top' : 'bottom'"
+					:side="bulkVariant === 'A' ? 'bottom' : 'top'"
 					align="start"
 				>
 					<!-- The Dropdown trigger needs a plain element: Tooltip drops the trigger's props. -->
@@ -213,3 +237,18 @@ const shown = computed(
 		props.layout.trash
 );
 </script>
+
+<style scoped>
+/* PROTOTYPE (#47260): variant F. */
+.glass {
+	background: color-mix(in srgb, var(--surface-base) 72%, transparent) !important;
+	backdrop-filter: blur(12px) saturate(1.4);
+}
+/* PROTOTYPE (#47260): variant H. */
+.deep {
+	box-shadow:
+		0 1px 2px rgb(0 0 0 / 0.06),
+		0 8px 24px rgb(0 0 0 / 0.12),
+		0 24px 48px rgb(0 0 0 / 0.1);
+}
+</style>

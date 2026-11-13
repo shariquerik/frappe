@@ -25,7 +25,7 @@
 		:rowMenu="rowActions.length > 0"
 		:cellClass="(row, column) => seenClassOf(row, column.fieldname)"
 		gutter="var(--page-gutter)"
-		:bottomInset="bulkVariant !== 'A' && selection.length ? '4.5rem' : undefined"
+		:bottomInset="isIsland && selection.length ? '4.5rem' : undefined"
 		@column-resize="resizeColumn($event.fieldname, $event.width)"
 		@column-reset="resetColumnWidth($event.fieldname)"
 		@row-contextmenu="menu.open($event.name, $event.event)"
@@ -126,7 +126,7 @@
 	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
 	<div class="relative h-0 shrink-0">
 		<div
-			v-if="bulkVariant === 'D' && selection.length && bulk.parts.value"
+			v-if="fades && selection.length && bulk.parts.value"
 			class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24"
 			style="background: linear-gradient(to top, var(--surface-base) 30%, transparent)"
 		/>
@@ -137,7 +137,7 @@
 			leave-to-class="translate-y-2 opacity-0"
 		>
 			<div
-				v-if="bulkVariant !== 'A' && selection.length && bulk.parts.value"
+				v-if="isIsland && selection.length && bulk.parts.value"
 				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
 			>
 				<component
@@ -155,7 +155,26 @@
 			</div>
 		</Transition>
 	</div>
+	<!-- PROTOTYPE (#47260): variant G docks the bar in the footer row's place. -->
+	<div
+		v-if="docked && selection.length && bulk.parts.value"
+		:class="pageGutter"
+		class="flex h-12 shrink-0 items-center border-t border-outline-gray-2 bg-surface-gray-2"
+	>
+		<component
+			:is="bulk.parts.value.chunk.BulkBar"
+			:scope="scope"
+			:doctype="view.doctype"
+			:status="bulk.parts.value.status"
+			:cap="bulk.cap"
+			:layout="bulk.layout.value"
+			:locked="bulk.locked"
+			v-model:menuOpen="bulk.menuOpen.value"
+			@clear="scope.clear()"
+		/>
+	</div>
 	<ListFooter
+		v-else
 		v-model:pageSize="pageSize"
 		:class="pageGutter"
 		:rowCount="rowCount"
@@ -227,7 +246,7 @@ import type { RendererHost } from "./renderer";
 import StatusCell from "./StatusCell.vue";
 import RowMenu from "./RowMenu.vue";
 import { rowMenuOptions } from "./rowActions";
-import { bulkVariant } from "./bulkPrototype/variant";
+import { bulkVariant, docked, fades, isIsland } from "./bulkPrototype/variant";
 import { useBulkBar } from "./useBulkBar";
 import { RowContextMenu, useRowContextMenu } from "./useRowContextMenu";
 

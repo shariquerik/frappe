@@ -28,7 +28,7 @@
 	<div
 		v-else
 		class="min-h-0 flex-1 overflow-y-auto py-2"
-		:class="[pageGutter, bulkVariant !== 'A' && selection.length && 'pb-[4.5rem]']"
+		:class="[pageGutter, isIsland && selection.length && 'pb-[4.5rem]']"
 		@pointerover="bulk.prefetch"
 		@focusin="bulk.prefetch"
 	>
@@ -63,7 +63,7 @@
 	<!-- PROTOTYPE (#47260): variant B floats the bar over the last rows, above the footer. -->
 	<div class="relative h-0 shrink-0">
 		<div
-			v-if="bulkVariant === 'D' && selection.length && bulk.parts.value"
+			v-if="fades && selection.length && bulk.parts.value"
 			class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24"
 			style="background: linear-gradient(to top, var(--surface-base) 30%, transparent)"
 		/>
@@ -74,7 +74,7 @@
 			leave-to-class="translate-y-2 opacity-0"
 		>
 			<div
-				v-if="bulkVariant !== 'A' && selection.length && bulk.parts.value"
+				v-if="isIsland && selection.length && bulk.parts.value"
 				class="absolute inset-x-0 bottom-4 z-20 mx-auto w-max"
 			>
 				<component
@@ -92,7 +92,26 @@
 			</div>
 		</Transition>
 	</div>
+	<!-- PROTOTYPE (#47260): variant G docks the bar in the footer row's place. -->
+	<div
+		v-if="docked && selection.length && bulk.parts.value"
+		:class="pageGutter"
+		class="flex h-12 shrink-0 items-center border-t border-outline-gray-2 bg-surface-gray-2"
+	>
+		<component
+			:is="bulk.parts.value.chunk.BulkBar"
+			:scope="scope"
+			:doctype="view.doctype"
+			:status="bulk.parts.value.status"
+			:cap="bulk.cap"
+			:layout="bulk.layout.value"
+			:locked="bulk.locked"
+			v-model:menuOpen="bulk.menuOpen.value"
+			@clear="scope.clear()"
+		/>
+	</div>
 	<ListFooter
+		v-else
 		v-model:pageSize="pageSize"
 		:class="pageGutter"
 		:rowCount="rowCount"
@@ -143,7 +162,7 @@ import { __ } from "@/i18n";
 import type { ListRow } from "@/list/useListRows";
 import type { View } from "@/list/view";
 import DeleteDialog from "@/pages/list/DeleteDialog.vue";
-import { bulkVariant } from "@/pages/list/bulkPrototype/variant";
+import { bulkVariant, docked, fades, isIsland } from "@/pages/list/bulkPrototype/variant";
 import type { RendererHost } from "@/pages/list/renderer";
 import { rowMenuOptions } from "@/pages/list/rowActions";
 import { useBulkBar } from "@/pages/list/useBulkBar";
