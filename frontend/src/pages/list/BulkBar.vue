@@ -71,7 +71,7 @@
 		</template>
 		<template v-if="shown">
 			<div :class="[divider, scope.canSelectAll.value ? 'mx-1' : 'me-1 ms-3']" />
-			<div class="flex items-center" :class="tight ? 'gap-0' : 'gap-0.5'">
+			<div class="flex items-center gap-0.5">
 				<Button
 					v-for="entry in layout.transitions"
 					:key="entry.name"
@@ -86,8 +86,7 @@
 					v-for="entry in layout.buttons"
 					:key="entry.name"
 					variant="ghost"
-					:class="{ '!px-1.5': tight }"
-					:label="barLabel(entry.label)"
+										:label="barLabel(entry.label)"
 					:icon-left="entry.icon"
 					:disabled="entry.disabled"
 					@click="entry.onClick"
@@ -95,8 +94,7 @@
 				<!-- PROTOTYPE (#47260): the owner's bulk Favourite; flips to Unfavourite when every selected row is starred. -->
 				<Button
 					variant="ghost"
-					:class="{ '!px-1.5': tight }"
-					:label="favourite.label"
+										:label="favourite.label"
 					:icon-left="favourite.icon"
 					:disabled="scope.all.value"
 					@click="toggleFavourites"
@@ -120,8 +118,7 @@
 							</template>
 							<Button
 								variant="ghost"
-								:class="{ '!px-1.5': tight }"
-								:label="__('More')"
+																:label="__('More')"
 								icon-right="lucide-chevron-down"
 							/>
 						</Tooltip>

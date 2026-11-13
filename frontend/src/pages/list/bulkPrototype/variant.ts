@@ -12,7 +12,7 @@ export const VARIANTS = [
 	{ key: "H", name: "D as a pill, deeper shadow" },
 	{ key: "I", name: "D with a count chip" },
 	{ key: "J", name: "D with a dark count badge" },
-	{ key: "K", name: "H, rounded, tight, checkbox" },
+	{ key: "K", name: "H, rounded, with checkbox" },
 ] as const;
 
 type Key = (typeof VARIANTS)[number]["key"];
