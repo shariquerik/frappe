@@ -1,7 +1,22 @@
 <!-- The avatar menu: the person's profile, the shell's acts for them and the page's own rows. The rail and the index draw it. -->
 <template>
-	<Dropdown :options="menu" side="right" align="end">
+	<Dropdown :options="menu" :side="wide ? 'top' : awaySide" :align="wide ? 'start' : 'end'">
+		<!-- PROTOTYPE (#47374): `wide` is the sidebar footer's avatar-and-name row. -->
 		<button
+			v-if="wide"
+			type="button"
+			data-key="user-menu"
+			class="flex h-8 w-full min-w-0 items-center gap-2 rounded-4 px-1 text-left hover:bg-surface-gray-3"
+		>
+			<Avatar
+				:image="boot.session.user.user_image"
+				:label="boot.session.user.full_name"
+				size="md"
+			/>
+			<span class="truncate text-sm text-ink-gray-8">{{ boot.session.user.full_name }}</span>
+		</button>
+		<button
+			v-else
 			type="button"
 			data-key="user-menu"
 			:class="USER_CELL"
@@ -23,6 +38,9 @@ import { acts } from "@/acts/dispatcher";
 import type { Boot } from "@/boot";
 import { pageMenuItems } from "./pageMenu";
 import { colorSchemes, shellAct, shellMenu } from "./shellActs";
+import { awaySide } from "./prototype/navLayout";
+
+defineProps<{ wide?: boolean }>();
 
 const USER_CELL =
 	"flex rounded-full transition hover:opacity-90 focus-visible:ring-0 focus-visible:focus-ring";

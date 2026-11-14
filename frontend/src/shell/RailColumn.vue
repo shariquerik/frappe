@@ -4,9 +4,11 @@
 -->
 <template>
 	<SidebarRail>
-		<div class="mb-3 flex shrink-0 items-center justify-center">
+		<!-- PROTOTYPE (#47374): `chrome` false drops the logo, search and avatar (a dock beside a
+		     sidebar that carries them). -->
+		<div v-if="chrome" class="mb-3 flex shrink-0 items-center justify-center">
 			<!-- A raw button: `Dropdown` cannot reach a trigger through `SidebarRailItem`'s `Tooltip`. -->
-			<Dropdown :options="menu" side="right" align="start">
+			<Dropdown :options="menu" :side="awaySide" align="start">
 				<button
 					type="button"
 					data-key="app-menu"
@@ -26,9 +28,9 @@
 			</Dropdown>
 		</div>
 
-		<div class="mb-3 flex shrink-0 flex-col items-center gap-3 self-stretch">
+		<div v-if="chrome" class="mb-3 flex shrink-0 flex-col items-center gap-3 self-stretch">
 			<Divider flex-item />
-			<Tooltip side="right">
+			<Tooltip :side="awaySide">
 				<template #content>
 					<span class="flex items-center gap-2 [&_[data-slot=key]]:text-ink-gray-4">
 						{{ __("Search") }} <KeyboardShortcut combo="Mod+K" />
@@ -72,7 +74,7 @@
 
 					<!-- Off this prefix: a full document load, so an `<a>` with `SidebarRailItem`'s classes.
 					     Never current: `current` is a route. -->
-					<Tooltip v-else :text="cell.label" side="right">
+					<Tooltip v-else :text="cell.label" :side="awaySide">
 						<a
 							:href="cell.href"
 							data-slot="sidebar-rail-item"
@@ -90,9 +92,10 @@
 		</ScrollArea>
 
 		<!-- The person's cell, pinned to the foot by the `ScrollArea`'s `flex-1` above it. -->
-		<div class="mt-3 flex shrink-0 items-center justify-center">
+		<div v-if="chrome" class="mt-3 flex shrink-0 items-center justify-center">
 			<UserMenu />
 		</div>
+		<slot name="foot" />
 	</SidebarRail>
 </template>
 
@@ -123,6 +126,7 @@ import type { PlacesApp } from "./palettePlaces";
 import { loadDocument } from "./tabKeepAlive";
 import { shellMenu } from "./shellActs";
 import UserMenu from "./UserMenu.vue";
+import { awaySide } from "./prototype/navLayout";
 
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }
@@ -141,11 +145,15 @@ const TRIGGER =
 	"relative flex size-7 shrink-0 items-center justify-center rounded-4 text-base text-ink-gray-8 transition hover:bg-surface-gray-3 focus-visible:ring-0 focus-visible:focus-ring";
 
 // The shell decides `current`, one row across rail and panel; a context is composed once per list.
-const props = defineProps<{
-	items: NavigationItem[];
-	context: ItemContext;
-	current?: string;
-}>();
+const props = withDefaults(
+	defineProps<{
+		items: NavigationItem[];
+		context: ItemContext;
+		current?: string;
+		chrome?: boolean;
+	}>(),
+	{ chrome: true }
+);
 
 const boot = inject<Boot>("boot")!;
 

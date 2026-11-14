@@ -8,26 +8,41 @@
 	<DesktopShell
 		:scroll="false"
 		class="relative h-screen w-screen overflow-clip bg-surface-base text-ink-gray-9"
-		:class="{ 'desk-shell': boot.app }"
+		:class="{
+			'desk-shell': boot.app,
+			'nav-right flex-row-reverse': side === 'right',
+			'nav-edgeless': boot.app && !inFlowNav,
+		}"
 	>
-		<template v-if="boot.app" #rail>
+		<!-- PROTOTYPE (#47374): the layout under test decides what sits in flow and what floats. -->
+		<template v-if="boot.app && railInFlow" #rail>
 			<RailColumn
 				:items="navigation.rail"
 				:context="contexts.rail"
 				:current="current.railKey"
-			/>
+			>
+				<template v-if="pinned" #foot><PinButton class="mt-3" /></template>
+			</RailColumn>
 		</template>
 
-		<template v-if="boot.app" #sidebar>
+		<template v-if="boot.app && inFlowNav" #sidebar>
+			<SidebarOnlyPanel
+				v-if="layout === 'sidebar'"
+				:navigation="navigation"
+				:contexts="contexts"
+				:current="current"
+				:sections="sections"
+			/>
 			<SidebarPanel
-				v-if="panel"
+				v-else-if="panel"
 				:address="panel.address"
 				:items="panel.items"
 				:context="panel.context"
 				:title="panel.title"
 				:current="current.rowKey"
 				:sections="sections[panel.address]"
-				:collapsed="sidebarCollapsed"
+				:collapsed="sidebarCollapsed && layout === 'rail'"
+				:chrome="layout === 'dock' && !pinned"
 				customizable
 				@customize="customize.write('sidebar', panel.address)"
 			/>
@@ -36,6 +51,35 @@
 		<main class="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
 			<RouterView />
 		</main>
+
+		<FloatingDock
+			v-if="boot.app && layout === 'dock' && !pinned"
+			:items="navigation.rail"
+			:context="contexts.rail"
+			:current="current.railKey"
+			:chrome="!panel"
+		/>
+		<PeekNav
+			v-if="boot.app && layout === 'peek' && !pinned"
+			:items="navigation.rail"
+			:context="contexts.rail"
+			:current="current.railKey"
+		>
+			<SidebarPanel
+				v-if="panel"
+				:address="panel.address"
+				:items="panel.items"
+				:context="panel.context"
+				:title="panel.title"
+				:current="current.rowKey"
+				:sections="sections[panel.address]"
+				:collapsed="false"
+				floating
+				customizable
+				@customize="customize.write('sidebar', panel.address)"
+			/>
+		</PeekNav>
+		<NavLayoutSwitcher />
 
 		<div
 			v-if="!boot.app"
@@ -122,6 +166,12 @@ import { useStaleBuildNotice } from "./staleBuild";
 import SidebarPanel from "./SidebarPanel.vue";
 import { useHashDialog } from "./useHashDialog";
 import UserMenu from "./UserMenu.vue";
+import FloatingDock from "./prototype/FloatingDock.vue";
+import NavLayoutSwitcher from "./prototype/NavLayoutSwitcher.vue";
+import { layout, pinned, side } from "./prototype/navLayout";
+import PeekNav from "./prototype/PeekNav.vue";
+import PinButton from "./prototype/PinButton.vue";
+import SidebarOnlyPanel from "./prototype/SidebarOnlyPanel.vue";
 
 const ShellSettingsDialog = defineAsyncComponent(() => import("./ShellSettingsDialog.vue"));
 const AboutDialog = defineAsyncComponent(() => import("./AboutDialog.vue"));
@@ -324,6 +374,15 @@ watch(sidebarCollapsed, collapsedMemory.remember);
 
 const confirmingLogout = ref(false);
 
+// PROTOTYPE (#47374): a pinned dock or peek is the rail, in flow.
+const railInFlow = computed(
+	() => layout.value === "rail" || (pinned.value && ["dock", "peek"].includes(layout.value))
+);
+// Anything in flow beside the page; the floating ones leave it the full width.
+const inFlowNav = computed(
+	() => railInFlow.value || layout.value === "sidebar" || (layout.value === "dock" && !!panel.value)
+);
+
 const { appActsPending, shell } = useShellActs({
 	boot,
 	router,
@@ -346,5 +405,18 @@ const standingWindows = useShellHooks(boot.shell_hooks, shell);
 /* The content's left edge; the panel draws the other one, and drops it while collapsed. */
 .desk-shell :deep([data-slot="desktop-shell-content"]) {
 	@apply border-l border-outline-gray-1 bg-surface-base;
+}
+
+/* PROTOTYPE (#47374): the mirror. The content's edge and the rail's active bar change sides. */
+.desk-shell.nav-right :deep([data-slot="desktop-shell-content"]) {
+	@apply border-l-0 border-r;
+}
+.desk-shell.nav-edgeless :deep([data-slot="desktop-shell-content"]) {
+	@apply border-0;
+}
+.nav-right :deep([data-slot="sidebar-rail-item-indicator"]) {
+	left: auto;
+	right: -11px;
+	border-radius: var(--radius-4) 0 0 var(--radius-4);
 }
 </style>
