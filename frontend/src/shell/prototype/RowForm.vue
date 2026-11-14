@@ -47,7 +47,13 @@
 				<Badge v-if="row" :label="ORIGIN_LABEL[row.origin]" size="sm" />
 			</div>
 			<template v-if="quiet && row && !mine && type !== 'Sidebar'">
-				<FormControl :modelValue="targetText" :label="targetLabel" disabled />
+				<FormControl
+					:modelValue="targetText"
+					:label="targetLabel"
+					variant="outline"
+					disabled
+					class="[&_input]:text-ink-gray-7"
+				/>
 			</template>
 			<p v-if="row && !mine && !quiet" class="text-xs text-ink-gray-5">
 				Inherited from {{ ORIGIN_LABEL[row.origin] }}: you can rename it, change its icon,
