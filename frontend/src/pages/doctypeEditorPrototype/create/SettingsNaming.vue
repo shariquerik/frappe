@@ -6,7 +6,7 @@
 	<SettingsRow v-if="!only || only === 'naming'" label="Naming rule" help="How each new record gets its ID." prop="naming" wide keywords="autoname naming series pattern format expression random hash autoincrement number prompt field script">
 		<RadioGroup :model-value="ui.rule" padded class="-mx-1.5 flex flex-col gap-0.5" @update:model-value="pick($event as Rule)">
 			<template v-for="one in rules" :key="one.value">
-				<Radio :value="one.value" :label="one.label" :description="(!byScript && ruleRefusal(ui, one.value)) || HELP[one.value]" :disabled="Boolean(ruleRefusal(ui, one.value))" />
+				<Radio :value="one.value" :label="one.label" :description="(!byScript && ruleRefusal(ui, one.value)) || HELP[one.value]" :disabled="Boolean(ruleRefusal(ui, one.value))" :class="{ '[&_[data-slot=description]]:!text-ink-gray-5': ruleRefusal(ui, one.value) }" />
 				<div v-if="one.value === ui.rule && hasControl" class="flex flex-col gap-2 pb-2 pl-[28px] pr-1.5" data-naming-control>
 					<template v-if="ui.rule === 'field'">
 						<Combobox class="w-[280px]" :model-value="field" :options="fieldOptions" placeholder="Choose a field" @update:model-value="pickField(String($event ?? ''))" />

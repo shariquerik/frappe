@@ -58,7 +58,7 @@
 						<template #suffix>
 							<span class="flex items-center gap-1 text-sm text-ink-gray-5">
 								{{ column.fields.length }} {{ column.fields.length === 1 ? "field" : "fields" }}
-								<span class="lucide-chevron-right size-4" aria-hidden="true" />
+								<span class="lucide-chevron-right mr-2 size-4" aria-hidden="true" />
 							</span>
 						</template>
 					</ItemListRow>

@@ -40,7 +40,7 @@
 					</button>
 				</template>
 				<div class="flex w-[300px] flex-col p-1.5" data-details-tray-popover>
-					<p class="px-2 pb-1.5 pt-2 text-p-sm text-ink-gray-5">Click one to add it at the end of this tab.</p>
+					<p class="px-2 pb-1.5 pt-2 text-p-sm text-ink-gray-6">Click one to add it at the end of this tab.</p>
 					<ItemListRow
 						v-for="row in rows"
 						:key="row.fieldname"
@@ -51,7 +51,7 @@
 					>
 						<template #prefix><span class="size-4 text-ink-gray-5" :class="typeIcon(row)" aria-hidden="true" /></template>
 						<span class="block truncate text-ink-gray-8">{{ row.label || row.fieldname }}</span>
-						<template #suffix><span class="text-sm text-ink-gray-5">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
+						<template #suffix><span class="text-sm text-ink-gray-6">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
 					</ItemListRow>
 				</div>
 			</Popover>
