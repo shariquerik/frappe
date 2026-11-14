@@ -61,7 +61,7 @@
 						/>
 						<ConditionMark class="mr-1" :rules="[{ label: 'Visible if', value: section.dependsOn }, { label: 'Starts open if', value: section.collapsibleDependsOn }]" />
 						<span
-							class="section-handle flex size-6 shrink-0 cursor-grab items-center justify-center text-ink-gray-4 opacity-0 transition-opacity hover:text-ink-gray-7 group-hover/section:opacity-100"
+							class="section-handle flex size-6 shrink-0 cursor-grab items-center justify-center text-ink-gray-5 opacity-0 transition-opacity hover:text-ink-gray-7 group-hover/section:opacity-100"
 							:class="{ '!opacity-100': isSection(section.name) }"
 							title="Drag to move the section"
 						>
@@ -148,7 +148,7 @@
 							</Draggable>
 							<div
 								v-if="!column.fields.length"
-								class="pointer-events-none absolute inset-x-0 top-0 flex h-[60px] items-center justify-center rounded-4 border border-dashed border-outline-gray-2 text-base text-ink-gray-4"
+								class="pointer-events-none absolute inset-x-0 top-0 flex h-[60px] items-center justify-center rounded-4 border border-dashed border-outline-gray-2 text-base text-ink-gray-5"
 							>
 								Drop a field here
 							</div>

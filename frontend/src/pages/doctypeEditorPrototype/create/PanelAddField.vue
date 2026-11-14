@@ -31,7 +31,7 @@
 				>
 					<template #prefix><span class="size-4 text-ink-gray-5" :class="iconOf(row.fieldtype)" aria-hidden="true" /></template>
 					<span class="block truncate text-ink-gray-8">{{ row.label }}</span>
-					<template #suffix><span class="max-w-32 truncate text-sm text-ink-gray-4">{{ row.section }}</span></template>
+					<template #suffix><span class="max-w-32 truncate text-sm text-ink-gray-5">{{ row.section }}</span></template>
 				</ItemListRow>
 			</div>
 		</PanelSection>
@@ -57,7 +57,7 @@
 			>
 				<template #prefix><span class="size-4 text-ink-gray-5" :class="typeIcon(row)" aria-hidden="true" /></template>
 				<span class="block truncate text-ink-gray-8">{{ row.label || row.fieldname }}</span>
-				<template #suffix><span class="max-w-32 truncate text-sm text-ink-gray-4">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
+				<template #suffix><span class="max-w-32 truncate text-sm text-ink-gray-5">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
 			</ItemListRow>
 		</div>
 		<p v-else class="text-p-sm text-ink-gray-5">{{ notPlaced.length ? "No field matches." : "Every field of the DocType is on this layout." }}</p>

@@ -46,7 +46,7 @@
 						:key="row.fieldname"
 						as="button"
 						type="button"
-						class="!min-h-8 text-left hover:bg-surface-gray-2"
+						class="!min-h-8 text-left hover:bg-surface-gray-3"
 						@click="$emit('place', row.fieldname)"
 					>
 						<template #prefix><span class="size-4 text-ink-gray-5" :class="typeIcon(row)" aria-hidden="true" /></template>
