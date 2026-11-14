@@ -18,12 +18,21 @@
 					<p class="mt-1 text-sm text-ink-gray-5">{{ boot.app_title }}</p>
 				</div>
 				<div class="flex flex-col items-end gap-1.5" data-level-switch>
-					<Tooltip
-						text="Only System Managers can change it for everyone"
-						:disabled="manager"
-					>
-						<TabButtons v-model="level" :options="levels" />
-					</Tooltip>
+					<div class="flex items-center gap-2">
+						<!-- PROTOTYPE (#47390): the navigation layout for the level being edited; Save writes it. -->
+						<Select
+							v-model="layout[level]"
+							class="w-52"
+							:options="layoutOptions"
+							data-layout-picker
+						/>
+						<Tooltip
+							text="Only System Managers can change it for everyone"
+							:disabled="manager"
+						>
+							<TabButtons v-model="level" :options="levels" />
+						</Tooltip>
+					</div>
 					<p class="h-4 text-xs text-ink-gray-5">
 						{{ level === "site" ? "Changes apply to everyone on this site" : "" }}
 					</p>
@@ -52,8 +61,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, watch } from "vue";
-import { Button, Dialog, TabButtons, Tooltip } from "frappe-ui";
+import { computed, inject, reactive, watch } from "vue";
+import { Button, Dialog, Select, TabButtons, Tooltip } from "frappe-ui";
 import type { Boot } from "@/boot";
 import { dirty, discard, editing, level, revert, save } from "./navDraft";
 import { clear } from "./dialogPane";
@@ -68,4 +77,19 @@ const levels = computed(() => [
 ]);
 
 watch(editing, (open) => open && clear());
+
+// PROTOTYPE (#47390): blank is "Default", which names what the levels below resolve to.
+const layout = reactive<Record<string, string>>({ user: "", site: "" });
+const NAMES: Record<string, string> = {
+	rail_and_sidebar: "Rail + sidebar",
+	sidebar_only: "Sidebar only",
+	floating_rail: "Floating rail",
+};
+const layoutOptions = computed(() => {
+	const below = level.value === "user" ? layout.site || "rail_and_sidebar" : "rail_and_sidebar";
+	return [
+		{ label: `Default (${NAMES[below]})`, value: "" },
+		...Object.entries(NAMES).map(([value, label]) => ({ label, value })),
+	];
+});
 </script>
