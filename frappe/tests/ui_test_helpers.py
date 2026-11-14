@@ -906,3 +906,36 @@ def create_webform_with_child_table_dropdown():
 			],
 		}
 	).insert()
+
+
+@whitelist_for_tests()
+def reset_ui_doctypes(prefix: str = "UI "):
+	"""Remove every stand-in DocType of the UI-states captures: its rows, child meta and tables.
+
+	A killed run, or a path that renames a DocType, leaves tables behind (SQLite keeps the old index
+	names), so the next seed of the same DocType fails. Dropping inside the server keeps frappe's
+	cached table list and column lists true.
+	"""
+	like = f"{prefix}%"
+	names = frappe.get_all("DocType", filters={"name": ("like", like)}, pluck="name")
+	layouts = frappe.get_all("DocType Layout", filters={"document_type": ("like", like)}, pluck="name")
+
+	for table in ("DocField", "DocPerm", "DocType Link", "DocType Action", "DocType State"):
+		frappe.db.delete(table, {"parent": ("like", like), "parenttype": "DocType"})
+	if layouts:
+		for table in ("DocType Layout Field", "DocType Layout Child Table"):
+			frappe.db.delete(table, {"parent": ("in", layouts)})
+		frappe.db.delete("DocType Layout", {"name": ("in", layouts)})
+	frappe.db.delete("Custom Field", {"dt": ("like", like)})
+	frappe.db.delete("Property Setter", {"doc_type": ("like", like)})
+	frappe.db.delete("DocType", {"name": ("like", like)})
+
+	for table in frappe.db.get_tables(cached=False):
+		if table.startswith(f"tab{prefix}"):
+			frappe.db.sql_ddl(f"drop table `{table}`")
+
+	frappe.db.commit()
+	frappe.client_cache.delete_value("db_tables")
+	frappe.client_cache.delete_keys("table_columns::*")
+	frappe.clear_cache()
+	return names

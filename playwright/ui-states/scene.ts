@@ -76,6 +76,9 @@ export async function openScene(
 		data: { usr: "Administrator", pwd: process.env.ADMIN_PASSWORD ?? "admin" },
 	});
 	if (!login.ok()) throw new Error(`login failed: ${await login.text()}`);
+	// Every path seeds from a clean site: a killed run or a rename leaves "UI *" tables behind.
+	const reset = await api.post("/api/method/frappe.tests.ui_test_helpers.reset_ui_doctypes", { data: {} });
+	if (!reset.ok()) throw new Error(`reset_ui_doctypes failed: ${await reset.text()}`);
 	const page = await context.newPage();
 	const stamp = Date.now().toString(36);
 	const tracked: Array<[string, string]> = [];
