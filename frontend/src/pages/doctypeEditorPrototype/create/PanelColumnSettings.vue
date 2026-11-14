@@ -14,7 +14,7 @@
 	<button
 		v-else-if="col === 'B'"
 		type="button"
-		class="mx-2 mt-2 flex h-7 max-w-[calc(100%-1rem)] items-center gap-1 rounded-4 px-2 text-base text-ink-gray-5 hover:bg-surface-gray-2 hover:text-ink-gray-8"
+		class="mx-2 mt-2 flex h-7 w-fit max-w-[calc(100%-1rem)] items-center gap-1 rounded-4 px-2 text-base text-ink-gray-5 hover:bg-surface-gray-2 hover:text-ink-gray-8"
 		data-column-back
 		@click="editor.state.selection = { kind: 'section', key: section.name! }"
 	>

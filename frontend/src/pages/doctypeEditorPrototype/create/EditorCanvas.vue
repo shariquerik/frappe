@@ -47,7 +47,7 @@
 		<template #item="{ element: section }">
 			<div :data-container-key="section.name" class="relative">
 				<!-- #47434: while one of its columns is ringed, the section's ring steps aside (the two would share an edge). -->
-				<div class="relative -m-4 rounded-7 p-4" :class="{ 'ring-1 ring-outline-gray-4': isSection(section.name) && !ringsColumnOf(section) }">
+				<div class="relative -m-4 rounded-8 p-4" :class="{ 'ring-1 ring-outline-gray-5': isSection(section.name) && !ringsColumnOf(section) }">
 					<div class="group/section relative flex h-6 items-center" :class="real ? 'mb-6' : 'mb-5'">
 						<input
 							:value="section.label"
@@ -99,12 +99,12 @@
 							<div
 								v-if="ringOn(column.name)"
 								class="pointer-events-none absolute -inset-4 z-[1] rounded-8 ring-1"
-								:class="isColumn(column.name) ? 'ring-outline-gray-4' : 'ring-outline-gray-2'"
+								:class="isColumn(column.name) ? 'ring-outline-gray-5' : 'ring-outline-gray-2'"
 								data-column-ring
 							/>
 							<span
 								v-if="col === 'A' && section.columns.length > 1 && ringOn(column.name)"
-								class="column-handle absolute -top-4 left-1/2 z-[2] flex h-4 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center rounded-3 bg-surface-base px-1 text-ink-gray-4 hover:text-ink-gray-7"
+								class="column-handle absolute -top-4 left-1/2 z-[2] flex h-4 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center rounded-3 bg-surface-base px-1 text-ink-gray-5 hover:text-ink-gray-7"
 								title="Drag to move the column"
 								data-column-grip
 							>

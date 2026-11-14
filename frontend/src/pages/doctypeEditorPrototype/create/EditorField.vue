@@ -5,7 +5,7 @@
 	<div
 		data-editor-select
 		class="editor-field group/field relative -m-2 cursor-grab rounded-6 p-2 transition-shadow active:cursor-grabbing"
-		:class="selected ? 'ring-1 ring-outline-gray-4' : 'hover:ring-1 hover:ring-outline-gray-2'"
+		:class="selected ? 'ring-1 ring-outline-gray-5' : 'hover:ring-1 hover:ring-outline-gray-2'"
 	>
 		<div v-if="field.fieldtype !== 'Check'" class="mb-1.5 flex items-center gap-1 text-sm text-ink-gray-6">
 			<span class="truncate">{{ field.label || field.fieldname }}</span>

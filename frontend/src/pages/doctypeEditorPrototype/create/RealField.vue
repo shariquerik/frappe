@@ -6,7 +6,7 @@
 	<div
 		data-editor-select
 		class="editor-field group/field relative -m-2 cursor-grab rounded-6 p-2 transition-shadow active:cursor-grabbing"
-		:class="selected ? 'ring-1 ring-outline-gray-4' : 'hover:ring-1 hover:ring-outline-gray-2'"
+		:class="selected ? 'ring-1 ring-outline-gray-5' : 'hover:ring-1 hover:ring-outline-gray-2'"
 		data-real-field
 	>
 		<template v-if="TABLE.has(field.fieldtype) && childUi">

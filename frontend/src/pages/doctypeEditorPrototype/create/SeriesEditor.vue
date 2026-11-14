@@ -56,7 +56,7 @@
 					<TextInput
 						ref="addInput"
 						v-model="draft"
-						class="-ml-[9px] w-[305px] shrink-0 [&_input]:font-mono"
+						class="-ml-[9px] w-[305px] shrink-0 [&_input]:font-mono [&_input]:text-sm"
 						placeholder="ACC-SINV-RET-.YYYY.-"
 						autocomplete="off"
 						@keydown.esc="(adding = false), (draft = '')"
@@ -82,7 +82,7 @@
 						</div>
 						<RadioGroup v-model="rowDefault" aria-label="Default series" class="[&_[role=radiogroup]]:!gap-y-0">
 						<div v-for="(row, at) in rows" :key="at" class="flex h-9 items-center gap-3" data-series-dialog-row>
-							<TextInput v-model="row.text" class="w-[260px] shrink-0 [&_input]:font-mono" placeholder="ACC-SINV-.YYYY.-" autocomplete="off" />
+							<TextInput v-model="row.text" class="w-[260px] shrink-0 [&_input]:font-mono [&_input]:text-sm" placeholder="ACC-SINV-.YYYY.-" autocomplete="off" />
 							<NamePreview class="min-w-0 flex-1 truncate whitespace-nowrap" :parts="row.text.trim() ? previewName(row.text.trim(), counterOf(row.text.trim()), labelOf) : [{ text: '—', gray: true }]" />
 							<span class="flex w-14 shrink-0 justify-center">
 								<!-- The circle alone, centred: frappe-ui's Radio leaves room for a label and nudges the circle down. -->

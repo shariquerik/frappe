@@ -59,7 +59,7 @@
 								v-if="editor.field(nameOf(element))"
 								data-editor-select
 								class="editor-field -mx-1.5 grid cursor-grab grid-cols-[130px_1fr] items-center gap-2 rounded-4 px-1.5 active:cursor-grabbing"
-								:class="isField(nameOf(element)) ? 'ring-1 ring-outline-gray-4' : 'hover:ring-1 hover:ring-outline-gray-2'"
+								:class="isField(nameOf(element)) ? 'ring-1 ring-outline-gray-5' : 'hover:ring-1 hover:ring-outline-gray-2'"
 								@click.stop="editor.state.selection = { kind: 'field', fieldname: nameOf(element) }"
 							>
 								<span class="truncate text-base text-ink-gray-5">{{ editor.field(nameOf(element))!.label || nameOf(element) }}</span>

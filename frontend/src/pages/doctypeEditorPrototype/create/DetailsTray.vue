@@ -8,7 +8,7 @@
 		<div v-if="where === 'below'" class="mt-10 border-t border-outline-gray-1 pt-4" data-details-tray>
 			<div class="flex h-7 items-center gap-1.5">
 				<span class="text-base font-medium text-ink-gray-8">Fields not on this layout</span>
-				<span class="text-sm text-ink-gray-4">{{ rows.length }}</span>
+				<span class="text-sm text-ink-gray-5">{{ rows.length }}</span>
 			</div>
 			<p class="mb-3 text-p-sm text-ink-gray-5">They stay in the DocType, off the form. Drag one onto the form, or click it to add it at the end of this tab.</p>
 			<Draggable
@@ -51,7 +51,7 @@
 					>
 						<template #prefix><span class="size-4 text-ink-gray-5" :class="typeIcon(row)" aria-hidden="true" /></template>
 						<span class="block truncate text-ink-gray-8">{{ row.label || row.fieldname }}</span>
-						<template #suffix><span class="text-sm text-ink-gray-4">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
+						<template #suffix><span class="text-sm text-ink-gray-5">{{ typeLabel(row.fieldtype, row.options) }}</span></template>
 					</ItemListRow>
 				</div>
 			</Popover>

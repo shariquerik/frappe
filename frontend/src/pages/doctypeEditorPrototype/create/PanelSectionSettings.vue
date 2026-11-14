@@ -56,7 +56,7 @@
 						</template>
 						<span class="block truncate" :class="column.label ? 'text-ink-gray-8' : 'text-ink-gray-6'">{{ column.label || `Column ${index + 1}` }}</span>
 						<template #suffix>
-							<span class="flex items-center gap-1 text-sm text-ink-gray-4">
+							<span class="flex items-center gap-1 text-sm text-ink-gray-5">
 								{{ column.fields.length }} {{ column.fields.length === 1 ? "field" : "fields" }}
 								<span class="lucide-chevron-right size-4" aria-hidden="true" />
 							</span>
