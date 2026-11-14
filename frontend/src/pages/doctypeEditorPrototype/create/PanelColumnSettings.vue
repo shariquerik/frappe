@@ -3,8 +3,16 @@
      the section's column list, so a "‹ <section>" crumb goes back; ?col=C from a field, so the crumb
      goes up to the section. Remove hands the column's fields to the column before it. -->
 <template>
+	<!-- ?col=C: the field panel's crumbs stay, with the column as the current one, so nothing moves. -->
+	<nav v-if="col === 'C'" class="mx-2 mt-2 flex h-7 min-w-0 items-center text-base text-ink-gray-5" data-field-crumbs>
+		<button type="button" class="h-7 min-w-0 truncate rounded-4 px-2 hover:bg-surface-gray-2 hover:text-ink-gray-8" @click="editor.state.selection = { kind: 'section', key: section.name! }">
+			{{ section.label || "Untitled section" }}
+		</button>
+		<span class="shrink-0 text-ink-gray-4">/</span>
+		<span class="shrink-0 px-2 text-ink-gray-8" aria-current="true">{{ column.label || `Column ${index + 1}` }}</span>
+	</nav>
 	<button
-		v-if="col !== 'A'"
+		v-else-if="col === 'B'"
 		type="button"
 		class="mx-2 mt-2 flex h-7 max-w-[calc(100%-1rem)] items-center gap-1 rounded-4 px-2 text-base text-ink-gray-5 hover:bg-surface-gray-2 hover:text-ink-gray-8"
 		data-column-back

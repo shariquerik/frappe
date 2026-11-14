@@ -93,6 +93,9 @@
 							@click="clickColumn(column.name, $event)"
 						>
 							<!-- #47434: the column's ring sits 16px outside it concentric with a field's (8px out, rounded-6), drawn over, so nothing moves. -->
+							<!-- ?col=A: the whole band out to the ring (half the gutter, 16px above and below) selects
+							     the column, not only the space between its fields. The fields sit above it. -->
+							<div v-if="col === 'A'" class="absolute -inset-4 rounded-8" data-column-hit />
 							<div
 								v-if="ringOn(column.name)"
 								class="pointer-events-none absolute -inset-4 z-[1] rounded-8 ring-1"
@@ -114,7 +117,7 @@
 								:item-key="(entry: any) => nameOf(entry)"
 								:group="{ name: 'dte-fields' }"
 								handle=".editor-field"
-								class="flex min-w-0 flex-1 flex-col gap-6 pb-4"
+								class="relative z-[1] flex min-w-0 flex-1 flex-col gap-6 pb-4"
 								:class="{ 'min-h-[60px]': !column.fields.length }"
 								:data-column-key="column.name"
 								:data-editor-empty="!column.fields.length || null"
@@ -152,7 +155,10 @@
 						</div>
 						</template>
 					</Draggable>
-					<AddFieldPopover :section-key="section.name" @add="addToSection(section, $event)" />
+					<!-- ?col=: a column's ring ends 16px under it, so "Add field" steps down to clear it by 8px. -->
+					<div :class="{ 'mt-6': col }">
+						<AddFieldPopover :section-key="section.name" @add="addToSection(section, $event)" />
+					</div>
 				</div>
 			</div>
 		</template>

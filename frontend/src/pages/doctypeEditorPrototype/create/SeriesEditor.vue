@@ -22,7 +22,7 @@
 				<div class="flex flex-col pt-[7px]" data-series-next>
 					<div v-for="(one, at) in lines" :key="at" class="flex h-7 items-center gap-2 whitespace-nowrap">
 						<NamePreview v-if="one" :parts="previewName(one, counterOf(one), labelOf)" />
-						<Badge v-if="at === 0 && one" label="Default" theme="gray" size="sm" />
+						<Badge v-if="at === firstLine" label="Default" theme="gray" size="sm" />
 					</div>
 				</div>
 			</div>
@@ -85,7 +85,8 @@
 							<TextInput v-model="row.text" class="w-[260px] shrink-0 [&_input]:font-mono" placeholder="ACC-SINV-.YYYY.-" autocomplete="off" />
 							<NamePreview class="min-w-0 flex-1 truncate whitespace-nowrap" :parts="row.text.trim() ? previewName(row.text.trim(), counterOf(row.text.trim()), labelOf) : [{ text: '—', gray: true }]" />
 							<span class="flex w-14 shrink-0 justify-center">
-								<Radio :value="at" :aria-label="`Make ${row.text} the default`" />
+								<!-- The circle alone, centred: frappe-ui's Radio leaves room for a label and nudges the circle down. -->
+								<Radio :value="at" class="!gap-0 !items-center [&>span:first-child]:!mt-0" :aria-label="`Make ${row.text} the default`" />
 							</span>
 							<Tooltip text="Remove series">
 								<Button variant="ghost" icon="lucide-x" label="Remove series" :disabled="rows.length < 2" @click="dropRow(at)" />
@@ -166,6 +167,7 @@ function applyDialog() {
 // C: the text box is the list; its first line is the default.
 const typed = ref([fallback.value, ...list.value.filter((one) => one !== fallback.value)].join("\n"));
 const lines = computed(() => typed.value.split("\n").map((one) => one.trim()));
+const firstLine = computed(() => lines.value.findIndex(Boolean));
 
 /** A name preview: the made-up parts (a field's value) in a lighter gray. */
 const NamePreview = defineComponent({

@@ -27,7 +27,7 @@
 		</PanelRow>
 		<!-- #47434 ?col=B: the section's columns, under the count that makes them. A click opens one;
 		     a drag on its grip reorders them; a hovered row rings its column on the form. -->
-		<div v-if="col === 'B' && section.columns.length > 1" class="-mx-2 -mt-1" data-column-list>
+		<div v-if="col === 'B' && section.columns.length > 1" class="-mx-2 -my-1" data-column-list>
 			<Draggable
 				:model-value="section.columns"
 				item-key="name"

@@ -40,7 +40,7 @@
 					</button>
 				</template>
 				<div class="flex w-[300px] flex-col p-1.5" data-details-tray-popover>
-					<p class="px-2 pb-1.5 pt-1 text-p-sm text-ink-gray-5">Click one to add it at the end of this tab.</p>
+					<p class="px-2 pb-1.5 pt-2 text-p-sm text-ink-gray-5">Click one to add it at the end of this tab.</p>
 					<ItemListRow
 						v-for="row in rows"
 						:key="row.fieldname"
