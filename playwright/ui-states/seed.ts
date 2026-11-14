@@ -9,7 +9,7 @@ export function customDoctype(name: string, fields: Doc[], extra: Doc = {}): Doc
 
 /** Removes a left-over DocType from a run that was killed before its scene closed. */
 async function dropStale(scene: Scene, name: string): Promise<void> {
-	await scene.api.delete(`/api/resource/DocType/${encodeURIComponent(name)}`, { failOnStatusCode: false });
+	await scene.api.delete(`/api/resource/DocType/${encodeURIComponent(name)}`, { headers: await scene.writeHeaders(), failOnStatusCode: false });
 }
 
 /**
@@ -114,7 +114,7 @@ export function resetCustomizations(scene: Scene, doctype = CUSTOMIZE_TARGET): v
 			});
 			const { data } = (await res.json()) as { data: Array<{ name: string }> };
 			for (const { name } of data)
-				await scene.api.delete(`/api/resource/${kind}/${encodeURIComponent(name)}`, { failOnStatusCode: false });
+				await scene.api.delete(`/api/resource/${kind}/${encodeURIComponent(name)}`, { headers: await scene.writeHeaders(), failOnStatusCode: false });
 		}
 	});
 }

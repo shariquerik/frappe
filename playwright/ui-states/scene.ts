@@ -46,6 +46,8 @@ export interface Scene {
 	track(doctype: string, name: string): void;
 	/** Runs when the scene closes, after the tracked documents are gone. Use it to undo a Customize Form save. */
 	onClose(cleanup: () => Promise<void>): void;
+	/** Headers a write needs once the page has booted: the session then holds a CSRF token. */
+	writeHeaders(): Promise<Record<string, string>>;
 	close(): Promise<void>;
 }
 
@@ -127,13 +129,17 @@ export async function openScene(
 			}, scheme);
 			await page.waitForTimeout(120);
 		},
+		async writeHeaders() {
+			const token = await page.evaluate(() => (window as unknown as { csrf_token?: string }).csrf_token).catch(() => undefined);
+			return token && token !== "{{ csrf_token }}" ? { "X-Frappe-CSRF-Token": token } : {};
+		},
 		async call(method, args = {}) {
-			const res = await api.post(`/api/method/${method}`, { data: args });
+			const res = await api.post(`/api/method/${method}`, { data: args, headers: await scene.writeHeaders() });
 			if (!res.ok()) throw new Error(`${method}: ${await res.text()}`);
 			return ((await res.json()) as { message: never }).message;
 		},
 		async insert(doctype, doc) {
-			const res = await api.post(`/api/resource/${doctype}`, { data: { doctype, ...doc } });
+			const res = await api.post(`/api/resource/${doctype}`, { data: { doctype, ...doc }, headers: await scene.writeHeaders() });
 			if (!res.ok()) throw new Error(`insert ${doctype}: ${await res.text()}`);
 			const data = ((await res.json()) as { data: Doc }).data;
 			tracked.push([doctype, String(data.name)]);
@@ -147,9 +153,10 @@ export async function openScene(
 		},
 		async close() {
 			// Newest first: a record before the DocType it belongs to.
+			const headers = await scene.writeHeaders();
 			for (const [doctype, name] of tracked.reverse()) {
 				await api
-					.delete(`/api/resource/${doctype}/${encodeURIComponent(name)}`, { failOnStatusCode: false })
+					.delete(`/api/resource/${doctype}/${encodeURIComponent(name)}`, { headers, failOnStatusCode: false })
 					.catch(() => undefined);
 			}
 			for (const cleanup of cleanups) await cleanup().catch(() => undefined);
