@@ -9,8 +9,8 @@ export type Side = "left" | "right";
 export const LAYOUTS: { key: Layout; letter: string; name: string }[] = [
 	{ key: "rail", letter: "A", name: "Rail + sidebar" },
 	{ key: "sidebar", letter: "B", name: "Sidebar only" },
-	{ key: "dock", letter: "C", name: "Dock: floating rail (v1)" },
-	{ key: "peek", letter: "D", name: "Dock: whole navigation peeks" },
+	{ key: "dock", letter: "C", name: "Floating rail" },
+	// PROTOTYPE (#47385): D (peek) was ruled out as a layout on #47374, so it is off this walk.
 ];
 
 /** Layout-major, so the right arrow flips the side before it moves to the next layout. */

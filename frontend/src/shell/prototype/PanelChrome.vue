@@ -23,7 +23,7 @@
 			</Dropdown>
 		</div>
 
-		<div class="shrink-0 px-2 pb-2">
+		<div v-if="search" class="shrink-0 px-2 pb-2">
 			<button
 				type="button"
 				class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-sm text-ink-gray-6 hover:bg-surface-gray-3"
@@ -32,7 +32,7 @@
 			>
 				<span class="lucide-search size-4" />
 				<span class="flex-1 text-left">{{ __("Search") }}</span>
-				<KeyboardShortcut combo="Mod+K" class="text-ink-gray-4" />
+				<KeyboardShortcut v-if="band === 'wide'" combo="Mod+K" class="text-ink-gray-4" />
 			</button>
 		</div>
 
@@ -43,8 +43,9 @@ import { Dropdown, KeyboardShortcut } from "frappe-ui";
 import { __ } from "@/i18n";
 import { openPalette } from "../palette";
 import { useAppMenu } from "./appMenu";
+import { band } from "./navNarrow";
 
-defineProps<{ title: string }>();
+withDefaults(defineProps<{ title: string; search?: boolean }>(), { search: true });
 
 const { boot, appTitle, menu, loadApps } = useAppMenu();
 </script>

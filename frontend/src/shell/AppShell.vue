@@ -11,12 +11,15 @@
 		:class="{
 			'desk-shell': boot.app,
 			'nav-right flex-row-reverse': side === 'right',
-			'nav-edgeless': boot.app && !inFlowNav,
+			'nav-edgeless': boot.app && (!inFlowNav || !desktopSlots),
+			'nav-menu-button': boot.app && menuButton,
+			'nav-tabbar': boot.app && sheetNav,
 		}"
 	>
 		<!-- PROTOTYPE (#47374): the layout under test decides what sits in flow and what floats. -->
-		<template v-if="boot.app && railInFlow" #rail>
+		<template v-if="boot.app && railInFlow && desktopSlots" #rail>
 			<RailColumn
+				class="relative z-30"
 				:items="navigation.rail"
 				:context="contexts.rail"
 				:current="current.railKey"
@@ -25,7 +28,7 @@
 			</RailColumn>
 		</template>
 
-		<template v-if="boot.app && inFlowNav" #sidebar>
+		<template v-if="boot.app && inFlowNav && desktopSlots" #sidebar>
 			<SidebarOnlyPanel
 				v-if="layout === 'sidebar'"
 				:navigation="navigation"
@@ -33,6 +36,26 @@
 				:current="current"
 				:sections="sections"
 			/>
+			<!-- PROTOTYPE (#47385): N2, the sidebar opens over the page and takes no width. -->
+			<div v-else-if="panel && overlayRail" class="relative z-30 h-full w-0 shrink-0">
+				<div
+					class="absolute inset-y-0 flex"
+					:class="[side === 'left' ? 'left-0' : 'right-0', navOpen ? 'shadow-2xl' : '']"
+					data-proto-overlay-sidebar
+				>
+					<SidebarPanel
+						:address="panel.address"
+						:items="panel.items"
+						:context="panel.context"
+						:title="panel.title"
+						:current="current.rowKey"
+						:sections="sections[panel.address]"
+						:collapsed="!navOpen"
+						customizable
+						@customize="customize.write('sidebar', panel.address)"
+					/>
+				</div>
+			</div>
 			<SidebarPanel
 				v-else-if="panel"
 				:address="panel.address"
@@ -53,7 +76,7 @@
 		</main>
 
 		<FloatingDock
-			v-if="boot.app && layout === 'dock' && !pinned"
+			v-if="boot.app && layout === 'dock' && !pinned && navMode === 'desktop'"
 			:items="navigation.rail"
 			:context="contexts.rail"
 			:current="current.railKey"
@@ -79,6 +102,37 @@
 				@customize="customize.write('sidebar', panel.address)"
 			/>
 		</PeekNav>
+		<!-- PROTOTYPE (#47385): the phone and narrow navigations. -->
+		<template v-if="boot.app">
+			<div
+				v-if="overlayRail && navOpen"
+				class="fixed inset-0 z-20 bg-black/10"
+				@click="navOpen = false"
+			/>
+			<PhoneMenuButton v-if="menuButton" />
+			<NavDrawer
+				v-if="drawerNav"
+				:navigation="navigation"
+				:contexts="contexts"
+				:current="current"
+				:sections="sections"
+				:panel="panel"
+			/>
+			<NavSheet
+				v-if="sheetNav"
+				:navigation="navigation"
+				:contexts="contexts"
+				:current="current"
+				:sections="sections"
+			/>
+			<NavPage
+				v-if="pageNav"
+				:navigation="navigation"
+				:contexts="contexts"
+				:current="current"
+				:sections="sections"
+			/>
+		</template>
 		<NavLayoutSwitcher />
 
 		<div
@@ -169,6 +223,11 @@ import UserMenu from "./UserMenu.vue";
 import FloatingDock from "./prototype/FloatingDock.vue";
 import NavLayoutSwitcher from "./prototype/NavLayoutSwitcher.vue";
 import { layout, pinned, side } from "./prototype/navLayout";
+import NavDrawer from "./prototype/NavDrawer.vue";
+import NavPage from "./prototype/NavPage.vue";
+import NavSheet from "./prototype/NavSheet.vue";
+import { closeOnNavigate, navMode, navOpen, phoneStyle } from "./prototype/navNarrow";
+import PhoneMenuButton from "./prototype/PhoneMenuButton.vue";
 import PeekNav from "./prototype/PeekNav.vue";
 import PinButton from "./prototype/PinButton.vue";
 import SidebarOnlyPanel from "./prototype/SidebarOnlyPanel.vue";
@@ -383,6 +442,19 @@ const inFlowNav = computed(
 	() => railInFlow.value || layout.value === "sidebar" || (layout.value === "dock" && !!panel.value)
 );
 
+// PROTOTYPE (#47385): which navigation the width and the walk's choices draw.
+const overlayRail = computed(() => navMode.value === "overlay" && layout.value === "rail");
+const desktopSlots = computed(() => navMode.value === "desktop" || overlayRail.value);
+const drawerNav = computed(
+	() =>
+		(navMode.value === "phone" && phoneStyle.value === "drawer") ||
+		(navMode.value === "overlay" && layout.value !== "rail")
+);
+const sheetNav = computed(() => navMode.value === "phone" && phoneStyle.value === "sheet");
+const pageNav = computed(() => navMode.value === "phone" && phoneStyle.value === "page");
+const menuButton = computed(() => drawerNav.value || pageNav.value);
+watch(() => route.fullPath, closeOnNavigate);
+
 const { appActsPending, shell } = useShellActs({
 	boot,
 	router,
@@ -393,8 +465,12 @@ const { appActsPending, shell } = useShellActs({
 		? {
 				customize: () => customize.write("rail"),
 				shareLink,
-				sidebarCollapsed: () => (panel.value ? sidebarCollapsed.value : null),
-				toggleSidebar: () => void (sidebarCollapsed.value = !sidebarCollapsed.value),
+				sidebarCollapsed: () =>
+					panel.value ? (overlayRail.value ? !navOpen.value : sidebarCollapsed.value) : null,
+				toggleSidebar: () =>
+					overlayRail.value
+						? void (navOpen.value = !navOpen.value)
+						: void (sidebarCollapsed.value = !sidebarCollapsed.value),
 		  }
 		: undefined,
 });
@@ -418,5 +494,17 @@ const standingWindows = useShellHooks(boot.shell_hooks, shell);
 	left: auto;
 	right: -11px;
 	border-radius: var(--radius-4) 0 0 var(--radius-4);
+}
+
+/* PROTOTYPE (#47385): room in the page header for the menu button, and under the page for the tab bar. */
+.nav-menu-button :deep([data-slot="desktop-shell-content"] > :first-child > header > div) {
+	padding-left: 2rem;
+}
+.nav-menu-button.nav-right :deep([data-slot="desktop-shell-content"] > :first-child > header > div) {
+	padding-left: 0;
+	padding-right: 2rem;
+}
+.nav-tabbar :deep([data-slot="desktop-shell-content"]) {
+	padding-bottom: 57px;
 }
 </style>
