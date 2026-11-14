@@ -52,7 +52,7 @@ const meta = {
 	commit: process.env.UI_STATES_COMMIT ?? "",
 	branch: process.env.UI_STATES_BRANCH ?? "",
 };
-const data = JSON.stringify({ meta, flows }).replace(/<\//g, "<\\/");
+const data = JSON.stringify({ meta, flows, carried: findings.carried ?? [] }).replace(/<\//g, "<\\/");
 const template = readFileSync(join(here, "template.html"), "utf8");
 writeFileSync(join(buildDir, "canvas.html"), template.replace("__DATA__", data).replaceAll("__APP__", app));
 writeFileSync(join(buildDir, "files.json"), JSON.stringify(shots.map((path) => ({ path })), null, "\t"));

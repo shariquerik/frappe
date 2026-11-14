@@ -63,6 +63,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tab[aria-selected="true"] { background: var(--surface); color: var(--fg); border-color: var(--line); }
 .tab .count { margin-left: 6px; font-family: var(--mono); font-size: 11px; color: var(--fg-3); }
 .panel { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--line); background: var(--surface); }
+.carried-list { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.carried-list li { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.carried-list b { display: block; font-weight: 600; margin-bottom: 2px; }
+.carried-list .fix { display: block; color: var(--fg-2); margin-top: 2px; }
 .flow-nav { list-style: none; margin: 0; padding: 8px; }
 .flow-nav button { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; }
 .flow-nav button:hover { background: var(--surface-2); }
@@ -226,8 +230,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-flows" aria-selected="true">Flows<span class="count" id="flow-count"></span></button>
       <button class="tab" role="tab" id="tab-comments" aria-selected="false">Comments<span class="count" id="comment-count"></span></button>
+      <button class="tab" role="tab" id="tab-carried" aria-selected="false" hidden>Carried items<span class="count" id="carried-count"></span></button>
     </div>
     <div class="panel" id="panel-flows"><ul class="flow-nav" id="flow-nav"></ul></div>
+    <div class="panel" id="panel-carried" hidden><ul class="carried-list" id="carried-list"></ul></div>
     <div class="panel" id="panel-comments" hidden>
       <div class="comment-tools">
         <button class="btn primary" id="copy-prompt">Copy prompt</button>
@@ -492,9 +498,17 @@ function renderNav() {
   }).join("");
 }
 $("flow-nav").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { location.hash = b.dataset.flow; goToLane(b.dataset.flow); } });
-for (const name of ["flows", "comments"]) {
+// Items found while reviewing that belong to no one flow (shared tokens, review-bot notes, cross-flow copy).
+const CARRIED = DATA.carried ?? [];
+if (CARRIED.length) {
+  $("tab-carried").hidden = false;
+  $("carried-count").textContent = CARRIED.length;
+  $("carried-list").innerHTML = CARRIED.map((f) => `<li><b>${esc(f.title)}</b>${esc(f.detail)}${f.fix ? `<span class="fix">→ ${esc(f.fix)}</span>` : ""}</li>`).join("");
+}
+const TABS = ["flows", "comments", "carried"];
+for (const name of TABS) {
   $(`tab-${name}`).onclick = () => {
-    for (const n of ["flows", "comments"]) { $(`tab-${n}`).setAttribute("aria-selected", String(n === name)); $(`panel-${n}`).hidden = n !== name; }
+    for (const n of TABS) { $(`tab-${n}`).setAttribute("aria-selected", String(n === name)); $(`panel-${n}`).hidden = n !== name; }
   };
 }
 function route() {

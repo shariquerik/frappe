@@ -926,6 +926,7 @@ def reset_ui_doctypes(prefix: str = "UI "):
 		for table in ("DocType Layout Field", "DocType Layout Child Table"):
 			frappe.db.delete(table, {"parent": ("in", layouts)})
 		frappe.db.delete("DocType Layout", {"name": ("in", layouts)})
+	frappe.db.delete("Form Layout", {"dt": ("like", like)})
 	frappe.db.delete("Custom Field", {"dt": ("like", like)})
 	frappe.db.delete("Property Setter", {"doc_type": ("like", like)})
 	frappe.db.delete("DocType", {"name": ("like", like)})
