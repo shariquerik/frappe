@@ -38,8 +38,7 @@
 		<p v-if="!fieldGroups.length" class="px-4 py-2 text-p-sm text-ink-gray-5">No field matches.</p>
 	</template>
 	<!-- #47097: outside Details, the DocType's fields this layout does not place come first. -->
-	<PanelSection v-if="offDetails && !(listing && pane === 'fields')" label="Fields not on this layout" data-unplaced>
-		<template #actions><span class="text-sm text-ink-gray-4">{{ notPlaced.length }}</span></template>
+	<PanelSection v-if="offDetails && !(listing && pane === 'fields')" label="Fields not on this layout" :count="notPlaced.length" data-unplaced>
 		<div data-unplaced-search>
 			<TextInput v-model="unplacedQuery" placeholder="Find a field">
 				<template #prefix><span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" /></template>

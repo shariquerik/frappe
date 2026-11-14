@@ -10,13 +10,13 @@
 		data-column-back
 		@click="editor.state.selection = { kind: 'section', key: section.name! }"
 	>
-		<span class="lucide-chevron-left size-4 shrink-0" aria-hidden="true" />
+		<span class="lucide-chevron-left -ml-1 size-4 shrink-0" aria-hidden="true" />
 		<span class="truncate">{{ section.label || "Untitled section" }}</span>
 	</button>
 	<PanelHeader
 		icon="lucide-columns-2"
 		:title="column.label || `Column ${index + 1}`"
-		:subtitle="`Column ${index + 1} of ${section.columns.length} · ${column.fields.length} ${column.fields.length === 1 ? 'field' : 'fields'}`"
+		:subtitle="`Column · ${column.fields.length} ${column.fields.length === 1 ? 'field' : 'fields'}`"
 		remove-label="Remove column, keep its fields"
 		:class="{ '!pt-2': col !== 'A' }"
 		@remove="remove"

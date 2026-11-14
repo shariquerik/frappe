@@ -35,7 +35,7 @@
 			·
 			<Popover side="bottom" align="start" :auto-focus="false">
 				<template #trigger="{ open }">
-					<button type="button" class="rounded-3 text-ink-gray-7 underline decoration-outline-gray-3 underline-offset-2 hover:text-ink-gray-9" :class="{ 'text-ink-gray-9': open }" data-details-tray-link>
+					<button type="button" class="rounded-3 text-ink-gray-7 underline decoration-[color:var(--outline-gray-3)] underline-offset-2 hover:text-ink-gray-9" :class="{ 'text-ink-gray-9': open }" data-details-tray-link>
 						{{ rows.length }} {{ rows.length === 1 ? "field" : "fields" }} not on this layout
 					</button>
 				</template>

@@ -13,15 +13,16 @@
 			<div class="flex items-start gap-3">
 				<Textarea
 					v-model="typed"
-					class="w-[296px] shrink-0 [&_textarea]:resize-none [&_textarea]:font-mono [&_textarea]:!text-sm [&_textarea]:!leading-7"
+					class="!w-[296px] shrink-0 resize-none font-mono !text-sm !leading-7"
 					:rows="Math.max(lines.length, 2)"
 					placeholder="ACC-SINV-.YYYY.-"
 					data-series-text
 				/>
-				<div class="flex flex-col pt-[5px]" data-series-next>
+				<!-- 1px border + 6px padding: each 28px row centres on its text line. -->
+				<div class="flex flex-col pt-[7px]" data-series-next>
 					<div v-for="(one, at) in lines" :key="at" class="flex h-7 items-center gap-2 whitespace-nowrap">
-						<NamePreview :parts="previewName(one, counter, labelOf)" />
-						<Badge v-if="at === 0" label="Default" theme="gray" size="sm" />
+						<NamePreview v-if="one" :parts="previewName(one, counterOf(one), labelOf)" />
+						<Badge v-if="at === 0 && one" label="Default" theme="gray" size="sm" />
 					</div>
 				</div>
 			</div>
@@ -32,16 +33,17 @@
 			<div
 				v-for="one in list"
 				:key="one"
-				class="group/series relative flex h-7 items-center gap-3"
+				class="group/series relative -mx-2 flex h-7 items-center gap-3 rounded-4 px-2"
+				:class="{ 'hover:bg-surface-gray-1': variant === 'A' }"
 				:data-series-row="one"
 			>
 				<span class="flex w-[296px] shrink-0 items-center gap-2">
 					<span class="min-w-0 truncate font-mono text-sm text-ink-gray-8">{{ one }}</span>
 					<Badge v-if="one === fallback" label="Default" theme="gray" size="sm" class="shrink-0" />
 				</span>
-				<NamePreview class="whitespace-nowrap" :parts="previewName(one, counter, labelOf)" />
+				<NamePreview class="whitespace-nowrap" :parts="previewName(one, counterOf(one), labelOf)" />
 				<!-- A: the row's acts, over its right end, only while it is hovered. -->
-				<div v-if="variant === 'A'" class="absolute inset-y-0 right-0 hidden items-center gap-1 bg-surface-base pl-2 group-hover/series:flex" data-series-acts>
+				<div v-if="variant === 'A'" class="absolute inset-y-0 right-2 hidden items-center gap-1 pl-2 group-hover/series:flex group-hover/series:bg-surface-gray-1" data-series-acts>
 					<Button v-if="one !== fallback" size="sm" variant="ghost" label="Make default" @click="fallback = one" />
 					<Tooltip text="Remove series">
 						<Button size="sm" variant="ghost" icon="lucide-x" label="Remove series" :disabled="list.length < 2" @click="remove(one)" />
@@ -54,14 +56,14 @@
 					<TextInput
 						ref="addInput"
 						v-model="draft"
-						class="w-[296px] shrink-0 [&_input]:font-mono"
+						class="-ml-[9px] w-[305px] shrink-0 [&_input]:font-mono"
 						placeholder="ACC-SINV-RET-.YYYY.-"
 						autocomplete="off"
 						@keydown.esc="(adding = false), (draft = '')"
 					/>
-					<NamePreview v-if="draft.trim()" class="whitespace-nowrap" :parts="previewName(draft.trim(), counter, labelOf)" />
+					<NamePreview v-if="draft.trim()" class="whitespace-nowrap" :parts="previewName(draft.trim(), counterOf(draft.trim()), labelOf)" />
 				</form>
-				<Button v-else size="sm" variant="ghost" icon-left="lucide-plus" label="Add a series" class="-ml-2 mt-0.5 w-fit" data-series-add-button @click="openAdd" />
+				<Button v-else size="sm" variant="ghost" icon-left="lucide-plus" label="Add a series" class="-ml-2 w-fit" data-series-add-button @click="openAdd" />
 				<p class="mt-1 text-p-sm text-ink-gray-5">
 					{{ adding ? "A dot ends the text part, and # marks the counter's digits. Enter adds it." : "The series are the options of the Naming Series field." }}
 				</p>
@@ -69,19 +71,19 @@
 
 			<template v-else>
 				<Button size="sm" variant="subtle" label="Edit series" class="mt-1.5 w-fit" data-series-edit @click="openDialog" />
-				<Dialog v-model:open="dialog" title="Naming Series" size="xl">
+				<Dialog v-model:open="dialog" title="Naming Series" size="2xl">
 					<div class="flex flex-col" data-series-dialog>
-						<p class="mb-4 text-p-base text-ink-gray-6">The person who creates a {{ doctype }} picks one; each series counts on its own.</p>
+						<p class="mb-4 text-p-base text-ink-gray-6">Each series counts on its own. The person who creates a {{ doctype }} picks one.</p>
 						<div class="flex h-6 items-center gap-3 text-sm text-ink-gray-5">
 							<span class="w-[260px] shrink-0">Series</span>
 							<span class="flex-1">Next name</span>
 							<span class="w-14 shrink-0 text-center">Default</span>
 							<span class="w-7 shrink-0" />
 						</div>
-						<RadioGroup v-model="rowDefault" aria-label="Default series">
+						<RadioGroup v-model="rowDefault" aria-label="Default series" class="[&_[role=radiogroup]]:!gap-y-0">
 						<div v-for="(row, at) in rows" :key="at" class="flex h-9 items-center gap-3" data-series-dialog-row>
 							<TextInput v-model="row.text" class="w-[260px] shrink-0 [&_input]:font-mono" placeholder="ACC-SINV-.YYYY.-" autocomplete="off" />
-							<NamePreview class="min-w-0 flex-1 truncate whitespace-nowrap" :parts="row.text.trim() ? previewName(row.text.trim(), counter, labelOf) : [{ text: '—', gray: true }]" />
+							<NamePreview class="min-w-0 flex-1 truncate whitespace-nowrap" :parts="row.text.trim() ? previewName(row.text.trim(), counterOf(row.text.trim()), labelOf) : [{ text: '—', gray: true }]" />
 							<span class="flex w-14 shrink-0 justify-center">
 								<Radio :value="at" :aria-label="`Make ${row.text} the default`" />
 							</span>
@@ -91,7 +93,10 @@
 						</div>
 						</RadioGroup>
 						<Button size="sm" variant="subtle" icon-left="lucide-plus" label="Add a series" class="mt-2 w-fit" @click="rows.push({ text: '' })" />
-						<p class="mt-4 text-p-sm text-ink-gray-5">A dot ends the text part, and # marks the counter's digits: ACC-SINV-.YYYY.-.##### gives ACC-SINV-2026-00001.</p>
+						<p class="mt-4 text-p-sm text-ink-gray-5">
+							A dot ends the text part, and # marks the counter's digits:
+							<span class="whitespace-nowrap font-mono">ACC-SINV-.YYYY.-.#####</span> gives <span class="whitespace-nowrap font-mono">ACC-SINV-2026-00001</span>.
+						</p>
 					</div>
 					<template #actions>
 						<div class="flex justify-end gap-2">
@@ -113,6 +118,9 @@ import { previewName } from "./settings";
 const props = defineProps<{ variant: string; series: string[]; fallback: string; counter: number; doctype: string; labelOf: (fieldname: string) => string }>();
 
 const list = ref([...props.series]);
+// Each series counts on its own (tabSeries). The prototype has no counters: the default series
+// follows the record count, the others are fresh, as a new series is.
+const counterOf = (one: string) => (one === (props.fallback || props.series[0]) ? props.counter : 1);
 const fallback = ref(props.fallback || props.series[0] || "");
 
 function remove(one: string) {

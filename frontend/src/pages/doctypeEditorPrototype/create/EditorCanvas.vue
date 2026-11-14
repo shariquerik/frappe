@@ -46,8 +46,9 @@
 	>
 		<template #item="{ element: section }">
 			<div :data-container-key="section.name" class="relative">
-				<div class="relative -m-4 rounded-7 p-4" :class="{ 'ring-1 ring-outline-gray-4': isSection(section.name) }">
-					<div class="group/section relative mb-5 flex h-6 items-center">
+				<!-- #47434: while one of its columns is ringed, the section's ring steps aside (the two would share an edge). -->
+				<div class="relative -m-4 rounded-7 p-4" :class="{ 'ring-1 ring-outline-gray-4': isSection(section.name) && !ringsColumnOf(section) }">
+					<div class="group/section relative flex h-6 items-center" :class="real ? 'mb-6' : 'mb-5'">
 						<input
 							:value="section.label"
 							data-editor-select
@@ -91,16 +92,16 @@
 							@mouseleave="colUi.hover = null"
 							@click="clickColumn(column.name, $event)"
 						>
-							<!-- #47434: the column's ring sits 12px outside it, drawn over, so nothing moves. -->
+							<!-- #47434: the column's ring sits 16px outside it concentric with a field's (8px out, rounded-6), drawn over, so nothing moves. -->
 							<div
 								v-if="ringOn(column.name)"
-								class="pointer-events-none absolute -inset-3 z-[1] rounded-7 ring-1"
+								class="pointer-events-none absolute -inset-4 z-[1] rounded-8 ring-1"
 								:class="isColumn(column.name) ? 'ring-outline-gray-4' : 'ring-outline-gray-2'"
 								data-column-ring
 							/>
 							<span
 								v-if="col === 'A' && section.columns.length > 1 && ringOn(column.name)"
-								class="column-handle absolute -top-3 left-1/2 z-[2] flex h-4 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center rounded-3 bg-surface-base px-1 text-ink-gray-4 hover:text-ink-gray-7"
+								class="column-handle absolute -top-4 left-1/2 z-[2] flex h-4 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center rounded-3 bg-surface-base px-1 text-ink-gray-4 hover:text-ink-gray-7"
 								title="Drag to move the column"
 								data-column-grip
 							>
@@ -193,6 +194,7 @@ const selectSection = (key: string) => (editor.state.selection = { kind: "sectio
 // hover rings the column here. C: a field's panel steps up to its column.
 const { col, real, tray } = use47434();
 const isColumn = (key: string) => editor.state.selection?.kind === "column" && editor.state.selection.key === key;
+const ringsColumnOf = (section: LayoutTreeSection) => Boolean(col.value) && section.columns.some((one) => ringOn(one.name!));
 const ringOn = (key: string) => Boolean(col.value) && (isColumn(key) || colUi.hover === key);
 function hoverOver(key: string, event: MouseEvent) {
 	if (col.value !== "A" || editor.state.dragging) return;

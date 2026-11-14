@@ -17,7 +17,7 @@
 		</div>
 		<p v-else-if="ui.perms.siteAtLoad" class="text-p-sm text-ink-gray-6" data-site-override>
 			This site uses its own permissions for {{ ui.doctype }}.
-			<button v-if="canCustomize" type="button" class="text-ink-gray-8 underline decoration-outline-gray-3 underline-offset-2 hover:decoration-ink-gray-5" @click="$emit('customize')">Edit them in Customize.</button>
+			<button v-if="canCustomize" type="button" class="text-ink-gray-8 underline decoration-[color:var(--outline-gray-3)] underline-offset-2 hover:decoration-ink-gray-5" @click="$emit('customize')">Edit them in Customize.</button>
 			<template v-else>Edit them in Customize.</template>
 		</p>
 
