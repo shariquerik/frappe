@@ -15,29 +15,48 @@
 					:data-add-type="kind.type"
 					@click="type = kind.type"
 				>
-					<span :class="[`lucide-${kind.icon}`, 'mt-0.5 size-4 shrink-0 text-ink-gray-6']" />
+					<span
+						:class="[`lucide-${kind.icon}`, 'mt-0.5 size-4 shrink-0 text-ink-gray-6']"
+					/>
 					<span class="min-w-0">
-						<span class="block text-sm font-medium text-ink-gray-8">{{ kind.type }}</span>
+						<span class="block text-sm font-medium text-ink-gray-8">{{
+							kind.type
+						}}</span>
 						<span class="block text-xs text-ink-gray-5">{{ kind.hint }}</span>
 					</span>
 				</button>
 			</div>
-			<p class="text-xs text-ink-gray-5">Module, Module Contents and Sidebar are added by apps only.</p>
+			<p class="text-xs text-ink-gray-5">
+				Module, Module Contents and Sidebar are added by apps only.
+			</p>
 		</template>
 
 		<template v-else>
-			<div class="flex items-center gap-2">
-				<button v-if="!row" type="button" class="lucide-arrow-left size-4 text-ink-gray-5" aria-label="Back" @click="type = null" />
+			<div v-if="!quiet" class="flex items-center gap-2">
+				<button
+					v-if="!row"
+					type="button"
+					class="lucide-arrow-left size-4 text-ink-gray-5"
+					aria-label="Back"
+					@click="type = null"
+				/>
 				<span :class="[`lucide-${kindOf(type).icon}`, 'size-4 text-ink-gray-6']" />
-				<span class="text-sm font-medium text-ink-gray-8">{{ row ? `Edit ${type}` : `New ${type}` }}</span>
+				<span class="text-sm font-medium text-ink-gray-8">{{
+					row ? `Edit ${type}` : `New ${type}`
+				}}</span>
 				<Badge v-if="row" :label="ORIGIN_LABEL[row.origin]" size="sm" />
 			</div>
-			<p v-if="row && !mine" class="text-xs text-ink-gray-5">
-				Inherited from {{ ORIGIN_LABEL[row.origin] }}: you can rename it, change its icon, hide or move it, but
-				not its type or target.
+			<template v-if="quiet && row && !mine && type !== 'Sidebar'">
+				<FormControl :modelValue="targetText" :label="targetLabel" disabled />
+			</template>
+			<p v-if="row && !mine && !quiet" class="text-xs text-ink-gray-5">
+				Inherited from {{ ORIGIN_LABEL[row.origin] }}: you can rename it, change its icon,
+				hide or move it, but not its type or target.
 			</p>
 
-			<p v-if="type === 'Sidebar'" class="text-xs text-ink-gray-5">Opens its own sidebar; edit that sidebar's rows to change where it leads.</p>
+			<p v-if="type === 'Sidebar'" class="text-xs text-ink-gray-5">
+				Opens its own sidebar; edit that sidebar's rows to change where it leads.
+			</p>
 			<template v-if="mine && type !== 'Sidebar'">
 				<Combobox
 					v-if="needsDoctype"
@@ -48,15 +67,48 @@
 					side="bottom"
 					align="start"
 				/>
-				<Select v-if="type === 'View'" v-model="view" :options="viewOptions" label="View" placeholder="Saved view or view type" />
-				<TextInput v-if="type === 'Record'" v-model="record" label="Record name" placeholder="e.g. CRM-DEAL-0001" />
-				<Select v-if="type === 'Page'" v-model="page" :options="pageOptions" label="Page" placeholder="Choose a page" />
+				<Select
+					v-if="type === 'View'"
+					v-model="view"
+					:options="viewOptions"
+					label="View"
+					placeholder="Saved view or view type"
+				/>
+				<TextInput
+					v-if="type === 'Record'"
+					v-model="record"
+					label="Record name"
+					placeholder="e.g. CRM-DEAL-0001"
+				/>
+				<Select
+					v-if="type === 'Page'"
+					v-model="page"
+					:options="pageOptions"
+					label="Page"
+					placeholder="Choose a page"
+				/>
 				<template v-if="type === 'Link'">
-					<TextInput v-model="url" label="URL" placeholder="/apps/crm/deals or https://…" />
-					<p :class="['text-xs', link.ok ? 'text-ink-gray-5' : 'text-ink-red-4']" data-link-kind>{{ link.note }}</p>
+					<TextInput
+						v-model="url"
+						label="URL"
+						placeholder="/apps/crm/deals or https://…"
+					/>
+					<p
+						:class="['text-xs', link.ok ? 'text-ink-gray-5' : 'text-ink-red-4']"
+						data-link-kind
+					>
+						{{ link.note }}
+					</p>
 				</template>
 				<template v-if="type === 'Act'">
-					<Combobox v-model="act" :options="actOptions" label="Act" placeholder="Choose an act" side="bottom" align="start" />
+					<Combobox
+						v-model="act"
+						:options="actOptions"
+						label="Act"
+						placeholder="Choose an act"
+						side="bottom"
+						align="start"
+					/>
 					<template v-if="chosenAct?.argument">
 						<TabButtons
 							v-model="actMode"
@@ -83,16 +135,42 @@
 				</template>
 				<template v-if="type === 'Section'">
 					<Checkbox v-model="collapsible" label="Can collapse" />
-					<Checkbox v-model="keepClosed" label="Starts closed" :disabled="!collapsible" />
+					<Checkbox
+						v-model="keepClosed"
+						label="Starts closed"
+						:disabled="!collapsible"
+					/>
 				</template>
 			</template>
 
 			<TextInput v-model="label" label="Label" :placeholder="defaultLabel || 'Label'" />
-			<TextInput v-if="type !== 'Section'" v-model="icon" label="Icon" placeholder="lucide name, e.g. star" />
+			<TextInput
+				v-if="type !== 'Section'"
+				v-model="icon"
+				label="Icon"
+				placeholder="lucide name, e.g. star"
+			/>
 
-			<div class="flex justify-end gap-2">
+			<slot name="placement" />
+
+			<div v-if="quiet && !row" class="flex justify-end">
+				<Button
+					variant="subtle"
+					label="Add row"
+					:disabled="!ready"
+					data-row-submit
+					@click="submit"
+				/>
+			</div>
+			<div v-else-if="!quiet" class="flex justify-end gap-2">
 				<Button label="Cancel" @click="emit('done')" />
-				<Button variant="solid" :label="row ? 'Apply' : 'Add'" :disabled="!ready" data-row-submit @click="submit" />
+				<Button
+					variant="solid"
+					:label="row ? 'Apply' : 'Add'"
+					:disabled="!ready"
+					data-row-submit
+					@click="submit"
+				/>
 			</div>
 		</template>
 	</div>
@@ -101,43 +179,60 @@
 <script setup lang="ts">
 import { computed, inject, ref, shallowRef, watch } from "vue";
 import { useRouter } from "vue-router";
-import { Badge, Button, Checkbox, Combobox, Select, TabButtons, TextInput } from "frappe-ui";
+import {
+	Badge,
+	Button,
+	Checkbox,
+	Combobox,
+	FormControl,
+	Select,
+	TabButtons,
+	TextInput,
+} from "frappe-ui";
 import { runMethod } from "@framework/ui/api";
 import { acts, type ActOption } from "@/acts/dispatcher";
 import type { Addresses } from "@/addresses";
 import { pages } from "@/contributions/registry";
 import { type Container, type DraftRow, ORIGIN_LABEL, own } from "./navDraft";
 import { add, refuse, update } from "./navEdits";
+import { ADDABLE, classify, jsonable, kindOf } from "./navRowKinds";
 
-const ADDABLE = [
-	{ type: "DocType", icon: "list", hint: "A list, or a single" },
-	{ type: "View", icon: "layout-grid", hint: "A saved view or a view type" },
-	{ type: "Record", icon: "file-text", hint: "One document" },
-	{ type: "Page", icon: "layout-dashboard", hint: "An app's page" },
-	{ type: "Link", icon: "link", hint: "A path here, or a URL" },
-	{ type: "Act", icon: "zap", hint: "Runs an action" },
-	{ type: "Section", icon: "heading", hint: "A heading that groups rows" },
-];
 const VIEW_TYPES = ["List", "Cards"];
 
-const props = defineProps<{ container: Container; row?: DraftRow; parentKey?: string | null; initialType?: string }>();
+const props = defineProps<{
+	container: Container;
+	row?: DraftRow;
+	parentKey?: string | null;
+	initialType?: string;
+	/** A new row's starting fields: "Add this page". */
+	prefill?: Partial<DraftRow>;
+	/** The dialog's form: no header, an existing row applies as you type, no solid button. */
+	quiet?: boolean;
+}>();
 const emit = defineEmits<{ done: [] }>();
 
 const addresses = inject<Addresses>("addresses")!;
 const router = useRouter();
 
 const r = props.row;
+const p = (r ?? props.prefill ?? {}) as Partial<DraftRow>;
 const type = ref<string | null>(r?.item_type ?? props.initialType ?? null);
 const mine = computed(() => !r || own(r));
-const label = ref(r?.label ?? "");
-const icon = ref(r?.icon ?? "");
-const doctype = ref<string | null>(r && r.item_type === "DocType" ? r.link_to ?? null : r?.link_doctype ?? null);
-const view = ref<string | null>(
-	r?.item_type === "View" ? (r.payload?.view_type ? `type:${r.payload.view_type}` : r.link_to ?? null) : null
+const label = ref(p.label ?? "");
+const icon = ref(p.icon ?? "");
+const doctype = ref<string | null>(
+	type.value === "DocType" ? p.link_to ?? null : p.link_doctype ?? null
 );
-const record = ref(r?.item_type === "Record" ? r.link_to ?? "" : "");
-const page = ref(r?.item_type === "Page" ? r.link_to ?? "" : "");
-const url = ref(r?.url ?? "");
+const view = ref<string | null>(
+	type.value === "View"
+		? p.payload?.view_type
+			? `type:${p.payload.view_type}`
+			: p.link_to ?? null
+		: null
+);
+const record = ref(type.value === "Record" ? p.link_to ?? "" : "");
+const page = ref(type.value === "Page" ? p.link_to ?? "" : "");
+const url = ref(p.url ?? "");
 const act = ref<string | null>(r?.item_type === "Act" ? r.link_to ?? null : null);
 const actMode = ref<"ask" | "preset">(r?.payload?.value !== undefined ? "preset" : "ask");
 const preset = ref<string>(r?.payload?.value !== undefined ? JSON.stringify(r.payload.value) : "");
@@ -145,7 +240,12 @@ const collapsible = ref(!!r?.collapsible || !r);
 const keepClosed = ref(!!r?.keep_closed);
 
 const needsDoctype = computed(() => ["DocType", "View", "Record"].includes(type.value ?? ""));
-const doctypes = computed(() => addresses.doctypes().sort().map((name) => ({ label: name, value: name })));
+const doctypes = computed(() =>
+	addresses
+		.doctypes()
+		.sort()
+		.map((name) => ({ label: name, value: name }))
+);
 
 const savedViews = shallowRef<{ key: string; label: string; type: string }[]>([]);
 watch(
@@ -153,11 +253,9 @@ watch(
 	async (name) => {
 		savedViews.value = [];
 		if (type.value !== "View" || !name) return;
-		const { data } = await runMethod<Record<string, { key: string; label: string; type: string }[]>>(
-			"frappe.desk.doctype.doctype_view.api.list_views",
-			{ doctype: name },
-			{ http: "GET" }
-		);
+		const { data } = await runMethod<
+			Record<string, { key: string; label: string; type: string }[]>
+		>("frappe.desk.doctype.doctype_view.api.list_views", { doctype: name }, { http: "GET" });
 		savedViews.value = data[name] ?? [];
 	},
 	{ immediate: true }
@@ -187,7 +285,8 @@ const presetChoices = shallowRef<ActOption[]>([]);
 watch(
 	[chosenAct, actMode],
 	async ([chosen, mode]) => {
-		presetChoices.value = chosen?.argument && mode === "preset" ? await chosen.argument.options("") : [];
+		presetChoices.value =
+			chosen?.argument && mode === "preset" ? await chosen.argument.options("") : [];
 	},
 	{ immediate: true }
 );
@@ -206,7 +305,9 @@ const defaultLabel = computed(() => {
 	}
 	if (type.value === "Act") {
 		const option = presetChoices.value.find((o) => JSON.stringify(o.value) === preset.value);
-		return [chosenAct.value?.label, actMode.value === "preset" ? option?.label : undefined].filter(Boolean).join(": ");
+		return [chosenAct.value?.label, actMode.value === "preset" ? option?.label : undefined]
+			.filter(Boolean)
+			.join(": ");
 	}
 	return doctype.value ?? "";
 });
@@ -225,17 +326,71 @@ const ready = computed(() => {
 		case "Link":
 			return link.value.ok;
 		case "Act":
-			return !!act.value && (actMode.value === "ask" || !chosenAct.value?.argument || !!preset.value);
+			return (
+				!!act.value &&
+				(actMode.value === "ask" || !chosenAct.value?.argument || !!preset.value)
+			);
 		case "Section":
 			return !!label.value;
 	}
 	return false;
 });
 
+// The dialog has one commit, its Save: a row it edits takes each change as it is typed.
+if (props.quiet && r)
+	watch(
+		[
+			label,
+			icon,
+			doctype,
+			view,
+			record,
+			page,
+			url,
+			act,
+			actMode,
+			preset,
+			collapsible,
+			keepClosed,
+		],
+		() => {
+			if (ready.value && (type.value !== "Link" || link.value.ok))
+				update(props.container, r.key, fields());
+		}
+	);
+
+/** What an inherited row points at, shown read-only. */
+const targetLabel = computed(() =>
+	type.value === "Link"
+		? "URL"
+		: type.value === "Act"
+		? "Act"
+		: type.value === "Section"
+		? "Type"
+		: type.value ?? ""
+);
+const targetText = computed(() => {
+	if (!r) return "";
+	if (r.item_type === "Link") return r.url ?? "";
+	if (r.item_type === "Section") return "Section";
+	return [r.link_doctype !== "DocType" ? r.link_doctype : undefined, r.link_to]
+		.filter(Boolean)
+		.join(" · ");
+});
+
+function fields(): Partial<DraftRow> {
+	return {
+		...(type.value === "Sidebar" ? {} : target()),
+		label: label.value || defaultLabel.value || undefined,
+		icon: icon.value || undefined,
+	};
+}
+
 function submit() {
 	if (type.value === "Link" && !link.value.ok) return refuse(link.value.note);
-	const fields = { ...(type.value === "Sidebar" ? {} : target()), label: label.value || defaultLabel.value || undefined, icon: icon.value || undefined };
-	const done = r ? update(props.container, r.key, fields) : add(props.container, fields, props.parentKey);
+	const done = r
+		? update(props.container, r.key, fields())
+		: add(props.container, fields(), props.parentKey);
 	if (done) emit("done");
 }
 
@@ -248,8 +403,18 @@ function target(): Partial<DraftRow> {
 		case "View": {
 			const bare = view.value!.startsWith("type:") ? view.value!.slice(5) : undefined;
 			return bare
-				? { item_type: t, link_doctype: doctype.value!, link_to: undefined, payload: { view_type: bare } }
-				: { item_type: t, link_doctype: doctype.value!, link_to: view.value!, icon: icon.value || "layout-grid" };
+				? {
+						item_type: t,
+						link_doctype: doctype.value!,
+						link_to: undefined,
+						payload: { view_type: bare },
+				  }
+				: {
+						item_type: t,
+						link_doctype: doctype.value!,
+						link_to: view.value!,
+						icon: icon.value || "layout-grid",
+				  };
 		}
 		case "Record":
 			return { item_type: t, link_doctype: doctype.value!, link_to: record.value };
@@ -261,7 +426,10 @@ function target(): Partial<DraftRow> {
 			return {
 				item_type: t,
 				link_to: act.value!,
-				payload: actMode.value === "preset" && preset.value ? { value: JSON.parse(preset.value) } : undefined,
+				payload:
+					actMode.value === "preset" && preset.value
+						? { value: JSON.parse(preset.value) }
+						: undefined,
 			};
 		default:
 			return {
@@ -271,33 +439,4 @@ function target(): Partial<DraftRow> {
 			};
 	}
 }
-
-function kindOf(name: string) {
-	return ADDABLE.find((k) => k.type === name) ?? { type: name, icon: "circle-dot", hint: "" };
-}
-
-/** `/…` is internal; http(s) on another origin is external; any other scheme is refused. */
-function classify(value: string): { ok: boolean; note: string } {
-	if (!value) return { ok: false, note: "A path that starts with /, or an http(s) URL." };
-	if (value.startsWith("/") && !value.startsWith("//")) return { ok: true, note: "Internal: opens here, in place." };
-	try {
-		const parsed = new URL(value);
-		if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
-			return { ok: false, note: `Refused: "${parsed.protocol}" links can't be added. Use a /path or an http(s) URL.` };
-		if (parsed.origin === location.origin)
-			return { ok: true, note: "This site: write it as a /path so it opens in place." };
-		return { ok: true, note: "External: opens in a new tab, marked ↗." };
-	} catch {
-		return { ok: false, note: "Refused: not a /path or an http(s) URL." };
-	}
-}
-
-function jsonable(value: unknown) {
-	try {
-		return JSON.stringify(JSON.parse(JSON.stringify(value))) === JSON.stringify(value);
-	} catch {
-		return false;
-	}
-}
-
 </script>

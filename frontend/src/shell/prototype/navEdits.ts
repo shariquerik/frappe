@@ -3,6 +3,7 @@
 // section in the rail (#47376). Each returns false and says why when it refuses.
 
 import { toast } from "frappe-ui";
+import { variantKey } from "./navEditorVariant";
 import {
 	CAP,
 	draft,
@@ -24,7 +25,8 @@ export const TOO_DEEP = "Too deep: a section, its items, and one level under an 
 
 export function refuse(message: string): false {
 	refusal.value = message;
-	toast.warning(message);
+	// The dialog draws each refusal under the field it is about, so it needs no toast.
+	if (variantKey.value !== "dialog") toast.warning(message);
 	return false;
 }
 

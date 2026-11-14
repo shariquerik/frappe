@@ -42,17 +42,6 @@
 					/>
 				</nav>
 			</ScrollArea>
-			<!-- PROTOTYPE (#47378): the editor's entry at the sidebar's foot. -->
-			<div v-if="customizable" class="shrink-0 border-t border-outline-gray-1 p-2">
-				<Button
-					variant="ghost"
-					class="w-full justify-start"
-					icon-left="lucide-pencil"
-					:label="__('Edit navigation')"
-					data-edit-navigation
-					@click="emit('customize')"
-				/>
-			</div>
 		</Sidebar>
 
 		<SidebarEdge

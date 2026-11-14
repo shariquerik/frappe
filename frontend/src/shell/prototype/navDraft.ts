@@ -34,7 +34,11 @@ export const selected = ref<{ container: Container; key: string } | null>(null);
 /** The last refusal, drawn inline by each variant. */
 export const refusal = ref<string | null>(null);
 
-let snapshot: Draft | null = null;
+/** The draft as the editor opened it, as JSON: the baseline for Discard and for `dirty`. */
+const snapshot = ref<string | null>(null);
+
+/** Whether the draft differs from what the editor opened with. */
+export const dirty = computed(() => !!snapshot.value && JSON.stringify(draft.value) !== snapshot.value);
 
 /** Seeds the draft from the server's navigation once, with the rows the editor must show off. */
 export function seed(navigation: Navigation) {
@@ -106,7 +110,7 @@ function toItem(row: DraftRow): NavigationItem {
 }
 
 export function open(container?: Container) {
-	snapshot = JSON.parse(JSON.stringify(draft.value));
+	snapshot.value = JSON.stringify(draft.value);
 	focus.value = container ?? RAIL;
 	selected.value = null;
 	refusal.value = null;
@@ -114,14 +118,21 @@ export function open(container?: Container) {
 }
 
 export function save() {
-	snapshot = null;
+	snapshot.value = null;
 	editing.value = false;
 }
 
 export function discard() {
-	if (snapshot) draft.value = snapshot;
-	snapshot = null;
+	revert();
+	snapshot.value = null;
 	editing.value = false;
+}
+
+/** Back to what the editor opened with, and keep editing. */
+export function revert() {
+	if (snapshot.value) draft.value = JSON.parse(snapshot.value);
+	selected.value = null;
+	refusal.value = null;
 }
 
 export function rows(container: Container): DraftRow[] {
