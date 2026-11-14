@@ -1,10 +1,16 @@
-<!-- The panel outside Details with nothing selected: the fields this layout leaves off, then "New
-     field" types. A click places or adds at the end of the section in view, on this layout only. -->
+<!-- The panel with nothing selected: the fields this layout leaves off, then the field types to add. A
+     click places or adds at the end of the section in view. On Details the group is drawn only while a
+     field is off the layout; elsewhere it always is, and the types are titled "New field". -->
 <template>
 	<p class="flex min-h-[42px] items-center px-4 py-2 text-p-sm text-ink-gray-6">
 		{{ __("Select a field or a section heading to edit it here.") }}
 	</p>
-	<div class="flex flex-col" data-panel-tray>
+	<GridColumnsGroup
+		v-if="canvas.state.definition.istable && !takesOff(canvas)"
+		:key="canvas.state.doctype"
+		:canvas="canvas"
+	/>
+	<div v-if="showsGroup" class="flex flex-col" data-panel-tray>
 		<PanelSection :label="__('Fields not on this layout')" :count="rows.length" show-count>
 			<TextInput
 				v-model="fieldQuery"
@@ -56,7 +62,7 @@
 			</p>
 		</PanelSection>
 	</div>
-	<NewFieldTypes :canvas="canvas" :label="__('New field')" />
+	<NewFieldTypes :canvas="canvas" :label="showsGroup ? __('New field') : __('Add a field')" />
 </template>
 
 <script setup lang="ts">
@@ -66,6 +72,8 @@ import type { RawMetaField } from "@framework/ui/FormLayout/types";
 import { acts } from "@/acts/dispatcher";
 import { __ } from "@/i18n";
 import type { DesignCanvas } from "./designCanvas";
+import { takesOff } from "./fieldPanel";
+import GridColumnsGroup from "./GridColumnsGroup.vue";
 import { typeIcon, typeName } from "./fieldtypes";
 import NewFieldTypes from "./NewFieldTypes.vue";
 import PanelSection from "./PanelSection.vue";
@@ -74,6 +82,7 @@ const props = defineProps<{ canvas: DesignCanvas }>();
 
 const fieldQuery = ref("");
 const rows = computed(() => props.canvas.offLayout.value);
+const showsGroup = computed(() => takesOff(props.canvas) || rows.value.length > 0);
 const shownRows = computed(() => {
 	const typed = fieldQuery.value.trim().toLowerCase();
 	return rows.value.filter(({ field }) =>

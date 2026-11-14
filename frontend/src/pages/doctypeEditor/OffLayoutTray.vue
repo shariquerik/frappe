@@ -1,5 +1,4 @@
-<!-- "Fields not on this layout": the DocType's fields the Details layout does not place. A row
-     drags onto the canvas or places with its button; a field dragged here leaves the layout. -->
+<!-- "Fields not on this layout" under a read-only canvas, which has no side panel to list them in. -->
 <template>
 	<div class="mt-10 border-t pt-4" data-canvas-tray>
 		<button

@@ -86,7 +86,7 @@
 			<QuickEntryCanvas v-else-if="type === 'Quick Entry'" :canvas="canvas" />
 			<div v-else class="mt-6"><CanvasForm :canvas="canvas" /></div>
 
-			<OffLayoutTray v-if="type === 'Details' || !canvas.editable" :canvas="canvas" />
+			<OffLayoutTray v-if="!canvas.editable" :canvas="canvas" />
 		</template>
 		<FieldBin v-if="canvas.editable" :canvas="canvas" />
 	</div>

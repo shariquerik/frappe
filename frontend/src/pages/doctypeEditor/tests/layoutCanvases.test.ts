@@ -1,5 +1,5 @@
 // The canvas and the panel of each layout type: the side panel's frame, the Create dialog's frame,
-// and the panel's tray outside Details.
+// and the panel's group of fields off the layout.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref, type App, type Component } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -63,9 +63,9 @@ describe("the canvas of each layout type", () => {
 		expect(create!.closest("[inert]")).not.toBeNull();
 	});
 
-	it("keeps Details' tray under its canvas", async () => {
+	it("draws no tray under Details' canvas, and keeps one under a read-only canvas", async () => {
 		const root = await draw(EditorCanvas, { type: "Details" });
-		expect(root.querySelector("[data-canvas-tray]")).not.toBeNull();
+		expect(root.querySelector("[data-canvas-tray]")).toBeNull();
 		expect(root.querySelector("[data-new-record-note]")).toBeNull();
 	});
 
@@ -111,9 +111,28 @@ describe("the panel outside Details", () => {
 		expect(editor.canvas.place("date")).toBeNull();
 	});
 
-	it("shows Details' hint, not the tray", async () => {
+	it("draws no group on Details while every field is on the layout", async () => {
 		const root = await draw(EditorPanel, { type: "Details" });
+		for (const fieldname of ["notes", "spare"]) {
+			root.querySelector<HTMLButtonElement>(`[data-panel-tray-field="${fieldname}"]`)!.click();
+			await settle();
+		}
 		expect(root.querySelector("[data-panel-tray]")).toBeNull();
+		expect(root.querySelector("[data-panel-new-field]")!.textContent).toContain("Add a field");
+	});
+
+	it("lists Details' off-layout fields first, and places a clicked one back", async () => {
+		const root = await draw(EditorPanel, { type: "Details" });
+		const tray = () => [...root.querySelectorAll("[data-panel-tray-field]")].map((row) => row.getAttribute("data-panel-tray-field"));
+		expect(tray()).toEqual(["notes", "spare"]);
+		expect(root.querySelector("[data-panel-new-field]")!.textContent).toContain("New field");
+		root.querySelector<HTMLButtonElement>('[data-panel-tray-field="notes"]')!.click();
+		await settle();
+		expect(tray()).toEqual(["spare"]);
+		root.querySelector<HTMLButtonElement>('[data-panel-tray-field="spare"]')!.click();
+		await settle();
+		expect(root.querySelector("[data-panel-tray]")).toBeNull();
+		expect(editor.canvas.place("spare")).not.toBeNull();
 	});
 });
 
