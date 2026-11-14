@@ -70,6 +70,14 @@
 						<span v-else class="text-sm font-medium">{{ cell.label.charAt(0) }}</span>
 					</SidebarRailItem>
 
+					<!-- PROTOTYPE (#47378): an `Act` cell runs its act; never current. -->
+					<Tooltip v-else-if="'act' in cell" :text="cell.label" side="right">
+						<button type="button" :class="CELL" :aria-label="cell.label" @click="runAct(cell)">
+							<Icon v-if="cell.icon" :name="cell.icon" />
+							<span v-else class="lucide-zap size-4" />
+						</button>
+					</Tooltip>
+
 					<!-- Off this prefix: a full document load, so an `<a>` with `SidebarRailItem`'s classes.
 					     Never current: `current` is a route. -->
 					<Tooltip v-else :text="cell.label" side="right">
@@ -118,7 +126,8 @@ import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
 import AppLogo from "./AppLogo.vue";
 import { menuApps } from "./appSwitchOrder";
-import { openPalette } from "./palette";
+import { openArgumentStep, openPalette } from "./palette";
+import { acts } from "@/acts/dispatcher";
 import type { PlacesApp } from "./palettePlaces";
 import { loadDocument } from "./tabKeepAlive";
 import { shellMenu } from "./shellActs";
@@ -127,6 +136,7 @@ import UserMenu from "./UserMenu.vue";
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }
 	| { href: string }
+	| { act: string; value?: unknown }
 );
 
 const TILE =
@@ -169,12 +179,18 @@ const cells = computed(() => {
 
 function cellOf(item: NavigationItem): Cell | null {
 	const rendering = renderingOf(item, props.context);
+	const cell = { key: item.key, label: labelOf(item, props.context), icon: item.icon };
+	if (rendering && "act" in rendering) return { ...cell, act: rendering.act, value: rendering.value };
 	if (!rendering || !("to" in rendering || "href" in rendering)) return null;
 
-	const cell = { key: item.key, label: labelOf(item, props.context), icon: item.icon };
 	return "to" in rendering
 		? { ...cell, to: rendering.to, sidebar: rendering.sidebar }
 		: { ...cell, href: rendering.href, sidebar: rendering.sidebar };
+}
+
+function runAct(cell: { act: string; value?: unknown }) {
+	if (cell.value === undefined && acts.find(cell.act)?.argument) return openArgumentStep(cell.act);
+	void acts.perform(cell.act, cell.value);
 }
 
 const APP_MENU = ["all_apps", "open_settings", "customize_sidebar", "copy_link", "about"];

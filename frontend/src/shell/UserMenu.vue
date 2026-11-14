@@ -35,6 +35,8 @@ const menu = computed<DropdownOptions>(() =>
 	[
 		[profileHeader()],
 		[...shellMenu(["my_settings"]), ...themeRow(), ...pageMenuItems.value],
+		// PROTOTYPE (#47378): the editor's entry point; the rail's own tile menu has one too.
+		[{ label: "Edit navigation", icon: "lucide-pencil", onClick: () => shellAct("customize_sidebar") && void acts.perform(shellAct("customize_sidebar")!.name) }],
 		shellMenu(["desk_v1"]),
 		shellMenu(["log_out"]).map((option) => ({ ...option, theme: "red" as const })),
 	]

@@ -15,7 +15,9 @@ export type Rendering =
 	| { to: RouteLocationRaw; sidebar?: string }
 	| { href: string; sidebar?: string }
 	| { group: true }
-	| { expand: () => Promise<NavigationItem[]> };
+	| { expand: () => Promise<NavigationItem[]> }
+	// PROTOTYPE (#47378): the `Act` kind's fifth result, an act to run, never a place.
+	| { act: string; value?: unknown };
 
 /**
  * Everything a renderer may know, as a parameter: a contributed renderer imports only `@shell`.

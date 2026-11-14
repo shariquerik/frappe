@@ -11,7 +11,9 @@
 		:class="{ 'desk-shell': boot.app }"
 	>
 		<template v-if="boot.app" #rail>
+			<InPlaceRail v-if="editing && variantKey === 'inplace'" />
 			<RailColumn
+				v-else
 				:items="navigation.rail"
 				:context="contexts.rail"
 				:current="current.railKey"
@@ -19,8 +21,10 @@
 		</template>
 
 		<template v-if="boot.app" #sidebar>
+			<!-- PROTOTYPE (#47378): variant A swaps the sidebar for its editable self; C docks a panel beside it. -->
+			<InPlaceSidebar v-if="editing && variantKey === 'inplace'" />
 			<SidebarPanel
-				v-if="panel"
+				v-else-if="panel"
 				:address="panel.address"
 				:items="panel.items"
 				:context="panel.context"
@@ -29,11 +33,13 @@
 				:sections="sections[panel.address]"
 				:collapsed="sidebarCollapsed"
 				customizable
-				@customize="customize.write('sidebar', panel.address)"
+				@customize="openEditor(panel.address)"
 			/>
+			<PanelEditor v-if="editing && variantKey === 'panel'" />
 		</template>
 
 		<main class="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
+			<EditStrip v-if="editing && variantKey === 'inplace'" />
 			<RouterView />
 		</main>
 
@@ -45,6 +51,9 @@
 			<div data-index-foot-notices />
 			<UserMenu />
 		</div>
+
+		<DialogEditor v-if="variantKey === 'dialog'" />
+		<NavEditorSwitcher v-if="DEV" />
 
 		<!-- The hash dialogs: one hash, one Dialog, above any page. -->
 		<CustomizeSidebarDialog
@@ -122,6 +131,15 @@ import { useStaleBuildNotice } from "./staleBuild";
 import SidebarPanel from "./SidebarPanel.vue";
 import { useHashDialog } from "./useHashDialog";
 import UserMenu from "./UserMenu.vue";
+import "./prototype/navRenderers";
+import DialogEditor from "./prototype/DialogEditor.vue";
+import EditStrip from "./prototype/EditStrip.vue";
+import InPlaceRail from "./prototype/InPlaceRail.vue";
+import InPlaceSidebar from "./prototype/InPlaceSidebar.vue";
+import NavEditorSwitcher from "./prototype/NavEditorSwitcher.vue";
+import PanelEditor from "./prototype/PanelEditor.vue";
+import { draft, editing, live, open as openDraft, seed } from "./prototype/navDraft";
+import { variantKey } from "./prototype/navEditorVariant";
 
 const ShellSettingsDialog = defineAsyncComponent(() => import("./ShellSettingsDialog.vue"));
 const AboutDialog = defineAsyncComponent(() => import("./AboutDialog.vue"));
@@ -147,7 +165,16 @@ const route = useRoute();
 watch(() => route.fullPath, closeCreates);
 watch(() => route.path, closeRecordDialogs);
 
-const navigation = ref<Navigation>(boot.navigation ?? { rail: [], sidebars: {} });
+// PROTOTYPE (#47378): the live navigation draws from the editor's in-memory draft.
+const served = ref<Navigation>(boot.navigation ?? { rail: [], sidebars: {} });
+seed(served.value);
+const navigation = computed<Navigation>(() => live.value ?? served.value);
+const DEV = import.meta.env.DEV;
+
+/** Opens the editor on a sidebar, or on the open panel's when asked from the rail or a menu. */
+function openEditor(container?: string) {
+	openDraft(container ?? panel.value?.address);
+}
 
 // One context per container: `Module Contents` measures against `context.items`, so a
 // sidebar row handed the rail's list would answer about the rail.
@@ -309,7 +336,9 @@ const paletteLoaded = ref(false);
 watch(paletteOpen, (isOpen) => isOpen && (paletteLoaded.value = true), { immediate: true });
 
 function replace(next: Navigation) {
-	navigation.value = next;
+	served.value = next;
+	draft.value = null;
+	seed(next);
 	boot.navigation = next;
 }
 
@@ -332,7 +361,7 @@ const { appActsPending, shell } = useShellActs({
 	confirmLogout: () => void (confirmingLogout.value = true),
 	rail: boot.app
 		? {
-				customize: () => customize.write("rail"),
+				customize: () => openEditor(),
 				shareLink,
 				sidebarCollapsed: () => (panel.value ? sidebarCollapsed.value : null),
 				toggleSidebar: () => void (sidebarCollapsed.value = !sidebarCollapsed.value),

@@ -39,11 +39,13 @@
 
 		<!-- Outside this prefix: a full document load, so an `<a>`. -->
 		<div v-else-if="destination && 'href' in destination" :data-key="item.key" :class="ROW">
-			<a :href="destination.href" :class="ROW_TARGET">
+			<a :href="destination.href" :class="ROW_TARGET" :target="external ? '_blank' : undefined">
 				<span class="grid shrink-0 place-items-center">
 					<Icon :name="iconOf(item)" />
 				</span>
 				<span class="ml-2 min-w-0 flex-1 truncate text-sm">{{ label }}</span>
+				<!-- PROTOTYPE (#47378): an external Link opens in a new tab and says so. -->
+				<span v-if="external" class="lucide-arrow-up-right mr-2 size-3.5 text-ink-gray-5" />
 			</a>
 		</div>
 
@@ -52,6 +54,17 @@
 			<button type="button" :class="ROW_TARGET" :aria-expanded="expanded" @click="expand">
 				<span class="grid shrink-0 place-items-center">
 					<Icon :name="iconOf(item)" />
+				</span>
+				<span class="ml-2 min-w-0 flex-1 truncate text-sm">{{ label }}</span>
+			</button>
+		</div>
+
+		<!-- PROTOTYPE (#47378): an `Act` row runs its act and is never current; a spinner while it runs. -->
+		<div v-else-if="actOf" :data-key="item.key" :class="ROW">
+			<button type="button" :class="ROW_TARGET" @click="runAct">
+				<span class="grid shrink-0 place-items-center">
+					<span v-if="running" class="lucide-loader-circle size-4 animate-spin" />
+					<Icon v-else :name="iconOf(item)" />
 				</span>
 				<span class="ml-2 min-w-0 flex-1 truncate text-sm">{{ label }}</span>
 			</button>
@@ -99,6 +112,8 @@ import type { SectionMemory } from "@/navigation/sectionMemory";
 import { iconOf, labelOf, renderingOf } from "@/navigation/registry";
 import Icon from "@/icons/Icon.vue";
 import LoadingStatus from "./LoadingStatus.vue";
+import { acts } from "@/acts/dispatcher";
+import { openArgumentStep } from "./palette";
 import type { ItemContext } from "@/navigation/types";
 
 // `SidebarItem`'s own classes, for the two rows drawn by hand. Neither is ever current.
@@ -128,6 +143,29 @@ const expander = computed(() => {
 	const value = rendering.value;
 	return value && "expand" in value ? value : null;
 });
+const external = computed(() => {
+	const value = destination.value;
+	return !!value && "href" in value && new URL(value.href, location.href).origin !== location.origin;
+});
+const actOf = computed(() => {
+	const value = rendering.value;
+	return value && "act" in value ? value : null;
+});
+const running = ref(false);
+
+/** A preset value runs at once; an act that wants an argument and has none asks through the palette. */
+async function runAct() {
+	const act = actOf.value;
+	if (!act || running.value) return;
+	if (act.value === undefined && acts.find(act.act)?.argument) return openArgumentStep(act.act);
+	running.value = true;
+	try {
+		await acts.perform(act.act, act.value);
+	} finally {
+		running.value = false;
+	}
+}
+
 // Children with no destination read as a heading whether or not the renderer said `group`.
 const heading = computed(
 	() => (rendering.value && "group" in rendering.value) || props.node.children.length > 0
