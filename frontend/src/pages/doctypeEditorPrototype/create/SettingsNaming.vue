@@ -18,6 +18,16 @@
 							<Button v-for="token in TOKENS" :key="token" size="sm" variant="subtle" class="font-mono" :label="token" @click="insert(token)" />
 						</div>
 					</template>
+					<!-- #47434: ?series= edits the series (G3). -->
+					<SeriesEditor
+						v-else-if="ui.rule === 'naming_series' && seriesVariant"
+						:variant="seriesVariant"
+						:series="series"
+						:fallback="seriesDefault"
+						:counter="counter"
+						:doctype="ui.doctype"
+						:label-of="labelOf"
+					/>
 					<div v-else-if="ui.rule === 'naming_series'" class="flex w-full flex-col">
 						<div v-for="(one, at) in series" :key="one" class="flex h-7 items-center gap-3">
 							<span class="flex w-[296px] shrink-0 items-center gap-2">
@@ -45,6 +55,8 @@
 import { computed, defineComponent, h, inject, nextTick, ref } from "vue";
 import { Badge, Button, Combobox, Radio, RadioGroup, Switch, TextInput } from "frappe-ui";
 import SettingsRow from "./SettingsRow.vue";
+import SeriesEditor from "./SeriesEditor.vue";
+import { use47434 } from "./proto47434";
 import { previewName, ruleRefusal, RULES, SettingsKey, TOKENS, type Rule } from "./settings";
 
 defineProps<{ only?: string }>();
@@ -69,6 +81,8 @@ const hasControl = computed(() => ["autoincrement", "field", "format", "naming_s
 const counter = computed(() => (ui.records ?? 0) + 1);
 const labelOf = (fieldname: string) => ui.fields.find((one) => one.fieldname === fieldname)?.label || fieldname;
 const fieldOptions = computed(() => ui.fields.filter((one) => NAMEABLE.has(one.fieldtype)).map((one) => ({ label: one.label || one.fieldname, value: one.fieldname })));
+const { series: seriesVariant } = use47434();
+const seriesDefault = computed(() => String(ui.fields.find((one) => one.fieldname === "naming_series")?.default ?? ""));
 const series = computed(() => String(ui.fields.find((one) => one.fieldname === "naming_series")?.options ?? "").split("\n").filter(Boolean));
 
 // What each rule last held, so switching away and back keeps it.

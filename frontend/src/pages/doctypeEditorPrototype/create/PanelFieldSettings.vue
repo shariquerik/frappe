@@ -6,7 +6,25 @@
      standard field hides instead of going, locks what a site may not change, and marks (and
      resets) what the site changed; a custom field names the field it is placed after. -->
 <template>
+	<!-- #47434 ?col=C: the field's place, a step up at a time; its column is one click away. -->
+	<nav v-if="col === 'C' && place" class="mx-2 mt-2 flex h-7 min-w-0 items-center text-base text-ink-gray-5" data-field-crumbs>
+		<button type="button" class="h-7 min-w-0 truncate rounded-4 px-2 hover:bg-surface-gray-2 hover:text-ink-gray-8" @click="editor.state.selection = { kind: 'section', key: place.section.name! }">
+			{{ place.section.label || "Untitled section" }}
+		</button>
+		<span class="shrink-0 text-ink-gray-4">/</span>
+		<button
+			type="button"
+			class="h-7 shrink-0 rounded-4 px-2 hover:bg-surface-gray-2 hover:text-ink-gray-8"
+			data-crumb-column
+			@mouseenter="colUi.hover = place.column.name!"
+			@mouseleave="colUi.hover = null"
+			@click="(colUi.hover = null), (editor.state.selection = { kind: 'column', key: place.column.name! })"
+		>
+			{{ place.column.label || `Column ${place.index + 1}` }}
+		</button>
+	</nav>
 	<PanelHeader
+		:class="{ '!pt-2': col === 'C' && place }"
 		:icon="typeIcon(field)"
 		:title="field.label || field.fieldname"
 		:subtitle="subtitle"
@@ -281,6 +299,7 @@ import FetchAddButton from "./FetchAddButton.vue";
 import FetchFromPicker from "./FetchFromPicker.vue";
 import LinkFiltersRow from "./LinkFiltersRow.vue";
 import { conditionScope } from "./conditions";
+import { colUi, use47434 } from "./proto47434";
 
 type Prop = { key: string; label: string; type: "check" | "text" | "int"; placeholder?: string; only?: (field: EditorField) => boolean };
 
@@ -308,6 +327,15 @@ function closeSearch() {
 	searchOpen.value = false;
 }
 const editor = inject(EditorKey)!;
+// #47434: where the field sits, for ?col=C's crumbs.
+const { col } = use47434();
+const place = computed(() => {
+	const column = editor.columnOf(props.field.fieldname);
+	const found = column ? editor.find(column.name!) : undefined;
+	if (!column || found?.kind !== "column") return null;
+	const section = found.parent as any;
+	return { column, section, index: section.columns.indexOf(column) };
+});
 const ui = inject(DraftUiKey)!;
 const doctypes = inject<Addresses>("addresses")!.doctypeNames();
 // #47099: the page's child tables; inside a child's scope its own fields are edited, never a nested table.

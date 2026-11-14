@@ -25,6 +25,46 @@
 		<PanelRow label="Columns" :box="false">
 			<TabButtons :options="COLUMNS" :model-value="section.columns.length" @update:model-value="$emit('columns', Number($event))" />
 		</PanelRow>
+		<!-- #47434 ?col=B: the section's columns, under the count that makes them. A click opens one;
+		     a drag on its grip reorders them; a hovered row rings its column on the form. -->
+		<div v-if="col === 'B' && section.columns.length > 1" class="-mx-2 -mt-1" data-column-list>
+			<Draggable
+				:model-value="section.columns"
+				item-key="name"
+				handle=".column-row-grip"
+				:data-parent-key="section.name"
+				ghost-class="opacity-40"
+				:animation="120"
+				@end="onDrop(editor, $event)"
+			>
+				<template #item="{ element: column, index }">
+					<ItemListRow
+						as="button"
+						type="button"
+						class="group/colrow !min-h-8 w-full text-left hover:bg-surface-gray-2"
+						:data-container-key="column.name"
+						:data-column-row="index + 1"
+						@mouseenter="colUi.hover = column.name"
+						@mouseleave="colUi.hover = null"
+						@click="(colUi.hover = null), (editor.state.selection = { kind: 'column', key: column.name })"
+					>
+						<template #prefix>
+							<span class="column-row-grip grid size-4 cursor-grab place-items-center text-ink-gray-5">
+								<span class="lucide-columns-2 size-4 group-hover/colrow:hidden" aria-hidden="true" />
+								<span class="lucide-grip-vertical hidden size-4 group-hover/colrow:block" aria-hidden="true" />
+							</span>
+						</template>
+						<span class="block truncate" :class="column.label ? 'text-ink-gray-8' : 'text-ink-gray-6'">{{ column.label || `Column ${index + 1}` }}</span>
+						<template #suffix>
+							<span class="flex items-center gap-1 text-sm text-ink-gray-4">
+								{{ column.fields.length }} {{ column.fields.length === 1 ? "field" : "fields" }}
+								<span class="lucide-chevron-right size-4" aria-hidden="true" />
+							</span>
+						</template>
+					</ItemListRow>
+				</template>
+			</Draggable>
+		</div>
 		<!-- #47100: a collapsible section, and when it starts open (`collapsible_depends_on`). -->
 		<PanelRow label="Collapsible" :box="false">
 			<div class="flex h-7 items-center px-2">
@@ -65,7 +105,11 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from "vue";
-import { Switch, TabButtons, TextInput } from "frappe-ui";
+import { ItemListRow, Switch, TabButtons, TextInput } from "frappe-ui";
+// @ts-ignore, vuedraggable ships no bundled types
+import Draggable from "vuedraggable";
+import { onDrop } from "../context";
+import { colUi, use47434 } from "./proto47434";
 import type { LayoutTreeSection } from "@framework/ui/FormLayout/types";
 import { EditorKey } from "../context";
 import PanelHeader from "./PanelHeader.vue";
@@ -91,6 +135,7 @@ function closeSearch() {
 	searchOpen.value = false;
 }
 const editor = inject(EditorKey)!;
+const { col } = use47434();
 
 const ui = inject(DraftUiKey)!;
 const scope = computed(() => conditionScope(editor.state.fields, { submittable: ui.kind === "submittable" }));

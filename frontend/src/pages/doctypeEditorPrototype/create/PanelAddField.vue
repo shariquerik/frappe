@@ -110,6 +110,7 @@ import PanelSection from "./PanelSection.vue";
 import { fieldIndex, matches, SavedUiKey } from "./savedDoctype";
 import { typeLabel } from "./newDoctype";
 import { typeIcon, type FieldType } from "./typeMenu";
+import { use47434 } from "./proto47434";
 
 defineEmits<{ add: [type: FieldType]; place: [fieldname: string]; "drag-start": [event: any]; "drag-end": [event: any] }>();
 
@@ -141,7 +142,9 @@ const fieldGroups = computed(() => {
 	return groups;
 });
 // #47097: Quick Entry already draws the unplaced mandatory fields, so they are not listed.
-const offDetails = computed(() => editor.state.layout !== "details");
+// #47434 ?tray=A: on Details too, while a field is off the layout; with none the group is not drawn.
+const { tray } = use47434();
+const offDetails = computed(() => editor.state.layout !== "details" || (tray.value === "A" && notPlaced.value.length > 0));
 const notPlaced = computed(() => {
 	const drawn = new Set(editor.state.layout === "quick-entry" ? editor.autoFields.value.map((one) => one.fieldname) : []);
 	return editor.unplaced.value.filter((one) => !one.hidden && !drawn.has(one.fieldname));

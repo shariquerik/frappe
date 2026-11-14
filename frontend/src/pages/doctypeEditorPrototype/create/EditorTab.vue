@@ -43,11 +43,11 @@
 						class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink-gray-6 placeholder:text-ink-gray-4 focus:outline-none focus:ring-0"
 						@input="grow"
 					/>
-					<p class="mt-1 text-p-sm text-ink-gray-5"><slot name="meta">{{ meta }}</slot></p>
+					<p class="mt-1 text-p-sm text-ink-gray-5"><slot name="meta">{{ meta }}</slot><DetailsTray v-if="tray === 'C'" where="meta" @place="place" /></p>
 					<!-- #47099: a child's editor shows its grid as the parent draws it. -->
 					<slot name="after-meta" />
 				</div>
-				<EditorCanvas v-if="layout !== 'side-panel' && layout !== 'quick-entry'" @drag-start="startField" @drag-end="endField" />
+				<EditorCanvas v-if="layout !== 'side-panel' && layout !== 'quick-entry'" @drag-start="startField" @drag-end="endField" @place="place" />
 			</div>
 			<DragLayer ref="layer" />
 		</div>
@@ -65,7 +65,9 @@
 				@close="clear"
 			/>
 			<PanelTabSettings v-else-if="selectedTab" :key="selectedTab.name" :tab="selectedTab" @close="clear" />
-			<PanelAddField v-if="!focusChild && !selectedField && !selectedSection && !selectedTab" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette">
+			<!-- #47434: a selected column (?col=). -->
+			<PanelColumnSettings v-else-if="selectedColumn" :key="selectedColumn.column.name" :column="selectedColumn.column" :section="selectedColumn.section" />
+			<PanelAddField v-if="!focusChild && !selectedField && !selectedSection && !selectedTab && !selectedColumn" @add="addTyped" @place="place" @drag-start="startPalette" @drag-end="endPalette">
 				<!-- #47099: in a child's own editor, its grid columns come right after the panel's hint, as the parent's first group does. -->
 				<template v-if="inChild" #first>
 					<GridColumns :child="inChild" :table="childUi?.jumped ?? ''" @open="openOwn" />
@@ -77,7 +79,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { LayoutTreeSection, LayoutTreeTab } from "@framework/ui/FormLayout/types";
+import type { LayoutTreeColumn, LayoutTreeSection, LayoutTreeTab } from "@framework/ui/FormLayout/types";
 import { Button } from "frappe-ui";
 import { EditorKey, onDrop } from "../context";
 import { MORE_FIELDS } from "../editor";
@@ -90,6 +92,9 @@ import PanelAddField from "./PanelAddField.vue";
 import PanelFieldSettings from "./PanelFieldSettings.vue";
 import PanelSectionSettings from "./PanelSectionSettings.vue";
 import PanelTabSettings from "./PanelTabSettings.vue";
+import PanelColumnSettings from "./PanelColumnSettings.vue";
+import DetailsTray from "./DetailsTray.vue";
+import { use47434 } from "./proto47434";
 import SidePanelCanvas from "./SidePanelCanvas.vue";
 import { DraftUiKey } from "./draftUi";
 import { typeLabel } from "./newDoctype";
@@ -108,7 +113,14 @@ const selectedTab = computed(() => {
 	const selected = editor.state.selection;
 	return selected?.kind === "tab" ? (editor.find(selected.key)?.node as LayoutTreeTab | undefined) : undefined;
 });
+const selectedColumn = computed(() => {
+	const selected = editor.state.selection;
+	if (selected?.kind !== "column") return undefined;
+	const found = editor.find(selected.key);
+	return found?.kind === "column" ? { column: found.node as LayoutTreeColumn, section: found.parent as LayoutTreeSection } : undefined;
+});
 const clear = () => (editor.state.selection = null);
+const { tray } = use47434();
 const childUi = inject(ChildUiKey, null);
 const inChild = inject(ChildScopeKey, null);
 const focusChild = computed(() => (!inChild && childUi?.focus ? childUi.get(editor.field(childUi.focus.table)?.options) : undefined));
@@ -289,6 +301,15 @@ function onKeydown(event: KeyboardEvent) {
 	if (!mod && !event.altKey && !typing && (event.key === "a" || event.key === "/")) {
 		event.preventDefault();
 		return openAddField();
+	}
+	// #47434: Alt+← and Alt+→ move a selected column.
+	if (event.altKey && selectedColumn.value && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+		event.preventDefault();
+		const { column, section } = selectedColumn.value;
+		const to = section.columns.indexOf(column) + (event.key === "ArrowLeft" ? -1 : 1);
+		if (to >= 0 && to < section.columns.length) editor.acts.moveContainer(column.name!, section.name!, to);
+		editor.state.selection = { kind: "column", key: column.name! };
+		return;
 	}
 	if (!["Delete", "Backspace"].includes(event.key) || !selectedField.value || focusChild.value) return;
 	if ((event.target as HTMLElement).closest?.(TYPING)) return;

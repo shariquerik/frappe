@@ -119,7 +119,9 @@
 		<SettingsDialogs v-if="ready" :ui="settings" />
 		<NewChildDialog v-if="ready" :customizing="customizing" />
 		<!-- #47100: the bar switches where a condition's builder opens; ?child= (#47099) reads from the address. -->
-		<VariantBar :variants="COND" param="cond" />
+		<!-- #47434: ?bar=col|series|tray points the bar at one of the redesigns. -->
+		<VariantBar v-if="BARS[String(route.query.bar)]" :key="String(route.query.bar)" :variants="BARS[String(route.query.bar)].variants" :param="String(route.query.bar)" />
+		<VariantBar v-else :variants="COND" param="cond" />
 	</PageFrame>
 </template>
 
@@ -145,6 +147,7 @@ import LayoutDialogs from "./LayoutDialogs.vue";
 import SettingsDialogs from "./SettingsDialogs.vue";
 import SettingsTab from "./SettingsTab.vue";
 import VariantBar from "./VariantBar.vue";
+import { BARS } from "./proto47434";
 import CanvasGrid from "./CanvasGrid.vue";
 import ChildScope from "./ChildScope.vue";
 import NewChildDialog from "./NewChildDialog.vue";
@@ -302,6 +305,11 @@ watch(
 		// #47100: the breaks' rules desk v2's meta layout drops, and the demo's seeded link filters.
 		seedBreakRules(editor.state.trees, editor.state.fields);
 		seedDemo(doctype, editor.state.fields);
+		// #47434: &off=a,b starts with those fields off Details, as if removed from the layout (no undo step).
+		for (const fieldname of String(route.query.off ?? "").split(",").filter(Boolean)) {
+			const column = editor.columnOf(fieldname);
+			if (column) column.fields = column.fields.filter((entry) => nameOf(entry) !== fieldname);
+		}
 		if (route.query.layout) editor.openLayout(String(route.query.layout) as LayoutKey, route.query.row ? String(route.query.row) : null);
 		titleField.value = (meta.value as any).title_field ?? "";
 		description.value = (meta.value as any).description ?? "";

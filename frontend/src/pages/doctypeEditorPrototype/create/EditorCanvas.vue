@@ -20,7 +20,9 @@
 			]"
 			@click.stop="openTab(tab.name!)"
 		>
-			{{ tab.label || "Untitled tab" }}
+			<!-- #47433 ruling 3: an unlabelled first tab reads "Details", in gray like a placeholder. -->
+			<span v-if="tab.label">{{ tab.label }}</span>
+			<span v-else class="text-ink-gray-4">Details</span>
 			<span v-if="tab.name === shown?.name" class="absolute inset-x-2 bottom-0 h-px bg-surface-gray-7" aria-hidden="true" />
 		</button>
 		<Tooltip text="Add tab">
@@ -65,8 +67,47 @@
 							<span class="lucide-grip-vertical size-4" aria-hidden="true" />
 						</span>
 					</div>
-					<div class="grid gap-x-8" :style="{ gridTemplateColumns: `repeat(${section.columns.length}, minmax(0,1fr))` }">
-						<div v-for="column in section.columns" :key="column.name" class="relative flex min-w-0 flex-col">
+					<!-- #47434: the columns drag by the grip a selected or hovered column shows (?col=A). -->
+					<Draggable
+						:model-value="section.columns"
+						item-key="name"
+						handle=".column-handle"
+						:group="{ name: `dte-columns-${section.name}` }"
+						class="grid gap-x-8"
+						:style="{ gridTemplateColumns: `repeat(${section.columns.length}, minmax(0,1fr))` }"
+						:data-parent-key="section.name"
+						ghost-class="opacity-40"
+						:animation="120"
+						@start="editor.state.dragging = 'column'"
+						@end="onDrop(editor, $event)"
+					>
+						<template #item="{ element: column }">
+						<div
+							:key="column.name"
+							class="relative flex min-w-0 flex-col"
+							:data-container-key="column.name"
+							:data-canvas-column="column.name"
+							@mouseover="hoverOver(column.name, $event)"
+							@mouseleave="colUi.hover = null"
+							@click="clickColumn(column.name, $event)"
+						>
+							<!-- #47434: the column's ring sits 12px outside it, drawn over, so nothing moves. -->
+							<div
+								v-if="ringOn(column.name)"
+								class="pointer-events-none absolute -inset-3 z-[1] rounded-7 ring-1"
+								:class="isColumn(column.name) ? 'ring-outline-gray-4' : 'ring-outline-gray-2'"
+								data-column-ring
+							/>
+							<span
+								v-if="col === 'A' && section.columns.length > 1 && ringOn(column.name)"
+								class="column-handle absolute -top-3 left-1/2 z-[2] flex h-4 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center rounded-3 bg-surface-base px-1 text-ink-gray-4 hover:text-ink-gray-7"
+								title="Drag to move the column"
+								data-column-grip
+							>
+								<span class="lucide-grip-horizontal size-4" aria-hidden="true" />
+							</span>
+							<!-- The record page draws a column's label over its fields (FormLayoutColumn). -->
+							<div v-if="real && column.label && !column.hideLabel" class="mb-4 max-w-fit text-base text-ink-gray-9" data-column-label>{{ column.label }}</div>
 							<Draggable
 								:model-value="column.fields"
 								:item-key="(entry: any) => nameOf(entry)"
@@ -86,8 +127,14 @@
 							>
 								<template #item="{ element }">
 									<div :data-fieldname="nameOf(element)">
+										<RealField
+											v-if="real && editor.field(nameOf(element))"
+											:field="editor.field(nameOf(element))!"
+											:selected="isField(nameOf(element))"
+											@click.stop="editor.state.selection = { kind: 'field', fieldname: nameOf(element) }"
+										/>
 										<EditorField
-											v-if="editor.field(nameOf(element))"
+											v-else-if="editor.field(nameOf(element))"
 											:field="editor.field(nameOf(element))!"
 											:selected="isField(nameOf(element))"
 											@click.stop="editor.state.selection = { kind: 'field', fieldname: nameOf(element) }"
@@ -102,7 +149,8 @@
 								Drop a field here
 							</div>
 						</div>
-					</div>
+						</template>
+					</Draggable>
 					<AddFieldPopover :section-key="section.name" @add="addToSection(section, $event)" />
 				</div>
 			</div>
@@ -113,6 +161,8 @@
 		<Button variant="subtle" size="sm" icon-left="lucide-plus" label="Add section" @click.stop="addSection" />
 		<Button v-if="editor.tree.value.length < 2" variant="subtle" size="sm" icon-left="lucide-panel-top" label="Add tab" @click.stop="addTab" />
 	</div>
+	<!-- #47434 ?tray=B: Details' fields off the layout, under the form; nothing when there are none. -->
+	<DetailsTray v-if="tray === 'B'" where="below" @place="$emit('place', $event)" @drag-start="$emit('drag-start', $event)" @drag-end="$emit('drag-end', $event)" />
 </template>
 
 <script setup lang="ts">
@@ -127,14 +177,32 @@ import AddFieldPopover from "./AddFieldPopover.vue";
 import EditorField from "./EditorField.vue";
 import ConditionMark from "./ConditionMark.vue";
 import { DraftUiKey } from "./draftUi";
+import RealField from "./RealField.vue";
+import DetailsTray from "./DetailsTray.vue";
+import { colUi, use47434 } from "./proto47434";
 
-defineEmits<{ "drag-start": [event: any]; "drag-end": [event: any] }>();
+defineEmits<{ "drag-start": [event: any]; "drag-end": [event: any]; place: [fieldname: string] }>();
 const editor = inject(EditorKey)!;
 const ui = inject(DraftUiKey)!;
 
 const isField = (fieldname: string) => editor.state.selection?.kind === "field" && editor.state.selection.fieldname === fieldname;
 const isSection = (key: string) => editor.state.selection?.kind === "section" && editor.state.selection.key === key;
 const selectSection = (key: string) => (editor.state.selection = { kind: "section", key });
+// #47434: ?col= picks how a column is selected. A: a click on its free space (not on a field)
+// selects it, and its hover ring says so first. B: the section's panel lists its columns; a row's
+// hover rings the column here. C: a field's panel steps up to its column.
+const { col, real, tray } = use47434();
+const isColumn = (key: string) => editor.state.selection?.kind === "column" && editor.state.selection.key === key;
+const ringOn = (key: string) => Boolean(col.value) && (isColumn(key) || colUi.hover === key);
+function hoverOver(key: string, event: MouseEvent) {
+	if (col.value !== "A" || editor.state.dragging) return;
+	colUi.hover = (event.target as HTMLElement).closest(".editor-field") ? null : key;
+}
+function clickColumn(key: string, event: MouseEvent) {
+	if (col.value !== "A" || (event.target as HTMLElement).closest(".editor-field")) return;
+	event.stopPropagation();
+	editor.state.selection = { kind: "column", key };
+}
 const isTab = (key: string) => editor.state.selection?.kind === "tab" && editor.state.selection.key === key;
 
 // Only the tab in view is drawn. A click on another tab opens it; a click on the open one selects it.
