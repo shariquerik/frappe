@@ -71,8 +71,14 @@
 			</nav>
 		</ScrollArea>
 
-		<div class="flex h-12 shrink-0 items-center border-t border-outline-gray-1 px-2">
-			<UserMenu wide />
+		<div class="shrink-0 border-t border-outline-gray-1">
+			<!-- PROTOTYPE (#47375): the utility slots, above the avatar when they sit at the bottom. -->
+			<div v-if="slots === 'bottom'" class="px-2 pt-2">
+				<UtilitySlots form="row" />
+			</div>
+			<div class="flex h-12 items-center px-2">
+				<UserMenu wide />
+			</div>
 		</div>
 	</div>
 </template>
@@ -92,6 +98,8 @@ import SidebarRow from "../SidebarRow.vue";
 import UserMenu from "../UserMenu.vue";
 import { useAppMenu } from "./appMenu";
 import PanelChrome from "./PanelChrome.vue";
+import { slots } from "./navLayout";
+import UtilitySlots from "./UtilitySlots.vue";
 
 const props = defineProps<{
 	navigation: Navigation;

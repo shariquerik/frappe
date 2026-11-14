@@ -49,12 +49,15 @@
 				</nav>
 			</ScrollArea>
 
-			<div
-				v-if="chrome"
-				class="flex h-12 shrink-0 items-center border-t border-outline-gray-1 px-2"
-			>
+			<div v-if="chrome" class="shrink-0 border-t border-outline-gray-1">
+			<!-- PROTOTYPE (#47375): the utility slots, above the avatar when they sit at the bottom. -->
+			<div v-if="slots === 'bottom'" class="px-2 pt-2">
+				<UtilitySlots form="row" />
+			</div>
+			<div class="flex h-12 items-center px-2">
 				<UserMenu wide />
 			</div>
+		</div>
 		</Sidebar>
 
 		<SidebarEdge
@@ -81,6 +84,8 @@ import SidebarRow from "./SidebarRow.vue";
 import { side } from "./prototype/navLayout";
 import { useAppMenu } from "./prototype/appMenu";
 import PanelChrome from "./prototype/PanelChrome.vue";
+import { slots } from "./prototype/navLayout";
+import UtilitySlots from "./prototype/UtilitySlots.vue";
 import UserMenu from "./UserMenu.vue";
 
 const { appTitle } = useAppMenu();

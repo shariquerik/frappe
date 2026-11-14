@@ -28,25 +28,13 @@
 			</Dropdown>
 		</div>
 
-		<div v-if="chrome" class="mb-3 flex shrink-0 flex-col items-center gap-3 self-stretch">
+		<!-- PROTOTYPE (#47375): the utility slots, here or above the avatar. -->
+		<div
+			v-if="chrome && slots === 'top'"
+			class="mb-3 flex shrink-0 flex-col items-center gap-3 self-stretch"
+		>
 			<Divider flex-item />
-			<Tooltip :side="awaySide">
-				<template #content>
-					<span class="flex items-center gap-2 [&_[data-slot=key]]:text-ink-gray-4">
-						{{ __("Search") }} <KeyboardShortcut combo="Mod+K" />
-					</span>
-				</template>
-				<button
-					type="button"
-					data-key="palette-trigger"
-					:class="TRIGGER"
-					:aria-label="__('Search')"
-					aria-keyshortcuts="Control+K Meta+K"
-					@click="openPalette"
-				>
-					<span class="lucide-search size-4" aria-hidden="true" />
-				</button>
-			</Tooltip>
+			<UtilitySlots form="icon" />
 			<Divider flex-item />
 		</div>
 
@@ -91,6 +79,14 @@
 			</nav>
 		</ScrollArea>
 
+		<div
+			v-if="chrome && slots === 'bottom'"
+			class="mt-3 flex shrink-0 flex-col items-center gap-3 self-stretch"
+		>
+			<Divider flex-item />
+			<UtilitySlots form="icon" />
+		</div>
+
 		<!-- The person's cell, pinned to the foot by the `ScrollArea`'s `flex-1` above it. -->
 		<div v-if="chrome" class="mt-3 flex shrink-0 items-center justify-center">
 			<UserMenu />
@@ -105,7 +101,6 @@ import type { RouteLocationRaw } from "vue-router";
 import {
 	Divider,
 	Dropdown,
-	KeyboardShortcut,
 	SidebarRail,
 	SidebarRailItem,
 	ScrollArea,
@@ -121,12 +116,12 @@ import { useItemTree } from "@/navigation/useItemTree";
 import type { ItemContext } from "@/navigation/types";
 import AppLogo from "./AppLogo.vue";
 import { menuApps } from "./appSwitchOrder";
-import { openPalette } from "./palette";
 import type { PlacesApp } from "./palettePlaces";
 import { loadDocument } from "./tabKeepAlive";
 import { shellMenu } from "./shellActs";
 import UserMenu from "./UserMenu.vue";
-import { awaySide } from "./prototype/navLayout";
+import { awaySide, slots } from "./prototype/navLayout";
+import UtilitySlots from "./prototype/UtilitySlots.vue";
 
 type Cell = { key: string; label: string; icon?: string; sidebar?: string } & (
 	| { to: RouteLocationRaw }
@@ -140,9 +135,6 @@ const LETTER_TILE =
 // `SidebarRailItem`'s own inactive tile.
 const CELL =
 	"relative flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-surface-gray-3 text-base transition focus-visible:ring-0 focus-visible:focus-ring";
-// `SidebarRailItem`'s `ghost` cell, whose own tooltip would put the key on a second line.
-const TRIGGER =
-	"relative flex size-7 shrink-0 items-center justify-center rounded-4 text-base text-ink-gray-8 transition hover:bg-surface-gray-3 focus-visible:ring-0 focus-visible:focus-ring";
 
 // The shell decides `current`, one row across rail and panel; a context is composed once per list.
 const props = withDefaults(

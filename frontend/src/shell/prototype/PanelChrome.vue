@@ -1,6 +1,6 @@
 <!--
   PROTOTYPE (#47374): the top of a panel that carries what the rail would: the app logo and
-  switcher (the app menu), then search. Used where no rail draws them.
+  switcher (the app menu), then the utility slots when they sit at the top. Used where no rail draws them.
 -->
 <template>
 		<div class="flex h-12 shrink-0 items-center px-2">
@@ -23,25 +23,17 @@
 			</Dropdown>
 		</div>
 
-		<div class="shrink-0 px-2 pb-2">
-			<button
-				type="button"
-				class="flex h-7 w-full items-center gap-2 rounded-4 px-2 text-sm text-ink-gray-6 hover:bg-surface-gray-3"
-				data-key="palette-trigger"
-				@click="openPalette"
-			>
-				<span class="lucide-search size-4" />
-				<span class="flex-1 text-left">{{ __("Search") }}</span>
-				<KeyboardShortcut combo="Mod+K" class="text-ink-gray-4" />
-			</button>
+		<!-- PROTOTYPE (#47375): the utility slots, here or in the panel's footer. -->
+		<div v-if="slots === 'top'" class="shrink-0 px-2 pb-2">
+			<UtilitySlots form="row" />
 		</div>
 
 </template>
 
 <script setup lang="ts">
-import { Dropdown, KeyboardShortcut } from "frappe-ui";
-import { __ } from "@/i18n";
-import { openPalette } from "../palette";
+import { Dropdown } from "frappe-ui";
+import { slots } from "./navLayout";
+import UtilitySlots from "./UtilitySlots.vue";
 import { useAppMenu } from "./appMenu";
 
 defineProps<{ title: string }>();

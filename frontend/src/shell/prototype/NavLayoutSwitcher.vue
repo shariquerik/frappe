@@ -7,7 +7,7 @@
 		<button type="button" :class="ARROW" aria-label="Previous variant" @click="go(-1)">
 			<span class="lucide-chevron-left size-4" />
 		</button>
-		<span class="min-w-[19rem] px-2 text-center tabular-nums">
+		<span class="min-w-[24rem] px-2 text-center tabular-nums">
 			{{ variant.label }}
 			<span class="text-gray-400">({{ at + 1 }}/{{ VARIANTS.length }})</span>
 		</span>
