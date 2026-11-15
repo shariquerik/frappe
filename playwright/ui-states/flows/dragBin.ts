@@ -82,15 +82,13 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 		},
 		draggingTab: {
 			meta: {
-				transient: true,
-				description: "A tab is held to reorder the strip. It cannot be reached with a mouse: the tab is one button and the drag options filter every button out, so a press on the tab never starts a drag.",
+				description: "A tab is held to reorder the strip: a faded copy of the tab follows the pointer over its neighbour. Before the canvas fix a press on the tab never started a drag.",
 			},
 			on: { DROPS_TAB: "tabMoved" },
 		},
 		tabMoved: {
 			meta: {
-				transient: true,
-				description: "The tab was released before its neighbour. Not reachable, as the drag never starts.",
+				description: "The tab was released before its neighbour: the strip order changed and the header shows 'Not saved'.",
 			},
 		},
 		customizeIdle: {
@@ -211,13 +209,14 @@ export const dragBin = defineFlow<Event>({
 			).toBeVisible();
 		},
 		async GRABS_TAB(scene) {
-			// The press lands on the tab's button, which the drag options filter out.
 			await grab(scene, scene.page.getByRole("tab", { name: "Payments" }));
 			await moveTo(scene, scene.page.getByRole("tab", { name: "Details" }));
-			await expect(scene.page.locator(".sortable-drag, .sortable-fallback")).toHaveCount(0);
+			await expect(scene.page.locator(".sortable-drag, .sortable-fallback").first()).toBeVisible();
 		},
 		async DROPS_TAB(scene) {
+			await moveTo(scene, scene.page.getByRole("tab", { name: "Details" }));
 			await scene.page.mouse.up();
+			await expect(scene.page.getByText("Not saved")).toBeVisible();
 		},
 		async OPENS_CUSTOMIZE(scene) {
 			await scene.goto(`/apps/desk/doctype/${CUSTOMIZE_TARGET}?mode=customize`);

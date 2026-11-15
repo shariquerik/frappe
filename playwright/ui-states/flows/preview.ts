@@ -51,14 +51,14 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { RECORD_ARRIVES: "loaded" },
 		},
 		recordFailed: {
-			meta: { description: "The invoice could not be read: no error shows; the picker quietly falls back to 'an empty form' and the form is blank." },
+			meta: { description: "The invoice could not be read: the picker keeps the picked record and a failure block shows the reason with a Try again button." },
 		},
 		layoutLoading: {
-			meta: { description: "The form's layout is still being read: the record picker shows, and the area under it is blank, with no loading mark." },
+			meta: { description: "The form's layout is still being read: the record picker shows, and a form skeleton fills the area under it." },
 			on: { LAYOUT_ARRIVES: "loaded" },
 		},
 		layoutFailed: {
-			meta: { description: "The form's layout could not be read: the record picker shows and the area under it stays blank, with no error and no retry." },
+			meta: { description: "The form's layout could not be read: the record picker shows, and a failure block says why with a Try again button." },
 		},
 		recordPicker: {
 			meta: { description: "The record picker is open under 'Previewing': 'Empty form' and the two invoices, newest first." },
@@ -127,7 +127,7 @@ export const preview = defineFlow<Event>({
 			holds.set(scene, await scene.hold(INVOICE));
 			await holds.get(scene)?.abort();
 			await previewTab(scene).click();
-			await expect(picker(scene)).toContainText("an empty form", { timeout: 45_000 });
+			await expect(scene.page.locator("[data-preview-failure]")).toBeVisible({ timeout: 45_000 });
 			await expect(pane(scene).getByText("Loading…")).toHaveCount(0);
 		},
 		async LAYOUT_SLOW(scene) {
@@ -144,7 +144,7 @@ export const preview = defineFlow<Event>({
 			await holds.get(scene)?.abort();
 			await previewTab(scene).click();
 			await expect(picker(scene)).toBeVisible();
-			await scene.settle(4000);
+			await expect(scene.page.locator("[data-preview-failure]")).toBeVisible({ timeout: 45_000 });
 		},
 		async OPENS_PICKER(scene) {
 			await picker(scene).click();

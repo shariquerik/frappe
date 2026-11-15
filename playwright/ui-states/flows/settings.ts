@@ -116,7 +116,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			meta: { description: "A role was added: Desk User joins System Manager in the grid with Read ticked, the header says Not saved and Save is on." },
 		},
 		rolesFailed: {
-			meta: { description: "The Role list request failed: the Permissions grid shows, and the Add a role picker opens on 'No results' with no error message anywhere." },
+			meta: { description: "The Role list request failed: the Permissions grid shows, and a failure row beside the Add a role picker says so with a Try again button." },
 		},
 		danger: {
 			meta: { description: "The Danger zone: Change kind, Rename DocType and Delete DocType rows, each with its red button; the Delete row counts the records it removes." },
@@ -150,7 +150,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			meta: { description: "The kind changed at once: a success toast, and the Danger zone and the Form section now say Submittable." },
 		},
 		kindFailed: {
-			meta: { description: "The server refused the change: the dialog is closed and an error toast says so; the kind is as before." },
+			meta: { description: "The server refused the change: the dialog stays open with the error line under the kinds, the confirm button is back, and the kind is as before." },
 		},
 		renameDialog: {
 			meta: { description: "Rename: the new name field holds the current name, the table line and the count of Link and Table fields that follow; Rename is disabled until the name changes." },
@@ -164,7 +164,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { CONFIRM_RENAME: "renamed" },
 		},
 		renameTaken: {
-			meta: { description: "The name of a DocType that exists, confirmed: the server refuses; the page shows the error toast." },
+			meta: { description: "The name of a DocType that exists, confirmed: the server refuses; the dialog stays open with the error line, so the typed name is kept." },
 		},
 		renamed: {
 			meta: { description: "The rename went through: a success toast, and the editor reopened under the new name, still on the Danger zone." },
@@ -184,7 +184,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			meta: { description: "The DocType was deleted: a success toast, and the editor leaves for the DocType list, which no longer has it." },
 		},
 		deleteFailed: {
-			meta: { description: "The server failed the delete: the dialog closes with an error toast, and the DocType and its records are still there." },
+			meta: { description: "The server failed the delete: the dialog stays open with the error line, and the DocType and its records are still there." },
 		},
 		cancelled: {
 			meta: { description: "Cancel after typing the name: the dialog is gone, the Danger zone is as it was and nothing was deleted." },
@@ -419,8 +419,7 @@ export const settings = defineFlow<Event>({
 			await holds.get(scene)!.roles.abort();
 			await openSection(scene, "permissions");
 			await expect(scene.page.locator('[data-perm-role="System Manager"]')).toBeVisible();
-			await scene.page.locator("[data-perm-add]").click();
-			await expect(scene.page.getByRole("listbox")).toBeVisible();
+			await expect(scene.page.locator("[data-roles-failed]")).toBeVisible({ timeout: 45_000 });
 		},
 		async EDIT_THEN_DANGER(scene) {
 			await openSection(scene, "danger");
@@ -468,8 +467,8 @@ export const settings = defineFlow<Event>({
 		async KIND_FAILS(scene) {
 			await holds.get(scene)!.kind.abort();
 			await dialog(scene, "data-change-kind-dialog").getByRole("button", { name: "Change kind" }).click();
-			await expect(toasts(scene).first()).toBeVisible();
-			await expect(dialog(scene, "data-change-kind-dialog")).toBeHidden();
+			await expect(dialog(scene, "data-change-kind-dialog").locator("[data-danger-error]")).toBeVisible();
+			await expect(dialog(scene, "data-change-kind-dialog")).toBeVisible();
 		},
 		async OPEN_RENAME(scene) {
 			await dangerButton(scene, "rename_doctype");
@@ -490,7 +489,7 @@ export const settings = defineFlow<Event>({
 		async TYPE_TAKEN(scene) {
 			await dialog(scene, "data-rename-doctype-dialog").getByLabel("New name").fill("ToDo");
 			await dialog(scene, "data-rename-doctype-dialog").getByRole("button", { name: "Rename" }).click();
-			await expect(toasts(scene).first()).toBeVisible();
+			await expect(dialog(scene, "data-rename-doctype-dialog").locator("[data-danger-error]")).toBeVisible();
 		},
 		async CONFIRM_RENAME(scene) {
 			await dialog(scene, "data-rename-doctype-dialog").getByRole("button", { name: "Rename" }).click();
@@ -518,8 +517,8 @@ export const settings = defineFlow<Event>({
 		async DELETE_FAILS(scene) {
 			await holds.get(scene)!.remove.abort();
 			await dialog(scene, "data-delete-doctype-dialog").getByRole("button", { name: `Delete ${NAME}` }).click();
-			await expect(toasts(scene).first()).toBeVisible();
-			await expect(dialog(scene, "data-delete-doctype-dialog")).toBeHidden();
+			await expect(dialog(scene, "data-delete-doctype-dialog").locator("[data-danger-error]")).toBeVisible();
+			await expect(dialog(scene, "data-delete-doctype-dialog")).toBeVisible();
 		},
 		async CANCEL(scene) {
 			const open = scene.page.locator(

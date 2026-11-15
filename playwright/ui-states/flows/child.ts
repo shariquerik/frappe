@@ -35,15 +35,15 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { EDIT_CHILD: "childLoading", ADDS_TABLE_FIELD: "childPicker" },
 		},
 		childLoading: {
-			meta: { description: "Edit was clicked and the child's editor has not loaded: the address already has the child's table, but the screen still shows the parent with nothing to say it is loading." },
+			meta: { description: "Edit was clicked and the child's editor has not loaded: the screen says 'Loading UI Sales Invoice Item…' and the address names the child table." },
 			on: { CHILD_LOADS: "childOpen", CHILD_FAILS: "childFailed" },
 		},
 		childFailed: {
-			meta: { description: "The child's load failed: an error toast, the screen stays on the parent while the address still names the child table." },
-			on: { EDIT_AGAIN: "childStillParent" },
+			meta: { description: "The child's load failed: an error toast, the screen is back on the parent and the address no longer names the child table." },
+			on: { EDIT_AGAIN: "childRetried" },
 		},
-		childStillParent: {
-			meta: { description: "Edit clicked again once the server answers: nothing happens, because the address already names the child table, so the parent stays and the child never opens." },
+		childRetried: {
+			meta: { description: "Edit clicked again once the server answers: the child's editor opens, as the address was reset by the failure." },
 		},
 		childOpen: {
 			meta: { description: "The child's editor: the crumbs read DocType / UI Sales Invoice / Items / UI Sales Invoice Item, the form's grid is drawn under the meta line and the panel edits the grid columns." },
@@ -131,9 +131,7 @@ export const child = defineFlow<Event>({
 		async EDIT_AGAIN(scene) {
 			await holds.get(scene)!.release();
 			await page(scene).locator("[data-open-child]").click();
-			// A moment to let a child editor show if it were going to.
-			await scene.settle(1500);
-			await expect(page(scene).locator("[data-child-grid]")).toHaveCount(0);
+			await childEditorShown(scene);
 		},
 		async OPENS_PREVIEW(scene) {
 			await page(scene).getByRole("tab", { name: "Preview" }).click();

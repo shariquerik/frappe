@@ -20,7 +20,7 @@ type Event =
  * The rule dialog of a field's Visible if row, opened from the panel of Payment due date. In the code
  * this is `RuleRow.vue` (a `draft` and an `open` flag), `RuleEditor.vue` (`draft.mode` picks the builder or
  * the textarea) and `ruleDraft.ts` (`mode`, `readable`, `problem`, `changed` are the state; the draft is
- * staged once, when the dialog closes, whether by Done, the close button or Escape).
+ * staged only by Done; the X, Escape and unmount drop it).
  */
 const machine = setup({ types: { events: {} as Event } }).createMachine({
 	id: "condition",
@@ -36,7 +36,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 		},
 		ruleAdded: {
 			meta: { description: "A rule is in the builder: 'Where Is return (credit note) Equals Yes'. Clear condition is enabled now." },
-			on: { ADD_SECOND: "twoRules", SHOW_CODE: "codeOfRule", CLEAR: "empty", DONE: "applied", ESCAPE: "applied" },
+			on: { ADD_SECOND: "twoRules", SHOW_CODE: "codeOfRule", CLEAR: "empty", DONE: "applied", ESCAPE: "dropped" },
 		},
 		twoRules: {
 			meta: { description: "A second condition is added: the rows are joined by 'And' on a bracket, each with its own field, operator and value, and the word 'and' is a toggle for 'or'." },
@@ -52,7 +52,10 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			meta: { description: "Code the builder cannot read: the note says 'The rules can't show this condition. It stays as code, as written.' and the Rules option of the toggle is disabled." },
 		},
 		applied: {
-			meta: { description: "The dialog is closed (by Done or Escape: both stage the draft): the Visible if row reads 'Is return (credit note) is on', the canvas field carries a rule mark, and the header shows 'Not saved'." },
+			meta: { description: "The dialog is closed by Done, which stages the draft: the Visible if row reads 'Is return (credit note) is on', the canvas field carries a rule mark, and the header shows 'Not saved'." },
+		},
+		dropped: {
+			meta: { description: "Escape (or the X) on a dialog with an edit: it closes and drops the draft: the Visible if row still reads 'Always' and nothing is staged. Only Done stages." },
 		},
 		unchanged: {
 			meta: { description: "Escape on an untouched dialog: it closes, the Visible if row still reads 'Always' and nothing is staged (Save stays disabled)." },
@@ -63,7 +66,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { ADD_TWO_ON_ONE_FIELD: "filtersProblem" },
 		},
 		filtersProblem: {
-			meta: { description: "Two filters name Territory: a red line under the builder says 'Territory has two filters, and a Link search keeps only one', and the draft is not staged." },
+			meta: { description: "Two filters name Territory: a red line under the builder says 'Territory has two filters, and a Link search keeps only one', the draft is not staged, and Done is disabled." },
 		},
 	},
 });
@@ -122,11 +125,9 @@ export const condition = defineFlow<Event>({
 			await expect(scene.page.locator(ROW)).toContainText("is on");
 		},
 		async ESCAPE(scene) {
-			const changed = await dialog(scene).getByRole("button", { name: "Clear condition" }).isEnabled();
 			await scene.page.keyboard.press("Escape");
 			await expect(dialog(scene)).toBeHidden();
-			if (changed) await expect(scene.page.locator(ROW)).toContainText("is on");
-			else await expect(scene.page.locator(ROW)).toContainText("Always");
+			await expect(scene.page.locator(ROW)).toContainText("Always");
 		},
 		async OPEN_FILTERS(scene) {
 			await scene.page.locator('[data-canvas-field="customer"]').click();
@@ -139,6 +140,7 @@ export const condition = defineFlow<Event>({
 			await addFilter(scene, "North");
 			await addFilter(scene, "South");
 			await expect(dialog(scene).locator("[data-slot=condition-error]")).toContainText("has two filters");
+			await expect(dialog(scene).getByRole("button", { name: "Done" })).toBeDisabled();
 		},
 	},
 });

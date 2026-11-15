@@ -1,209 +1,279 @@
 {
- "design-saved": [
-  {
-   "title": "Loading and failed are two loose refs",
-   "detail": "DoctypeEditor.vue chooses between loading, failed and the editor from `state` (line 154) and `pageState` (line 160). Loading is `state == null` with no `pageState`; failed is `pageState` set. `reset()` (line ~314) clears both in separate steps, so the page can briefly be in neither.",
-   "fix": "One `load: idle | loading | failed | ready` value that holds the error."
-  },
-  {
-   "title": "403 reason is dropped",
-   "detail": "`failedState` (frontend/src/shell/pageState.ts:34) maps every 403 to `{ name: \"noPermission\" }` with no message, so the server's reason (design mode on a standard DocType needs developer mode) never reaches the page.",
-   "fix": "Carry the server message into the page state and show it under the title."
-  }
- ],
- "design-invoice": [
-  {
-   "title": "Child columns hide their own loading and failure",
-   "detail": "childFields.ts reads `saved.meta.value?.fields ?? null` and ignores the loading and error state of `useDoctypeMeta`, so a pending or failed child meta shows the same 'No columns to display' as an empty child (itemsColumnsPending and itemsColumnsFailed look identical).",
-   "fix": "Read `loading` and `error` from the meta and show a skeleton and a retry."
-  }
- ],
- "customize": [
-  {
-   "title": "Customize refusal loses the reason",
-   "detail": "Customize on a core DocType is refused by the server, but `failedState` (shell/pageState.ts:34) shows only 'No permission'. The reason ('core DocType and cannot be customized') is dropped.",
-   "fix": "Pass the server message to the page state."
-  },
-  {
-   "title": "Screen decided by tab, shown, openChild and state.pending",
-   "detail": "DoctypeEditor.vue:~45-72 draws Editor, Settings, child preview, Preview or 'Save the DocType first' from four values with nested v-else-if.",
-   "fix": "One `view` state derived once, with the others as its data."
-  }
- ],
- "selection": [
-  {
-   "title": "Selection outlives the thing it points at",
-   "detail": "`selection` (designCanvas.ts:71) is cleared only by explicit acts (designCanvas.ts:145, `select()` at :167). Undo of an added field or section leaves it set: the canvas shows no ring and the panel falls back to the type list, but the selection is still held and Alt+Arrow shortcuts stay enabled. Redo brings the field back already selected.",
-   "fix": "Reconcile `selection` with the layout after every edit, undo and redo; clear it when its target is gone."
-  },
-  {
-   "title": "Right panel is a v-if chain",
-   "detail": "EditorPanel.vue:8-30 chooses FieldPanel, ContainerPanel or the Add field tray from `selectedField`, `container` and `takesOff`. There is no state for 'selection names something that is gone', so ContainerPanel keeps its header and trash button over an empty panel (staleSection).",
-   "fix": "A `panel: field | container | tray` state computed from a validated selection."
-  },
-  {
-   "title": "Open tab and selection are two values",
-   "detail": "`openTabName` (designCanvas.ts:73) and `selection` are kept in step by `select()` and `tabOf()`; clicking a tab both opens and selects it, so a field on another tab can be selected only after its tab.",
-   "fix": "Model the selection as a path (tab, section, column, field)."
-  },
-  {
-   "title": "Hover and tab rename are local refs",
-   "detail": "CanvasColumn.vue:99 keeps `hovered` per column and combines it with `canvas.editable`, selection and drag state; CanvasTabs.vue:96 keeps `renaming` outside the canvas, apart from the selected tab.",
-   "fix": "Lift hover and rename into the canvas state."
-  }
- ],
- "add-field": [
-  {
-   "title": "Panel branch hides the search",
-   "detail": "The Add a field list is the last v-else of the panel chain (EditorPanel.vue); its search query is local to NewFieldTypes.vue, so it resets whenever the panel switches to a field or container and back.",
-   "fix": "Keep the query in the canvas state, or keep the tray mounted."
-  }
- ],
- "drag-bin": [
-  {
-   "title": "Drag state is written from three places",
-   "detail": "`canvas.drag = { active, overBin, fieldname }` is set by Sortable events (canvasDrops.ts), a window pointermove listener (FieldBin.vue:65) and read as a guard by `dropField` and `dropOffLayout`; the bin's phrase (remove, take off, hide) is computed in FieldBin.vue separately from what the drop does in canvasDrops.ts. A hidden field dragged over the bin says 'Release to hide' and the drop does nothing.",
-   "fix": "One drag state machine: idle, dragging(source), overBin(action)."
-  },
-  {
-   "title": "Tabs cannot be dragged",
-   "detail": "CanvasTabs.vue:13 binds `dropTab`, but DRAG_OPTIONS.filter is 'button, input' (canvasDrops.ts:74) and each tab is a button, so a press never starts a drag. Tabs move only through the panel's Move buttons (ContainerPanel.vue:251).",
-   "fix": "Give tabs a drag handle, or remove the dead `dropTab` binding."
-  }
- ],
- "finder": [
-  {
-   "title": "Finder state is split across two components",
-   "detail": "DoctypeEditor.vue holds `finderOpen`; EditorFinder.vue holds `query` and `active` and clears them in a watch on `open` (113-119). Empty, results and no results are derived from `items.length`, not named. editorFinder.ts caps each group at 6 with no 'more' hint.",
-   "fix": "Name the three result states; show a hint when a group is capped."
-  }
- ],
- "menus": [
-  {
-   "title": "Header menu is built from separate checks",
-   "detail": "EditorHeader.vue:137-175 builds the menu rows from `props.mode`, `acts.find(...)` and `props.developerMode` (:118); in a child editor `dangerScope` is null (DoctypeEditor.vue:239) and the menu button disappears.",
-   "fix": "One list of menu rows per mode, built in one place."
-  },
-  {
-   "title": "Remove section has no confirmation",
-   "detail": "ContainerPanel.vue:277 runs `canvas.remove_section` straight away: the section is removed with no confirmation, while removing a field asks.",
-   "fix": "Confirm, or rely on undo and say so in a toast."
-  }
- ],
- "layouts": [
-  {
-   "title": "Open layout comes from a ref plus a fallback",
-   "detail": "The layout the canvas draws comes from `wanted` (designCanvas.ts:105, resolved by `existing()`) plus `forNewRecord` (:107). A deleted or conditionless layout falls back silently to the type's default, so deleted and conditionCleared both land on 'Details' with no notice.",
-   "fix": "Tell the user which layout opened and why."
-  },
-  {
-   "title": "A refused layout act has no state",
-   "detail": "`runOpenLayoutAct` (layoutDialogs.ts) calls `acts.perform`; an `EditRefused` thrown inside reaches the user only as an error toast through `scope.failed`. AddLayoutDialog.vue:30 `shownRefusal` is unreachable: Create is disabled until both fields are filled, and then `addLayoutRefusal` (layoutMenu.ts:87) cannot return a message.",
-   "fix": "Show the refusal in the dialog; delete the unreachable branch."
-  }
- ],
- "settings": [
-  {
-   "title": "Danger act progress is a promise plus a flag",
-   "detail": "dangerActs.ts:118-125 sets `edits.locked` only after the dialog closes; between open and confirm a Save can still run, guarded by an error toast (line 120). Each dialog closes before the server call (line 86), so a failed rename or delete shows only a toast and the typed name is lost (renameTaken).",
-   "fix": "Keep the dialog open in a `working` and `failed` state."
-  },
-  {
-   "title": "Roles load has no loading or failed state",
-   "detail": "SettingsPermissions.vue:159 loads roles in onMounted with no catch; a failure leaves an empty list and the picker says 'No results'.",
-   "fix": "Show loading and a retry."
-  },
-  {
-   "title": "Tab and place are separate refs",
-   "detail": "DoctypeEditor.vue:161-162: `tab` and `settingsPlace` are separate refs, written together by `findSetting`; SettingsTab.vue:71-72 treats an empty or unknown section as the first, so 'none chosen' and 'first' are one state.",
-   "fix": "One `place` value."
-  }
- ],
- "preview": [
-  {
-   "title": "Preview ignores layout loading and failure",
-   "detail": "PreviewTab.vue:39 and :74 read only `details.layout.value`; `details.loading` and `details.error` are never read. A slow or failed layout shows a blank pane under the picker (layoutLoading and layoutFailed screenshots are identical).",
-   "fix": "Show a skeleton, an error and a retry."
-  },
-  {
-   "title": "A failed record read looks like an empty form",
-   "detail": "PreviewTab.vue:100-101 catches the error and emits `pick(null)`, so the user sees 'Previewing an empty form' with no message.",
-   "fix": "Show the error and keep the picked record."
-  }
- ],
- "child": [
-  {
-   "title": "No loading state for the child editor",
-   "detail": "useChildTables.ts:30-34 pushes `table=` to the address before the load returns, and `shown` falls back to the parent until then, so childLoading looks like parentTable.",
-   "fix": "A `loading` state with the child's name."
-  },
-  {
-   "title": "A failed child load leaves the page stuck",
-   "detail": "The only handling is a toast (useChildTables.ts:24). The address keeps `table=items` while the parent shows, and clicking 'Edit …' again does nothing because `open()` returns early when the address already matches (line 31).",
-   "fix": "Reset the address on failure or retry from the same click."
-  }
- ],
- "condition": [
-  {
-   "title": "The rule dialog has no cancel",
-   "detail": "RuleRow.vue `close()` stages the draft on every close, whether by Done, the X or Escape, when `draft.changed()`. State is spread over `open`, `draft` and the module-level `lastOpened` (line 57), plus ruleDraft.ts `mode`, `value`, `tree`, `code`.",
-   "fix": "Add a real cancel, or name the dialog's states."
-  },
-  {
-   "title": "Mode and validity are separate flags",
-   "detail": "ruleDraft.ts: `problem` is computed from `tree` and blocks staging only in `setTree`, not in `setCode` or `switchTo`; `readable` is computed from `value` while `mode` is a separate ref.",
-   "fix": "One draft state: rules(valid|invalid) or code(readable|not)."
-  }
- ],
- "save": [
-  {
-   "title": "Save status is spread over six flags",
-   "detail": "editorSave.ts keeps `saving` (:68), `banner` (:69, with `failed` and `offers` inside), `lateExports` (:71), `writtenChildren` (:73), `edits.locked` and `edits.dirty`; `canSave` (editorActs.ts) and the Not saved badge (EditorHeader.vue) each read a different subset.",
-   "fix": "One save state: clean, dirty, saving, refused, stale, failed."
-  },
-  {
-   "title": "Save errors outlive their edit",
-   "detail": "The banner and `canvas.errors` clear only at save start (editorSave.ts:84-85), on dismiss and after re-apply (:145). After Undo the banner stays and the error shows under a field with nothing staged.",
-   "fix": "Clear an error when its edit is undone."
-  },
-  {
-   "title": "A refused rename marks no field",
-   "detail": "The server keys the error to the old name (design_state.py rename_field); the canvas already holds the new name, so `errorsAt` (designCanvas.ts) finds no field and only the banner shows.",
-   "fix": "Key errors by field id, not name."
-  }
- ],
- "carried": [
-  {
-   "title": "frappe-ui tokens",
-   "detail": "Focus ring in dark is 1.54:1; the inactive Code label is too faint; the Dialog top padding is 20px; the Rules|Code track tone; the placeholder gray in both themes."
-  },
-  {
-   "title": "Greptile P2s on #47465",
-   "detail": "FieldMarks tooltips sit inside inert wrappers; `!important` in the EditorCanvas drag styles."
-  },
-  {
-   "title": "Greptile P2s on #47476",
-   "detail": "The MOVES label is not translated; a 4-line comment; `!important` classes."
-  },
-  {
-   "title": "#47478 differences from the prototype",
-   "detail": "No per-section collapse chevron; the prototype's data is faked."
-  },
-  {
-   "title": "Module list 500 toast",
-   "detail": "A failed request shows the raw line 'GET /document/Module%20Def failed with status 500'. The text comes from ui/src/api/envelope.ts:94 (`${where} failed with status ${status}`) when the server sends no message; seen in the New DocType, save, settings and child flows. Candidate fix: a human message per request kind."
-  },
-  {
-   "title": "Toast text is monospace",
-   "detail": "Success and error toasts look monospace in the save, layouts and settings screenshots, both themes (seen in screenshots; cause not traced in code)."
-  },
-  {
-   "title": "Duplicate kind label",
-   "detail": "The meta line under the title reads 'Custom · Custom · N records' when the module is Custom."
-  },
-  {
-   "title": "Stale banner timestamp",
-   "detail": "The stale-save banner prints a raw timestamp ('Changed by Administrator at 2026-11-14 11:51:23.170818')."
-  }
- ]
+	"design-saved": [
+		{
+			"title": "Loading and failed are two loose refs",
+			"detail": "DoctypeEditor.vue chooses between loading, failed and the editor from `state` (line 154) and `pageState` (line 160). Loading is `state == null` with no `pageState`; failed is `pageState` set. `reset()` (line ~314) clears both in separate steps, so the page can briefly be in neither.",
+			"fix": "One `load: idle | loading | failed | ready` value that holds the error."
+		},
+		{
+			"title": "403 reason is dropped",
+			"detail": "`failedState` (frontend/src/shell/pageState.ts:34) maps every 403 to `{ name: \"noPermission\" }` with no message, so the server's reason (design mode on a standard DocType needs developer mode) never reaches the page.",
+			"fix": "Carry the server message into the page state and show it under the title.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "\"Loading X…\" line is low contrast",
+			"detail": "The shell's \"Loading X…\" line is `text-ink-gray-5`, about 4.2:1. An existing shell style that #47504 does not restyle (low). https://github.com/frappe/frappe/pull/47504",
+			"leftover": "47504"
+		}
+	],
+	"design-invoice": [
+		{
+			"title": "Child columns hide their own loading and failure",
+			"detail": "childFields.ts reads `saved.meta.value?.fields ?? null` and ignores the loading and error state of `useDoctypeMeta`, so a pending or failed child meta shows the same 'No columns to display' as an empty child (itemsColumnsPending and itemsColumnsFailed look identical).",
+			"fix": "Read `loading` and `error` from the meta and show a skeleton and a retry.",
+			"status": "fixed",
+			"pr": "47504"
+		}
+	],
+	"customize": [
+		{
+			"title": "Customize refusal loses the reason",
+			"detail": "Customize on a core DocType is refused by the server, but `failedState` (shell/pageState.ts:34) shows only 'No permission'. The reason ('core DocType and cannot be customized') is dropped.",
+			"fix": "Pass the server message to the page state.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "Screen decided by tab, shown, openChild and state.pending",
+			"detail": "DoctypeEditor.vue:~45-72 draws Editor, Settings, child preview, Preview or 'Save the DocType first' from four values with nested v-else-if.",
+			"fix": "One `view` state derived once, with the others as its data."
+		}
+	],
+	"selection": [
+		{
+			"title": "Selection outlives the thing it points at",
+			"detail": "`selection` (designCanvas.ts:71) is cleared only by explicit acts (designCanvas.ts:145, `select()` at :167). Undo of an added field or section leaves it set: the canvas shows no ring and the panel falls back to the type list, but the selection is still held and Alt+Arrow shortcuts stay enabled. Redo brings the field back already selected.",
+			"fix": "Reconcile `selection` with the layout after every edit, undo and redo; clear it when its target is gone.",
+			"status": "fixed",
+			"pr": "47503"
+		},
+		{
+			"title": "Right panel is a v-if chain",
+			"detail": "EditorPanel.vue:8-30 chooses FieldPanel, ContainerPanel or the Add field tray from `selectedField`, `container` and `takesOff`. There is no state for 'selection names something that is gone', so ContainerPanel keeps its header and trash button over an empty panel (staleSection).",
+			"fix": "A `panel: field | container | tray` state computed from a validated selection."
+		},
+		{
+			"title": "Open tab and selection are two values",
+			"detail": "`openTabName` (designCanvas.ts:73) and `selection` are kept in step by `select()` and `tabOf()`; clicking a tab both opens and selects it, so a field on another tab can be selected only after its tab.",
+			"fix": "Model the selection as a path (tab, section, column, field)."
+		},
+		{
+			"title": "Hover and tab rename are local refs",
+			"detail": "CanvasColumn.vue:99 keeps `hovered` per column and combines it with `canvas.editable`, selection and drag state; CanvasTabs.vue:96 keeps `renaming` outside the canvas, apart from the selected tab.",
+			"fix": "Lift hover and rename into the canvas state."
+		},
+		{
+			"title": "Undo of a rename drops the selection",
+			"detail": "Undo of a rename leaves the selection on the dead new name, so the selection drops and the user is not put back on the old field. Left open by #47503 (b). https://github.com/frappe/frappe/pull/47503",
+			"leftover": "47503"
+		}
+	],
+	"add-field": [
+		{
+			"title": "Panel branch hides the search",
+			"detail": "The Add a field list is the last v-else of the panel chain (EditorPanel.vue); its search query is local to NewFieldTypes.vue, so it resets whenever the panel switches to a field or container and back.",
+			"fix": "Keep the query in the canvas state, or keep the tray mounted.",
+			"status": "fixed",
+			"pr": "47503"
+		}
+	],
+	"drag-bin": [
+		{
+			"title": "Drag state is written from three places",
+			"detail": "`canvas.drag = { active, overBin, fieldname }` is set by Sortable events (canvasDrops.ts), a window pointermove listener (FieldBin.vue:65) and read as a guard by `dropField` and `dropOffLayout`; the bin's phrase (remove, take off, hide) is computed in FieldBin.vue separately from what the drop does in canvasDrops.ts. A hidden field dragged over the bin says 'Release to hide' and the drop does nothing.",
+			"fix": "One drag state machine: idle, dragging(source), overBin(action)."
+		},
+		{
+			"title": "Tabs cannot be dragged",
+			"detail": "CanvasTabs.vue:13 binds `dropTab`, but DRAG_OPTIONS.filter is 'button, input' (canvasDrops.ts:74) and each tab is a button, so a press never starts a drag. Tabs move only through the panel's Move buttons (ContainerPanel.vue:251).",
+			"fix": "Give tabs a drag handle, or remove the dead `dropTab` binding.",
+			"status": "fixed",
+			"pr": "47503"
+		}
+	],
+	"finder": [
+		{
+			"title": "Finder state is split across two components",
+			"detail": "DoctypeEditor.vue holds `finderOpen`; EditorFinder.vue holds `query` and `active` and clears them in a watch on `open` (113-119). Empty, results and no results are derived from `items.length`, not named. editorFinder.ts caps each group at 6 with no 'more' hint.",
+			"fix": "Name the three result states; show a hint when a group is capped."
+		}
+	],
+	"menus": [
+		{
+			"title": "Header menu is built from separate checks",
+			"detail": "EditorHeader.vue:137-175 builds the menu rows from `props.mode`, `acts.find(...)` and `props.developerMode` (:118); in a child editor `dangerScope` is null (DoctypeEditor.vue:239) and the menu button disappears.",
+			"fix": "One list of menu rows per mode, built in one place."
+		},
+		{
+			"title": "Remove section has no confirmation",
+			"detail": "ContainerPanel.vue:277 runs `canvas.remove_section` straight away: the section is removed with no confirmation, while removing a field asks.",
+			"fix": "Confirm, or rely on undo and say so in a toast."
+		}
+	],
+	"layouts": [
+		{
+			"title": "Open layout comes from a ref plus a fallback",
+			"detail": "The layout the canvas draws comes from `wanted` (designCanvas.ts:105, resolved by `existing()`) plus `forNewRecord` (:107). A deleted or conditionless layout falls back silently to the type's default, so deleted and conditionCleared both land on 'Details' with no notice.",
+			"fix": "Tell the user which layout opened and why."
+		},
+		{
+			"title": "A refused layout act has no state",
+			"detail": "`runOpenLayoutAct` (layoutDialogs.ts) calls `acts.perform`; an `EditRefused` thrown inside reaches the user only as an error toast through `scope.failed`. AddLayoutDialog.vue:30 `shownRefusal` is unreachable: Create is disabled until both fields are filled, and then `addLayoutRefusal` (layoutMenu.ts:87) cannot return a message.",
+			"fix": "Show the refusal in the dialog; delete the unreachable branch."
+		}
+	],
+	"settings": [
+		{
+			"title": "Danger act progress is a promise plus a flag",
+			"detail": "dangerActs.ts:118-125 sets `edits.locked` only after the dialog closes; between open and confirm a Save can still run, guarded by an error toast (line 120). Each dialog closes before the server call (line 86), so a failed rename or delete shows only a toast and the typed name is lost (renameTaken).",
+			"fix": "Keep the dialog open in a `working` and `failed` state.",
+			"status": "fixed",
+			"pr": "47505"
+		},
+		{
+			"title": "Roles load has no loading or failed state",
+			"detail": "SettingsPermissions.vue:159 loads roles in onMounted with no catch; a failure leaves an empty list and the picker says 'No results'.",
+			"fix": "Show loading and a retry.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "Tab and place are separate refs",
+			"detail": "DoctypeEditor.vue:161-162: `tab` and `settingsPlace` are separate refs, written together by `findSetting`; SettingsTab.vue:71-72 treats an empty or unknown section as the first, so 'none chosen' and 'first' are one state.",
+			"fix": "One `place` value."
+		},
+		{
+			"title": "Danger failure text says \"Try again.\" for every status",
+			"detail": "`httpFailure()` words every failed load as \"Could not load X. Try again.\", whatever the status. Kept by #47505 as the ticket worded it. https://github.com/frappe/frappe/pull/47505",
+			"leftover": "47505"
+		}
+	],
+	"preview": [
+		{
+			"title": "Preview ignores layout loading and failure",
+			"detail": "PreviewTab.vue:39 and :74 read only `details.layout.value`; `details.loading` and `details.error` are never read. A slow or failed layout shows a blank pane under the picker (layoutLoading and layoutFailed screenshots are identical).",
+			"fix": "Show a skeleton, an error and a retry.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "A failed record read looks like an empty form",
+			"detail": "PreviewTab.vue:100-101 catches the error and emits `pick(null)`, so the user sees 'Previewing an empty form' with no message.",
+			"fix": "Show the error and keep the picked record.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "Preview error can show the transport text",
+			"detail": "When the server gives no reason the failure block can read \"GET /path failed with status 403\", as the record page does through `errorMessage`. Left open by #47504 (low). https://github.com/frappe/frappe/pull/47504",
+			"leftover": "47504"
+		},
+		{
+			"title": "Preview failure text says \"Could not load\" twice",
+			"detail": "The failure block reads \"Could not load SINV-…. Could not load UI Sales Invoice. Try again.\" and \"Could not load the layout. Could not load the data. Try again.\": the block's own lead-in is followed by the transport message, which already says the same. New after #47504 (low).",
+			"fix": "Show the lead-in or the reason, not both."
+		}
+	],
+	"child": [
+		{
+			"title": "No loading state for the child editor",
+			"detail": "useChildTables.ts:30-34 pushes `table=` to the address before the load returns, and `shown` falls back to the parent until then, so childLoading looks like parentTable.",
+			"fix": "A `loading` state with the child's name.",
+			"status": "fixed",
+			"pr": "47504"
+		},
+		{
+			"title": "A failed child load leaves the page stuck",
+			"detail": "The only handling is a toast (useChildTables.ts:24). The address keeps `table=items` while the parent shows, and clicking 'Edit …' again does nothing because `open()` returns early when the address already matches (line 31).",
+			"fix": "Reset the address on failure or retry from the same click.",
+			"status": "fixed",
+			"pr": "47504"
+		}
+	],
+	"condition": [
+		{
+			"title": "The rule dialog has no cancel",
+			"detail": "RuleRow.vue `close()` stages the draft on every close, whether by Done, the X or Escape, when `draft.changed()`. State is spread over `open`, `draft` and the module-level `lastOpened` (line 57), plus ruleDraft.ts `mode`, `value`, `tree`, `code`.",
+			"fix": "Add a real cancel, or name the dialog's states.",
+			"status": "fixed",
+			"pr": "47505"
+		},
+		{
+			"title": "Mode and validity are separate flags",
+			"detail": "ruleDraft.ts: `problem` is computed from `tree` and blocks staging only in `setTree`, not in `setCode` or `switchTo`; `readable` is computed from `value` while `mode` is a separate ref.",
+			"fix": "One draft state: rules(valid|invalid) or code(readable|not).",
+			"status": "fixed",
+			"pr": "47505"
+		}
+	],
+	"save": [
+		{
+			"title": "Save status is spread over six flags",
+			"detail": "editorSave.ts keeps `saving` (:68), `banner` (:69, with `failed` and `offers` inside), `lateExports` (:71), `writtenChildren` (:73), `edits.locked` and `edits.dirty`; `canSave` (editorActs.ts) and the Not saved badge (EditorHeader.vue) each read a different subset.",
+			"fix": "One save state: clean, dirty, saving, refused, stale, failed."
+		},
+		{
+			"title": "Save errors outlive their edit",
+			"detail": "The banner and `canvas.errors` clear only at save start (editorSave.ts:84-85), on dismiss and after re-apply (:145). After Undo the banner stays and the error shows under a field with nothing staged.",
+			"fix": "Clear an error when its edit is undone.",
+			"status": "fixed",
+			"pr": "47503"
+		},
+		{
+			"title": "A refused rename marks no field",
+			"detail": "The server keys the error to the old name (design_state.py rename_field); the canvas already holds the new name, so `errorsAt` (designCanvas.ts) finds no field and only the banner shows.",
+			"fix": "Key errors by field id, not name.",
+			"status": "fixed",
+			"pr": "47503"
+		},
+		{
+			"title": "Partial Undo does not rebuild the banner",
+			"detail": "After a partial Undo the banner messages are not rebuilt; only the case where no error is left clears the banner. Left open by #47503 (a). https://github.com/frappe/frappe/pull/47503",
+			"leftover": "47503"
+		}
+	],
+	"carried": [
+		{
+			"title": "frappe-ui tokens",
+			"detail": "Focus ring in dark is 1.54:1; the inactive Code label is too faint; the Dialog top padding is 20px; the Rules|Code track tone; the placeholder gray in both themes."
+		},
+		{
+			"title": "Greptile P2s on #47465",
+			"detail": "FieldMarks tooltips sit inside inert wrappers; `!important` in the EditorCanvas drag styles."
+		},
+		{
+			"title": "Greptile P2s on #47476",
+			"detail": "The MOVES label is not translated (fixed in #47503: lazy labels); a 4-line comment; `!important` classes."
+		},
+		{
+			"title": "#47478 differences from the prototype",
+			"detail": "No per-section collapse chevron; the prototype's data is faked."
+		},
+		{
+			"title": "Module list 500 toast",
+			"detail": "A failed request shows the raw line 'GET /document/Module%20Def failed with status 500'. The text comes from ui/src/api/envelope.ts:94 (`${where} failed with status ${status}`) when the server sends no message; seen in the New DocType, save, settings and child flows. Candidate fix: a human message per request kind.",
+			"status": "fixed",
+			"pr": "47505"
+		},
+		{
+			"title": "Toast text is monospace",
+			"detail": "Success and error toasts look monospace in the save, layouts and settings screenshots, both themes (seen in screenshots; cause not traced in code).",
+			"status": "fixed",
+			"pr": "47505"
+		},
+		{
+			"title": "Duplicate kind label",
+			"detail": "The meta line under the title reads 'Custom · Custom · N records' when the module is Custom.",
+			"status": "fixed",
+			"pr": "47505"
+		},
+		{
+			"title": "Stale banner timestamp",
+			"detail": "The stale-save banner prints a raw timestamp ('Changed by Administrator at 2026-11-14 11:51:23.170818').",
+			"status": "fixed",
+			"pr": "47505"
+		}
+	]
 }

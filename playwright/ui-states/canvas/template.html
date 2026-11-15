@@ -139,6 +139,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .findings li { margin: 0 0 8px; max-width: 62ch; }
 .findings li:last-child { margin-bottom: 0; }
 .findings li b { font-weight: 600; }
+.badge-fixed { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; color: var(--fg-2); background: var(--line); }
+.findings li.is-fixed, .carried-list li.is-fixed { opacity: .75; }
 .findings li .fix { display: block; color: var(--fg-2); margin-top: 2px; }
 
 .edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
@@ -372,8 +374,10 @@ function renderWorld() {
       <span class="stat">${flow.states.length} states · ${captured} captured${missing ? ` · <span class="miss">${missing} not captured</span>` : ""} · ${flow.edges.length} transitions</span></header>`;
     if (flow.findings.length) {
       const d = document.createElement("details"); d.className = "findings"; d.style.top = "44px";
-      d.innerHTML = `<summary>${flow.findings.length} state-machine finding${flow.findings.length > 1 ? "s" : ""}</summary><ul>` +
-        flow.findings.map((f) => `<li><b>${esc(f.title)}</b> ${esc(f.detail)}${f.fix ? `<span class="fix">→ ${esc(f.fix)}</span>` : ""}</li>`).join("") + "</ul>";
+      const list = [...flow.findings].sort((a, b) => (a.status === "fixed") - (b.status === "fixed"));
+      const nFixed = list.filter((f) => f.status === "fixed").length;
+      d.innerHTML = `<summary>${list.length} state-machine finding${list.length > 1 ? "s" : ""}${nFixed ? ` · ${nFixed} fixed` : ""}</summary><ul>` +
+        list.map((f) => `<li${f.status === "fixed" ? ' class="is-fixed"' : ""}>${f.status === "fixed" ? `<span class="badge-fixed">Fixed${f.pr ? ` in #${esc(f.pr)}` : ""}</span>` : ""}<b>${esc(f.title)}</b> ${esc(f.detail)}${f.fix && f.status !== "fixed" ? `<span class="fix">→ ${esc(f.fix)}</span>` : ""}</li>`).join("") + "</ul>";
       el.appendChild(d);
     }
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -503,7 +507,7 @@ const CARRIED = DATA.carried ?? [];
 if (CARRIED.length) {
   $("tab-carried").hidden = false;
   $("carried-count").textContent = CARRIED.length;
-  $("carried-list").innerHTML = CARRIED.map((f) => `<li><b>${esc(f.title)}</b>${esc(f.detail)}${f.fix ? `<span class="fix">→ ${esc(f.fix)}</span>` : ""}</li>`).join("");
+  $("carried-list").innerHTML = CARRIED.map((f) => `<li${f.status === "fixed" ? ' class="is-fixed"' : ""}>${f.status === "fixed" ? `<span class="badge-fixed">Fixed${f.pr ? ` in #${esc(f.pr)}` : ""}</span>` : ""}<b>${esc(f.title)}</b>${esc(f.detail)}${f.fix ? `<span class="fix">→ ${esc(f.fix)}</span>` : ""}</li>`).join("");
 }
 const TABS = ["flows", "comments", "carried"];
 for (const name of TABS) {
