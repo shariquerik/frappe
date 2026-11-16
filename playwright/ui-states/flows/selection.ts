@@ -89,7 +89,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { UNDO: "staleSection" },
 		},
 		staleSection: {
-			meta: { description: "The new section was undone while selected: the section is gone, yet the panel still shows a section header with no rows, because the selection names a section that no longer exists." },
+			meta: { description: "The new section was undone while selected: the section is gone and the panel falls back to the 'Add a field' list, with no ring on the canvas." },
 		},
 	},
 });

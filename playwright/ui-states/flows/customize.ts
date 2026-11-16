@@ -39,7 +39,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			},
 		},
 		coreRefused: {
-			meta: { description: "Customize was asked for a core DocType (User): the server refuses with a permission error, so the page shows the generic No permission state and not the server's reason." },
+			meta: { description: "Customize was asked for a core DocType (User): the server refuses with a permission error, so the page shows the No permission state with the server's reason ('User is a core DocType and cannot be customized') under it." },
 		},
 		standardFieldSelected: {
 			meta: { description: "A standard field the app makes mandatory (Subject) is selected: its panel shows the Fieldname and the Required row locked, with the reason in the lock's tooltip." },

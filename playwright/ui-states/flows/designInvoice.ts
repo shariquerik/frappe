@@ -51,10 +51,10 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			meta: { description: "The Items tab, selected (the right panel shows the tab's label, order and Visible if): the child Table field drawn as a grid with the child DocType's four columns (Item, Quantity, Rate, Amount), then the Totals section with a rule mark on 'Discount amount'." },
 		},
 		itemsColumnsPending: {
-			meta: { description: "The Items tab while the child DocType's meta has not arrived: the Table field shows the muted line 'No columns to display' in place of its grid, with no loading mark." },
+			meta: { description: "The Items tab while the child DocType's meta has not arrived: the Table field shows a grey loading bar in place of its grid." },
 		},
 		itemsColumnsFailed: {
-			meta: { description: "The Items tab after the child DocType's meta request failed: the same 'No columns to display' line as while it loads, so nothing on the page says the read failed." },
+			meta: { description: "The Items tab after the child DocType's meta request failed: the Table field shows the red line 'Could not load the columns of UI Sales Invoice Item.' with a Try again button." },
 		},
 		payments: {
 			meta: { description: "The Payments tab, selected (tab settings in the right panel): an 'Include payment (POS)' check, then a Payment details section with a rule mark on its heading (it shows only when that check is on) and one on 'Paid amount' (required only then)." },

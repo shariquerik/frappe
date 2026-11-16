@@ -65,7 +65,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: { UNDOES_RENAME: "undone" },
 		},
 		undone: {
-			meta: { description: "Undo took the refused rename back: the Not saved badge is gone and Save is disabled, but the red banner stays, and the refusal now also shows in red under Payment due date, a field that has nothing staged." },
+			meta: { description: "Undo took the refused rename back: the Not saved badge is gone, Save is disabled and the red banner is gone with it; the editor looks as it did before the rename." },
 		},
 		customizeIdle: {
 			meta: { description: "Customize mode on a standard DocType with nothing changed: no Not saved badge and Save disabled." },
