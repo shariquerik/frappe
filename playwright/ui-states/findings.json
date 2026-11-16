@@ -16,6 +16,17 @@
 			"title": "\"Loading X…\" line is low contrast",
 			"detail": "The shell's \"Loading X…\" line is `text-ink-gray-5`, about 4.2:1. An existing shell style that #47504 does not restyle (low). https://github.com/frappe/frappe/pull/47504",
 			"leftover": "47504"
+		},
+		{
+			"title": "No line between the header and the tabs",
+			"detail": "Owner comment: the record page draws a border between header and tabs and the editor did not. EditorTabs.vue is now a record-style tab bar below the page header (all states show it).",
+			"status": "fixed",
+			"pr": "47644"
+		},
+		{
+			"title": "Tab bar is missing during Loading",
+			"detail": "Leftover of https://github.com/frappe/frappe/pull/47644: the tab strip is not shown in the short Loading state, because the tabs do nothing until the content loads (see the loading state).",
+			"pr": "47644"
 		}
 	],
 	"design-invoice": [
@@ -39,6 +50,17 @@
 			"title": "Screen decided by tab, shown, openChild and state.pending",
 			"detail": "DoctypeEditor.vue:~45-72 draws Editor, Settings, child preview, Preview or 'Save the DocType first' from four values with nested v-else-if.",
 			"fix": "One `view` state derived once, with the others as its data."
+		},
+		{
+			"title": "Switching Customize and Design reloads every time",
+			"detail": "Owner comment: no cache after the second switch. `ModeCache` keeps one load per mode for the open DocType; a save, act or export reload drops both.",
+			"status": "fixed",
+			"pr": "47670"
+		},
+		{
+			"title": "A cached mode can be stale",
+			"detail": "Leftover of https://github.com/frappe/frappe/pull/47670: a cached mode can differ from another user's change until the next save, whose version check offers 'reload and reapply'.",
+			"pr": "47670"
 		}
 	],
 	"selection": [
@@ -91,6 +113,29 @@
 			"fix": "Give tabs a drag handle, or remove the dead `dropTab` binding.",
 			"status": "fixed",
 			"pr": "47503"
+		},
+		{
+			"title": "Text selects while dragging",
+			"detail": "Owner comment on overBin: text was selected under a held field, section, column or tab. Now `body:has(.sortable-fallback, .canvas-drag-fallback)` is select-none.",
+			"status": "fixed",
+			"pr": "47601"
+		},
+		{
+			"title": "A field held on another tab's name does not open the tab",
+			"detail": "Owner comment on fieldOnOtherTab. `tabDwell.ts` opens the tab after 500 ms on its name and the drag goes on in its canvas (new state switchedTabWhileDragging).",
+			"status": "fixed",
+			"pr": "47601"
+		},
+		{
+			"title": "No cue while the tab dwell runs",
+			"detail": "Leftover of https://github.com/frappe/frappe/pull/47601: the tab strip shows nothing during the 500 ms before the tab opens, and on a short tab the bin sits lower than its content.",
+			"fix": "A hover ring on the tab during the dwell.",
+			"pr": "47601"
+		},
+		{
+			"title": "Escape does not cancel a drag",
+			"detail": "Leftover of https://github.com/frappe/frappe/pull/47601: Sortable 1.14 in fallback mode has no Escape cancel, so a drag ends only by a drop. Undo after a cross-tab drop restores the field but leaves the new tab open.",
+			"pr": "47601"
 		}
 	],
 	"finder": [
@@ -110,6 +155,23 @@
 			"title": "Remove section has no confirmation",
 			"detail": "ContainerPanel.vue:277 runs `canvas.remove_section` straight away: the section is removed with no confirmation, while removing a field asks.",
 			"fix": "Confirm, or rely on undo and say so in a toast."
+		},
+		{
+			"title": "Section ⋯ and drag handle vanish while the menu is open",
+			"detail": "Owner comment on sectionMenu: both controls now stay while the menu is open, also under a column's ring.",
+			"status": "fixed",
+			"pr": "47602"
+		},
+		{
+			"title": "No context menu on a section, column or field",
+			"detail": "Owner comment on sectionMenu: right-click opens the ⋯ menu at the pointer for a section, a column and a field (new states sectionContextMenu, columnContextMenu, fieldContextMenu).",
+			"status": "fixed",
+			"pr": "47602"
+		},
+		{
+			"title": "Context menu leftovers",
+			"detail": "Leftover of https://github.com/frappe/frappe/pull/47602: three problems in the shared frappe-ui ContextMenu are tracked in https://github.com/frappe/frappe-ui/issues/1359; the tab strip has no context menu; a read-only canvas shows the browser's own menu.",
+			"pr": "47602"
 		}
 	],
 	"layouts": [

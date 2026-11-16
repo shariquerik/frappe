@@ -12,6 +12,8 @@ type Event =
 	| { type: "CANCELS" }
 	| { type: "DROPS_IN_COLUMN" }
 	| { type: "DROPS_ON_TAB" }
+	| { type: "HOLDS_ON_TAB" }
+	| { type: "DROPS_IN_OPENED_TAB" }
 	| { type: "GRABS_SECTION" }
 	| { type: "DROPS_SECTION" }
 	| { type: "GRABS_COLUMN" }
@@ -47,7 +49,7 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 		},
 		draggingField: {
 			meta: { description: "A placed field is held and has moved: it follows the pointer, a drop line marks where it would land, and the bin shows at the canvas's bottom reading 'Drop here to remove'." },
-			on: { MOVES_TO_BIN: "overBin", DROPS_IN_COLUMN: "fieldMoved", DROPS_ON_TAB: "fieldOnOtherTab" },
+			on: { MOVES_TO_BIN: "overBin", DROPS_IN_COLUMN: "fieldMoved", DROPS_ON_TAB: "fieldOnOtherTab", HOLDS_ON_TAB: "switchedTabWhileDragging" },
 		},
 		overBin: {
 			meta: { description: "The held field is over the bin: the pill turns red and reads 'Release to remove'." },
@@ -65,6 +67,13 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 		},
 		fieldOnOtherTab: {
 			meta: { description: "The field was released on a tab's name: it left the open tab for the end of the Items tab's first section, so it is gone from this view and the header shows 'Not saved'." },
+		},
+		switchedTabWhileDragging: {
+			meta: { description: "The held field rested on the Items tab's name for half a second: the tab opened under the ghost, so the field can be dropped where it should go." },
+			on: { DROPS_IN_OPENED_TAB: "fieldDroppedInOpenedTab" },
+		},
+		fieldDroppedInOpenedTab: {
+			meta: { description: "The field was released on the canvas after the tab opened: it sits in the tab the pointer was over (Payments here, crossed on the way down), the header shows 'Not saved' and Undo is enabled." },
 		},
 		draggingSection: {
 			meta: { description: "A section is held by its grip: the section follows the pointer and a faded copy marks its place. No bin shows, because a section cannot be dropped on it." },
@@ -168,6 +177,17 @@ export const dragBin = defineFlow<Event>({
 			await scene.page.mouse.up();
 			await expect(scene.page.getByText("Not saved")).toBeVisible();
 			await expect(field(scene, "posting_date")).toHaveCount(0);
+		},
+		async HOLDS_ON_TAB(scene) {
+			await moveTo(scene, scene.page.getByRole("tab", { name: "Items" }));
+			await expect(scene.page.getByRole("tab", { name: "Items" })).toHaveAttribute("aria-selected", "true", { timeout: 3000 });
+			await expect(scene.page.locator(".sortable-fallback, .canvas-drag-fallback").first()).toBeVisible();
+		},
+		async DROPS_IN_OPENED_TAB(scene) {
+			await moveTo(scene, scene.page.locator("[data-canvas-field]:visible").first());
+			await scene.page.mouse.up();
+			await expect(scene.page.getByText("Not saved")).toBeVisible();
+			await expect(field(scene, "posting_date")).toBeVisible();
 		},
 		async GRABS_SECTION(scene) {
 			await scene.page.getByRole("tab", { name: "Items" }).click();

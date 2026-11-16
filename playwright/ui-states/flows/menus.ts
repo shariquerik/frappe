@@ -16,6 +16,9 @@ type Event =
 	| { type: "CANCELS" }
 	| { type: "DISCARDS" }
 	| { type: "OPEN_SECTION_MENU" }
+	| { type: "RIGHT_CLICK_SECTION" }
+	| { type: "RIGHT_CLICK_COLUMN" }
+	| { type: "RIGHT_CLICK_FIELD" }
 	| { type: "ADD_COLUMN" }
 	| { type: "MOVE_UP" }
 	| { type: "REMOVE_SECTION" }
@@ -48,6 +51,9 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 			on: {
 				OPEN_MORE: "headerMenu",
 				OPEN_SECTION_MENU: "sectionMenu",
+				RIGHT_CLICK_SECTION: "sectionContextMenu",
+				RIGHT_CLICK_COLUMN: "columnContextMenu",
+				RIGHT_CLICK_FIELD: "fieldContextMenu",
 				OPEN_TYPE_MENU: "typeMenu",
 				OPEN_TAB_MENU: "tabMenu",
 				OPENS_CUSTOMIZE: "customizeEditor",
@@ -85,6 +91,15 @@ const machine = setup({ types: { events: {} as Event } }).createMachine({
 		sectionMenu: {
 			meta: { description: "A section's ⋯ menu (the Totals section on the Items tab): Move up, Move down, Move to the tab before, Move to the tab after, Add column, Remove section; a move that has nowhere to go is disabled." },
 			on: { ADD_COLUMN: "columnAdded", MOVE_UP: "sectionMovedUp", REMOVE_SECTION: "sectionRemoved" },
+		},
+		sectionContextMenu: {
+			meta: { description: "A right-click on the Totals section opens its ⋯ menu where the pointer is, and selects the section: same items as the ⋯ button." },
+		},
+		columnContextMenu: {
+			meta: { description: "A right-click on a column of the Totals section: Move left, Move right and Remove column (the column panel's acts), and the column is selected." },
+		},
+		fieldContextMenu: {
+			meta: { description: "A right-click on a field: Move up, Move down, Move to the column before or after, Move to tab, then Remove (the field panel's acts), and the field is selected." },
 		},
 		columnAdded: {
 			meta: { description: "Add column: the Totals section has a third, empty column, the header says Not saved and Save is enabled." },
@@ -227,6 +242,26 @@ export const menus = defineFlow<Event>({
 		async OPEN_SECTION_MENU(scene) {
 			await sectionOfItemsTab(scene);
 			await expect(menuItem(scene, "Remove section")).toBeVisible();
+		},
+		async RIGHT_CLICK_SECTION(scene) {
+			await page(scene).getByRole("tab", { name: "Items" }).click();
+			const totals = sectionsOf(scene).last();
+			await totals.scrollIntoViewIfNeeded();
+			const box = (await totals.boundingBox())!;
+			await page(scene).mouse.click(box.x + box.width - 6, box.y + 10, { button: "right" });
+			await expect(menuItem(scene, "Remove section")).toBeVisible();
+		},
+		async RIGHT_CLICK_COLUMN(scene) {
+			await page(scene).getByRole("tab", { name: "Items" }).click();
+			const column = sectionsOf(scene).last().locator("[data-canvas-column]").nth(1);
+			await column.scrollIntoViewIfNeeded();
+			const box = (await column.boundingBox())!;
+			await page(scene).mouse.click(box.x + box.width / 2, box.y + box.height - 6, { button: "right" });
+			await expect(menuItem(scene, "Remove column")).toBeVisible();
+		},
+		async RIGHT_CLICK_FIELD(scene) {
+			await page(scene).locator("[data-canvas-field]").filter({ hasText: "Posting date" }).first().click({ button: "right" });
+			await expect(menuItem(scene, /Move to tab/)).toBeVisible();
 		},
 		async ADD_COLUMN(scene) {
 			await menuItem(scene, "Add column").click();
