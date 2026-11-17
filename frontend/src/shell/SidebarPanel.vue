@@ -67,7 +67,9 @@
 
 				<!-- `pt-0.5`: the first row's shadow is otherwise clipped on the viewport's top edge. -->
 				<ScrollArea ref="scroller" class="min-h-0 flex-1" viewportClass="px-2 pb-2 pt-0.5">
-					<nav class="flex flex-col gap-0.5" :aria-label="title">
+					<!-- PROTOTYPE #45851 variant K: the DocType sidebar type, its rows the DocType's views. -->
+					<SidebarViews v-if="views" flat />
+					<nav v-else class="flex flex-col gap-0.5" :aria-label="title">
 						<!-- Keyed per sidebar: a section reused across sidebars replays its open/close transition. -->
 						<SidebarRow
 							v-for="node in tree"
@@ -113,6 +115,7 @@ import { navSide } from "./navigationSide";
 import SidebarEdge from "./SidebarEdge.vue";
 import SidebarRow from "./SidebarRow.vue";
 import UserMenu from "./UserMenu.vue";
+import SidebarViews from "@/pages/list/viewSwitcherPrototype/SidebarViews.vue";
 
 // `address` is the scrubbed key, which is also what the arrangement endpoints take for a `Sidebar`.
 const props = defineProps<{
@@ -127,6 +130,8 @@ const props = defineProps<{
 	chrome?: boolean;
 	/** Drawn over the page from the seam, taking no width; a row tap or a click on the scrim emits `close`. */
 	overlay?: boolean;
+	/** PROTOTYPE #45851: list the open DocType's views instead of `items`. */
+	views?: boolean;
 }>();
 const emit = defineEmits<{ customize: []; close: [] }>();
 

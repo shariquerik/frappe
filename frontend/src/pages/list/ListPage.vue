@@ -31,10 +31,14 @@
 			<template #list>
 				<!-- The column's scroller is a block: this gives the rows area a height to fill. -->
 				<div class="flex h-full min-h-0 flex-col">
+					<!-- PROTOTYPE #45851 variant B: the view tabs. -->
+					<TabsStrip v-if="variant === 'B'" :gutter="pageGutter" />
 					<div
 						:class="[pageGutter, { invisible: !list.engine.ready.value }]"
 						class="flex shrink-0 items-start justify-between gap-2 pt-3.5"
 					>
+						<!-- PROTOTYPE #45851 variant D: the view as the row's first control. -->
+						<ControlsSwitcher v-if="variant === 'D'" />
 						<div class="flex min-w-0 flex-1 flex-col">
 							<QuickFilter
 								v-if="shown.has('quick_filter')"
@@ -45,6 +49,7 @@
 							/>
 						</div>
 						<div v-if="!customizing" class="flex shrink-0 items-center gap-2">
+							<ModifiedCluster v-if="variant === 'D'" />
 							<template v-for="item in rowControls" :key="item.name">
 								<Filter
 									v-if="item.name === 'filter'"
@@ -93,6 +98,13 @@
 							:view="view"
 							:host="host"
 						/>
+						<!-- PROTOTYPE #45851 variants E, F (floating) and G (footer). -->
+						<FloatingViews
+							v-if="variant === 'E' || variant === 'F'"
+							:mode="variant === 'E' ? 'all' : 'pill'"
+						/>
+						<FooterViews v-if="variant === 'G'" />
+						<SaveBar v-if="variant === 'L' || variant === 'K'" />
 					</div>
 				</div>
 			</template>
@@ -100,6 +112,11 @@
 
 		<FrameBands :bands="frame.after" :page="list.page" />
 		<PageDialogs v-if="list.engine.dialogs.value.length" :controller="list.engine" />
+		<!-- PROTOTYPE #45851: stub dialogs and the floating variant bar. -->
+		<template v-if="variant">
+			<ViewDialogs />
+			<PrototypeBar />
+		</template>
 	</PageFrame>
 </template>
 
@@ -139,6 +156,22 @@ import { clearDefaultView, setDefaultView } from "./defaultView";
 import { allowsHeaderItem, useListActs } from "./listActs";
 import { listHeaderItems, projectListHeader } from "./listHeader";
 import { rendererFor, type RendererHost } from "./renderer";
+import { useRoute } from "vue-router";
+import { markRaw } from "vue";
+import ControlsSwitcher from "./viewSwitcherPrototype/ControlsSwitcher.vue";
+import HeaderSwitcher from "./viewSwitcherPrototype/HeaderSwitcher.vue";
+import ModifiedCluster from "./viewSwitcherPrototype/ModifiedCluster.vue";
+import PrototypeBar from "./viewSwitcherPrototype/PrototypeBar.vue";
+import FloatingViews from "./viewSwitcherPrototype/FloatingViews.vue";
+import FooterViews from "./viewSwitcherPrototype/FooterViews.vue";
+import ViewsPanel from "./viewSwitcherPrototype/ViewsPanel.vue";
+import HeaderViewButton from "./viewSwitcherPrototype/HeaderViewButton.vue";
+import HeaderViews from "./viewSwitcherPrototype/HeaderViews.vue";
+import SaveBar from "./viewSwitcherPrototype/SaveBar.vue";
+import TabsStrip from "./viewSwitcherPrototype/TabsStrip.vue";
+import ViewDialogs from "./viewSwitcherPrototype/ViewDialogs.vue";
+import { viewActGroups } from "./viewSwitcherPrototype/menus";
+import { currentKey, isModified, loadViews, protoState, useViewActs, variantOf } from "./viewSwitcherPrototype/store";
 
 // A script's `page.dialog.form` needs a host; the stack loads only when one is open.
 const PageDialogs = defineAsyncComponent(() => import("@/pages/record/dialogs/PageDialogs.vue"));
@@ -150,6 +183,12 @@ const boot = inject<Boot>("boot")!;
 const addresses = inject<Addresses>("addresses")!;
 const { view, quickFilterFields, customizing, metaError, reloadMeta, createValues } = props.page;
 const { doctype, filters, sort, seeded } = view;
+
+// PROTOTYPE #45851: `?variant=A|B|C|D` picks where the view switcher draws.
+const route = useRoute();
+const variant = computed(() => variantOf(route));
+const protoActs = useViewActs(router, route);
+watch(variant, (value) => value && void loadViews(boot, doctype), { immediate: true });
 
 const { meta } = useDoctypeMeta(doctype);
 const created: (() => void)[] = [];
@@ -252,16 +291,56 @@ const host: RendererHost = {
 const quickFilterAct = computed(() => listActs.drawn("customize_quick_filter"));
 
 list.engine.header.provideBuiltins(() =>
-	listHeaderItems({
-		doctype,
-		module: moduleCrumb,
-		view: viewCrumb,
-		starsLoaded: () => settings.favourites.value !== null,
-		favourited: () => favourited.value,
-		toggleFavourite: () => settings.toggleFavourite(starKey),
-		create,
-	})
+	protoHeader(
+		listHeaderItems({
+			doctype,
+			module: moduleCrumb,
+			view: () => (variant.value ? null : viewCrumb()),
+			starsLoaded: () => settings.favourites.value !== null,
+			favourited: () => favourited.value,
+			toggleFavourite: () => settings.toggleFavourite(starKey),
+			create,
+		})
+	)
 );
+
+/** PROTOTYPE #45851: A and C draw the crumbs, the view control, the star and the modified state themselves. */
+function protoHeader(items: HeaderItem[]): HeaderItem[] {
+	// I and J: the view in the header's right side; modified, it takes the right side whole (Create gives way).
+	if (variant.value === "I" || variant.value === "J") {
+		const modified = protoState().loaded && isModified(route);
+		const kept = modified ? items.filter((item) => item.zone === "left") : items;
+		const ours = {
+			name: "proto_view_button",
+			zone: "right",
+			component: markRaw(variant.value === "I" ? HeaderViewButton : HeaderViews),
+		};
+		return [ours as HeaderItem, ...kept];
+	}
+	if (!["A", "C", "K", "L"].includes(variant.value ?? "")) return items;
+	const crumbs = items
+		.filter((item) => item.display === "crumb")
+		.map((item) => ({ label: item.label!, href: item.href ?? router.resolve(routeFor(doctype)).path }));
+	const kept = items.filter((item) => item.display !== "crumb" && item.name !== "favourite");
+	return [
+		{
+			name: "proto_view",
+			zone: "left",
+			component: markRaw(HeaderSwitcher),
+			props: {
+				crumbs,
+				// C lists the views in the sidebar; with no sidebar (a non-modular prefix) it falls back to A.
+				mode:
+					(variant.value === "C" && isModular(boot)) || (variant.value === "K" && protoState().inSidebar)
+						? "acts"
+						: "all",
+				favourited: favourited.value,
+				toggleFavourite: () => settings.toggleFavourite(starKey),
+			},
+		} as HeaderItem,
+		...kept,
+	];
+}
 
 function moduleCrumb() {
 	const label = meta.value?.module;
@@ -279,7 +358,21 @@ const header = computed(() =>
 	projectListHeader(list.engine.header.resolve(), allowsHeaderItem(list, permissions))
 );
 const frame = computed(() => projectFrame(list.engine.frame.resolve()));
-const bodyItems = computed(() => list.engine.body.visible());
+const bodyItems = computed(() => {
+	const items = list.engine.body.visible();
+	// PROTOTYPE #45851 variant H: a Views column at the body's left.
+	if (variant.value !== "H") return items;
+	const panel = {
+		name: "proto_views",
+		component: markRaw(ViewsPanel),
+		width: 232,
+		minWidth: 180,
+		maxWidth: 320,
+		collapsible: true,
+		gutter: false,
+	};
+	return [panel, ...items];
+});
 
 function runHeaderItem(item: HeaderItem) {
 	if (item.run) void acts.perform(`header.${item.name}`);
@@ -301,7 +394,7 @@ const menuOptions = computed(() => {
 			? [act]
 			: [];
 	const editor = ["customize_form", "edit_doctype"].map(listActs.drawn);
-	return [...quickFilter, ...editor]
+	const own = [...quickFilter, ...editor]
 		.filter((each): each is NonNullable<typeof each> => Boolean(each))
 		.map((each) =>
 			withAct(
@@ -309,5 +402,13 @@ const menuOptions = computed(() => {
 				each.name
 			)
 		);
+	// PROTOTYPE #45851 variant D: this view's acts head the row's existing ⋯ menu.
+	if (variant.value !== "D" || !protoState().loaded) return own;
+	const groups = viewActGroups(protoActs, currentKey(route)).map((group, index) => ({
+		...group,
+		group: index ? group.group : "This view",
+		hideLabel: index > 0,
+	}));
+	return own.length ? [...groups, { group: "List", hideLabel: true, options: own }] : groups;
 });
 </script>

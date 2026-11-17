@@ -48,6 +48,7 @@
 				:chrome="floating"
 				:customizable="!floating"
 				:overlay="overlay"
+				:views="panel.views"
 				@customize="customize.write('sidebar', panel.address)"
 				@close="overlayOpen = false"
 			/>
@@ -185,7 +186,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
-import { computed, defineAsyncComponent, inject, nextTick, onUnmounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, inject, nextTick, onUnmounted, ref, watch, watchEffect } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import { Button, DesktopShell, Dialogs, ToastProvider, toast } from "frappe-ui";
 import { keepInHistory } from "@framework/ui/utils";
@@ -230,6 +231,7 @@ import { useShellHooks } from "./shellHooks";
 import { useStaleBuildNotice } from "./staleBuild";
 import SidebarOnly from "./SidebarOnly.vue";
 import SidebarPanel from "./SidebarPanel.vue";
+import { protoState } from "@/pages/list/viewSwitcherPrototype/store";
 import { useHashDialog } from "./useHashDialog";
 import UserMenu from "./UserMenu.vue";
 
@@ -406,7 +408,25 @@ function shareLink(): string {
 }
 
 // The panel, or nothing. An empty sidebar is absent from the payload; the count is the last fence.
-const panel = computed(() => {
+const panel = computed(() => viewsPanel() ?? sidebarPanel());
+
+/** PROTOTYPE #45851 variant K: a rail item that is a DocType opens a sidebar of the DocType's views. */
+function viewsPanel() {
+	if (String(route.query.variant ?? "").toUpperCase() !== "K") return null;
+	const views = protoState();
+	if (!views.loaded) return null;
+	const owner = navigation.value.rail.find((item) => item.key === current.value.railKey);
+	if (owner?.item_type !== "DocType" || owner.link_to !== views.doctype) return null;
+	return {
+		address: `views_${views.doctype}`,
+		items: [] as NavigationItem[],
+		context: contexts.value.rail,
+		title: owner.label ?? views.doctype,
+		views: true,
+	};
+}
+
+function sidebarPanel() {
 	const address = current.value.sidebar;
 	const items = address ? navigation.value.sidebars[address] : undefined;
 	if (!address || !items?.length) return null;
@@ -419,8 +439,12 @@ const panel = computed(() => {
 		context: contexts.value.sidebars[address],
 		// The authored label only: `labelOf`'s last resort is `link_to`, here the scrubbed address.
 		title: owner?.label,
+		views: false,
 	};
-});
+}
+
+// PROTOTYPE #45851: tells the list header whether the views are in the sidebar.
+watchEffect(() => (protoState().inSidebar = !!panel.value?.views));
 
 // One dialog for both containers; the endpoints take the container as an argument.
 const customize = useHashDialog("customize");

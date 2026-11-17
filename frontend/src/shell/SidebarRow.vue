@@ -33,10 +33,12 @@
 			:data-key="item.key"
 			:data-sidebar="destination.sidebar"
 		>
-			<SidebarItem :route="target" :label="label" :active="isCurrent">
+			<SidebarItem :route="target" :label="label" :active="isCurrent && !protoViews">
 				<template #prefix><Icon :name="iconOf(item)" /></template>
 			</SidebarItem>
 		</div>
+		<!-- PROTOTYPE #45851 variant C: the DocType row opens into its views. -->
+		<SidebarViews v-if="protoViews" />
 
 		<!-- Outside this prefix: a full document load, so an `<a>`. -->
 		<div v-else-if="destination && 'href' in destination" :data-key="item.key" :class="ROW">
@@ -139,6 +141,9 @@ import type { SectionMemory } from "@/navigation/sectionMemory";
 import { iconOf, labelOf, renderingOf } from "@/navigation/registry";
 import Icon from "@/icons/Icon.vue";
 import LoadingStatus from "./LoadingStatus.vue";
+import { useRoute } from "vue-router";
+import SidebarViews from "@/pages/list/viewSwitcherPrototype/SidebarViews.vue";
+import { protoState, variantOf } from "@/pages/list/viewSwitcherPrototype/store";
 import type { ItemContext } from "@/navigation/types";
 
 // `SidebarItem`'s own classes, for the two rows drawn by hand. Neither is ever current.
@@ -158,6 +163,16 @@ const props = defineProps<{
 }>();
 
 const item = computed(() => props.node.item);
+
+// PROTOTYPE #45851: under variant C, the row of the list's doctype lists its views.
+const protoRoute = useRoute();
+const protoViews = computed(
+	() =>
+		variantOf(protoRoute) === "C" &&
+		protoState().loaded &&
+		item.value.item_type !== "View" &&
+		item.value.link_to === protoState().doctype
+);
 const isCurrent = computed(() => !!props.current && props.current === item.value.key);
 const rendering = computed(() => renderingOf(item.value, props.context));
 const label = computed(() => labelOf(item.value, props.context));
